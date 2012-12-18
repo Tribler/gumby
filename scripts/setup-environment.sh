@@ -50,7 +50,7 @@ mkdir $PEERS_DIRECTORY
 export PYTHONPATH=${BRANCH}:/home/mbardac/3rd-party/lib/python2.6/site-packages:$PYTHONPATH
 export LD_LIBRARY_PATH=/home/mbardac/3rd-party/lib:$LD_LIBRARY_PATH
 
-./barter-ec-generator.py --total-peers $NUMBER_OF_PEERS -o $PEERS_DIRECTORY/peer-keys
+ec-generator.py --total-peers $NUMBER_OF_PEERS -o $PEERS_DIRECTORY/peer-keys
 
 for i in `seq -f "%05g" $NUMBER_OF_PEERS`; do
     PEER_DATA_DIR=$PEERS_DIRECTORY/$i/data/

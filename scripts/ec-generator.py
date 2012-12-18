@@ -8,7 +8,7 @@
 # The public and private keys come from an eleptic curve
 # key, generated during runtime for each peer
 #
-# Use ./barter-ec-generator.py --help for help on the parameters
+# Use ./ec-generator.py --help for help on the parameters
 #
 from Tribler.dispersy.crypto import ec_generate_key, ec_to_public_bin, ec_to_private_bin
 

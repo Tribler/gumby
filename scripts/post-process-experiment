@@ -21,11 +21,11 @@ for RES_FILE in */output/resource_usage.log; do
 done
 cd $ID
 
-./barter-experiment-analysis $EXPERIMENT_CONFIG $PD
+experiment-analysis $EXPERIMENT_CONFIG $PD
 if test $? -ne 0; then
     exit 2
 fi
 echo "* Generating graphs..."
-./barter-generate-graphs $PD | gnuplot
+generate-graphs $PD | gnuplot
 echo "* Done."
 

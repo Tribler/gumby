@@ -33,7 +33,7 @@ ls -l ../dispersy_experiments/scripts
 
 das4-start das4-allchannel.conf ../dispersy_experiments/scenario_1000/ 20 5 $HEAD_IP $TRACKER_PORT $SYNC_PORT
 
-barter-post-process-experiment das4-allchannel.conf ../dispersy_experiments/scenario_1000/
+post-process-experiment das4-allchannel.conf ../dispersy_experiments/scenario_1000/
 
 cd ..
 

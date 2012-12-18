@@ -68,7 +68,7 @@ fi
 
 echo "* Extracting statistics..."
 cd $BRANCH
-./barter-extract-statistics $PEERS_DIRECTORY ${MESSAGESTOPLOT}
+extract-statistics $PEERS_DIRECTORY ${MESSAGESTOPLOT}
 
 svn_version=$(cat $PEERS_DIRECTORY/output/svn_version.txt)
 

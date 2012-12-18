@@ -2,14 +2,14 @@
 
 """
 # setup once
-./barter-ec-generator.py 10
-./barter-setup-environment.sh 10
+ec-generator.py 10
+setup-environment.sh 10
 
 # obtain stats to plot
-./barter-cluster-run
+cluster-run
 
 # parse logs and plot
-./barter-generate-graphs peers_directory | gnuplot
+generate-graphs peers_directory | gnuplot
 
 # loot at graphs
 display peers/records.png
