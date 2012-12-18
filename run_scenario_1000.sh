@@ -29,7 +29,7 @@ rm -fR output/*
 cd mainbranch
 
 
-das4-start das4-allchannel.conf ../dispersy_experiments/scenario_1000/ 20 15 $HEAD_IP $TRACKER_PORT $SYNC_PORT
+das4-start das4-allchannel.conf ../dispersy_experiments/scenario_1000/ 20 1 $HEAD_IP $TRACKER_PORT $SYNC_PORT
 
 barter-post-process-experiment das4-allchannel.conf ../dispersy_experiments/scenario_1000/
 
