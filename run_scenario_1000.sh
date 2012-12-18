@@ -2,7 +2,7 @@
 
 set -xe
 
-export PATH=$PATH:scripts
+export PATH=$PATH:$PWD/scripts
 
 #DAS4 Set up:
 module load prun/default
