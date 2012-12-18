@@ -28,6 +28,8 @@ rm -fR output/*
 
 cd mainbranch
 
+echo $PATH
+ls -l ../dispersy_experiments/scripts
 
 das4-start das4-allchannel.conf ../dispersy_experiments/scenario_1000/ 20 1 $HEAD_IP $TRACKER_PORT $SYNC_PORT
 
