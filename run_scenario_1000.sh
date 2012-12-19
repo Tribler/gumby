@@ -2,7 +2,8 @@
 
 set -xe
 
-export PATH=$PATH:$PWD/scripts
+SCRIPTS_PATH=$PWD/scripts
+export PATH=$PATH:$SCRIPTS_PATH
 export PYTHONPATH=$PYTHONPATH:$PWD/../mainbranch
 
 #DAS4 Set up:
@@ -32,9 +33,9 @@ cd mainbranch
 echo $PATH
 ls -l ../dispersy_experiments/scripts
 
-das4-start das4-allchannel.conf ../dispersy_experiments/scenario_1000/ 20 5 $HEAD_IP $TRACKER_PORT $SYNC_PORT
+das4-start $SCRIPTS_PATH/das4-allchannel.conf ../dispersy_experiments/scenario_1000/ 20 5 $HEAD_IP $TRACKER_PORT $SYNC_PORT
 
-post-process-experiment das4-allchannel.conf ../dispersy_experiments/scenario_1000/
+post-process-experiment $SCRIPTS_PATH/das4-allchannel.conf ../dispersy_experiments/scenario_1000/
 
 cd ..
 
