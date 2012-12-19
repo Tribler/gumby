@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+import sys
+import os
+from math import ceil
+
+def reduce(peers_directory, nrlines, inputfile, outputfile):
+    ifp = open(os.path.join(peers_directory, inputfile), 'r')
+    ofp = open(os.path.join(peers_directory, outputfile), 'w')
+    
+    lines = ifp.readlines()
+    print >> ofp, lines[0][:-1]
+    
+    lines = lines[1:]
+    if len(lines) > nrlines:
+        nrlines_to_merge = int(ceil(len(lines)/float(nrlines)))
+        print >> sys.stderr, "%s has %d lines, reducing to %d lines"%(inputfile, len(lines), nrlines)
+
+        max_time = None
+        to_be_merged_parts = None
+        for i, line in enumerate(lines):
+            parts = line.split()
+            max_time = max(long(parts[0]), max_time)
+            
+            parts = map(float, parts[1:])
+            if not to_be_merged_parts:
+                to_be_merged_parts = [[]]* len(parts)
+                
+            for j, part in enumerate(parts):
+                to_be_merged_parts[j].append(part)
+            
+            if (i > 0 and i % nrlines_to_merge == 0) or (i + 1 == len(lines)):
+                print >> ofp, max_time,
+                
+                for j, parts in enumerate(to_be_merged_parts):
+                    mean = sum(parts)/float(len(parts))
+                    print >> ofp, mean,
+                    
+                    to_be_merged_parts[j] = []
+                    
+                print >> ofp, ''
+                
+    else:
+        for line in lines:
+            print >> ofp, line
+            
+    ifp.close()
+    ofp.close()
+
+def main(peers_directory, nrlines):
+    reduce(peers_directory, nrlines, '/output/send.txt', '/output/send_reduced.txt')
+    reduce(peers_directory, nrlines, '/output/send_diff.txt', '/output/send_diff_reduced.txt')
+    reduce(peers_directory, nrlines, '/output/received.txt', '/output/received_reduced.txt')
+    reduce(peers_directory, nrlines, '/output/received_diff.txt', '/output/received_diff_reduced.txt')
+    reduce(peers_directory, nrlines, '/output/dropped.txt', '/output/dropped_reduced.txt')
+    reduce(peers_directory, nrlines, '/output/dropped_diff.txt', '/output/dropped_diff_reduced.txt')
+    
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print "Usage: %s <peers-directory> <nr-of-lines-to-output>" %(sys.argv[0])
+        print >> sys.stderr, sys.argv
+        
+        exit(1)
+
+    main(sys.argv[1], int(sys.argv[2]))

@@ -69,6 +69,7 @@ fi
 echo "* Extracting statistics..."
 cd $BRANCH
 extract-statistics $PEERS_DIRECTORY ${MESSAGESTOPLOT}
+reduce-statistics $PEERS_DIRECTORY 300
 
 svn_version=$(cat $PEERS_DIRECTORY/output/svn_version.txt)
 
