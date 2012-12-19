@@ -3,6 +3,7 @@
 set -xe
 
 export PATH=$PATH:$PWD/scripts
+export PYTHONPATH=$PYTHONPATH:$PWD/../mainbranch
 
 #DAS4 Set up:
 module load prun/default
