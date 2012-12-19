@@ -31,7 +31,7 @@ cd mainbranch
 echo $PATH
 ls -l ../dispersy_experiments/scripts
 
-das4-start das4-allchannel.conf ../dispersy_experiments/scenario_1000/ 20 5 $HEAD_IP $TRACKER_PORT $SYNC_PORT
+das4-start das4-allchannel.conf ../dispersy_experiments/scenario_1000/ 20 15 $HEAD_IP $TRACKER_PORT $SYNC_PORT
 
 post-process-experiment das4-allchannel.conf ../dispersy_experiments/scenario_1000/
 
