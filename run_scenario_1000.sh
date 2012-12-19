@@ -45,11 +45,11 @@ cd dispersy_experiments/scenario_1000/output
 find -type f -exec chmod a+r {} \;
 find -type d -exec chmod a+rx {} \;
 
-for FILE in records-dropped  records-received \
-            records-total statistics traffic-received\
-            traffic-sent connections-total-1 connections-total-2; do
-    convert -density 500 -resize 800x600 $FILE.eps $FILE.png
-done
+#for FILE in records-dropped  records-received \
+#            records-total statistics traffic-received\
+#            traffic-sent connections-total-1 connections-total-2; do
+#    convert -density 500 -resize 800x600 $FILE.eps $FILE.png
+#done
 
 #rsync -a --delete  ./ $WORKSPACE/output/
 

@@ -10,5 +10,4 @@ p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages received by peer\n")
 p
 
-dev.copy2pdf(file="total_records.pdf", width=7, height=5)
-embedFonts("total_records.pdf",options="-dEmbedAllFonts=true -dPDFSETTINGS=/printer")
+ggsave(file="total_records.png")

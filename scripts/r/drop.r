@@ -11,7 +11,7 @@ p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped\n")
 p
 
-dev.copy2pdf(file="dropped_diff.pdf")
+ggsave(file="dropped_diff.png")
 
 df <- read.table("dropped_reduced.txt", header = TRUE)
 df <- melt(df, id="time")
@@ -22,4 +22,4 @@ p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped\n")
 p
 
-dev.copy2pdf(file="dropped.pdf")
+ggsave(file="dropped.png")
