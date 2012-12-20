@@ -52,7 +52,7 @@ def reduce(peers_directory, nrlines, inputfile, outputfile):
     ofp.close()
 
 def main(peers_directory, nrlines):
-    print >> sys.stderr, peers_directory
+    peers_directory = peers_directory.strip()
     
     reduce(peers_directory, nrlines, '/output/send.txt', '/output/send_reduced.txt')
     reduce(peers_directory, nrlines, '/output/send_diff.txt', '/output/send_diff_reduced.txt')
