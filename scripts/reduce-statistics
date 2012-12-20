@@ -4,6 +4,8 @@ import os
 from math import ceil
 
 def reduce(peers_directory, nrlines, inputfile, outputfile):
+    print >> sys.stderr, peers_directory
+    
     ifp = open(os.path.join(peers_directory, inputfile), 'r')
     ofp = open(os.path.join(peers_directory, outputfile), 'w')
 
@@ -47,6 +49,8 @@ def reduce(peers_directory, nrlines, inputfile, outputfile):
     ofp.close()
 
 def main(peers_directory, nrlines):
+    print >> sys.stderr, peers_directory
+    
     reduce(peers_directory, nrlines, '/output/send.txt', '/output/send_reduced.txt')
     reduce(peers_directory, nrlines, '/output/send_diff.txt', '/output/send_diff_reduced.txt')
     reduce(peers_directory, nrlines, '/output/received.txt', '/output/received_reduced.txt')
