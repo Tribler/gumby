@@ -13,6 +13,7 @@ fi
 EXPERIMENT_CONFIG=$1
 BRANCH=$2
 SCRIPTS_PATH=$(dirname $(readlink -f $0))
+export PATH=$PATH:SCRIPTS_PATH
 
 source $EXPERIMENT_CONFIG
 
@@ -51,11 +52,12 @@ for i in $(seq 1 1 $PEERS_PER_NODE); do
 done
 
 export PYTHONPATH=${BRANCH}
-${SCRIPTS_PATH}/process_guard.py \
+process_guard.py \
 	$PEERS_DIRECTORY/control/$(hostname)/start_commands \
 	$PEERS_DIRECTORY/control/$(hostname)/output/ \
 	$EXPERIMENT_LENGTH \
-    0.1 # This is the sampling cadence in secons (IE once every 0.1 secs)
+    0.1 2>&1 | tee $PEERS_DIRECTORY/control/$(hostname)/output/process_guard.log
+   #^^^ This is the sampling cadence in secons (IE once every 0.1 secs)
 
 # save the output of the run for all peers on this node
 # take the output from the temporary directory
