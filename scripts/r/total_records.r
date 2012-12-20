@@ -9,6 +9,7 @@ for (package in toInstall){
 	}
 	library(package)
 }
+lapply(toInstall, library, character.only = TRUE)
 
 df <- read.table("sum_total_records.txt", header = TRUE, check.names = FALSE)
 df <- melt(df, id="time")

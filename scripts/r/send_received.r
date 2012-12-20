@@ -9,6 +9,7 @@ for (package in toInstall){
 	}
 	library(package)
 }
+lapply(toInstall, library, character.only = TRUE)
 
 df <- read.table("send_diff_reduced.txt", header = TRUE)
 df <- melt(df, id="time")
