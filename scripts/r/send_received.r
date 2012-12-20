@@ -15,7 +15,7 @@ df <- subset(df, df$value > 0)
 df$value = df$value/1024.0
 
 p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
-p <- p + geom_point(data = df, alpha=0.5)
+p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
 p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KB/s upload)\n")
 p
@@ -26,7 +26,7 @@ df <- melt(df, id="time")
 df <- subset(df, df$value > 0)
 df$value = df$value/1024.0
 
-p <- ggplot(df, aes(time, value, group=variable, colour=type)) + theme_bw()
+p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
 p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KB/s download)\n")
