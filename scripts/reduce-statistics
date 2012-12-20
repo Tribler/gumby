@@ -4,10 +4,13 @@ import os
 from math import ceil
 
 def reduce(peers_directory, nrlines, inputfile, outputfile):
-    print >> sys.stderr, peers_directory
+    inputfile = os.path.join(peers_directory, inputfile)
+    outputfile = os.path.join(peers_directory, outputfile)
     
-    ifp = open(os.path.join(peers_directory, inputfile), 'r')
-    ofp = open(os.path.join(peers_directory, outputfile), 'w')
+    print >> sys.stderr, peers_directory, inputfile, outputfile
+    
+    ifp = open(inputfile, 'r')
+    ofp = open(outputfile, 'w')
 
     lines = ifp.readlines()
     print >> ofp, lines[0][:-1]
