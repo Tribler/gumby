@@ -1,5 +1,5 @@
 #!/bin/sh
-
+set -x
 source /etc/bashrc
 
 module load prun
@@ -48,7 +48,7 @@ rm -rf /local/$USER/dispersy/
 mkdir -p /local/$USER/dispersy/
 
 for i in $(seq 1 1 $PEERS_PER_NODE); do
-	echo "${BRANCH}/das4-peer $PEERS_DIRECTORY $EXPERIMENT_CONFIG $BRANCH" >> $PEERS_DIRECTORY/control/$(hostname)/start_commands
+	echo "${SCRIPTS_PATH}/das4-peer $PEERS_DIRECTORY $EXPERIMENT_CONFIG $BRANCH" >> $PEERS_DIRECTORY/control/$(hostname)/start_commands
 done
 
 export PYTHONPATH=${BRANCH}
