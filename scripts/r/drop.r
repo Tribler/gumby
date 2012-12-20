@@ -1,5 +1,7 @@
+.libPaths( c("~/R/x86_64-redhat-linux-gnu-library/2.15", .libPaths()))
+
 toInstall <- c("ggplot2", "reshape")
-install.packages(toInstall, repos = "http://cran.r-project.org")
+install.packages(toInstall, repos = "http://cran.r-project.org", lib="~/R/x86_64-redhat-linux-gnu-library/2.15")
 lapply(toInstall, library, character.only = TRUE)
 
 df <- read.table("dropped_diff_reduced.txt", header = TRUE)
