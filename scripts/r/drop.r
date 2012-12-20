@@ -1,5 +1,6 @@
-library(ggplot2)
-library(reshape)
+toInstall <- c("ggplot2", "reshape")
+install.packages(toInstall, repos = "http://cran.r-project.org")
+lapply(toInstall, library, character.only = TRUE)
 
 df <- read.table("dropped_diff_reduced.txt", header = TRUE)
 df <- melt(df, id="time")
