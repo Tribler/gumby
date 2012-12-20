@@ -4,10 +4,8 @@ is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1])
 toInstall <- c("ggplot2", "reshape")
 for (package in toInstall){
 	if (is.installed(package) == FALSE){
-		print(package)
 		install.packages(package, repos = "http://cran.r-project.org", lib="~/R/x86_64-redhat-linux-gnu-library/2.15")		
 	}
-	library(package)
 }
 lapply(toInstall, library, character.only = TRUE)
 
@@ -21,7 +19,7 @@ p <- p + geom_point(data = df, alpha=0.5)
 p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KB/s upload)\n")
 p
-ggsave(file="send_diff.png")
+ggsave(file="send_diff.png", width=800, height=600)
 
 df <- read.table("received_diff_reduced.txt", header = TRUE, check.names = FALSE)
 df <- melt(df, id="time")
@@ -33,7 +31,7 @@ p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
 p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KB/s download)\n")
 p
-ggsave(file="received_diff.png")
+ggsave(file="received_diff.png", width=800, height=600)
 
 df <- read.table("send_reduced.txt", header = TRUE)
 df <- melt(df, id="time")
@@ -44,7 +42,7 @@ p <- p + geom_line(alpha = 5/10)
 p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB/s upload)")
 p
-ggsave(file="send.png")
+ggsave(file="send.png", width=800, height=600)
 
 df <- read.table("received_reduced.txt", header = TRUE)
 df <- melt(df, id="time")
@@ -55,4 +53,4 @@ p <- p + geom_line(alpha = 5/10)
 p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB/s download)")
 p
-ggsave(file="received.png")
+ggsave(file="received.png", width=800, height=600)

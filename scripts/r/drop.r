@@ -6,7 +6,6 @@ for (package in toInstall){
 	if (is.installed(package) == FALSE){
 		install.packages(package, repos = "http://cran.r-project.org", lib="~/R/x86_64-redhat-linux-gnu-library/2.15")		
 	}
-	print(package)
 }
 lapply(toInstall, library, character.only = TRUE)
 
@@ -20,7 +19,7 @@ p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped\n")
 p
 
-ggsave(file="dropped_diff.png")
+ggsave(file="dropped_diff.png", width=800, height=600)
 
 df <- read.table("dropped_reduced.txt", header = TRUE)
 df <- melt(df, id="time")
@@ -31,4 +30,4 @@ p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped\n")
 p
 
-ggsave(file="dropped.png")
+ggsave(file="dropped.png", width=800, height=600)

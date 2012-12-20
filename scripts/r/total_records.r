@@ -4,10 +4,8 @@ is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1])
 toInstall <- c("ggplot2", "reshape")
 for (package in toInstall){
 	if (is.installed(package) == FALSE){
-		print(package)
 		install.packages(package, repos = "http://cran.r-project.org", lib="~/R/x86_64-redhat-linux-gnu-library/2.15")		
 	}
-	library(package)
 }
 lapply(toInstall, library, character.only = TRUE)
 
@@ -20,4 +18,4 @@ p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages received by peer\n")
 p
 
-ggsave(file="total_records.png")
+ggsave(file="total_records.png", width=800, height=600)
