@@ -7,6 +7,7 @@ for (package in toInstall){
 		print(package)
 		install.packages(package, repos = "http://cran.r-project.org", lib="~/R/x86_64-redhat-linux-gnu-library/2.15")		
 	}
+	library(package)
 }
 
 df <- read.table("dropped_diff_reduced.txt", header = TRUE)
