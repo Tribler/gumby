@@ -19,7 +19,7 @@ p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
 p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KB/s upload)\n")
 p
-ggsave(file="send_diff.png", width=800, height=600)
+ggsave(file="send_diff.png", width=8, height=6, dpi=100)
 
 df <- read.table("received_diff_reduced.txt", header = TRUE, check.names = FALSE)
 df <- melt(df, id="time")
@@ -31,7 +31,7 @@ p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
 p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KB/s download)\n")
 p
-ggsave(file="received_diff.png", width=800, height=600)
+ggsave(file="received_diff.png", width=8, height=6, dpi=100)
 
 df <- read.table("send_reduced.txt", header = TRUE)
 df <- melt(df, id="time")
@@ -42,7 +42,7 @@ p <- p + geom_line(alpha = 5/10)
 p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB/s upload)")
 p
-ggsave(file="send.png", width=800, height=600)
+ggsave(file="send.png", width=8, height=6, dpi=100)
 
 df <- read.table("received_reduced.txt", header = TRUE)
 df <- melt(df, id="time")
@@ -53,4 +53,4 @@ p <- p + geom_line(alpha = 5/10)
 p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB/s download)")
 p
-ggsave(file="received.png", width=800, height=600)
+ggsave(file="received.png", width=8, height=6, dpi=100)

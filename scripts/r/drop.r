@@ -19,7 +19,7 @@ p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped\n")
 p
 
-ggsave(file="dropped_diff.png", width=800, height=600)
+ggsave(file="dropped_diff.png", width=8, height=6, dpi=100)
 
 df <- read.table("dropped_reduced.txt", header = TRUE)
 df <- melt(df, id="time")
@@ -30,4 +30,4 @@ p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped\n")
 p
 
-ggsave(file="dropped.png", width=800, height=600)
+ggsave(file="dropped.png", width=8, height=6, dpi=100)

@@ -18,4 +18,4 @@ p <- p + opts(legend.position="none")
 p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages received by peer\n")
 p
 
-ggsave(file="total_records.png", width=800, height=600)
+ggsave(file="total_records.png", width=8, height=6, dpi=100)
