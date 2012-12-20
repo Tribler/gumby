@@ -52,14 +52,12 @@ def reduce(peers_directory, nrlines, inputfile, outputfile):
     ofp.close()
 
 def main(peers_directory, nrlines):
-    peers_directory = peers_directory.strip()
-    
-    reduce(peers_directory, nrlines, '/output/send.txt', '/output/send_reduced.txt')
-    reduce(peers_directory, nrlines, '/output/send_diff.txt', '/output/send_diff_reduced.txt')
-    reduce(peers_directory, nrlines, '/output/received.txt', '/output/received_reduced.txt')
-    reduce(peers_directory, nrlines, '/output/received_diff.txt', '/output/received_diff_reduced.txt')
-    reduce(peers_directory, nrlines, '/output/dropped.txt', '/output/dropped_reduced.txt')
-    reduce(peers_directory, nrlines, '/output/dropped_diff.txt', '/output/dropped_diff_reduced.txt')
+    reduce(peers_directory, nrlines, 'output/send.txt', 'output/send_reduced.txt')
+    reduce(peers_directory, nrlines, 'output/send_diff.txt', 'output/send_diff_reduced.txt')
+    reduce(peers_directory, nrlines, 'output/received.txt', 'output/received_reduced.txt')
+    reduce(peers_directory, nrlines, 'output/received_diff.txt', 'output/received_diff_reduced.txt')
+    reduce(peers_directory, nrlines, 'output/dropped.txt', 'output/dropped_reduced.txt')
+    reduce(peers_directory, nrlines, 'output/dropped_diff.txt', 'output/dropped_diff_reduced.txt')
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -68,5 +66,4 @@ if __name__ == "__main__":
 
         exit(1)
     
-    print >> sys.stderr, sys.argv
     main(sys.argv[1], int(sys.argv[2]))
