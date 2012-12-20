@@ -46,7 +46,7 @@ def reduce(peers_directory, nrlines, inputfile, outputfile):
 
     else:
         for line in lines:
-            print >> ofp, line
+            print >> ofp, line[:-1]
 
     ifp.close()
     ofp.close()
