@@ -108,11 +108,11 @@ def generate(peers_directory, messagestoplot):
         print >> h_created_record, "# timestamp timeoffset num-records"
         print >> h_created_record, "0 0 0"
 
-        h_total_record = open(node + "/output/total-record.txt", "w+")
+        h_total_record = open(node + "/output/total_record.txt", "w+")
         print >> h_total_record, "# timestamp timeoffset num-records"
         print >> h_total_record, "0 0 0"
         
-        h_total_connections = open(node + "/output/total-connections.txt", "w+")
+        h_total_connections = open(node + "/output/total_connections.txt", "w+")
         print >> h_total_connections, "# timestamp timeoffset (num-connections +)"
         print >> h_total_connections, "#", " ".join(communities) 
         print >> h_total_connections, "0 0" + (" 0"*len(communities))
@@ -251,10 +251,13 @@ def generate(peers_directory, messagestoplot):
 
     # returns the first and the last last timetime
     experiment_length = start+last - start
-    merge_records(peers_directory, "/output/total-record.txt", '/output/sum_total_records.txt', 2)
+    merge_records(peers_directory, "/output/total_record.txt", '/output/sum_total_records.txt', 2)
     merge_records(peers_directory, "/output/stat.txt", '/output/send.txt', 2, '/output/send_diff.txt')
     merge_records(peers_directory, "/output/stat.txt", '/output/received.txt', 3, '/output/received_diff.txt')
     merge_records(peers_directory, "/output/drop.txt", '/output/dropped.txt', 2, '/output/dropped_diff.txt')
+    
+    for column in xrange(len(communities)):
+        merge_records(peers_directory, "/output/total_connections.txt", '/output/total_connections_%d.txt'%(column+1), 2+column)
     
     sum_at_experiment_end = sum_created_records(peers_directory)
     

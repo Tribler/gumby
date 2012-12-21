@@ -58,6 +58,11 @@ def main(peers_directory, nrlines):
     reduce(peers_directory, nrlines, 'output/received_diff.txt', 'output/received_diff_reduced.txt')
     reduce(peers_directory, nrlines, 'output/dropped.txt', 'output/dropped_reduced.txt')
     reduce(peers_directory, nrlines, 'output/dropped_diff.txt', 'output/dropped_diff_reduced.txt')
+    
+    total_connections = 1
+    while os.path.exists(os.path.join(peers_directory, 'output/total_connections-%d.txt'%total_connections)):
+        reduce(peers_directory, nrlines, 'output/total_connections_%d.txt'%total_connections, 'output/total_connections_%d_reduced.txt'%total_connections)
+        total_connections +=1
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
