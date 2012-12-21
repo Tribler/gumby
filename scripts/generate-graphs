@@ -321,7 +321,7 @@ def main(peers_directory):
     [ first, last ] = [int(i) for i in h_first_last.readline().strip().split()]
     h_first_last.close()
  
-    for func in [records, received_records, statistics, connections]:
+    for func in [records, received_records, statistics]:
         func(peers_directory, first-10, last+10)
         
 #    received_f = open(peers_directory + "/output/received.txt", "w")
