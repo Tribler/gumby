@@ -58,7 +58,8 @@ def get_communities(peers_directory):
             if 'candidates' in kargs:
 #                print >> sys.stderr, node, kargs['candidates']
                 for community, nrcandidates in kargs['candidates']:
-                    communities.add(community)
+                    if nrcandidates:
+                        communities.add(community)
         except:
             pass
     
@@ -420,39 +421,38 @@ def merge_records(peers_directory, inputfile, outputfile, columnindex, diffoutpu
         h_records.close()
 
 def write_records(all_nodes, sum_records, peers_directory, outputfile, diffoutputfile = None):
-    if len(sum_records) > 0:
-        all_nodes.sort()
+    all_nodes.sort()
 
-        fp = open(peers_directory + outputfile, 'wb')
-        fp2 = open(peers_directory + diffoutputfile, 'wb') if diffoutputfile else None
-        
-        print >> fp, 'time', ' '.join(all_nodes)
+    fp = open(peers_directory + outputfile, 'wb')
+    fp2 = open(peers_directory + diffoutputfile, 'wb') if diffoutputfile else None
+    
+    print >> fp, 'time', ' '.join(all_nodes)
+    if fp2:
+        print >> fp2, 'time', ' '.join(all_nodes)
+    
+    prev_records = {}
+    for time in sorted(sum_records.iterkeys()):
+        print >> fp, time,
         if fp2:
-            print >> fp2, 'time', ' '.join(all_nodes)
+            print >> fp2, time,
         
-        prev_records = {}
-        for time in sorted(sum_records.iterkeys()):
-            print >> fp, time,
-            if fp2:
-                print >> fp2, time,
+        nodes = sum_records[time]
+        for node in all_nodes:
+            value = nodes.get(node, prev_records.get(node, 0))
+            print >> fp, value,
             
-            nodes = sum_records[time]
-            for node in all_nodes:
-                value = nodes.get(node, prev_records.get(node, 0))
-                print >> fp, value,
-                
-                if fp2:
-                    diff = value - prev_records.get(node, 0)
-                    print >> fp2, diff,
-                
-                prev_records[node] = value
-            print >> fp, ''
             if fp2:
-                print >> fp2, ''
+                diff = value - prev_records.get(node, 0)
+                print >> fp2, diff,
             
-        fp.close()
+            prev_records[node] = value
+        print >> fp, ''
         if fp2:
-            fp2.close()
+            print >> fp2, ''
+        
+    fp.close()
+    if fp2:
+        fp2.close()
     
 def parse_statistics(peers_directory):
     """ I created a file under 'peers/' called 'sum_scenario_statiscitcs.txt'
