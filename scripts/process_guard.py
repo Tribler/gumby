@@ -156,7 +156,8 @@ class ProcessMonitor(object):
 
             timestamp = time()
             for line in self._rm.get_raw_stats():
-                self.monitor_file.write("%f %s\n" % (timestamp, line))
+                pass
+                #self.monitor_file.write("%f %s\n" % (timestamp, line))
             #Look for new subprocesses only once in a second and during the first 10 seconds
             if (timestamp < time_start+10) and (timestamp - last_subprocess_update >= 1):
                 self._rm.update_pid_tree()
