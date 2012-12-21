@@ -419,6 +419,8 @@ def merge_records(peers_directory, inputfile, outputfile, columnindex, diffoutpu
                 if record == 0: continue
                 sum_records.setdefault(time, {})[nodename] = record
         h_records.close()
+        
+    write_records(all_nodes, sum_records, peers_directory, outputfile, diffoutputfile)
 
 def write_records(all_nodes, sum_records, peers_directory, outputfile, diffoutputfile = None):
     all_nodes.sort()
