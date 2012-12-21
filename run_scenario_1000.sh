@@ -39,6 +39,20 @@ WORKSPACE=$PWD
 
 cd dispersy_experiments/scenario_1000/output
 
+R --no-save --quiet < $WORKSPACE/dispersy_experiments/scripts/r/drop.r &
+PID1=$! 
+R --no-save --quiet < $WORKSPACE/dispersy_experiments/scripts/r/total_records.r &
+PID2=$!
+R --no-save --quiet < $WORKSPACE/dispersy_experiments/scripts/r/connections.r &
+PID3=$!
+R --no-save --quiet < $WORKSPACE/dispersy_experiments/scripts/r/send_received.r &
+PID4=$!
+
+wait $PID1
+wait $PID2
+wait $PID3
+wait $PID4
+
 find -type f -exec chmod a+r {} \;
 find -type d -exec chmod a+rx {} \;
 
