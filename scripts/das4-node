@@ -56,7 +56,7 @@ process_guard.py \
 	$PEERS_DIRECTORY/control/$(hostname)/start_commands \
 	$PEERS_DIRECTORY/control/$(hostname)/output/ \
 	$EXPERIMENT_LENGTH \
-    0.1 2>&1 | tee $PEERS_DIRECTORY/control/$(hostname)/output/process_guard.log
+    100.1 2>&1 | tee $PEERS_DIRECTORY/control/$(hostname)/output/process_guard.log
    #^^^ This is the sampling cadence in secons (IE once every 0.1 secs)
 
 # save the output of the run for all peers on this node
