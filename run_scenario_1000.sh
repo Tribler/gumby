@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xe
+set -e
 
 SCRIPTS_PATH=$PWD/scripts
 export PATH=$PATH:$SCRIPTS_PATH
@@ -38,6 +38,7 @@ cd ..
 WORKSPACE=$PWD
 
 cd dispersy_experiments/scenario_1000/output
+date
 
 R --no-save --quiet < $WORKSPACE/dispersy_experiments/scripts/r/drop.r &
 PID1=$! 
@@ -52,6 +53,8 @@ wait $PID1
 wait $PID2
 wait $PID3
 wait $PID4
+
+date
 
 find -type f -exec chmod a+r {} \;
 find -type d -exec chmod a+rx {} \;

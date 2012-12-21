@@ -24,7 +24,7 @@ experiment-analysis $EXPERIMENT_CONFIG $PD
 if test $? -ne 0; then
     exit 2
 fi
-echo "* Generating graphs..."
-generate-graphs $PD | gnuplot
+#echo "* Generating graphs..."
+#generate-graphs $PD | gnuplot
 echo "* Done."
 
