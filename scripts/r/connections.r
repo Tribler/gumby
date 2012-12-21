@@ -21,5 +21,5 @@ while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep =
 	p
 	
 	ggsave(file=paste("total_connections_", toString(i), ".png", sep = ''), width=8, height=6, dpi=100)
-	i <- i + 1
+	i = i + 1
 }
