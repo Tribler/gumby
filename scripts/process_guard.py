@@ -33,9 +33,20 @@ class ResourceMonitor(object):
                 self.pid_list.remove(pid)
                 continue
             try:
-                status = open('/proc/%s/stat' % pid, 'r' ).read()[:-1] #Skip the newline
+                #status = open('/proc/%s/stat' % pid, 'r' ).read()[:-1] #Skip the newline
+                status = "9932 (bash) S 1 9932 9932 0 -1 8192 1330 25068 0 12 1 0 21 7 20 0 1 0 873934607 112930816 2 18446744073709551615 1 1 0 0 0 0 65536 4 65538 18446744073709551615 0 0 17 0 0 0 0 0 0"
                 stats = [status]
-                for line in open('/proc/%s/io' % pid, 'r' ).readlines():
+                #for line in open('/proc/%s/io' % pid, 'r' ).readlines():
+                fakestuff = [
+                    "rchar: 2012\n",
+                    "wchar: 0\n",
+                    "syscr: 7\n",
+                    "syscw: 0\n",
+                    "read_bytes: 0\n",
+                    "write_bytes: 0\n",
+                    "cancelled_write_bytes: 0\n",
+                        ]
+                for line in fakestuff:
                     try:
                         stats.append(line.split(': ')[1][:-1]) #Skip the newline
                     except Exception, e:
