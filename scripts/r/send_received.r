@@ -9,7 +9,7 @@ for (package in toInstall){
 }
 lapply(toInstall, library, character.only = TRUE)
 
-df <- read.table("send_diff_reduced.txt", header = TRUE)
+df <- read.table("send_diff_reduced.txt", header = TRUE, check.names = FALSE)
 df <- melt(df, id="time")
 df <- subset(df, df$value > 0)
 df$value = df$value/1024.0
@@ -33,7 +33,7 @@ p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for p
 p
 ggsave(file="received_diff.png", width=8, height=6, dpi=100)
 
-df <- read.table("send_reduced.txt", header = TRUE)
+df <- read.table("send_reduced.txt", header = TRUE, check.names = FALSE)
 df <- melt(df, id="time")
 df$value = df$value/1024.0
 
@@ -44,7 +44,7 @@ p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB/s
 p
 ggsave(file="send.png", width=8, height=6, dpi=100)
 
-df <- read.table("received_reduced.txt", header = TRUE)
+df <- read.table("received_reduced.txt", header = TRUE, check.names = FALSE)
 df <- melt(df, id="time")
 df$value = df$value/1024.0
 
