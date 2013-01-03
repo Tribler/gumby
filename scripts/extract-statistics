@@ -260,7 +260,7 @@ def generate(peers_directory, messagestoplot):
     for column in xrange(len(communities)):
         merge_records(peers_directory, "/output/total_connections.txt", '/output/total_connections_%d.txt'%(column+1), 2+column)
         
-    parse_resource_files(peers_directory)
+    parse_resource_files(peers_directory, start)
     
     sum_at_experiment_end = sum_created_records(peers_directory)
     
@@ -520,7 +520,7 @@ def parse_statistics(peers_directory):
             print >> fp, ''
     fp.close()
     
-def parse_resource_files(peers_directory):
+def parse_resource_files(peers_directory, start_timestamp):
     def calc_diff(curtime, prevtime, curvalue, prevvalue):
         diff = curvalue - prevvalue
         diff_in_log = curtime - prevtime
@@ -553,7 +553,7 @@ def parse_resource_files(peers_directory):
             for line in h_records:
                 parts = line.split()
                 
-                time = float(parts[0])
+                time = float(parts[0]) - start_timestamp
                 pid = nodename + parts[1]
                 
                 if pid not in all_nodes:
