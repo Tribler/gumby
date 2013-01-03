@@ -42,7 +42,7 @@ if(file.exists("wchars.txt")){
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(data = df, alpha = 0.5)
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "WChar per process\n")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "WChar per process (KiBytes/s)\n")
 	p
 	
 	ggsave(file="wchars.png", width=8, height=6, dpi=100)
@@ -55,7 +55,7 @@ if(file.exists("rchars.txt")){
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(data = df, alpha = 0.5)
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "RChar per process\n")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "RChar per process (KiBytes/s)\n")
 	p
 	
 	ggsave(file="rchars.png", width=8, height=6, dpi=100)
