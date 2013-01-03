@@ -23,7 +23,6 @@ class ResourceMonitor(object):
         self.process_group_id = getpgrp()
 
     def get_raw_stats(self):
-        assert self.own_pid not in self.pid_list, "My pid should not be present in pid_list"
         for pid in self.pid_list:
             try:
                 if False:
