@@ -13,21 +13,17 @@ cat ~/.bashrc | grep SGE_KEEP_TMPFILES || echo SGE_KEEP_TMPFILES=no >> ~/.bashrc
 
 #Modify baseconfig such that it contains all global variables
 cd ../mainbranch
-cat "$EXPERIMENT_CONFIG" | grep HEAD_IP || (echo "" >> "$EXPERIMENT_CONFIG" && echo HEAD_IP=$HEAD_IP >> "$EXPERIMENT_CONFIG")
-sed -i "s/^HEAD\_IP=.*/HEAD\_IP=$HEAD_IP/" "$EXPERIMENT_CONFIG"
 
-cat "$EXPERIMENT_CONFIG" | grep SYNC_PORT || (echo "" >> "$EXPERIMENT_CONFIG" && echo SYNC_PORT=$SYNC_PORT >> "$EXPERIMENT_CONFIG")
-sed -i "s/^SYNC\_PORT=.*/SYNC\_PORT=$SYNC_PORT/" "$EXPERIMENT_CONFIG"
+echo "" >> "$EXPERIMENT_CONFIG" && echo HEAD_IP=$HEAD_IP >> "$EXPERIMENT_CONFIG"
+echo "" >> "$EXPERIMENT_CONFIG" && echo SYNC_PORT=$SYNC_PORT >> "$EXPERIMENT_CONFIG"
+echo "" >> "$EXPERIMENT_CONFIG" && echo MESSAGESTOPLOT=$MESSAGESTOPLOT >> "$EXPERIMENT_CONFIG"
 
-cat "$EXPERIMENT_CONFIG" | grep COMMUNITY_SCRIPT || (echo "" >> "$EXPERIMENT_CONFIG" && echo COMMUNITY_SCRIPT=$COMMUNITY_SCRIPT >> "$EXPERIMENT_CONFIG")
 sed -i "s/^COMMUNITY\_SCRIPT=.*/COMMUNITY\_SCRIPT=$COMMUNITY_SCRIPT/" "$EXPERIMENT_CONFIG"
-
-cat "$EXPERIMENT_CONFIG" | grep COMMUNITY_ARGS || (echo "" >> "$EXPERIMENT_CONFIG" && echo COMMUNITY_ARGS=$COMMUNITY_ARGS >> "$EXPERIMENT_CONFIG")
 sed -i "s/^COMMUNITY\_ARGS=.*/COMMUNITY\_ARGS=$COMMUNITY_ARGS/" "$EXPERIMENT_CONFIG"
 
 #Start experiment
 das4-start $EXPERIMENT_CONFIG $PWD/../dispersy_experiments/$SCENARIO_PATH/ $NRNODES $DURATION $TRACKER_PORT
-post-process-experiment $PWD/../dispersy_experiments/$SCENARIO_PATH/
+post-process-experiment $EXPERIMENT_CONFIG $PWD/../dispersy_experiments/$SCENARIO_PATH/
 
 cd ../dispersy_experiments/$SCENARIO_PATH/output
 
