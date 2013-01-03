@@ -160,9 +160,9 @@ class ProcessMonitor(object):
         sleep_time = self._cadence
         last_subprocess_update = time_start
         while True:
-            if self._rm.is_everyone_dead():
-                print "All child processes have died, exiting"
-                break
+#            if self._rm.is_everyone_dead():
+#                print "All child processes have died, exiting"
+#                break
             next_wake = time() + self._cadence
 
             timestamp = time()
