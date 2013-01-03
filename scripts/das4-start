@@ -6,7 +6,8 @@ if test $# -ne 5; then
 fi
 BRANCH=$(pwd)
 SCRIPTS_PATH=$(dirname $0)
-source "$1"
+EXPERIMENT_CONFIG=$1
+source "$EXPERIMENT_CONFIG"
 
 cd "$2"
 PEERS_DIRECTORY=$(pwd)
