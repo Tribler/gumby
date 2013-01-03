@@ -74,6 +74,4 @@ done
 rm -rf /local/$USER/
 
 netstat -su  > $PEERS_DIRECTORY/control/$(hostname)/output/udp_stats_stop.txt
-
 exit 0
-

@@ -16,15 +16,14 @@ class ResourceMonitor(object):
 
     def __init__(self, pid_list):
         """Create new ResourceMonitor instance."""
-        self.pid_list = pid_list
+        self.pid_list = []
+        self.ignore_pid_list = pid_list
+        self.ignore_pid_list.append(getpid())
+        
         self.process_group_id = getpgrp()
-        self.own_pid = getpid()
-        #print "PGRP ID:", self.process_group_id
 
     def get_raw_stats(self):
         assert self.own_pid not in self.pid_list, "My pid should not be present in pid_list"
-        assert len(self.pid_list) > 0, "Should only be called with at least one pid to get stats from"
-        
         for pid in self.pid_list:
             try:
                 if False:
@@ -65,7 +64,7 @@ class ResourceMonitor(object):
         #print 'i',parent_pids
         for pid_dir in iglob('/proc/[1-9]*'):
             pid = int(pid_dir.split('/')[-1])
-            if pid in self.pid_list or pid == self.own_pid:
+            if pid in self.pid_list or pid in self.ignore_pid_list:
                 continue
             
             stat_file = path.join(pid_dir, 'stat')
@@ -159,12 +158,12 @@ class ProcessMonitor(object):
             timestamp = time()
             r_timestamp = ceil(timestamp / self._interval) * self._interval #rounding timestamp to nearest interval to try to overlap multiple nodes
             
-#            #Look for new subprocesses only once a second and only during the first 10 seconds
-#            if (timestamp < time_start+10) and (timestamp - last_subprocess_update >= 1):
-#                self._rm.update_pid_tree()
-#                last_subprocess_update = timestamp
+            #Look for new subprocesses only once a second and only during the first 10 seconds
+            if (timestamp < time_start+10) and (timestamp - last_subprocess_update >= 1):
+                self._rm.update_pid_tree()
+                last_subprocess_update = timestamp
             
-            if self._rm.is_everyone_dead():
+            if (timestamp > time_start+10) and self._rm.is_everyone_dead():
                 print "All child processes have died, exiting"
                 self.stop()
 

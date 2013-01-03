@@ -2,23 +2,34 @@
 set -e
 
 SCRIPTS_PATH=$PWD/scripts
+EXPERIMENT_CONFIG=$SCRIPTS_PATH/das4-baseconfig.conf
 export PATH=$PATH:$SCRIPTS_PATH
 export PYTHONPATH=$PYTHONPATH:$PWD/../mainbranch
 
 #DAS4 Set up:
 module load prun/default
+# check if we allready have SGE_KEEP_TMPFILES=no in .bashrc, if not add it
+cat ~/.bashrc | grep SGE_KEEP_TMPFILES || echo SGE_KEEP_TMPFILES=no >> ~/.bashrc
 
-cd ..
-
-rm -fR dispersy_experiments/scenario_1000/output/*
-rm -fR output/*
-
+#Modify baseconfig such that it contains all global variables
 cd mainbranch
+cat "$EXPERIMENT_CONFIG" | grep HEAD_IP || (echo "" >> "$EXPERIMENT_CONFIG" && echo HEAD_IP=$HEAD_IP >> "$EXPERIMENT_CONFIG")
+sed -i "s/^HEAD\_IP=.*/HEAD\_IP=$HEAD_IP/" "$EXPERIMENT_CONFIG"
 
-das4-start $SCRIPTS_PATH/das4-allchannel.conf $PWD/../dispersy_experiments/scenario_1000/ 20 15 $HEAD_IP $TRACKER_PORT $SYNC_PORT
-post-process-experiment $SCRIPTS_PATH/das4-allchannel.conf $PWD/../dispersy_experiments/scenario_1000/
+cat "$EXPERIMENT_CONFIG" | grep SYNC_PORT || (echo "" >> "$EXPERIMENT_CONFIG" && echo SYNC_PORT=$SYNC_PORT >> "$EXPERIMENT_CONFIG")
+sed -i "s/^SYNC\_PORT=.*/SYNC\_PORT=$SYNC_PORT/" "$EXPERIMENT_CONFIG"
 
-cd ../dispersy_experiments/scenario_1000/output
+cat "$EXPERIMENT_CONFIG" | grep COMMUNITY_SCRIPT || (echo "" >> "$EXPERIMENT_CONFIG" && echo COMMUNITY_SCRIPT=$COMMUNITY_SCRIPT >> "$EXPERIMENT_CONFIG")
+sed -i "s/^COMMUNITY\_SCRIPT=.*/COMMUNITY\_SCRIPT=$COMMUNITY_SCRIPT/" "$EXPERIMENT_CONFIG"
+
+cat "$EXPERIMENT_CONFIG" | grep COMMUNITY_ARGS || (echo "" >> "$EXPERIMENT_CONFIG" && echo COMMUNITY_ARGS=$COMMUNITY_ARGS >> "$EXPERIMENT_CONFIG")
+sed -i "s/^COMMUNITY\_ARGS=.*/COMMUNITY\_ARGS=$COMMUNITY_ARGS/" "$EXPERIMENT_CONFIG"
+
+#Start experiment
+das4-start $EXPERIMENT_CONFIG $PWD/../dispersy_experiments/$SCENARIO_PATH/ $NRNODES $DURATION $HEAD_IP $TRACKER_PORT
+post-process-experiment $PWD/../dispersy_experiments/$SCENARIO_PATH/
+
+cd ../dispersy_experiments/$SCENARIO_PATH/output
 
 R --no-save --quiet < $WORKSPACE/dispersy_experiments/scripts/r/drop.r &
 PID1=$! 
