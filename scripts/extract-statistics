@@ -541,13 +541,15 @@ def parse_resource_files(peers_directory):
     resource_folder = os.path.join(peers_directory, 'output', 'resource_usage')
     for filename in os.listdir(resource_folder):
         if filename.endswith('.log'):
+            nodename = filename[:-4] + "_"
+            
             fn_records = os.path.join(resource_folder, filename)
             h_records = open(fn_records)
             for line in h_records:
                 parts = line.split()
                 
                 time = float(parts[0])
-                pid = parts[1]
+                pid = nodename + parts[1]
                 
                 if pid not in all_nodes:
                     all_nodes.add(pid)

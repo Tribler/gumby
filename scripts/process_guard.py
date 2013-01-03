@@ -9,6 +9,7 @@ from sys import argv, exit
 from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path
 from signal import SIGKILL, SIGTERM, signal
 from glob import iglob
+from math import ceil
 
 class ResourceMonitor(object):
     # adapted after http://stackoverflow.com/questions/276052/how-to-get-current-cpu-and-ram-usage-in-python
@@ -156,6 +157,7 @@ class ProcessMonitor(object):
         last_subprocess_update = time_start
         while not self.stopping:
             timestamp = time()
+            r_timestamp = ceil(timestamp / self._interval) * self._interval #rounding timestamp to nearest interval to try to overlap multiple nodes
             
             #Look for new subprocesses only once a second and only during the first 10 seconds
             if (timestamp < time_start+10) and (timestamp - last_subprocess_update >= 1):
@@ -170,7 +172,7 @@ class ProcessMonitor(object):
                 next_wake = timestamp + self._interval
                 
                 for line in self._rm.get_raw_stats():
-                    self.monitor_file.write("%f %s\n" % (timestamp, line))
+                    self.monitor_file.write("%f %s\n" % (r_timestamp, line))
     
                 if timestamp > self.end_time:
                     print "End time reached, killing monitored processes."
