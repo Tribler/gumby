@@ -533,9 +533,14 @@ def parse_resource_files(peers_directory):
     
     stimes = {}
     utimes = {}
+    vsizes = {}
+    rchars = {}
+    wchars = {}
     
     prev_stimes = {}
     prev_utimes = {}
+    prev_wchar = {}
+    prev_rchar = {}
     prev_times = {}
     
     resource_folder = os.path.join(peers_directory, 'output', 'resource_usage')
@@ -557,28 +562,37 @@ def parse_resource_files(peers_directory):
                 utime = long(parts[14])
                 stime = long(parts[15])
                 
+                utimes.setdefault(time, {})[pid] = write_diff_to_dict(prev_times.get(pid, time), utime, prev_utimes.get(pid, utime))
+                stimes.setdefault(time, {})[pid] = write_diff_to_dict(prev_times.get(pid, time), stime, prev_stimes.get(pid, stime))
+                
                 vsize = long(parts[23])
+                vsizes.setdefault(time, {})[pid] = vsize
+                
                 rss = long(parts[24])
                 delay_io_ticks = long(parts[41])
-                
                 write_bytes = long(parts[-2])
                 read_bytes = long(parts[-3])
                 syscw = long(parts[-4])
                 syscr = long(parts[-5])
+                
                 wchar = long(parts[-6])
                 rchar = long(parts[-7])
                 
-                utimes.setdefault(time, {})[pid] = write_diff_to_dict(prev_times.get(pid, time), utime, prev_utimes.get(pid, utime))
-                stimes.setdefault(time, {})[pid] = write_diff_to_dict(prev_times.get(pid, time), stime, prev_stimes.get(pid, stime))
-                
+                rchars.setdefault(time, {})[pid] = write_diff_to_dict(prev_times.get(pid, time), rchar, prev_rchar.get(pid, utime))
+                wchars.setdefault(time, {})[pid] = write_diff_to_dict(prev_times.get(pid, time), wchar, prev_wchar.get(pid, stime))
+                                
                 prev_utimes[pid] = utime
                 prev_stimes[pid] = stime
+                prev_rchar[pid] = rchar
+                prev_wchar[pid] = wchar
                 prev_times[pid] = time
-                
     
     all_nodes = list(all_nodes)
     write_records(all_nodes, utimes, peers_directory, "/output/utimes.txt")
     write_records(all_nodes, stimes, peers_directory, "/output/stimes.txt")
+    write_records(all_nodes, wchars, peers_directory, "/output/wchars.txt")
+    write_records(all_nodes, rchars, peers_directory, "/output/rchars.txt")
+    write_records(all_nodes, vsizes, peers_directory, "/output/vsizes.txt")
 
 def main(peers_directory, messagestoplot):
     global node_count

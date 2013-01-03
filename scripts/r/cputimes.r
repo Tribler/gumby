@@ -34,3 +34,42 @@ if(file.exists("stimes.txt")){
 	
 	ggsave(file="stimes.png", width=8, height=6, dpi=100)
 }
+
+if(file.exists("wchars.txt")){
+	df <- read.table("wchars.txt", header = TRUE, check.names = FALSE)
+	df <- melt(df, id="time")
+	
+	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
+	p <- p + geom_line(data = df, alpha = 0.5)
+	p <- p + opts(legend.position="none")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "WChar per process\n")
+	p
+	
+	ggsave(file="wchars.png", width=8, height=6, dpi=100)
+}
+
+if(file.exists("rchars.txt")){
+	df <- read.table("rchars.txt", header = TRUE, check.names = FALSE)
+	df <- melt(df, id="time")
+	
+	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
+	p <- p + geom_line(data = df, alpha = 0.5)
+	p <- p + opts(legend.position="none")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "RChar per process\n")
+	p
+	
+	ggsave(file="rchars.png", width=8, height=6, dpi=100)
+}
+
+if(file.exists("vsizes.txt")){
+	df <- read.table("vsizes.txt", header = TRUE, check.names = FALSE)
+	df <- melt(df, id="time")
+	
+	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
+	p <- p + geom_line(data = df, alpha = 0.5)
+	p <- p + opts(legend.position="none")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "VSize per process\n")
+	p
+	
+	ggsave(file="vsizes.png", width=8, height=6, dpi=100)
+}
