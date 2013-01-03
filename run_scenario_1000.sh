@@ -12,7 +12,7 @@ module load prun/default
 cat ~/.bashrc | grep SGE_KEEP_TMPFILES || echo SGE_KEEP_TMPFILES=no >> ~/.bashrc
 
 #Modify baseconfig such that it contains all global variables
-cd mainbranch
+cd ../mainbranch
 cat "$EXPERIMENT_CONFIG" | grep HEAD_IP || (echo "" >> "$EXPERIMENT_CONFIG" && echo HEAD_IP=$HEAD_IP >> "$EXPERIMENT_CONFIG")
 sed -i "s/^HEAD\_IP=.*/HEAD\_IP=$HEAD_IP/" "$EXPERIMENT_CONFIG"
 
