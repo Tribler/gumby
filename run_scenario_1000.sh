@@ -26,7 +26,7 @@ cat "$EXPERIMENT_CONFIG" | grep COMMUNITY_ARGS || (echo "" >> "$EXPERIMENT_CONFI
 sed -i "s/^COMMUNITY\_ARGS=.*/COMMUNITY\_ARGS=$COMMUNITY_ARGS/" "$EXPERIMENT_CONFIG"
 
 #Start experiment
-das4-start $EXPERIMENT_CONFIG $PWD/../dispersy_experiments/$SCENARIO_PATH/ $NRNODES $DURATION $HEAD_IP $TRACKER_PORT
+das4-start $EXPERIMENT_CONFIG $PWD/../dispersy_experiments/$SCENARIO_PATH/ $NRNODES $DURATION $TRACKER_PORT
 post-process-experiment $PWD/../dispersy_experiments/$SCENARIO_PATH/
 
 cd ../dispersy_experiments/$SCENARIO_PATH/output
