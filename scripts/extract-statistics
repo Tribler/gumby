@@ -259,6 +259,8 @@ def generate(peers_directory, messagestoplot):
     
     for column in xrange(len(communities)):
         merge_records(peers_directory, "/output/total_connections.txt", '/output/total_connections_%d.txt'%(column+1), 2+column)
+        
+    parse_resource_files(peers_directory)
     
     sum_at_experiment_end = sum_created_records(peers_directory)
     
@@ -517,6 +519,64 @@ def parse_statistics(peers_directory):
                 print >> fp, sum,
             print >> fp, ''
     fp.close()
+    
+def parse_resource_files(peers_directory):
+    def write_diff_to_dict(prev_time, curvalue, prevvalue):
+        diff = curvalue - prevvalue
+        diff_in_log = time - prev_time
+        
+        if diff_in_log:
+            return (diff/10.0)/diff_in_log
+        return 0
+    
+    all_nodes = set()
+    
+    stimes = {}
+    utimes = {}
+    
+    prev_stimes = {}
+    prev_utimes = {}
+    prev_times = {}
+    
+    resource_folder = os.path.join(peers_directory, 'output', 'resource_usage')
+    for filename in os.listdir(resource_folder):
+        if filename.endswith('.log'):
+            fn_records = os.path.join(resource_folder, filename)
+            h_records = open(fn_records)
+            for line in h_records:
+                parts = line.split()
+                
+                time = float(parts[0])
+                pid = parts[1]
+                
+                if pid not in all_nodes:
+                    all_nodes.add(pid)
+                    
+                utime = long(parts[14])
+                stime = long(parts[15])
+                
+                vsize = long(parts[23])
+                rss = long(parts[24])
+                delay_io_ticks = long(parts[41])
+                
+                write_bytes = long(parts[-2])
+                read_bytes = long(parts[-3])
+                syscw = long(parts[-4])
+                syscr = long(parts[-5])
+                wchar = long(parts[-6])
+                rchar = long(parts[-7])
+                
+                utimes.setdefault(time, {})[pid] = write_diff_to_dict(prev_times.get(pid, time), utime, prev_utimes.get(pid, utime))
+                stimes.setdefault(time, {})[pid] = write_diff_to_dict(prev_times.get(pid, time), stime, prev_stimes.get(pid, stime))
+                
+                prev_utimes[pid] = utime
+                prev_stimes[pid] = stime
+                prev_times[pid] = time
+                
+    
+    all_nodes = list(all_nodes)
+    write_records(all_nodes, utimes, peers_directory, "/output/utimes.txt")
+    write_records(all_nodes, stimes, peers_directory, "/output/stimes.txt")
 
 def main(peers_directory, messagestoplot):
     global node_count
