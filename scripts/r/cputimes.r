@@ -16,7 +16,7 @@ if(file.exists("utimes.txt")){
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(data = df, alpha = 0.5)
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "utime per process\n")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Utime per process\n")
 	p
 	
 	ggsave(file="utimes.png", width=8, height=6, dpi=100)
@@ -29,7 +29,7 @@ if(file.exists("stimes.txt")){
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(data = df, alpha = 0.5)
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "stime per process\n")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Stime per process\n")
 	p
 	
 	ggsave(file="stimes.png", width=8, height=6, dpi=100)
