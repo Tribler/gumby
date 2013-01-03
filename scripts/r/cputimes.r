@@ -19,7 +19,7 @@ if(file.exists("utimes.txt")){
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "utime per process\n")
 	p
 	
-	ggsave(file=utimes.png, width=8, height=6, dpi=100)
+	ggsave(file="utimes.png", width=8, height=6, dpi=100)
 }
 
 if(file.exists("stimes.txt")){
@@ -32,5 +32,5 @@ if(file.exists("stimes.txt")){
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "stime per process\n")
 	p
 	
-	ggsave(file=stimes.png, width=8, height=6, dpi=100)
+	ggsave(file="stimes.png", width=8, height=6, dpi=100)
 }
