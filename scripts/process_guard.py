@@ -157,12 +157,12 @@ class ProcessMonitor(object):
             timestamp = time()
             r_timestamp = ceil(timestamp / self._interval) * self._interval #rounding timestamp to nearest interval to try to overlap multiple nodes
             
-            #Look for new subprocesses only once a second and only during the first 10 seconds
-            if (timestamp < time_start+10) and (timestamp - last_subprocess_update >= 1):
+            #Look for new subprocesses only once a second and only during the first 30 seconds
+            if (timestamp < time_start+30) and (timestamp - last_subprocess_update >= 1):
                 self._rm.update_pid_tree()
                 last_subprocess_update = timestamp
             
-            if (timestamp > time_start+10) and self._rm.is_everyone_dead():
+            if (timestamp > time_start+30) and self._rm.is_everyone_dead():
                 print "All child processes have died, exiting"
                 self.stop()
 
