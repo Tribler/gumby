@@ -26,11 +26,9 @@ class ResourceMonitor(object):
         
         for pid in self.pid_list:
             try:
-                #status = open('/proc/%s/stat' % pid, 'r' ).read()[:-1] #Skip the newline
-                status = "9932 (bash) S 1 9932 9932 0 -1 8192 1330 25068 0 12 1 0 21 7 20 0 1 0 873934607 112930816 2 18446744073709551615 1 1 0 0 0 0 65536 4 65538 18446744073709551615 0 0 17 0 0 0 0 0 0"
-                stats = [status]
-                #for line in open('/proc/%s/io' % pid, 'r' ).readlines():
-                fakestuff = [
+                if False:
+                    status = "9932 (bash) S 1 9932 9932 0 -1 8192 1330 25068 0 12 1 0 21 7 20 0 1 0 873934607 112930816 2 18446744073709551615 1 1 0 0 0 0 65536 4 65538 18446744073709551615 0 0 17 0 0 0 0 0 0"
+                    lines = [
                     "rchar: 2012\n",
                     "wchar: 0\n",
                     "syscr: 7\n",
@@ -38,20 +36,25 @@ class ResourceMonitor(object):
                     "read_bytes: 0\n",
                     "write_bytes: 0\n",
                     "cancelled_write_bytes: 0\n",
-                        ]
-                for line in fakestuff:
+                    ]
+                else:
+                    status = open('/proc/%s/stat' % pid, 'r' ).read()[:-1] #Skip the newline
+                    lines = open('/proc/%s/io' % pid, 'r' ).readlines()
+                
+                stats = [status]    
+                for line in lines:    
                     try:
                         stats.append(line.split(': ')[1][:-1]) #Skip the newline
+                        
                     except Exception, e:
                         print "Got exception while reading/splitting line:"
                         print e
                         print "Line contents are:", line
-                        
                 yield ' '.join(stats)
+                
             except IOError:
                 #print "Process with PID %s died." % pid
                 self.pid_list.remove(pid)
-            #self.monitor_file.flush()
 
     def is_everyone_dead(self):
         return len(self.pid_list) == 0
@@ -167,8 +170,7 @@ class ProcessMonitor(object):
                 next_wake = timestamp + self._interval
                 
                 for line in self._rm.get_raw_stats():
-                    pass
-                    #self.monitor_file.write("%f %s\n" % (timestamp, line))
+                    self.monitor_file.write("%f %s\n" % (timestamp, line))
     
                 if timestamp > self.end_time:
                     print "End time reached, killing monitored processes."
