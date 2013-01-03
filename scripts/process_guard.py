@@ -152,6 +152,8 @@ class ProcessMonitor(object):
         sleep_time = self._interval
         last_subprocess_update = time_start
         while not self.stopping:
+            timestamp = time()
+            
             #Look for new subprocesses only once a second and only during the first 10 seconds
             if (timestamp < time_start+10) and (timestamp - last_subprocess_update >= 1):
                 self._rm.update_pid_tree()
@@ -162,7 +164,6 @@ class ProcessMonitor(object):
                 self.stop()
 
             else:
-                timestamp = time()
                 next_wake = timestamp + self._interval
                 
                 for line in self._rm.get_raw_stats():
