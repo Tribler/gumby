@@ -28,7 +28,7 @@ XRANGE="$(post-process-experiment $EXPERIMENT_CONFIG $PWD/../dispersy_experiment
 
 cd ../dispersy_experiments/$SCENARIO_PATH/output
 
-R --no-save --quiet --args $XRANGE < $WORKSPACE/dispersy_experiments/scripts/r/drop.r &
+R --no-save --quiet --args "$XRANGE" < $WORKSPACE/dispersy_experiments/scripts/r/drop.r &
 PID1=$! 
 R --no-save --quiet --args $XRANGE < $WORKSPACE/dispersy_experiments/scripts/r/total_records.r &
 PID2=$!
