@@ -623,20 +623,25 @@ def parse_resource_files(peers_directory, start_timestamp):
     write_records(all_nodes, rchars, peers_directory, "/output/rchars_node.txt")
     write_records(all_nodes, vsizes, peers_directory, "/output/vsizes_node.txt")
 
-def main(peers_directory, messagestoplot):
+def main(peers_directory, experiment_config, messagestoplot):
     global node_count
     peer_count = open(peers_directory+'/peer.count', 'r')
     node_count = int(peer_count.readline())
     peer_count.close()
     
-    generate(peers_directory, messagestoplot.split(','))
+    first, last = generate(peers_directory, messagestoplot.split(','))
+    
+    f = open(experiment_config, 'wa')
+    print >> f, "XMIN=%d"%fist
+    print >> f, "XMAX=%d"%last
+    f.close()
 
 if __name__ == "__main__":
-    if len(argv) != 3:
-        print "Usage: %s <peers-directory> <messagestoplot>" %(argv[0])
+    if len(argv) != 4:
+        print "Usage: %s <peers-directory> <experiment-config> <messagestoplot>" %(argv[0])
         import sys
         print >> sys.stderr, argv
         
         exit(1)
 
-    main(argv[1], argv[2])
+    main(argv[1], argv[2], argv[3])

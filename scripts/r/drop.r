@@ -8,7 +8,6 @@ for (package in toInstall){
 	}
 }
 lapply(toInstall, library, character.only = TRUE)
-commandArgs(TRUE)
 minX <- as.integer(commandArgs(TRUE)[1])
 maxX <- as.integer(commandArgs(TRUE)[2])
 

@@ -26,6 +26,3 @@ if test $? -ne 0; then
 fi
 
 rm -rf output/resource_usage
-
-echo XMIN=-120 >> $EXPERIMENT_CONFIG
-echo XMAX=1000 >> $EXPERIMENT_CONFIG

@@ -23,6 +23,7 @@ if(file.exists("utimes.txt")){
 	p <- p + geom_line(data = df2)
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Utime per process\n")
+	p <- p + xlim(minX, maxX)
 	p
 	
 	ggsave(file="utimes.png", width=8, height=6, dpi=100)
@@ -40,6 +41,7 @@ if(file.exists("stimes.txt")){
 	p <- p + geom_line(data = df2)
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Stime per process\n")
+	p <- p + xlim(minX, maxX)
 	p
 	
 	ggsave(file="stimes.png", width=8, height=6, dpi=100)
@@ -57,6 +59,7 @@ if(file.exists("wchars.txt")){
 	p <- p + geom_line(data = df2)
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "WChar per process (KiBytes/s)\n")
+	p <- p + xlim(minX, maxX)
 	p
 	
 	ggsave(file="wchars.png", width=8, height=6, dpi=100)
@@ -74,6 +77,7 @@ if(file.exists("rchars.txt")){
 	p <- p + geom_line(data = df2)
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "RChar per process (KiBytes/s)\n")
+	p <- p + xlim(minX, maxX)
 	p
 	
 	ggsave(file="rchars.png", width=8, height=6, dpi=100)
@@ -91,6 +95,7 @@ if(file.exists("vsizes.txt")){
 	p <- p + geom_step(data = df2)
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "VSize per process (KiBytes)\n")
+	p <- p + xlim(minX, maxX)
 	p
 	
 	ggsave(file="vsizes.png", width=8, height=6, dpi=100)

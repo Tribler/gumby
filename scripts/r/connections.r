@@ -20,6 +20,7 @@ while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep =
 	p <- p + geom_step(data = df, alpha = 0.5)
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Connections per peer\n")
+	p <- p + xlim(minX, maxX)
 	p
 	
 	ggsave(file=paste("total_connections_", toString(i), ".png", sep = ''), width=8, height=6, dpi=100)
