@@ -24,19 +24,19 @@ sed -i "s/^COMMUNITY\_ARGS=.*/COMMUNITY\_ARGS=$COMMUNITY_ARGS/" "$EXPERIMENT_CON
 
 #Start experiment
 das4-start $EXPERIMENT_CONFIG $PWD/../dispersy_experiments/$SCENARIO_PATH/ $NRNODES $DURATION $TRACKER_PORT
-MINX="$(post-process-experiment $EXPERIMENT_CONFIG $PWD/../dispersy_experiments/$SCENARIO_PATH/)"
+XRANGE="$(post-process-experiment $EXPERIMENT_CONFIG $PWD/../dispersy_experiments/$SCENARIO_PATH/)"
 
 cd ../dispersy_experiments/$SCENARIO_PATH/output
 
-R --no-save --quiet --args -$MINX < $WORKSPACE/dispersy_experiments/scripts/r/drop.r &
+R --no-save --quiet --args $XRANGE < $WORKSPACE/dispersy_experiments/scripts/r/drop.r &
 PID1=$! 
-R --no-save --quiet < $WORKSPACE/dispersy_experiments/scripts/r/total_records.r &
+R --no-save --quiet --args $XRANGE < $WORKSPACE/dispersy_experiments/scripts/r/total_records.r &
 PID2=$!
-R --no-save --quiet < $WORKSPACE/dispersy_experiments/scripts/r/connections.r &
+R --no-save --quiet --args $XRANGE < $WORKSPACE/dispersy_experiments/scripts/r/connections.r &
 PID3=$!
-R --no-save --quiet < $WORKSPACE/dispersy_experiments/scripts/r/send_received.r &
+R --no-save --quiet --args $XRANGE < $WORKSPACE/dispersy_experiments/scripts/r/send_received.r &
 PID4=$!
-R --no-save --quiet < $WORKSPACE/dispersy_experiments/scripts/r/cputimes.r &
+R --no-save --quiet --args $XRANGE < $WORKSPACE/dispersy_experiments/scripts/r/cputimes.r &
 PID5=$!
 
 wait $PID1

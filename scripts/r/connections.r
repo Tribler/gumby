@@ -8,6 +8,8 @@ for (package in toInstall){
 	}
 }
 lapply(toInstall, library, character.only = TRUE)
+minX <- as.integer(commandArgs(TRUE)[1])
+maxX <- as.integer(commandArgs(TRUE)[2])
 
 i = 1
 while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep = ''))){

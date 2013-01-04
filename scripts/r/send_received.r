@@ -8,6 +8,8 @@ for (package in toInstall){
 	}
 }
 lapply(toInstall, library, character.only = TRUE)
+minX <- as.integer(commandArgs(TRUE)[1])
+maxX <- as.integer(commandArgs(TRUE)[2])
 
 if(file.exists("send_diff_reduced.txt")){
 	df <- read.table("send_diff_reduced.txt", header = TRUE, check.names = FALSE)

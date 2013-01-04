@@ -8,6 +8,8 @@ for (package in toInstall){
 	}
 }
 lapply(toInstall, library, character.only = TRUE)
+minX <- as.integer(commandArgs(TRUE)[1])
+maxX <- as.integer(commandArgs(TRUE)[2])
 
 if(file.exists("utimes.txt")){
 	df <- read.table("utimes.txt", header = TRUE, check.names = FALSE)

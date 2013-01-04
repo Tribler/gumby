@@ -8,6 +8,8 @@ for (package in toInstall){
 	}
 }
 lapply(toInstall, library, character.only = TRUE)
+minX <- as.integer(commandArgs(TRUE)[1])
+maxX <- as.integer(commandArgs(TRUE)[2])
 
 if(file.exists("sum_total_records.txt")){
 	df <- read.table("sum_total_records.txt", header = TRUE, check.names = FALSE)

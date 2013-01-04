@@ -27,4 +27,4 @@ fi
 
 rm -rf output/resource_usage
 
-echo "-120"
+echo "-120 1000"
