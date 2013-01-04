@@ -5,7 +5,7 @@ import re
 from os import listdir
 import os
 from sys import argv, exit, maxint
-#from Tribler.dispersy.tool.ldecoder import parse, parselast
+from Tribler.dispersy.tool.ldecoder import parse, parselast
 
 # Global variable (yes, not the brightest thing)
 measured_record_count = {} # dictionary with the total record count per node at time measure_interval_stop
@@ -632,14 +632,11 @@ def main(peers_directory, messagestoplot):
     generate(peers_directory, messagestoplot.split(','))
 
 if __name__ == "__main__":
-    parse_resource_files(".", 0)
-    
-    
-#    if len(argv) != 3:
-#        print "Usage: %s <peers-directory> <messagestoplot>" %(argv[0])
-#        import sys
-#        print >> sys.stderr, argv
-#        
-#        exit(1)
-#
-#    main(argv[1], argv[2])
+    if len(argv) != 3:
+        print "Usage: %s <peers-directory> <messagestoplot>" %(argv[0])
+        import sys
+        print >> sys.stderr, argv
+        
+        exit(1)
+
+    main(argv[1], argv[2])
