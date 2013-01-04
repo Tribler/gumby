@@ -567,7 +567,7 @@ def parse_resource_files(peers_directory, start_timestamp):
                 stimes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), stime, prev_stimes.get(pid, stime)) * 100
                 
                 vsize = long(parts[23])
-                vsizes.setdefault(time, {})[pid] = vsize
+                vsizes.setdefault(time, {})[pid] = vsize / 1024.0
                 
                 rss = long(parts[24])
                 delay_io_ticks = long(parts[41])

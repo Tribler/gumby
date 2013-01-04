@@ -18,7 +18,7 @@ if(file.exists("send_diff_reduced.txt")){
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KB/s upload)\n")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KiBytes/s upload)\n")
 	p
 	ggsave(file="send_diff.png", width=8, height=6, dpi=100)
 }
@@ -32,7 +32,7 @@ if(file.exists("received_diff_reduced.txt")){
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KB/s download)\n")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KiBytes/s download)\n")
 	p
 	ggsave(file="received_diff.png", width=8, height=6, dpi=100)
 }
@@ -45,7 +45,7 @@ if(file.exists("send_reduced.txt")){
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(alpha = 5/10)
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB total upload)")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KiBytes total upload)")
 	p
 	ggsave(file="send.png", width=8, height=6, dpi=100)
 }
@@ -58,7 +58,7 @@ if(file.exists("received_reduced.txt")){
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(alpha = 5/10)
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB total download)")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KiBytes total download)")
 	p
 	ggsave(file="received.png", width=8, height=6, dpi=100)
 }
