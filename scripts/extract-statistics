@@ -632,7 +632,7 @@ def main(peers_directory, experiment_config, messagestoplot):
     first, last = generate(peers_directory, messagestoplot.split(','))
     
     f = open(experiment_config, 'a')
-    print >> f, "XMIN=%d"%fist
+    print >> f, "XMIN=%d"%first
     print >> f, "XMAX=%d"%last
     f.close()
 
