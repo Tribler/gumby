@@ -434,6 +434,10 @@ def write_records(all_nodes, sum_records, peers_directory, outputfile, diffoutpu
     if fp2:
         print >> fp2, 'time', ' '.join(all_nodes)
     
+    #if empty add one line of all zero's
+    if len(sum_records) == 0:
+        sum_records[0] = {}    
+    
     prev_records = {}
     for time in sorted(sum_records.iterkeys()):
         print >> fp, time,
