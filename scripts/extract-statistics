@@ -5,7 +5,7 @@ import re
 from os import listdir
 import os
 from sys import argv, exit, maxint
-from Tribler.dispersy.tool.ldecoder import parse, parselast
+#from Tribler.dispersy.tool.ldecoder import parse, parselast
 
 # Global variable (yes, not the brightest thing)
 measured_record_count = {} # dictionary with the total record count per node at time measure_interval_stop
@@ -530,7 +530,8 @@ def parse_resource_files(peers_directory, start_timestamp):
             return float(diff)/diff_in_log
         return 0
     
-    all_nodes = set()
+    all_pids = set()
+    all_nodes = []
     
     stimes = {}
     utimes = {}
@@ -544,10 +545,18 @@ def parse_resource_files(peers_directory, start_timestamp):
     prev_rchar = {}
     prev_times = {}
     
+    #we read the jiffie -> second conversion rate from the os
+    #by dividing the utime and stime values by this conversion rate we will get the actual cpu seconds spend during this second.
+    try: 
+        sc_clk_tck = float(os.sysconf(os.sysconf_names['SC_CLK_TCK']))
+    except AttributeError:
+        sc_clk_tck = 100.0
+    
     resource_folder = os.path.join(peers_directory, 'output', 'resource_usage')
     for filename in os.listdir(resource_folder):
         if filename.endswith('.log'):
-            nodename = filename[:-4] + "_"
+            nodename = filename[:-4]
+            all_nodes.append(nodename)
             
             fn_records = os.path.join(resource_folder, filename)
             h_records = open(fn_records)
@@ -555,19 +564,22 @@ def parse_resource_files(peers_directory, start_timestamp):
                 parts = line.split()
                 
                 time = float(parts[0]) - start_timestamp
-                pid = nodename + parts[1]
+                pid = nodename + "_" + parts[1]
                 
-                if pid not in all_nodes:
-                    all_nodes.add(pid)
+                if pid not in all_pids:
+                    all_pids.add(pid)
                     
                 utime = long(parts[14])
                 stime = long(parts[15])
                 
-                utimes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), utime, prev_utimes.get(pid, utime)) * 100
-                stimes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), stime, prev_stimes.get(pid, stime)) * 100
+                utimes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), utime, prev_utimes.get(pid, utime)) / sc_clk_tck
+                stimes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), stime, prev_stimes.get(pid, stime)) / sc_clk_tck
+                utimes[time].setdefault(nodename, []).append(utimes[time][pid])
+                stimes[time].setdefault(nodename, []).append(stimes[time][pid])
                 
                 vsize = long(parts[23])
                 vsizes.setdefault(time, {})[pid] = vsize / 1024.0
+                vsizes[time].setdefault(nodename, []).append(vsizes[time][pid])
                 
                 rss = long(parts[24])
                 delay_io_ticks = long(parts[41])
@@ -581,19 +593,35 @@ def parse_resource_files(peers_directory, start_timestamp):
                 
                 rchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), rchar, prev_rchar.get(pid, utime)) / 1024.0
                 wchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), wchar, prev_wchar.get(pid, stime)) / 1024.0
-                                
+                rchars[time].setdefault(nodename, []).append(rchars[time][pid])
+                wchars[time].setdefault(nodename, []).append(wchars[time][pid])
+                
                 prev_utimes[pid] = utime
                 prev_stimes[pid] = stime
                 prev_rchar[pid] = rchar
                 prev_wchar[pid] = wchar
                 prev_times[pid] = time
     
-    all_nodes = list(all_nodes)
-    write_records(all_nodes, utimes, peers_directory, "/output/utimes.txt")
-    write_records(all_nodes, stimes, peers_directory, "/output/stimes.txt")
-    write_records(all_nodes, wchars, peers_directory, "/output/wchars.txt")
-    write_records(all_nodes, rchars, peers_directory, "/output/rchars.txt")
-    write_records(all_nodes, vsizes, peers_directory, "/output/vsizes.txt")
+    all_pids = list(all_pids)
+    write_records(all_pids, utimes, peers_directory, "/output/utimes.txt")
+    write_records(all_pids, stimes, peers_directory, "/output/stimes.txt")
+    write_records(all_pids, wchars, peers_directory, "/output/wchars.txt")
+    write_records(all_pids, rchars, peers_directory, "/output/rchars.txt")
+    write_records(all_pids, vsizes, peers_directory, "/output/vsizes.txt")
+    
+    #calculate sum for all nodes
+    for dictionary in [utimes, stimes, wchars, rchars, vsizes]:
+        for time, values in dictionary.iteritems():
+            for node in all_nodes:
+                if node in values:
+                    values[node] = sum(values[node])
+    
+    #write mean for all nodes to separate files
+    write_records(all_nodes, utimes, peers_directory, "/output/utimes_node.txt")
+    write_records(all_nodes, stimes, peers_directory, "/output/stimes_node.txt")
+    write_records(all_nodes, wchars, peers_directory, "/output/wchars_node.txt")
+    write_records(all_nodes, rchars, peers_directory, "/output/rchars_node.txt")
+    write_records(all_nodes, vsizes, peers_directory, "/output/vsizes_node.txt")
 
 def main(peers_directory, messagestoplot):
     global node_count
@@ -604,11 +632,14 @@ def main(peers_directory, messagestoplot):
     generate(peers_directory, messagestoplot.split(','))
 
 if __name__ == "__main__":
-    if len(argv) != 3:
-        print "Usage: %s <peers-directory> <messagestoplot>" %(argv[0])
-        import sys
-        print >> sys.stderr, argv
-        
-        exit(1)
-
-    main(argv[1], argv[2])
+    parse_resource_files(".", 0)
+    
+    
+#    if len(argv) != 3:
+#        print "Usage: %s <peers-directory> <messagestoplot>" %(argv[0])
+#        import sys
+#        print >> sys.stderr, argv
+#        
+#        exit(1)
+#
+#    main(argv[1], argv[2])
