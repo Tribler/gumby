@@ -7,49 +7,50 @@ def reduce(peers_directory, nrlines, inputfile, outputfile):
     inputfile = os.path.join(peers_directory, inputfile)
     outputfile = os.path.join(peers_directory, outputfile)
     
-    print >> sys.stderr, peers_directory, inputfile, outputfile
+    if os.path.exists(inputfile):
+        print >> sys.stderr, peers_directory, inputfile, outputfile
+        
+        ifp = open(inputfile, 'r')
+        ofp = open(outputfile, 'w')
     
-    ifp = open(inputfile, 'r')
-    ofp = open(outputfile, 'w')
-
-    lines = ifp.readlines()
-    print >> ofp, lines[0][:-1]
-
-    lines = lines[1:]
-    if len(lines) > nrlines:
-        nrlines_to_merge = int(ceil(len(lines)/float(nrlines)))
-        print >> sys.stderr, "%s has %d lines, reducing to %d lines"%(inputfile, len(lines), nrlines)
-
-        max_time = None
-        to_be_merged_parts = None
-        for i, line in enumerate(lines):
-            parts = line.split()
-            max_time = max(long(parts[0]), max_time)
-
-            parts = map(float, parts[1:])
-            if not to_be_merged_parts:
-                to_be_merged_parts = [[]]* len(parts)
-
-            for j, part in enumerate(parts):
-                to_be_merged_parts[j].append(part)
-
-            if (i > 0 and i % nrlines_to_merge == 0) or (i + 1 == len(lines)):
-                print >> ofp, max_time,
-
-                for j, parts in enumerate(to_be_merged_parts):
-                    mean = sum(parts)/float(len(parts))
-                    print >> ofp, mean,
-
-                    to_be_merged_parts[j] = []
-
-                print >> ofp, ''
-
-    else:
-        for line in lines:
-            print >> ofp, line[:-1]
-
-    ifp.close()
-    ofp.close()
+        lines = ifp.readlines()
+        print >> ofp, lines[0][:-1]
+    
+        lines = lines[1:]
+        if len(lines) > nrlines:
+            nrlines_to_merge = int(ceil(len(lines)/float(nrlines)))
+            print >> sys.stderr, "%s has %d lines, reducing to %d lines"%(inputfile, len(lines), nrlines)
+    
+            max_time = None
+            to_be_merged_parts = None
+            for i, line in enumerate(lines):
+                parts = line.split()
+                max_time = max(long(parts[0]), max_time)
+    
+                parts = map(float, parts[1:])
+                if not to_be_merged_parts:
+                    to_be_merged_parts = [[]]* len(parts)
+    
+                for j, part in enumerate(parts):
+                    to_be_merged_parts[j].append(part)
+    
+                if (i > 0 and i % nrlines_to_merge == 0) or (i + 1 == len(lines)):
+                    print >> ofp, max_time,
+    
+                    for j, parts in enumerate(to_be_merged_parts):
+                        mean = sum(parts)/float(len(parts))
+                        print >> ofp, mean,
+    
+                        to_be_merged_parts[j] = []
+    
+                    print >> ofp, ''
+    
+        else:
+            for line in lines:
+                print >> ofp, line[:-1]
+    
+        ifp.close()
+        ofp.close()
 
 def main(peers_directory, nrlines):
     reduce(peers_directory, nrlines, 'output/send.txt', 'output/send_reduced.txt')
