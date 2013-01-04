@@ -8,6 +8,7 @@ for (package in toInstall){
 	}
 }
 lapply(toInstall, library, character.only = TRUE)
+minX <- as.integer(commandArgs(TRUE))
 
 if(file.exists("dropped_diff_reduced.txt")){
 	df <- read.table("dropped_diff_reduced.txt", header = TRUE)
@@ -18,6 +19,7 @@ if(file.exists("dropped_diff_reduced.txt")){
 	p <- p + geom_point(aes(size=value), alpha = 5/10) + scale_size(range = c(1, 3))
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped (Diff)\n")
+	p <- p + xlim(minX, max(df$time))
 	p
 	
 	ggsave(file="dropped_diff.png", width=8, height=6, dpi=100)
@@ -31,6 +33,7 @@ if(file.exists("dropped_reduced.txt")){
 	p <- p + geom_step(alpha = 0.5)
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped\n")
+	p <- p + xlim(minX, max(df$time))
 	p
 	
 	ggsave(file="dropped.png", width=8, height=6, dpi=100)
