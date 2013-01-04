@@ -45,7 +45,7 @@ if(file.exists("send_reduced.txt")){
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(alpha = 5/10)
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB/s upload)")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB total upload)")
 	p
 	ggsave(file="send.png", width=8, height=6, dpi=100)
 }
@@ -58,7 +58,7 @@ if(file.exists("received_reduced.txt")){
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(alpha = 5/10)
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB/s download)")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KB total download)")
 	p
 	ggsave(file="received.png", width=8, height=6, dpi=100)
 }
