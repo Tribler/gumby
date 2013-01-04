@@ -27,4 +27,4 @@ fi
 
 rm -rf output/resource_usage
 
-echo "-120 1000"
+echo XRANGE="-120 1000" >> $EXPERIMENT_CONFIG
