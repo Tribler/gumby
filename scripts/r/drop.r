@@ -28,7 +28,7 @@ if(file.exists("dropped_reduced.txt")){
 	df <- melt(df, id="time")
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
-	p <- p + geom_line(alpha = 0.5)
+	p <- p + geom_step(alpha = 0.5)
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped\n")
 	p

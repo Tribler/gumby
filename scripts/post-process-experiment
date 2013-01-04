@@ -24,7 +24,8 @@ experiment-analysis $EXPERIMENT_CONFIG $PD
 if test $? -ne 0; then
     exit 2
 fi
-#echo "* Generating graphs..."
-#generate-graphs $PD | gnuplot
+
+rm -rf output/resource_usage
+
 echo "* Done."
 

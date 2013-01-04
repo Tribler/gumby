@@ -15,7 +15,7 @@ while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep =
 	df <- melt(df, id="time")
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
-	p <- p + geom_line(data = df, alpha = 0.5)
+	p <- p + geom_step(data = df, alpha = 0.5)
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Connections per peer\n")
 	p
