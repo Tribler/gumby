@@ -492,12 +492,11 @@ def parse_statistics(peers_directory):
     nodes = list(nodes)
     nodes.sort()
     
-    fp = open(peers_directory + '/output/sum_statictics.txt', 'w')
+    fp = open(peers_directory + '/output/sum_statistics.txt', 'w')
     keys = sum_records.keys()
     keys.sort()
         
-    print >> fp, "#", "time", "timeoffset", "values"
-    print >> fp, " ".join(keys)
+    print >> fp, "time", " ".join(keys)
     
     if keys:
         timestamps = sum_records[keys[0]].keys()
@@ -505,7 +504,7 @@ def parse_statistics(peers_directory):
         
         prev_values = {}
         for time in timestamps:
-            print >> fp, time, timeoffset_dict[time],
+            print >> fp, timeoffset_dict[time],
             for key in keys:
                 sum = 0
                 for node in nodes:

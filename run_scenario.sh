@@ -41,12 +41,15 @@ R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/dispersy_experiments/scripts
 PID4=$!
 R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/dispersy_experiments/scripts/r/cputimes.r &
 PID5=$!
+R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/dispersy_experiments/scripts/r/statistics.r &
+PID6=$!
 
 wait $PID1
 wait $PID2
 wait $PID3
 wait $PID4
 wait $PID5
+wait $PID6
 
 find -type f -exec chmod a+r {} \;
 find -type d -exec chmod a+rx {} \;
