@@ -53,12 +53,8 @@ def reduce(peers_directory, nrlines, inputfile, outputfile):
         ofp.close()
 
 def main(peers_directory, nrlines):
-    reduce(peers_directory, nrlines, 'output/send.txt', 'output/send_reduced.txt')
-    reduce(peers_directory, nrlines, 'output/send_diff.txt', 'output/send_diff_reduced.txt')
-    reduce(peers_directory, nrlines, 'output/received.txt', 'output/received_reduced.txt')
-    reduce(peers_directory, nrlines, 'output/received_diff.txt', 'output/received_diff_reduced.txt')
-    reduce(peers_directory, nrlines, 'output/dropped.txt', 'output/dropped_reduced.txt')
-    reduce(peers_directory, nrlines, 'output/dropped_diff.txt', 'output/dropped_diff_reduced.txt')
+    for filename in ['send', 'send_diff', 'received', 'received_diff', 'dropped', 'dropped_diff', 'utimes', 'stimes', 'wchars', 'rchars', 'writebytes', 'readbytes', 'vsizes', 'utimes_node', 'stimes_node', 'wchars_node', 'rchars_node', 'writebytes_node', 'readbytes_node', 'vsizes_node']:
+        reduce(peers_directory, nrlines, 'output/%s.txt'%filename, 'output/%s_reduced.txt'%filename)
     
     total_connections = 1
     while os.path.exists(os.path.join(peers_directory, 'output/total_connections_%d.txt'%total_connections)):

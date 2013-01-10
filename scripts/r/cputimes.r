@@ -11,12 +11,12 @@ lapply(toInstall, library, character.only = TRUE)
 minX <- as.integer(commandArgs(TRUE)[1])
 maxX <- as.integer(commandArgs(TRUE)[2])
 
-if(file.exists("utimes.txt")){
-	df <- read.table("utimes.txt", header = TRUE, check.names = FALSE)
+if(file.exists("utimes_reduced.txt")){
+	df <- read.table("utimes_reduced.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
 	df$type <- 'Process'
 	
-	df2 <- read.table("utimes_node.txt", header = TRUE, check.names = FALSE)
+	df2 <- read.table("utimes_node_reduced.txt", header = TRUE, check.names = FALSE)
 	df2 <- melt(df2, id="time")
 	df2$type <- 'Node'
 	
@@ -33,12 +33,12 @@ if(file.exists("utimes.txt")){
 	ggsave(file="utimes.png", width=8, height=6, dpi=100)
 }
 
-if(file.exists("stimes.txt")){
-	df <- read.table("stimes.txt", header = TRUE, check.names = FALSE)
+if(file.exists("stimes_reduced.txt")){
+	df <- read.table("stimes_reduced.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
 	df$type <- 'Process'
 	
-	df2 <- read.table("stimes_node.txt", header = TRUE, check.names = FALSE)
+	df2 <- read.table("stimes_node_reduced.txt", header = TRUE, check.names = FALSE)
 	df2 <- melt(df2, id="time")
 	df2$type <- 'Node'
 	
@@ -55,12 +55,12 @@ if(file.exists("stimes.txt")){
 	ggsave(file="stimes.png", width=8, height=6, dpi=100)
 }
 
-if(file.exists("wchars.txt")){
-	df <- read.table("wchars.txt", header = TRUE, check.names = FALSE)
+if(file.exists("wchars_reduced.txt")){
+	df <- read.table("wchars_reduced.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
 	df$type <- 'Process'
 	
-	df2 <- read.table("wchars_node.txt", header = TRUE, check.names = FALSE)
+	df2 <- read.table("wchars_node_reduced.txt", header = TRUE, check.names = FALSE)
 	df2 <- melt(df2, id="time")
 	df2$type <- 'Node'
 	
@@ -77,12 +77,12 @@ if(file.exists("wchars.txt")){
 	ggsave(file="wchars.png", width=8, height=6, dpi=100)
 }
 
-if(file.exists("rchars.txt")){
-	df <- read.table("rchars.txt", header = TRUE, check.names = FALSE)
+if(file.exists("rchars_reduced.txt")){
+	df <- read.table("rchars_reduced.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
 	df$type <- 'Process'
 	
-	df2 <- read.table("rchars_node.txt", header = TRUE, check.names = FALSE)
+	df2 <- read.table("rchars_node_reduced.txt", header = TRUE, check.names = FALSE)
 	df2 <- melt(df2, id="time")
 	df2$type <- 'Node'
 	
@@ -99,12 +99,12 @@ if(file.exists("rchars.txt")){
 	ggsave(file="rchars.png", width=8, height=6, dpi=100)
 }
 
-if(file.exists("writebytes.txt")){
-	df <- read.table("writebytes.txt", header = TRUE, check.names = FALSE)
+if(file.exists("writebytes_reduced.txt")){
+	df <- read.table("writebytes_reduced.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
 	df$type <- 'Process'
 	
-	df2 <- read.table("writebytes_node.txt", header = TRUE, check.names = FALSE)
+	df2 <- read.table("writebytes_node_reduced.txt", header = TRUE, check.names = FALSE)
 	df2 <- melt(df2, id="time")
 	df2$type <- 'Node'
 	
@@ -121,12 +121,12 @@ if(file.exists("writebytes.txt")){
 	ggsave(file="writebytes.png", width=8, height=6, dpi=100)
 }
 
-if(file.exists("readbytes.txt")){
-	df <- read.table("readbytes.txt", header = TRUE, check.names = FALSE)
+if(file.exists("readbytes_reduced.txt")){
+	df <- read.table("readbytes_reduced.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
 	df$type <- 'Process'
 	
-	df2 <- read.table("readbytes_node.txt", header = TRUE, check.names = FALSE)
+	df2 <- read.table("readbytes_node_reduced.txt", header = TRUE, check.names = FALSE)
 	df2 <- melt(df2, id="time")
 	df2$type <- 'Node'
 	
@@ -143,12 +143,12 @@ if(file.exists("readbytes.txt")){
 	ggsave(file="readbytes.png", width=8, height=6, dpi=100)
 }
 
-if(file.exists("vsizes.txt")){
-	df <- read.table("vsizes.txt", header = TRUE, check.names = FALSE)
+if(file.exists("vsizes_reduced.txt")){
+	df <- read.table("vsizes_reduced.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
 	df$type <- 'Process'
 	
-	df2 <- read.table("vsizes_node.txt", header = TRUE, check.names = FALSE)
+	df2 <- read.table("vsizes_node_reduced.txt", header = TRUE, check.names = FALSE)
 	df2 <- melt(df2, id="time")
 	df2$type <- 'Node'
 	
