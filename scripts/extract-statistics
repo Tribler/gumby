@@ -589,21 +589,22 @@ def parse_resource_files(peers_directory, start_timestamp):
                 delay_io_ticks = long(parts[41])
                 write_bytes = long(parts[-2])
                 read_bytes = long(parts[-3])
+                
+                readbytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), read_bytes, prev_readbytes.get(pid, read_bytes)) / 1024.0
+                writebytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), write_bytes, prev_writebytes.get(pid, write_bytes)) / 1024.0
+                readbytes[time].setdefault(nodename, []).append(readbytes[time][pid])
+                writebytes[time].setdefault(nodename, []).append(writebytes[time][pid])
+                
                 syscw = long(parts[-4])
                 syscr = long(parts[-5])
                 
                 wchar = long(parts[-6])
                 rchar = long(parts[-7])
                 
-                rchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), rchar, prev_rchar.get(pid, utime)) / 1024.0
-                wchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), wchar, prev_wchar.get(pid, stime)) / 1024.0
+                rchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), rchar, prev_rchar.get(pid, rchar)) / 1024.0
+                wchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), wchar, prev_wchar.get(pid, wchar)) / 1024.0
                 rchars[time].setdefault(nodename, []).append(rchars[time][pid])
                 wchars[time].setdefault(nodename, []).append(wchars[time][pid])
-                
-                readbytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), rchar, prev_readbytes.get(pid, read_bytes)) / 1024.0
-                writebytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), wchar, prev_writebytes.get(pid, write_bytes)) / 1024.0
-                readbytes[time].setdefault(nodename, []).append(readbytes[time][pid])
-                writebytes[time].setdefault(nodename, []).append(writebytes[time][pid])
                 
                 prev_utimes[pid] = utime
                 prev_stimes[pid] = stime
@@ -634,8 +635,8 @@ def parse_resource_files(peers_directory, start_timestamp):
     write_records(all_nodes, stimes, peers_directory, "/output/stimes_node.txt")
     write_records(all_nodes, wchars, peers_directory, "/output/wchars_node.txt")
     write_records(all_nodes, rchars, peers_directory, "/output/rchars_node.txt")
-    write_records(all_pids, writebytes, peers_directory, "/output/writebytes_node.txt")
-    write_records(all_pids, readbytes, peers_directory, "/output/readbytes_node.txt")
+    write_records(all_nodes, writebytes, peers_directory, "/output/writebytes_node.txt")
+    write_records(all_nodes, readbytes, peers_directory, "/output/readbytes_node.txt")
     write_records(all_nodes, vsizes, peers_directory, "/output/vsizes_node.txt")
 
 def main(peers_directory, experiment_config, messagestoplot):
