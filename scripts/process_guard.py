@@ -75,6 +75,8 @@ class ResourceMonitor(object):
                     #print "New process with PID %s found in the group, adding it" % pid
                     #print "   ", open(stat_file, 'r').read()
                     self.pid_list.append(pid)
+                else:
+                    self.ignore_pid_list.append(pid)
 
 class ProcessController(object):
     def __init__(self, output_dir):
@@ -150,6 +152,8 @@ class ProcessMonitor(object):
             self.stop()
 
     def monitoring_loop(self):
+        check_for_new_processes = 60
+        
         time_start = time()
         sleep_time = self._interval
         last_subprocess_update = time_start
@@ -158,11 +162,11 @@ class ProcessMonitor(object):
             r_timestamp = ceil(timestamp / self._interval) * self._interval #rounding timestamp to nearest interval to try to overlap multiple nodes
             
             #Look for new subprocesses only once a second and only during the first 30 seconds
-            if (timestamp < time_start+30) and (timestamp - last_subprocess_update >= 1):
+            if (timestamp < time_start+check_for_new_processes) and (timestamp - last_subprocess_update >= 1):
                 self._rm.update_pid_tree()
                 last_subprocess_update = timestamp
             
-            if (timestamp > time_start+30) and self._rm.is_everyone_dead():
+            if (timestamp > time_start+check_for_new_processes) and self._rm.is_everyone_dead():
                 print "All child processes have died, exiting"
                 self.stop()
 
