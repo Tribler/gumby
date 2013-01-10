@@ -538,11 +538,15 @@ def parse_resource_files(peers_directory, start_timestamp):
     vsizes = {}
     rchars = {}
     wchars = {}
+    readbytes = {}
+    writebytes = {}
     
     prev_stimes = {}
     prev_utimes = {}
     prev_wchar = {}
     prev_rchar = {}
+    prev_writebytes = {}
+    prev_readbytes = {}
     prev_times = {}
     
     #we read the jiffie -> second conversion rate from the os
@@ -596,10 +600,17 @@ def parse_resource_files(peers_directory, start_timestamp):
                 rchars[time].setdefault(nodename, []).append(rchars[time][pid])
                 wchars[time].setdefault(nodename, []).append(wchars[time][pid])
                 
+                readbytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), rchar, prev_readbytes.get(pid, read_bytes)) / 1024.0
+                writebytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), wchar, prev_writebytes.get(pid, write_bytes)) / 1024.0
+                readbytes[time].setdefault(nodename, []).append(readbytes[time][pid])
+                writebytes[time].setdefault(nodename, []).append(writebytes[time][pid])
+                
                 prev_utimes[pid] = utime
                 prev_stimes[pid] = stime
                 prev_rchar[pid] = rchar
                 prev_wchar[pid] = wchar
+                prev_readbytes[pid] = read_bytes
+                prev_writebytes[pid] = write_bytes
                 prev_times[pid] = time
     
     all_pids = list(all_pids)
@@ -607,10 +618,12 @@ def parse_resource_files(peers_directory, start_timestamp):
     write_records(all_pids, stimes, peers_directory, "/output/stimes.txt")
     write_records(all_pids, wchars, peers_directory, "/output/wchars.txt")
     write_records(all_pids, rchars, peers_directory, "/output/rchars.txt")
+    write_records(all_pids, writebytes, peers_directory, "/output/writebytes.txt")
+    write_records(all_pids, readbytes, peers_directory, "/output/readbytes.txt")
     write_records(all_pids, vsizes, peers_directory, "/output/vsizes.txt")
     
     #calculate sum for all nodes
-    for dictionary in [utimes, stimes, wchars, rchars, vsizes]:
+    for dictionary in [utimes, stimes, wchars, rchars, vsizes, writebytes, readbytes]:
         for time, values in dictionary.iteritems():
             for node in all_nodes:
                 if node in values:
@@ -621,6 +634,8 @@ def parse_resource_files(peers_directory, start_timestamp):
     write_records(all_nodes, stimes, peers_directory, "/output/stimes_node.txt")
     write_records(all_nodes, wchars, peers_directory, "/output/wchars_node.txt")
     write_records(all_nodes, rchars, peers_directory, "/output/rchars_node.txt")
+    write_records(all_pids, writebytes, peers_directory, "/output/writebytes_node.txt")
+    write_records(all_pids, readbytes, peers_directory, "/output/readbytes_node.txt")
     write_records(all_nodes, vsizes, peers_directory, "/output/vsizes_node.txt")
 
 def main(peers_directory, experiment_config, messagestoplot):

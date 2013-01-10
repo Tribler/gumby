@@ -99,6 +99,50 @@ if(file.exists("rchars.txt")){
 	ggsave(file="rchars.png", width=8, height=6, dpi=100)
 }
 
+if(file.exists("writebytes.txt")){
+	df <- read.table("writebytes.txt", header = TRUE, check.names = FALSE)
+	df <- melt(df, id="time")
+	df$type <- 'Process'
+	
+	df2 <- read.table("writebytes_node.txt", header = TRUE, check.names = FALSE)
+	df2 <- melt(df2, id="time")
+	df2$type <- 'Node'
+	
+	df <- rbind(df, df2)
+	
+	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
+	p <- p + geom_line(data = df, alpha = 0.5)
+	p <- p + facet_grid(type ~ ., scales = "free_y") 
+	p <- p + opts(legend.position="none")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Write_bytes per process (KiBytes/s)\n")
+	p <- p + xlim(minX, maxX)
+	p
+	
+	ggsave(file="writebytes.png", width=8, height=6, dpi=100)
+}
+
+if(file.exists("readbytes.txt")){
+	df <- read.table("readbytes.txt", header = TRUE, check.names = FALSE)
+	df <- melt(df, id="time")
+	df$type <- 'Process'
+	
+	df2 <- read.table("readbytes_node.txt", header = TRUE, check.names = FALSE)
+	df2 <- melt(df2, id="time")
+	df2$type <- 'Node'
+	
+	df <- rbind(df, df2)
+	
+	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
+	p <- p + geom_line(data = df, alpha = 0.5)
+	p <- p + facet_grid(type ~ ., scales = "free_y") 
+	p <- p + opts(legend.position="none")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Read_bytes per process (KiBytes/s)\n")
+	p <- p + xlim(minX, maxX)
+	p
+	
+	ggsave(file="readbytes.png", width=8, height=6, dpi=100)
+}
+
 if(file.exists("vsizes.txt")){
 	df <- read.table("vsizes.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
