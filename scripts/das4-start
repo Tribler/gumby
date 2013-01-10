@@ -78,7 +78,7 @@ das4-config-sync-server.py $PEER_COUNT $INITIAL_DELAY $SYNC_PORT & # it automati
 CONFIG_SERVER_PID=$!
 #disown  # remove job from the job table of the current bash process
 
-cd "$PEERS_DIRECTORY"
+cd ~
 
 echo "* Starting experiment on $NODE_COUNT nodes ("$[$PEER_COUNT / $NODE_COUNT]" peers per node)..."
 
