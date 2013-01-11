@@ -365,8 +365,11 @@ def generate(peers_directory, messagestoplot):
     h.close()
     
     parse_statistics(peers_directory)
-
-    bytes_per_second_experiment = float(sum_traffic)/len(traffic_count)/experiment_length
+    
+    if len(traffic_count) and experiment_length:
+        bytes_per_second_experiment = float(sum_traffic)/len(traffic_count)/experiment_length
+    else:
+        bytes_per_second_experiment = 0
     
     bytes_in = sum(total_down for total_down, _,_,_ in dispersy_in_out.values())
     bytes_out = sum(total_up for _,total_up,_,_ in dispersy_in_out.values())
