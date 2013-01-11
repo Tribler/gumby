@@ -31,6 +31,9 @@ source $EXPERIMENT_CONFIG
 
 cd ../dispersy_experiments/$SCENARIO_PATH/output
 
+#make sure the R local install dir exists
+mkdir -p ~/R/x86_64-redhat-linux-gnu-library/2.15
+
 R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/dispersy_experiments/scripts/r/drop.r &
 PID1=$! 
 R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/dispersy_experiments/scripts/r/total_records.r &
