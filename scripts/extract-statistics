@@ -48,6 +48,21 @@ def get_first_datetime(peers_directory):
             _, time, _, _ = parse(node + "/output/dispersy.log").next()
             datetimes.append(time)
             
+    #Fallback to resource files
+    if not datetimes:
+        print >> sys.stderr, "USING fallback2 for get_first_datetime"
+        resource_folder = os.path.join(peers_directory, 'output', 'resource_usage')
+        for filename in os.listdir(resource_folder):
+            if filename.endswith('.log'):
+                fn_records = os.path.join(resource_folder, filename)
+                h_records = open(fn_records)
+                for line in h_records:
+                    parts = line.split()
+                
+                    time = float(parts[0])
+                    datetimes.append(time)
+                    break
+    
     return min(datetimes)
 
 def get_communities(peers_directory):
@@ -74,13 +89,15 @@ def generate(peers_directory, messagestoplot):
     dispersy_statistics = {}
     dispersy_in_out = {}
     nr_connections = []
+    
     communities = []
+    messagestoplot = [message for message in messagestoplot if message]
+    
+    first = maxint
+    start = int(get_first_datetime(peers_directory))
+    last = 0
     
     if len(list(get_nodes(peers_directory))) > 0:
-        messagestoplot = [message for message in messagestoplot if message]
-        first = maxint
-        start = int(get_first_datetime(peers_directory))
-        last = 0
         communities = get_communities(peers_directory)
     
         node_list = [x for x in get_nodes(peers_directory)]
@@ -247,8 +264,8 @@ def generate(peers_directory, messagestoplot):
             nr_connections.sort(reverse = True)
             nr_connections = nr_connections[:10]
     else:
-        start = 0
-        last = 1
+        first = 0
+        last = 1000
     
     f = open(peers_directory + "/output/dispersy_incomming_connections.txt", 'w')
     for nr, node in nr_connections:
