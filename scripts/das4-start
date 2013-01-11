@@ -83,7 +83,7 @@ cd ~
 echo "* Starting experiment on $NODE_COUNT nodes ("$[$PEER_COUNT / $NODE_COUNT]" peers per node)..."
 
 #echo "* Reserving $NODE_COUNT nodes... "
-reservation_length=$[$EXPERIMENT_LENGTH * 60 + 60]
+reservation_length=$[$EXPERIMENT_LENGTH * 60 + 300]
 echo "* Job reservation length is: $EXPERIMENT_LENGTH min (experiment length) + 5 min = $reservation_length seconds"
 #RESERVATION_ID=$(preserve -# $NODE_COUNT $reservation_length | head -n1 | sed 's/Reservation number \(.*\):/\1/g')
 #echo "* Done. Reservation ID: $RESERVATION_ID (you can see reservation status with 'preserve -llist')"
