@@ -74,6 +74,7 @@ def generate(peers_directory, messagestoplot):
     dispersy_statistics = {}
     dispersy_in_out = {}
     nr_connections = []
+    communities = []
     
     if len(list(get_nodes(peers_directory))) > 0:
         messagestoplot = [message for message in messagestoplot if message]
