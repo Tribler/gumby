@@ -75,7 +75,7 @@ def generate(peers_directory, messagestoplot):
     dispersy_in_out = {}
     nr_connections = []
     
-    if len(get_nodes) > 0:
+    if len(get_nodes(peers_directory)) > 0:
         messagestoplot = [message for message in messagestoplot if message]
         first = maxint
         start = int(get_first_datetime(peers_directory))
