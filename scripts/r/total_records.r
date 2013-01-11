@@ -1,13 +1,6 @@
-.libPaths( c("~/R/x86_64-redhat-linux-gnu-library/2.15", .libPaths()))
-is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1]) 
+library(ggplot2)
+library(reshape)
 
-toInstall <- c("ggplot2", "reshape")
-for (package in toInstall){
-	if (is.installed(package) == FALSE){
-		install.packages(package, repos = "http://cran.r-project.org", lib="~/R/x86_64-redhat-linux-gnu-library/2.15")		
-	}
-}
-lapply(toInstall, library, character.only = TRUE)
 minX <- as.integer(commandArgs(TRUE)[1])
 maxX <- as.integer(commandArgs(TRUE)[2])
 
