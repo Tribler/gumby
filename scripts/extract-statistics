@@ -374,7 +374,10 @@ def generate(peers_directory, messagestoplot):
     bytes_in = sum(total_down for total_down, _,_,_ in dispersy_in_out.values())
     bytes_out = sum(total_up for _,total_up,_,_ in dispersy_in_out.values())
     bytes_lost = bytes_out - bytes_in
-    bytes_lost_ratio = bytes_lost/float(bytes_out)
+    if bytes_out:
+        bytes_lost_ratio = bytes_lost/float(bytes_out)
+    else:
+        bytes_lost_ratio = 0
     
     in_requests = sum(received_count for _,_,_,received_count in dispersy_in_out.values())
     out_requests = sum(total_send for _,_,total_send,_ in dispersy_in_out.values())
