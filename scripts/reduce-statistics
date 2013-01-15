@@ -3,7 +3,7 @@ import sys
 import os
 from math import ceil
 
-def reduce(peers_directory, nrlines, inputfile, outputfile):
+def reduce(directory, nrlines, inputfile, outputfile):
     inputfile = os.path.join(peers_directory, inputfile)
     outputfile = os.path.join(peers_directory, outputfile)
     
@@ -25,7 +25,7 @@ def reduce(peers_directory, nrlines, inputfile, outputfile):
             to_be_merged_parts = None
             for i, line in enumerate(lines):
                 parts = line.split()
-                max_time = max(long(parts[0]), max_time)
+                max_time = max(float(parts[0]), max_time)
     
                 parts = map(float, parts[1:])
                 if not to_be_merged_parts:

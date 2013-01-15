@@ -501,7 +501,7 @@ def parse_statistics(peers_directory):
             if line[0] == "#": continue
             parts = line.split()
 
-            time = int(parts[0])
+            time = float(parts[0])
             timeoffset = int(parts[1])
             key = parts[2]
             value = float(parts[3])
