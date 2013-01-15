@@ -3,7 +3,7 @@ import sys
 import os
 from math import ceil
 
-def reduce(directory, nrlines, inputfile, outputfile):
+def reduce(peers_directory, nrlines, inputfile, outputfile):
     inputfile = os.path.join(peers_directory, inputfile)
     outputfile = os.path.join(peers_directory, outputfile)
     
