@@ -151,7 +151,7 @@ def parse_resource_files(peers_directory, start_timestamp):
     write_records(all_pids, readbytes, peers_directory, "/output/readbytes.txt")
     write_records(all_pids, vsizes, peers_directory, "/output/vsizes.txt")
     
-    if len(all_pids) > 1:
+    if len(all_nodes) > 1:
         #calculate sum for all nodes
         for dictionary in [utimes, stimes, wchars, rchars, vsizes, writebytes, readbytes]:
             for time, values in dictionary.iteritems():
