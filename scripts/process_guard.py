@@ -79,28 +79,35 @@ class ResourceMonitor(object):
                     self.ignore_pid_list.append(pid)
 
 class ProcessController(object):
-    def __init__(self, output_dir):
+    def __init__(self, output_dir, commands):
         self.cmd_id = 0
         self.pid_list = {}
         self.processes = []
         self.files = []
         self.output_dir = output_dir
+        
         setpgrp() # creat new process group and become its leader
+        
+        self.nr_commands = len(commands)
+        for command in commands:
+            self.run(command)
 
     def run(self, cmd):
-        output_filename = output_dir + "/%05d.out" %self.cmd_id
-        error_filename = output_dir + "/%05d.err" %self.cmd_id
-
-        stdout = open(output_filename, "w")
-        stderr = open(error_filename, "w")
+        if self.nr_commands > 1:
+            output_filename = output_dir + "/%05d.out" %self.cmd_id
+            error_filename = output_dir + "/%05d.err" %self.cmd_id
+    
+            stdout = open(output_filename, "w")
+            stderr = open(error_filename, "w")
+            
+            self.files.append(stdout)
+            self.files.append(stderr)
+        else:
+            stdout, stderr = None
+            
         print >> stdout, "Starting #%05d: %s" %(self.cmd_id, cmd)
-
         p = subprocess.Popen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True)
-
         self.processes.append(p)
-        self.files.append(stdout)
-        self.files.append(stderr)
-
         self.pid_list[p.pid] = self.cmd_id
         self.cmd_id = self.cmd_id + 1
 
@@ -126,14 +133,11 @@ class ProcessMonitor(object):
         self.start_time = time()
         self.end_time = self.start_time + time_limit
         self._interval = interval
-        self._pc = ProcessController(output_dir)
-        self.command_count = 0
-        for f in open(process_list_file).readlines():
-            cmd = f.strip()
-            if cmd == "": continue
-            self._pc.run(cmd)
-            self.command_count = self.command_count + 1
-
+        
+        commands = [cmd.strip() for cmd in open(process_list_file).readlines()]
+        commands = [cmd for cmd in open(process_list_file).readlines() if cmd]
+        
+        self._pc = ProcessController(output_dir, commands)
         self._rm = ResourceMonitor(self._pc.get_pid_list())
         self.monitor_file = open(output_dir+"/resource_usage.log","w", (1024**2)*10) #Set the file's buffering to 10MB
 
