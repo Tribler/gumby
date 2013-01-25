@@ -103,7 +103,7 @@ class ProcessController(object):
             self.files.append(stdout)
             self.files.append(stderr)
         else:
-            stdout, stderr = None
+            stdout = stderr = None
             
         print >> stdout, "Starting #%05d: %s" %(self.cmd_id, cmd)
         p = subprocess.Popen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True)
