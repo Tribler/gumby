@@ -1,8 +1,9 @@
 library(ggplot2)
 library(reshape)
 
-minX <- as.integer(commandArgs(TRUE)[1])
-maxX <- as.integer(commandArgs(TRUE)[2])
+args <- commandArgs(TRUE)
+minX <- as.integer(args[1])
+maxX <- as.integer(args[2])
 
 if(file.exists("utimes_reduced.txt")){
 	df <- read.table("utimes_reduced.txt", header = TRUE, check.names = FALSE)
@@ -26,7 +27,9 @@ if(file.exists("utimes_reduced.txt")){
 	 
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Utime\n")
-	p <- p + xlim(minX, maxX)
+	if(length(args) > 0){ 
+		p <- p + xlim(minX, maxX)
+	}
 	p
 	
 	ggsave(file="utimes.png", width=8, height=6, dpi=100)
@@ -54,7 +57,9 @@ if(file.exists("stimes_reduced.txt")){
 	 
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Stime\n")
-	p <- p + xlim(minX, maxX)
+	if(length(args) > 0){
+		p <- p + xlim(minX, maxX)
+	}
 	p
 	
 	ggsave(file="stimes.png", width=8, height=6, dpi=100)
@@ -82,7 +87,9 @@ if(file.exists("wchars_reduced.txt")){
 	 
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "WChar per process (KiBytes/s)\n")
-	p <- p + xlim(minX, maxX)
+	if(length(args) > 0){
+		p <- p + xlim(minX, maxX)
+	}
 	p
 	
 	ggsave(file="wchars.png", width=8, height=6, dpi=100)
@@ -110,7 +117,9 @@ if(file.exists("rchars_reduced.txt")){
 		 
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "RChar (KiBytes/s)\n")
-	p <- p + xlim(minX, maxX)
+	if(length(args) > 0){
+		p <- p + xlim(minX, maxX)
+	}
 	p
 	
 	ggsave(file="rchars.png", width=8, height=6, dpi=100)
@@ -138,7 +147,9 @@ if(file.exists("writebytes_reduced.txt")){
 	 
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Write_bytes per process (KiBytes/s)\n")
-	p <- p + xlim(minX, maxX)
+	if(length(args) > 0){
+		p <- p + xlim(minX, maxX)
+	}
 	p
 	
 	ggsave(file="writebytes.png", width=8, height=6, dpi=100)
@@ -166,7 +177,9 @@ if(file.exists("readbytes_reduced.txt")){
 	 
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Read_bytes per process (KiBytes/s)\n")
-	p <- p + xlim(minX, maxX)
+	if(length(args) > 0){
+		p <- p + xlim(minX, maxX)
+	}
 	p
 	
 	ggsave(file="readbytes.png", width=8, height=6, dpi=100)
@@ -194,7 +207,9 @@ if(file.exists("vsizes_reduced.txt")){
 	 
 	p <- p + opts(legend.position="none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "VSize (KiBytes)\n")
-	p <- p + xlim(minX, maxX)
+	if(length(args) > 0){
+		p <- p + xlim(minX, maxX)
+	}
 	p
 	
 	ggsave(file="vsizes.png", width=8, height=6, dpi=100)
