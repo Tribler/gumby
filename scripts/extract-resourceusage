@@ -6,19 +6,12 @@ from os import listdir
 import os
 from sys import argv, exit, maxint
 
-# Global variable (yes, not the brightest thing)
-measured_record_count = {} # dictionary with the total record count per node at time measure_interval_stop
-record_count = {} # same as before but at experiment end
-traffic_count = {} # dictionary with the total traffic count per node at time measure_interval_stop
-node_count = 0 
-
-
-def write_records(all_nodes, sum_records, peers_directory, outputfile, diffoutputfile = None):
+def write_records(all_nodes, sum_records, output_directory, outputfile, diffoutputfile = None):
     if len(sum_records) > 0:
         all_nodes.sort()
     
-        fp = open(peers_directory + outputfile, 'wb')
-        fp2 = open(peers_directory + diffoutputfile, 'wb') if diffoutputfile else None
+        fp = open(os.path.join(output_directory, outputfile), 'wb')
+        fp2 = open(os.path.join(output_directory, diffoutputfile), 'wb') if diffoutputfile else None
         
         print >> fp, 'time', ' '.join(all_nodes)
         if fp2:
@@ -48,7 +41,7 @@ def write_records(all_nodes, sum_records, peers_directory, outputfile, diffoutpu
         if fp2:
             fp2.close()
     
-def parse_resource_files(peers_directory, start_timestamp):
+def parse_resource_files(input_directory, output_directory, start_timestamp):
     def calc_diff(curtime, prevtime, curvalue, prevvalue):
         diff = curvalue - prevvalue
         diff_in_log = curtime - prevtime
@@ -83,13 +76,12 @@ def parse_resource_files(peers_directory, start_timestamp):
     except AttributeError:
         sc_clk_tck = 100.0
     
-    resource_folder = os.path.join(peers_directory, 'output', 'resource_usage')
-    for filename in os.listdir(resource_folder):
-        if filename.endswith('.log'):
+    for filename in os.listdir(input_directory):
+        if filename.endswith('usage.log'):
             nodename = filename[:-4]
             all_nodes.append(nodename)
             
-            fn_records = os.path.join(resource_folder, filename)
+            fn_records = os.path.join(input_directory, filename)
             h_records = open(fn_records)
             for line in h_records:
                 parts = line.split()
@@ -142,13 +134,13 @@ def parse_resource_files(peers_directory, start_timestamp):
                 prev_times[pid] = time
     
     all_pids = list(all_pids)
-    write_records(all_pids, utimes, peers_directory, "/output/utimes.txt")
-    write_records(all_pids, stimes, peers_directory, "/output/stimes.txt")
-    write_records(all_pids, wchars, peers_directory, "/output/wchars.txt")
-    write_records(all_pids, rchars, peers_directory, "/output/rchars.txt")
-    write_records(all_pids, writebytes, peers_directory, "/output/writebytes.txt")
-    write_records(all_pids, readbytes, peers_directory, "/output/readbytes.txt")
-    write_records(all_pids, vsizes, peers_directory, "/output/vsizes.txt")
+    write_records(all_pids, utimes, output_directory, "utimes.txt")
+    write_records(all_pids, stimes, output_directory, "stimes.txt")
+    write_records(all_pids, wchars, output_directory, "wchars.txt")
+    write_records(all_pids, rchars, output_directory, "rchars.txt")
+    write_records(all_pids, writebytes, output_directory, "writebytes.txt")
+    write_records(all_pids, readbytes, output_directory, "readbytes.txt")
+    write_records(all_pids, vsizes, output_directory, "vsizes.txt")
     
     if len(all_nodes) > 1:
         #calculate sum for all nodes
@@ -159,15 +151,15 @@ def parse_resource_files(peers_directory, start_timestamp):
                         values[node] = sum(values[node])
         
         #write mean for all nodes to separate files
-        write_records(all_nodes, utimes, peers_directory, "/output/utimes_node.txt")
-        write_records(all_nodes, stimes, peers_directory, "/output/stimes_node.txt")
-        write_records(all_nodes, wchars, peers_directory, "/output/wchars_node.txt")
-        write_records(all_nodes, rchars, peers_directory, "/output/rchars_node.txt")
-        write_records(all_nodes, writebytes, peers_directory, "/output/writebytes_node.txt")
-        write_records(all_nodes, readbytes, peers_directory, "/output/readbytes_node.txt")
-        write_records(all_nodes, vsizes, peers_directory, "/output/vsizes_node.txt")
+        write_records(all_nodes, utimes, output_directory, "utimes_node.txt")
+        write_records(all_nodes, stimes, output_directory, "stimes_node.txt")
+        write_records(all_nodes, wchars, output_directory, "wchars_node.txt")
+        write_records(all_nodes, rchars, output_directory, "rchars_node.txt")
+        write_records(all_nodes, writebytes, output_directory, "writebytes_node.txt")
+        write_records(all_nodes, readbytes, output_directory, "readbytes_node.txt")
+        write_records(all_nodes, vsizes, output_directory, "vsizes_node.txt")
 
-def main(peers_directory, experiment_config = None):
+def main(input_directory, output_directory, experiment_config = None):
     start = 0
     if experiment_config:
         f = open(experiment_config, 'r')
@@ -177,17 +169,17 @@ def main(peers_directory, experiment_config = None):
                 break
         f.close()
     
-    parse_resource_files(peers_directory, start)
+    parse_resource_files(input_directory, output_directory, start)
 
 if __name__ == "__main__":
-    if len(argv) != 2:
-        print "Usage: %s <peers-directory> (<experiment-config>)" %(argv[0])
+    if len(argv) != 3:
+        print "Usage: %s <input-directory> <output-directory> (<experiment-config>)" %(argv[0])
         import sys
         print >> sys.stderr, argv
         
         exit(1)
     
-    if len(argv) == 3:
-        main(argv[1], argv[2])
+    if len(argv) == 4:
+        main(argv[1], argv[2], argv[3])
     else:
-        main(argv[1])
+        main(argv[1], argv[2])
