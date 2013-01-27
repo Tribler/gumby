@@ -175,7 +175,7 @@ if __name__ == "__main__":
     if len(argv) != 3:
         print "Usage: %s <input-directory> <output-directory> (<experiment-config>)" %(argv[0])
         import sys
-        print >> sys.stderr, argv
+        print >> sys.stderr, "Got:",argv
         
         exit(1)
     
