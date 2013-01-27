@@ -69,8 +69,8 @@ fi
 echo "* Extracting statistics..."
 cd $BRANCH
 extract-statistics $PEERS_DIRECTORY $EXPERIMENT_CONFIG ${MESSAGESTOPLOT}
-extract-resourceusage $PEERS_DIRECTORY $EXPERIMENT_CONFIG
-reduce-statistics $PEERS_DIRECTORY 300
+extract-resourceusage $PEERS_DIRECTORY/output/resource_usage $PEERS_DIRECTORY/output $EXPERIMENT_CONFIG
+reduce-statistics $PEERS_DIRECTORY/output 300
 
 svn_version=$(cat $PEERS_DIRECTORY/output/svn_version.txt)
 

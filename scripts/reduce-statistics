@@ -3,12 +3,12 @@ import sys
 import os
 from math import ceil
 
-def reduce(peers_directory, nrlines, inputfile, outputfile):
-    inputfile = os.path.join(peers_directory, inputfile)
-    outputfile = os.path.join(peers_directory, outputfile)
+def reduce(base_directory, nrlines, inputfile, outputfile):
+    inputfile = os.path.join(base_directory, inputfile)
+    outputfile = os.path.join(base_directory, outputfile)
     
     if os.path.exists(inputfile):
-        print >> sys.stderr, peers_directory, inputfile, outputfile
+        print >> sys.stderr, base_directory, inputfile, outputfile
         
         ifp = open(inputfile, 'r')
         ofp = open(outputfile, 'w')
@@ -54,11 +54,11 @@ def reduce(peers_directory, nrlines, inputfile, outputfile):
 
 def main(peers_directory, nrlines):
     for filename in ['send', 'send_diff', 'received', 'received_diff', 'dropped', 'dropped_diff', 'utimes', 'stimes', 'wchars', 'rchars', 'writebytes', 'readbytes', 'vsizes', 'utimes_node', 'stimes_node', 'wchars_node', 'rchars_node', 'writebytes_node', 'readbytes_node', 'vsizes_node']:
-        reduce(peers_directory, nrlines, 'output/%s.txt'%filename, 'output/%s_reduced.txt'%filename)
+        reduce(peers_directory, nrlines, '%s.txt'%filename, '%s_reduced.txt'%filename)
     
     total_connections = 1
     while os.path.exists(os.path.join(peers_directory, 'output/total_connections_%d.txt'%total_connections)):
-        reduce(peers_directory, nrlines, 'output/total_connections_%d.txt'%total_connections, 'output/total_connections_%d_reduced.txt'%total_connections)
+        reduce(peers_directory, nrlines, 'total_connections_%d.txt'%total_connections, 'total_connections_%d_reduced.txt'%total_connections)
         total_connections +=1
 
 if __name__ == "__main__":
