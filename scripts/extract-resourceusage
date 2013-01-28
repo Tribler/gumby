@@ -172,7 +172,7 @@ def main(input_directory, output_directory, experiment_config = None):
     parse_resource_files(input_directory, output_directory, start)
 
 if __name__ == "__main__":
-    if len(argv) != 3:
+    if len(argv) < 3:
         print "Usage: %s <input-directory> <output-directory> (<experiment-config>)" %(argv[0])
         import sys
         print >> sys.stderr, "Got:",argv
