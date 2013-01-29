@@ -16,7 +16,7 @@ mkdir -p output/resource_usage
 cd control
 for RES_FILE in */output/resource_usage.log; do
     NODE_NAME=$( echo $RES_FILE | cut -f1 -d/ )
-    cp -L "$RES_FILE" "../output/resource_usage/$NODE_NAME_usage.log"
+    cp -L "$RES_FILE" "../output/resource_usage/$NODE_NAMEusage.log"
 done
 
 cd $PD
