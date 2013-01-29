@@ -60,6 +60,10 @@ def main(peers_directory, nrlines):
     while os.path.exists(os.path.join(peers_directory, 'output/total_connections_%d.txt'%total_connections)):
         reduce(peers_directory, nrlines, 'total_connections_%d.txt'%total_connections, 'total_connections_%d_reduced.txt'%total_connections)
         total_connections +=1
+        
+    for filename in os.listdir(peers_directory):
+        if filename.endswith('-debugstatistics.txt'):
+            reduce(peers_directory, nrlines, '%s.txt'%filename, '%s_reduced.txt'%filename)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
