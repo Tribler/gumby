@@ -25,4 +25,4 @@ if test $? -ne 0; then
     exit 2
 fi
 
-#rm -rf output/resource_usage
+rm -rf output/resource_usage
