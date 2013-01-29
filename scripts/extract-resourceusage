@@ -78,7 +78,8 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
     
     for filename in os.listdir(input_directory):
         if filename.endswith('usage.log'):
-            nodename = filename[:-4]
+            print >> sys.stderr, "Parsing resource_usage file %s"%filename
+            nodename = filename[:-9]
             all_nodes.append(nodename)
             
             fn_records = os.path.join(input_directory, filename)
@@ -173,8 +174,7 @@ def main(input_directory, output_directory, experiment_config = None):
 
 if __name__ == "__main__":
     if len(argv) < 3:
-        print "Usage: %s <input-directory> <output-directory> (<experiment-config>)" %(argv[0])
-        import sys
+        print >> sys.stderr, "Usage: %s <input-directory> <output-directory> (<experiment-config>)" %(argv[0])
         print >> sys.stderr, "Got:",argv
         
         exit(1)
