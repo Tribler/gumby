@@ -88,6 +88,7 @@ def generate(peers_directory, messagestoplot):
     dispersy_bootstrap_distribution = {}
     dispersy_statistics = {}
     dispersy_in_out = {}
+    dispersy_debugstatistics = set()
     nr_connections = []
     
     communities = []
@@ -109,6 +110,18 @@ def generate(peers_directory, messagestoplot):
 
         for node in node_list:
             nodename = node[-5:]
+            
+            def write_to_debug(time, timeoffset, key, value):
+                dispersy_debugstatistics.add(key)
+                filename = node + "/output/scenario-%s-debugstatistics.txt"%key
+                if not os.path.exists(filename):
+                    h_debugstatistics = open(filename, "w+")
+                    print >> h_debugstatistics, "# timestamp timeoffset value"
+                else:
+                    h_debugstatistics = open(filename, "a")
+                
+                print >> h_debugstatistics, time, timeoffset, key, value
+                h_debugstatistics.close()
             
             traffic_start = traffic_stop = None
             
@@ -147,7 +160,7 @@ def generate(peers_directory, messagestoplot):
             h_stat = open(node + "/output/stat.txt", "w+")
             print >> h_stat, "# timestamp timeoffset total-send total-received"
             print >> h_stat, "0 0 0 0"
-    
+            
             print  nodename, " ",
             record_count[nodename] = {}
             dispersy_in_out[nodename] = [0,0,0,0]
@@ -225,6 +238,11 @@ def generate(peers_directory, messagestoplot):
                         if key not in dispersy_bootstrap_distribution:
                             dispersy_bootstrap_distribution[key] = {}
                         dispersy_bootstrap_distribution[key][node] = value
+                        
+                if message == "scenario-debug":
+                    for key, value in kargs.iteritems():
+                        if isinstance(value, (int, float)):
+                            write_to_debug(str(time), str(timeoffset), key, value)
                 
                 if writeTotal:
                     print >> h_total_record, str(time), str(timeoffset), str(c_received_record + c_created_record)
@@ -258,6 +276,7 @@ def generate(peers_directory, messagestoplot):
             
             h_statistics.close()
             h_stat.close()
+            h_debugstatistics.close()
             
             last = max(last, timeoffset)        
             nr_connections.append((max_incomming_connections, nodename))
@@ -279,6 +298,11 @@ def generate(peers_directory, messagestoplot):
     
     for column in xrange(len(communities)):
         merge_records(peers_directory, "/output/total_connections.txt", '/output/total_connections_%d.txt'%(column+1), 2+column)
+    
+    for debug_stat in dispersy_debugstatistics:
+        merge_records(peers_directory, "/output/scenario-%s-debugstatistics.txt"%debug_stat, "/output/scenario-%s-debugstatistics.txt"%debug_stat, 2)
+    
+    parse_statistics(peers_directory)
     
     sum_at_experiment_end = sum_created_records(peers_directory)
     
@@ -361,8 +385,6 @@ def generate(peers_directory, messagestoplot):
     for time in times:
         print >> h, "%d %d"%(time, records_in_time[time])
     h.close()
-    
-    parse_statistics(peers_directory)
     
     if len(traffic_count) and experiment_length:
         bytes_per_second_experiment = float(sum_traffic)/len(traffic_count)/experiment_length
