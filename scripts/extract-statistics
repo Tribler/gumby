@@ -120,7 +120,7 @@ def generate(peers_directory, messagestoplot):
                 else:
                     h_debugstatistics = open(filename, "a")
                 
-                print >> h_debugstatistics, time, timeoffset, key, value
+                print >> h_debugstatistics, time, timeoffset, value
                 h_debugstatistics.close()
             
             traffic_start = traffic_stop = None
