@@ -26,7 +26,7 @@ if(file.exists("utimes_reduced.txt")){
 		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
 	}
 	
-	p <- p + geom_line(alpha = 0.5, aes(time, value, group=variable, colour=variable))
+	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
 	
 	if(file.exists("utimes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -63,7 +63,7 @@ if(file.exists("stimes_reduced.txt")){
 		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
 	}
 	
-	p <- p + geom_line(alpha = 0.5, aes(time, value, group=variable, colour=variable))
+	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
 	
 	if(file.exists("stimes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -100,7 +100,7 @@ if(file.exists("wchars_reduced.txt")){
 		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
 	}
 	
-	p <- p + geom_line(alpha = 0.5, aes(time, value, group=variable, colour=variable))
+	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
 	
 	if(file.exists("wchars_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -137,7 +137,7 @@ if(file.exists("rchars_reduced.txt")){
 		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
 	}
 	
-	p <- p + geom_line(alpha = 0.5, aes(time, value, group=variable, colour=variable))
+	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
 	
 	if(file.exists("rchars_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -174,7 +174,7 @@ if(file.exists("writebytes_reduced.txt")){
 		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
 	}
 	
-	p <- p + geom_line(alpha = 0.5, aes(time, value, group=variable, colour=variable))
+	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
 	
 	if(file.exists("writebytes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -211,7 +211,7 @@ if(file.exists("readbytes_reduced.txt")){
 		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
 	}
 	
-	p <- p + geom_line(alpha = 0.5, aes(time, value, group=variable, colour=variable))
+	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
 	
 	if(file.exists("readbytes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -248,7 +248,7 @@ if(file.exists("vsizes_reduced.txt")){
 		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
 	}
 	
-	p <- p + geom_step(alpha = 0.5, aes(time, value, group=variable, colour=variable))
+	p <- p + geom_step(aes(time, value, group=variable, colour=variable))
 	
 	if(file.exists("vsizes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
