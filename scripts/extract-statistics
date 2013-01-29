@@ -276,7 +276,6 @@ def generate(peers_directory, messagestoplot):
             
             h_statistics.close()
             h_stat.close()
-            h_debugstatistics.close()
             
             last = max(last, timeoffset)        
             nr_connections.append((max_incomming_connections, nodename))
