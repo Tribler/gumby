@@ -102,7 +102,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
                 stimes[time].setdefault(nodename, []).append(stimes[time][pid])
                 
                 vsize = long(parts[23])
-                vsizes.setdefault(time, {})[pid] = vsize / 1024.0
+                vsizes.setdefault(time, {})[pid] = vsize / 1048576.0
                 vsizes[time].setdefault(nodename, []).append(vsizes[time][pid])
                 
                 rss = long(parts[24])

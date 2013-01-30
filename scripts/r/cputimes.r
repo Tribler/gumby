@@ -255,7 +255,7 @@ if(file.exists("vsizes_reduced.txt")){
 	}
 	 
 	p <- p + opts(legend.position="none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "VSize (KiBytes)\n")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "VSize (MBytes)\n")
 	if(length(args) > 0){
 		p <- p + xlim(minX, maxX)
 	}
