@@ -23,13 +23,13 @@ echo Deleting old data
 rm -fR output
 
 echo Deleting old code
-parallel-ssh -l jenkins -i -v -p 40 -h $HOSTLIST rm -fR /home/whirm/dispersy /home/emilon/das4_walker /home/emilon/mainbranch
+parallel-ssh -l jenkins -i -v -p 40 -h $HOSTLIST rm -fR /home/whirm/dispersy ~/das4_walker ~/mainbranch
 
 echo Copying dispersy
-parallel-rsync -l jenkins -v -o out -e out -p 40 -h $HOSTLIST -avz dispersy /home/emilon/dispersy
+parallel-rsync -l jenkins -v -o out -e out -p 40 -h $HOSTLIST -avz dispersy ~/dispersy
 
 echo Copying das4-walker
-parallel-rsync -l jenkins -p 40 -h $HOSTLIST -avz das4_walker/ /home/emilon/das4_walker
+parallel-rsync -l jenkins -p 40 -h $HOSTLIST -avz das4_walker/ ~/das4_walker
 
 echo Running the experiment
 parallel-ssh -l jenkins  -t 0 -i -v -p 40 -h $HOSTLIST 'cd das4_walker && pwd && python -c "from dispersy.tool.main import main; main()" --script walker.script.ScenarioScript --kargs peernumber=$(hostname |cut -f2 -de),scenario=config'
