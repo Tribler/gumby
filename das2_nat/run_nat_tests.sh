@@ -26,7 +26,7 @@ echo Deleting old code
 parallel-ssh -l jenkins -i -v -p 40 -h $HOSTLIST rm -fR dispersy das4_walker mainbranch
 
 echo Copying dispersy
-parallel-rsync -l jenkins -v -o out -e out -p 40 -h $HOSTLIST -avz dispersy /home/jenkins/dispersy
+parallel-rsync -l jenkins -v -o out -e out -p 40 -h $HOSTLIST -avz dispersy/ /home/jenkins/dispersy
 
 echo Copying das4-walker
 parallel-rsync -l jenkins -p 40 -h $HOSTLIST -avz das4_walker/ /home/jenkins/das4_walker
