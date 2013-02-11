@@ -5,7 +5,11 @@ set -e
 #svn co https://svn.tribler.org/dispersy/branches/20120612-27046-mainbranch dispersy
 #svn co https://svn.tribler.org/abc/branches/boudewijn/das4-walker das4_walker
 
-HOSTLIST=$(dirname $(readlink -f $0))/hostlist.txt
+if [ -z "$1" ]; then
+    HOSTLIST=$(dirname $(readlink -f $0))/hostlist.txt
+else
+    HOSTLIST="$1"
+fi
 
 if [ ! -e dispersy -o ! -e das4_walker ]; then
     echo "Please, check out dispersy and das4_walker before running this script."
