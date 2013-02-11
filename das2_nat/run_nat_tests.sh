@@ -23,21 +23,21 @@ echo Deleting old data
 rm -fR output
 
 echo Deleting old code
-parallel-ssh -i -v -p 40 -h $HOSTLIST rm -fR /home/whirm/dispersy /home/emilon/das4_walker /home/emilon/mainbranch
+parallel-ssh -l jenkins -i -v -p 40 -h $HOSTLIST rm -fR /home/whirm/dispersy /home/emilon/das4_walker /home/emilon/mainbranch
 
 echo Copying dispersy
-parallel-rsync -v -o out -e out -p 40 -h $HOSTLIST -avz dispersy /home/emilon/dispersy
+parallel-rsync -l jenkins -v -o out -e out -p 40 -h $HOSTLIST -avz dispersy /home/emilon/dispersy
 
 echo Copying das4-walker
-parallel-rsync -p 40 -h $HOSTLIST -avz das4_walker/ /home/emilon/das4_walker
+parallel-rsync -l jenkins -p 40 -h $HOSTLIST -avz das4_walker/ /home/emilon/das4_walker
 
 echo Running the experiment
-parallel-ssh -t 0 -i -v -p 40 -h $HOSTLIST 'cd das4_walker && pwd && python -c "from dispersy.tool.main import main; main()" --script walker.script.ScenarioScript --kargs peernumber=$(hostname |cut -f2 -de),scenario=config'
+parallel-ssh -l jenkins  -t 0 -i -v -p 40 -h $HOSTLIST 'cd das4_walker && pwd && python -c "from dispersy.tool.main import main; main()" --script walker.script.ScenarioScript --kargs peernumber=$(hostname |cut -f2 -de),scenario=config'
 
 echo Getting experiment data back from the nodes
 mkdir -p output
 for HOST in $(grep -v ^# $HOSTLIST); do
-    rsync --delete -a $HOST:das4_walker/walktest.log output/$HOST.walktest.log
+    rsync --delete -a jenkins@$HOST:das4_walker/walktest.log output/$HOST.walktest.log
 done
 
 
