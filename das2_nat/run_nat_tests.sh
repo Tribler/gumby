@@ -1,9 +1,16 @@
 #!/bin/bash
+#svn co https://svn.tribler.org/dispersy/branches/20120612-27046-mainbranch dispersy
+#svn co https://svn.tribler.org/abc/branches/boudewijn/das4-walker das4_walker
 
 set -e
 
-#svn co https://svn.tribler.org/dispersy/branches/20120612-27046-mainbranch dispersy
-#svn co https://svn.tribler.org/abc/branches/boudewijn/das4-walker das4_walker
+if [ -z "$WORKSPACE" ]; then
+    echo "This script is meant to be executed from a Jenkins Job."
+    exit 1
+fi
+
+#Install R dependencies
+R --no-save --quiet < $WORKSPACE/experiments/scripts/r/install.r
 
 if [ -z "$1" ]; then
     HOSTLIST=$(dirname $(readlink -f $0))/hostlist.txt
