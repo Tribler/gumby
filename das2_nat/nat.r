@@ -31,7 +31,7 @@ midpoint <- 0.6
 
 p <- ggplot(d, aes(x=To, y=From)) + theme_bw() + geom_point(aes(size=Requests, color=Successrate))
 p <- p + scale_color_gradient2(low='red',mid="yellow", high="darkgreen", midpoint = midpoint)
-p <- p + scale_y_continuous(breaks=seq(1,17,1))
+p <- p + scale_y_continuous(breaks=seq(1,length(colnames(r)),1))
 p <- p + labs(x = "Node Receiving", y = "Node Requesting") + opts(axis.text.x = theme_text(hjust = 0, colour = "grey50"), axis.text.y = theme_text(colour = "grey50"))
 p
 
