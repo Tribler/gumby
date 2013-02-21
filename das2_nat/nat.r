@@ -20,14 +20,21 @@ colnames(srm) <- c('from', 'nattype', 'to', 'successrate')
 
 d <- merge(rm, srm, sort=FALSE)
 d <- na.omit(d)
-midpoint <- 0.5
+
 d$to <- str_sub(d$to, 0, -3)
 
+nattypes <- list('1'="Symmetric", '2'="Port Res", '3'="Restricted", '4'="Full Cone", '5'="Open", '6' = "Unknown", '9'="?")
+mf_labeller <- function(var, value){
+    value <- as.character(value)
+    return(nattypes[value])
+}
+
 p <- ggplot(d, aes(x=to, y=from)) + theme_bw()
-p <- p + facet_grid(nattype ~ ., scales = "free_y")
+p <- p + facet_grid(nattype ~ ., scales = "free_y", labeller=mf_labeller)
 p <- p + geom_point(aes(size=requests, color=successrate))
-p <- p + scale_color_gradient2(low='red',mid="yellow", high="darkgreen", midpoint = midpoint)
-p <- p + labs(x = "Node Receiving", y = "Node Requesting\n") + opts(axis.text.x = theme_text(hjust = 0, colour = "grey50", angle = -45), axis.text.y = theme_text(colour = "grey50"))
+p <- p + scale_color_gradient2(low='red',mid="yellow", high="darkgreen", midpoint = 0.5)
+p <- p + labs(x = "Node Receiving", y = "Node Requesting\n")
+p <- p + opts(axis.text.x = theme_text(hjust=0, angle = -45))
 p
 
 ggsave(file="nat.png", width=8, height=6, dpi=100)
