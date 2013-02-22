@@ -39,7 +39,7 @@ echo Copying das4-walker
 parallel-rsync -l jenkins -p 40 -h $HOSTLIST -avz das4_walker/ /home/jenkins/das4_walker
 
 echo Running the experiment
-parallel-ssh -l jenkins  -t 0 -i -v -p 40 -h $HOSTLIST 'cd das4_walker && pwd && python -c "from dispersy.tool.main import main; main()" --script walker.script.ScenarioScript --kargs peernumber=$(hostname |cut -f2 -de),scenario=config'
+parallel-ssh -l jenkins  -t 0 -i -v -p 40 -h $HOSTLIST 'cd das4_walker && pwd && python -c "from ..dispersy.tool.main import main; main()" --script walker.script.ScenarioScript --kargs peernumber=$(hostname |cut -f2 -de),scenario=config'
 
 echo Getting experiment data back from the nodes
 mkdir -p output
