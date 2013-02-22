@@ -40,5 +40,4 @@ p <- p + opts(axis.text.x = theme_text(hjust=0, angle = -45))
 p <- p + opts(panel.margin = unit(0, "in"))
 p
 
-ggsave(file="nat.png", width=8, height=6, dpi=100)
 ggsave(file="nat.svg", width=8, height=6, dpi=100)
