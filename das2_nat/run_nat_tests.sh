@@ -30,7 +30,7 @@ echo Deleting old data
 rm -fR output
 
 echo Deleting old code
-parallel-ssh -l jenkins -i -v -p 40 -h $HOSTLIST rm -fR dispersy das4_walker mainbranch
+parallel-ssh -l jenkins -i -v -p 40 -h $HOSTLIST rm -fR dispersy das4_walker mainbranch out output
 
 echo Copying dispersy
 parallel-rsync -l jenkins -v -o out -e out -p 40 -h $HOSTLIST -avz dispersy/ /home/jenkins/dispersy
