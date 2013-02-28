@@ -344,16 +344,17 @@ def generate(peers_directory, messagestoplot):
         print >> h_traffic_count, "%s %d %d %d" %(node, v[0], v[1], v[2])
     h_traffic_count.close()
 
+    sum_coverage = 0.0
     if sum_at_experiment_end:
         h_record_count = open(peers_directory + "/output/records_per_peer.txt", "w+")
         print >> h_record_count, "# peer-id records_received records_created records_total coverage"
-        sum_coverage = 0.0
         for node in measured_record_count.keys():
             v = measured_record_count[node]
             v[3] = float(v[2])*100/sum_at_experiment_end
             sum_coverage += v[3]
             print >> h_record_count, "%s %d %d %d %f" %(node, v[0], v[1], v[2], v[3])
         h_record_count.close()
+        
     l = len(measured_record_count)
     if l != 0:
         average_coverage = sum_coverage/l
