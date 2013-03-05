@@ -1,5 +1,7 @@
 #!/bin/bash -ex
 
+export R_LIBS_USER=$R_LIBS_USER${R_LIBS_USER:+:}$HOME/R
+
 export DISPLAY=:0
 OLDHOME=$HOME
 export HOME=$(mktemp -d)
