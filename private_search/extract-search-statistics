@@ -8,7 +8,6 @@ from sys import argv, exit, maxint
 from Tribler.dispersy.tool.ldecoder import parse, parselast
 
 def get_nodes(peer_dir, node_count):
-    global node_count
     pattern = re.compile('[0-9]{5}')
     for d in listdir(peer_dir):
         if pattern.match(d):
