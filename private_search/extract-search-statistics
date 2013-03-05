@@ -84,13 +84,13 @@ def generate(peers_directory, messagestoplot):
         f = open(peers_directory, "/output/searches.txt", 'w')
         print >> f, "identifier duration nrmessages nrcycles"
         for identifier, nodes in searches.iteritems():
-            nr_collisions = sum(created, for _,created,_,_ in nodes)      
+            nr_collisions = sum(created for _,created,_,_ in nodes)      
             if nr_collisions > 1:
                 print "skipping", identifier,"got",nr_collisions,"nodes creating it"
                 continue
             
             duration = max(timeoffset for timeoffset,_,_,_ in nodes) - min(timeoffset for timeoffset,_,_,_ in nodes)
-            nr_cycles = sum(created, for _,created,_,_ in nodes)
+            nr_cycles = sum(cycle for _,_,cycle,_ in nodes)
             nr_messages = len(nodes)
             
             print >> f, identifier, duration, nr_messages, nr_cycles
