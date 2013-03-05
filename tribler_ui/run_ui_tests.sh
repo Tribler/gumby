@@ -59,5 +59,5 @@ HOME=$OLDHOME vnc4server -kill $DISPLAY ||:
 $WORKSPACE/experiments/scripts/extract-resourceusage output output
 $WORKSPACE/experiments/scripts/reduce-statistics output 300
 cd output
-R --no-save --quiet --args < $WORKSPACE/experiments/scripts/r/install.r
-R --no-save --quiet --args 0 999999 < $WORKSPACE/experiments/scripts/r/cputimes.r 
+R --no-save --quiet < $WORKSPACE/experiments/scripts/r/install.r
+R --no-save --quiet < $WORKSPACE/experiments/scripts/r/cputimes.r 
