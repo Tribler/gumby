@@ -52,7 +52,7 @@ def get_first_datetime(peers_directory, node_count):
     
     return min(datetimes)
 
-def generate(peers_directory, messagestoplot):
+def generate(peers_directory):
     peer_count = open(peers_directory+'/peer.count', 'r')
     node_count = int(peer_count.readline())
     peer_count.close()
