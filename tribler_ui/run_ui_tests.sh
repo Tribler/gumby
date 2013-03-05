@@ -55,8 +55,10 @@ fi
 
 HOME=$OLDHOME vnc4server -kill $DISPLAY ||:
 
+#Create the graphs
+pwd
+ls -l
 $WORKSPACE/experiments/scripts/reduce-statistics output 300
-
+ls -l
 R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/experiments/scripts/r/install.r
 R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/experiments/scripts/r/cputimes.r 
-
