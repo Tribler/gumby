@@ -51,5 +51,6 @@ fi
 
 vnc4server -kill $DISPLAY
 
+R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/experiments/scripts/r/install.r
 R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/experiments/scripts/r/cputimes.r 
 
