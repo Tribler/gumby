@@ -24,13 +24,6 @@ def get_nodes(peer_dir):
             if node_nr <= node_count and dispersy_exists:
                 yield peer_dir + "/" + d
 
-def get_title(node):
-    if re.match(".*[0-9]{5}", node):
-        return node[-5:]
-    elif len(node)>7 and node[-7:] == "tracker":
-        return "tracker"
-    return "???"
-
 def get_first_datetime(peers_directory):
     datetimes = []
     for node in get_nodes(peers_directory):
