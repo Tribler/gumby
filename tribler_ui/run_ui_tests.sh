@@ -1,16 +1,18 @@
-#!/bin/bash -ex
+#!/bin/bash -xe
 
 export R_LIBS_USER=$R_LIBS_USER${R_LIBS_USER:+:}$HOME/R
 
 export DISPLAY=:0
+
+
 OLDHOME=$HOME
 export HOME=$(mktemp -d)
-mkdir -p $HOME/.vnc
-chmod go-rwx $HOME/.vnc
-cp $OLDHOME/.vnc/passwd $HOME/.vnc/
+#mkdir -p $HOME/.vnc
+#chmod go-rwx $HOME/.vnc
+#cp $OLDHOME/.vnc/passwd $HOME/.vnc/
 
-vnc4server -kill $DISPLAY ||:
-vnc4server -name Tribler -geometry 1280x1024 $DISPLAY
+HOME=$OLDHOME vnc4server -kill $DISPLAY ||:
+HOME=$OLDHOME vnc4server -name Tribler -geometry 1280x1024 $DISPLAY
 
 sleep 2
 openbox &
@@ -51,7 +53,7 @@ if [ -e /proc/$OBOX_PID ]; then
     kill -9 $OBOX_PID ||:
 fi
 
-vnc4server -kill $DISPLAY
+HOME=$OLDHOME vnc4server -kill $DISPLAY ||:
 
 R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/experiments/scripts/r/install.r
 R --no-save --quiet --args $XMIN $XMAX < $WORKSPACE/experiments/scripts/r/cputimes.r 
