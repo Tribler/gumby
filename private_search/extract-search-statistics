@@ -81,7 +81,7 @@ def generate(peers_directory):
                     
                     searches[identifier].append((timeoffset, created_by_me, cycle, nodename))
         
-        f = open(peers_directory, "/output/searches.txt", 'w')
+        f = open(peers_directory + "/output/searches.txt", 'w')
         print >> f, "identifier duration nrmessages nrcycles"
         for identifier, nodes in searches.iteritems():
             nr_collisions = sum(created for _,created,_,_ in nodes)      
