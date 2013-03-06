@@ -71,7 +71,7 @@ def generate(peers_directory):
         for node in node_list:
             nodename = node[-5:]
             print  nodename, " ",
-            for lineno, time, message, kargs in parse(node + "/output/dispersy.log", interrests = ['search-statistics']):
+            for lineno, time, message, kargs in parse(node + "/output/dispersy.log", interests = ['search-statistics']):
                 timeoffset = time - start
                 
                 if message == "search-statistics":
