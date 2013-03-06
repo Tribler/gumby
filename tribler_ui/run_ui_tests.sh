@@ -28,7 +28,7 @@ cd ../..
 #Run the tests
 TESTDIR=Tribler/Test
 
-echo "nosetests --with-xcoverage --xcoverage-file=$PWD/coverage.xml  --with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive $TESTDIR/test_remote_search.py" > process_list.txt
+echo "nosetests --with-xcoverage --xcoverage-file=$PWD/coverage.xml  --with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive $TESTDIR/test_remote_search.py $TESTDIR/test_libtorrent_download.py $TESTDIR/test_gui_general.py" > process_list.txt
 
 
 mkdir -p output
