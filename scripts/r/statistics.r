@@ -7,6 +7,7 @@ maxX <- as.integer(commandArgs(TRUE)[2])
 if(file.exists("sum_statistics.txt")){
 	df <- read.table("sum_statistics.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
+	df <- subset(df, str_sub(variable, -1) != '_')
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(data = df)
