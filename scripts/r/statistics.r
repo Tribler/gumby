@@ -1,5 +1,6 @@
 library(ggplot2)
 library(reshape)
+library(stringr)
 
 minX <- as.integer(commandArgs(TRUE)[1])
 maxX <- as.integer(commandArgs(TRUE)[2])
