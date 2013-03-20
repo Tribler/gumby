@@ -92,8 +92,8 @@ def generate(peers_directory):
 
                 duration = max(timeoffset for timeoffset, _, _, _ in nodes) - min(timeoffset for timeoffset, _, _, _ in nodes)
                 nr_cycles = sum(cycle for _, _, cycle, _ in nodes)
-                nr_messages = len(nodes)
-                nr_unique_nodes = len(set(nodename for _, _, _, nodename in nodes))
+                nr_messages = len(nodes) - 1  # substracting search creator
+                nr_unique_nodes = len(set(nodename for _, _, _, nodename in nodes)) - 1
 
                 print >> f, identifier, duration, nr_messages, nr_cycles, nr_unique_nodes
 
