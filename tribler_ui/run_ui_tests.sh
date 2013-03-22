@@ -25,6 +25,8 @@ cd ../..
 #EO Build swift
 
 
+rm -fR  TriblerDownloads .Tribler 
+
 #Run the tests
 TESTDIR=Tribler/Test
 
