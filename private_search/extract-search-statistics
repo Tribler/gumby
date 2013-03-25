@@ -13,8 +13,8 @@ def get_nodes(peer_dir, node_count):
     for d in listdir(peer_dir):
         if pattern.match(d):
             node_nr = int(d)
-            
-            dispersy_exists = os.path.exists(os.path.join(peer_dir, d, 'output','dispersy.log'))
+
+            dispersy_exists = os.path.exists(os.path.join(peer_dir, d, 'output', 'dispersy.log'))
             if node_nr <= node_count and dispersy_exists:
                 yield peer_dir + "/" + d
 
@@ -22,20 +22,20 @@ def get_first_datetime(peers_directory, node_count):
     datetimes = []
     for node in get_nodes(peers_directory, node_count):
         try:
-            _, _, _, kargs = parse(node + "/output/dispersy.log", ('joined-community', )).next()
+            _, _, _, kargs = parse(node + "/output/dispersy.log", ('joined-community',)).next()
             if 'starting_timestamp' in kargs:
                 datetimes.append(kargs['starting_timestamp'])
         except:
             pass
-    
-    #Fallback to old method
+
+    # Fallback to old method
     if not datetimes:
         print >> sys.stderr, "USING fallback for get_first_datetime"
         for node in get_nodes(peers_directory, node_count):
             _, time, _, _ = parse(node + "/output/dispersy.log").next()
             datetimes.append(time)
-            
-    #Fallback to resource files
+
+    # Fallback to resource files
     if not datetimes:
         print >> sys.stderr, "USING fallback2 for get_first_datetime"
         resource_folder = os.path.join(peers_directory, 'output', 'resource_usage')
@@ -45,20 +45,20 @@ def get_first_datetime(peers_directory, node_count):
                 h_records = open(fn_records)
                 for line in h_records:
                     parts = line.split()
-                
+
                     time = float(parts[0])
                     datetimes.append(time)
                     break
-    
+
     return min(datetimes)
 
 def generate(peers_directory):
-    peer_count = open(peers_directory+'/peer.count', 'r')
+    peer_count = open(peers_directory + '/peer.count', 'r')
     node_count = int(peer_count.readline())
     peer_count.close()
-    
+
     start = int(get_first_datetime(peers_directory, node_count))
-    
+
     searches = defaultdict(list)
     if len(list(get_nodes(peers_directory, node_count))) > 0:
         node_list = [x for x in get_nodes(peers_directory, node_count)]
@@ -71,39 +71,40 @@ def generate(peers_directory):
         for node in node_list:
             nodename = node[-5:]
             print  nodename, " ",
-            for lineno, time, message, kargs in parse(node + "/output/dispersy.log", interests = ['search-statistics']):
+            for lineno, time, message, kargs in parse(node + "/output/dispersy.log", interests=['search-statistics']):
                 timeoffset = time - start
-                
+
                 if message == "search-statistics":
                     identifier = kargs['identifier']
                     created_by_me = kargs.get('created_by_me', False)
                     cycle = kargs.get('cycle', False)
-                    
+
                     searches[identifier].append((timeoffset, created_by_me, cycle, nodename))
-        
+
         if searches:
             f = open(peers_directory + "/output/searches.txt", 'w')
-            print >> f, "identifier duration nrmessages nrcycles"
+            print >> f, "identifier duration nrmessages nrcycles nruniquenodes"
             for identifier, nodes in searches.iteritems():
-                nr_collisions = sum(created for _,created,_,_ in nodes)      
+                nr_collisions = sum(created for _, created, _, _ in nodes)
                 if nr_collisions > 1:
-                    print "skipping", identifier,"got",nr_collisions,"nodes creating it"
+                    print "skipping", identifier, "got", nr_collisions, "nodes creating it"
                     continue
-                
-                duration = max(timeoffset for timeoffset,_,_,_ in nodes) - min(timeoffset for timeoffset,_,_,_ in nodes)
-                nr_cycles = sum(cycle for _,_,cycle,_ in nodes)
-                nr_messages = len(nodes)
-                
-                print >> f, identifier, duration, nr_messages, nr_cycles
-                 
+
+                duration = max(timeoffset for timeoffset, _, _, _ in nodes) - min(timeoffset for timeoffset, _, _, _ in nodes)
+                nr_cycles = sum(cycle for _, _, cycle, _ in nodes)
+                nr_messages = len(nodes) - 1  # substracting search creator
+                nr_unique_nodes = len(set(nodename for _, _, _, nodename in nodes)) - 1
+
+                print >> f, identifier, duration, nr_messages, nr_cycles, nr_unique_nodes
+
             f.close()
-    
+
 if __name__ == "__main__":
     if len(argv) != 2:
-        print "Usage: %s <peers-directory>" %(argv[0])
+        print "Usage: %s <peers-directory>" % (argv[0])
         import sys
         print >> sys.stderr, argv
-        
+
         exit(1)
 
     generate(argv[1])
