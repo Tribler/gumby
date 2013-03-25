@@ -20,7 +20,7 @@ rm -fR output
 
 #Build swift
 cd Tribler/SwiftEngine
-make clean
+make clean ||:
 make -j4
 cp swift ../../
 cd ../..
