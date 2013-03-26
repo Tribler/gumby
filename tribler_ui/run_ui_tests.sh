@@ -16,14 +16,18 @@ pwd
 
 cd tribler
 
+rm -fR output
 
 #Build swift
 cd Tribler/SwiftEngine
+make clean ||:
 make -j4
 cp swift ../../
 cd ../..
 #EO Build swift
 
+
+rm -fR  TriblerDownloads .Tribler 
 
 #Run the tests
 TESTDIR=Tribler/Test
