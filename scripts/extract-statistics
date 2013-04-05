@@ -209,9 +209,9 @@ def generate(peers_directory, messagestoplot):
 
                         print >> h_blstats, str(time), str(timeoffset),
                         for community in communities:
-                            print >> h_blstats, c_communities.get(community, [0, 0])[0],
+                            print >> h_blstats, c_blstats.get(community, [0, 0])[0],
                         for community in communities:
-                            print >> h_blstats, c_communities.get(community, [0, 0])[1],
+                            print >> h_blstats, c_blstats.get(community, [0, 0])[1],
                         print >> h_blstats, ''
 
                 if message == "statistics-successful-messages":
