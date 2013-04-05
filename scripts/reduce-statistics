@@ -51,7 +51,7 @@ def reduce(base_directory, nrlines, inputfile, outputfile):
         ofp.close()
 
 def main(input_directory, nrlines):
-    for filename in ['send', 'send_diff', 'received', 'received_diff', 'dropped', 'dropped_diff', 'utimes', 'stimes', 'wchars', 'rchars', 'writebytes', 'readbytes', 'vsizes', 'utimes_node', 'stimes_node', 'wchars_node', 'rchars_node', 'writebytes_node', 'readbytes_node', 'vsizes_node']:
+    for filename in ['send', 'send_diff', 'received', 'received_diff', 'dropped', 'dropped_diff', 'bl_skip', 'bl_skip_diff', 'bl_reuse', 'bl_reuse_skip', 'utimes', 'stimes', 'wchars', 'rchars', 'writebytes', 'readbytes', 'vsizes', 'utimes_node', 'stimes_node', 'wchars_node', 'rchars_node', 'writebytes_node', 'readbytes_node', 'vsizes_node']:
         reduce(input_directory, nrlines, '%s.txt' % filename, '%s_reduced.txt' % filename)
 
     total_connections = 1

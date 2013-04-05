@@ -61,3 +61,31 @@ if(file.exists("received_reduced.txt")){
 	p
 	ggsave(file="received.png", width=8, height=6, dpi=100)
 }
+
+if(file.exists("bl_skip_reduced.txt")){
+    df <- read.table("bl_skip_reduced.txt", header = TRUE, check.names = FALSE)
+    df <- melt(df, id="time")
+    df <- subset(df, df$value > 0)
+    
+    p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
+    p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
+    p <- p + opts(legend.position="none")
+    p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bloomfilter skips\n")
+    p <- p + xlim(minX, maxX)
+    p
+    ggsave(file="bl_skip.png", width=8, height=6, dpi=100)
+}
+
+if(file.exists("bl_reuse_reduced.txt")){
+    df <- read.table("bl_reuse_reduced.txt", header = TRUE, check.names = FALSE)
+    df <- melt(df, id="time")
+    df <- subset(df, df$value > 0)
+    
+    p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
+    p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
+    p <- p + opts(legend.position="none")
+    p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bloomfilter reuse\n")
+    p <- p + xlim(minX, maxX)
+    p
+    ggsave(file="bl_reuse.png", width=8, height=6, dpi=100)
+}
