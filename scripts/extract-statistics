@@ -82,7 +82,6 @@ def generate(peers_directory, messagestoplot):
     dispersy_statistics = {}
     dispersy_in_out = {}
     dispersy_debugstatistics = set()
-    bl_stats = {}
     nr_connections = []
 
     communities = []
@@ -125,6 +124,7 @@ def generate(peers_directory, messagestoplot):
             c_received_records = {}
             c_dropped_record = 0
             c_communities = {}
+            c_blstats = {}
             cur_incomming_connections = max_incomming_connections = 0
 
             h_received_record = open(node + "/output/received-record.txt", "w+")
@@ -156,13 +156,14 @@ def generate(peers_directory, messagestoplot):
             print >> h_stat, "0 0 0 0"
 
             h_blstats = open(node + "/output/bl_stat.txt", "w+")
-            print >> h_blstats, "# timestamp timeoffset bl-skip bl-reuse"
-            print >> h_blstats, "0 0 0 0"
+            print >> h_blstats, "# timestamp timeoffset (bl-skip +) (bl-reuse +)"
+            print >> h_blstats, "#", " ".join(communities)
+            print >> h_blstats, "0 0" + (" 0 0"*len(communities))
 
             print  nodename, " ",
             record_count[nodename] = {}
             dispersy_in_out[nodename] = [0, 0, 0, 0]
-            bl_stats[nodename] = [0, 0]
+
             for lineno, time, message, kargs in parse(node + "/output/dispersy.log"):
                 time = int(time)
                 timeoffset = time - start
@@ -202,9 +203,16 @@ def generate(peers_directory, messagestoplot):
                             print >> h_total_connections, c_communities.get(community, 0),
                         print >> h_total_connections, ''
 
-                    if 'bl_skip' in kargs or 'bl_reuse' in kargs:
-                        bl_stats[nodename] = [kargs.get('bl_skip', bl_stats[nodename][0]), kargs.get('bl_reuse', bl_stats[nodename][1])]
-                        print >> h_blstats, str(time), str(timeoffset), str(bl_stats[nodename][0]), str(bl_stats[nodename][1])
+                    if 'bloom' in kargs:
+                        for community, bl_reuse, bl_skip in kargs['bloom']:
+                            c_blstats[community] = [bl_reuse, bl_skip]
+
+                        print >> h_blstats, str(time), str(timeoffset),
+                        for community in communities:
+                            print >> h_blstats, c_communities.get(community, [0, 0])[0],
+                        for community in communities:
+                            print >> h_blstats, c_communities.get(community, [0, 0])[1],
+                        print >> h_blstats, ''
 
                 if message == "statistics-successful-messages":
                     for key, value in kargs.iteritems():
@@ -298,11 +306,13 @@ def generate(peers_directory, messagestoplot):
     merge_records(peers_directory, "/output/stat.txt", '/output/send.txt', 2, '/output/send_diff.txt')
     merge_records(peers_directory, "/output/stat.txt", '/output/received.txt', 3, '/output/received_diff.txt')
     merge_records(peers_directory, "/output/drop.txt", '/output/dropped.txt', 2, '/output/dropped_diff.txt')
-    merge_records(peers_directory, "/output/bl_stat.txt", '/output/bl_skip.txt', 2, '/output/bl_skip_diff.txt')
-    merge_records(peers_directory, "/output/bl_stat.txt", '/output/bl_reuse.txt', 3, '/output/bl_reuse_diff.txt')
 
     for column in xrange(len(communities)):
         merge_records(peers_directory, "/output/total_connections.txt", '/output/total_connections_%d.txt' % (column + 1), 2 + column)
+
+    for column in xrange(len(communities)):
+        merge_records(peers_directory, "/output/bl_stat.txt", '/output/bl_reuse_%d.txt' % (column + 1), 2 + column)
+        merge_records(peers_directory, "/output/bl_stat.txt", '/output/bl_skip_%d.txt' % (column + 1), 2 + len(communities) + column)
 
     for debug_stat in dispersy_debugstatistics:
         merge_records(peers_directory, "/output/scenario-%s-debugstatistics.txt" % debug_stat, "/output/scenario-%s-debugstatistics.txt" % debug_stat, 2)
