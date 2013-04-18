@@ -21,7 +21,9 @@ rm -fR output
 #Build swift
 cd Tribler/SwiftEngine
 make clean ||:
-make -j4
+#Disable debug output
+sed -i "s/DEBUG = True/DEBUG = False/" SConstruct
+scons -j4
 cp swift ../../
 cd ../..
 #EO Build swift
