@@ -91,12 +91,9 @@ mkdir -p $DISPERSY_DIR/data
 cp -a ${MYDIR}/data/* $DISPERSY_DIR/data/
 cp -af ${BRANCH}/bootstraptribler.txt $DISPERSY_DIR
 cp ${LOG_CONF} $DISPERSY_DIR/logger.conf
-
-cd ${BRANCH}
-ls -l
+cp ${LOG_CONF} $DISPERSY_DIR/Tribler/dispersy/tool/logger.conf
 
 cd $DISPERSY_DIR
-ls -l
 
 echo python -O -c "from Tribler.dispersy.tool.main import main; main()" --port $MY_PORT --strict --debugstatistics $DISPERSY_ARGS
 python -O -c "from Tribler.dispersy.tool.main import main; main()" --port $MY_PORT --strict --debugstatistics $DISPERSY_ARGS
