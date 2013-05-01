@@ -94,6 +94,9 @@ cp ${LOG_CONF} $DISPERSY_DIR/logger.conf
 
 cd $DISPERSY_DIR
 
+pwd
+ls -l
+
 echo python -O -c "from Tribler.dispersy.tool.main import main; main()" --port $MY_PORT --strict --debugstatistics $DISPERSY_ARGS
 python -O -c "from Tribler.dispersy.tool.main import main; main()" --port $MY_PORT --strict --debugstatistics $DISPERSY_ARGS
 
