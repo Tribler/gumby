@@ -91,7 +91,7 @@ mkdir -p $DISPERSY_DIR/data
 cp -a ${MYDIR}/data/* $DISPERSY_DIR/data/
 cp -af ${BRANCH}/bootstraptribler.txt $DISPERSY_DIR
 cp ${LOG_CONF} $DISPERSY_DIR/logger.conf
-cp ${LOG_CONF} $DISPERSY_DIR/Tribler/dispersy/tool/logger.conf
+cp ${LOG_CONF} $BRANCH/Tribler/dispersy/tool/logger.conf
 
 cd $DISPERSY_DIR
 
