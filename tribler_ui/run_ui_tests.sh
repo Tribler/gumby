@@ -23,18 +23,23 @@ cd Tribler/SwiftEngine
 make clean ||:
 #Disable debug output
 sed -i "s/DEBUG = True/DEBUG = False/" SConstruct
-scons -j4
+scons -j8
 cp swift ../../
 cd ../..
 #EO Build swift
 
-
-rm -fR  TriblerDownloads .Tribler 
+#This shouldn't be necessary anymore
+#rm -fR  TriblerDownloads .Tribler
 
 #Run the tests
-TESTDIR=Tribler/Test
+if [ -z "$1" ]; then
+    TESTDIR=Tribler/Test
+    TESTS="$TESTDIR/test_remote_search.py $TESTDIR/test_libtorrent_download.py $TESTDIR/test_gui_general.py"
+else
+    TESTS="$*"
+fi
 
-echo "nosetests --with-xcoverage --xcoverage-file=$PWD/coverage.xml  --with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive $TESTDIR/test_remote_search.py $TESTDIR/test_libtorrent_download.py $TESTDIR/test_gui_general.py" > process_list.txt
+echo "nosetests --with-xcoverage --xcoverage-file=$PWD/coverage.xml  --with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive $TESTS" > process_list.txt
 
 
 mkdir -p output
@@ -59,4 +64,4 @@ $WORKSPACE/experiments/scripts/extract-resourceusage output output
 $WORKSPACE/experiments/scripts/reduce-statistics output 300
 cd output
 R --no-save --quiet < $WORKSPACE/experiments/scripts/r/install.r
-R --no-save --quiet < $WORKSPACE/experiments/scripts/r/cputimes.r 
+R --no-save --quiet < $WORKSPACE/experiments/scripts/r/cputimes.r
