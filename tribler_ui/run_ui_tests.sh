@@ -51,7 +51,7 @@ else
     TESTS="$*"
 fi
 
-echo "nosetests --with-xcoverage --xcoverage-file=$PWD/coverage.xml  --with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive $TESTS" > process_list.txt
+echo "nosetests -v --with-xcoverage --xcoverage-file=$PWD/coverage.xml  --with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive $TESTS" > process_list.txt
 
 
 mkdir -p output
