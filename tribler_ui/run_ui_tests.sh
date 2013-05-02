@@ -1,5 +1,17 @@
 #!/bin/bash -xe
 
+if [ ! -z $(pidof swift) ]; then
+    echo "WARNING: Swift was running before starting the tests, killing it."
+    echo "WARNING: Make sure that no other experiment/test that uses swift is running at the same time."
+    killall swift
+    sleep 1
+    if [ ! -z $(pidof swift) ]; then
+        echo "ERROR: Swift didn't die or was respawned."
+        echo "ERROR: Exiting with failure"
+        exit 1
+    fi
+fi
+
 export R_LIBS_USER=$R_LIBS_USER${R_LIBS_USER:+:}$HOME/R
 
 export DISPLAY=:0
@@ -65,3 +77,10 @@ $WORKSPACE/experiments/scripts/reduce-statistics output 300
 cd output
 R --no-save --quiet < $WORKSPACE/experiments/scripts/r/install.r
 R --no-save --quiet < $WORKSPACE/experiments/scripts/r/cputimes.r
+
+
+if [ ! -z $(pidof swift) ]; then
+    echo "ERROR: swift was still running after finishing the tests."
+    echo "ERROR: Exiting with failure."
+    exit 1
+fi
