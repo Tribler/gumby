@@ -12,6 +12,8 @@ if [ ! -z $(pidof swift) ]; then
     fi
 fi
 
+mkdir -p $HOME/R
+
 export R_LIBS_USER=$R_LIBS_USER${R_LIBS_USER:+:}$HOME/R
 
 export DISPLAY=:0
