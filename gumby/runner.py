@@ -6,16 +6,6 @@
 # Author: Elric Milon
 # Maintainer:
 # Created: Wed Jun  5 14:47:19 2013 (+0200)
-# Version:
-# Last-Updated:
-#           By:
-#     Update #: 412
-# URL:
-# Doc URL:
-# Keywords:
-# Compatibility:
-#
-#
 
 # Commentary:
 #
@@ -60,10 +50,7 @@ from twisted.internet import reactor
 
 from sshclient import runRemoteCMD
 
-#setDebugging(True)
-
-class ExperimentEnded(Exception):
-    pass
+setDebugging(True)
 
 class ExperimentRunner(Logger):
     def __init__(self, config):
@@ -71,7 +58,6 @@ class ExperimentRunner(Logger):
         self._remote_workspace_dir = "Experiment_" + basename(config['workspace_dir'])
         # TODO: check if the experiment dir actually exists
         self._experiment_dir = path.abspath(config['workspace_dir'])
-        self._tracker_proto = None
 
     def logPrefix(self):
         return "ExperimentRunner"
@@ -92,7 +78,7 @@ class ExperimentRunner(Logger):
             experiment_dir = self._config['workspace_dir']
             args = ("/usr/bin/rsync", "-avz", "--recursive", "--exclude=.git*",
                     "--exclude=.svn", "--delete-excluded",
-                    experiment_dir + '/', ":".join((host, self._remote_workspace_dir+'/')
+                    experiment_dir + '/', ":".join((host, self._remote_workspace_dir + '/')
                                                    ))
             msg("Running: %s " % ' '.join(args))
             reactor.spawnProcess(pp, args[0], args)
@@ -122,16 +108,26 @@ class ExperimentRunner(Logger):
         def onTrackerFailure(failure):
             err("Tracked died, stopping experiment.")
             return failure
-        pp = OneShotProcessProtocol()
-        args = self._config['local_tracker_cmd'].split(' ', 1)
-        msg("Spawning local tracker with:", args)
-        reactor.spawnProcess(pp, args[0], args)
-        pp.getDeferred().addErrback(onTrackerFailure)
-        self._tracker_proto = pp
+
+        cmd = self._config['tracker_cmd']
+        if self._config.as_bool("tracker_run_local"):
+            msg("Spawning local tracker with:", cmd)
+            pp = OneShotProcessProtocol()
+            args = cmd.split(' ', 1)
+            reactor.spawnProcess(pp, args[0], args)
+            d = pp.getDeferred()
+        else:
+            msg("Spawning remote tracker on head node with:", cmd)
+            final_cmd = path.join(self._remote_workspace_dir, cmd)
+            host = self._config['head_nodes'][0]
+            d = runRemoteCMD(host, final_cmd)
+
+        d.addErrback(onTrackerFailure)
 
     def runLocalSetup(self):
         def onLocalSetupSuccess(ignored):
             msg("Local setup script finished.")
+
         def onLocalSetupFailure(failure):
             return failure
         pp = OneShotProcessProtocol()
@@ -156,7 +152,7 @@ class ExperimentRunner(Logger):
         #     process_guard_file.write(self._config['local_setup_cmd']+'\n')
         pp = OneShotProcessProtocol()
 
-        args=self._config['local_instance_cmd'].split()
+        args = self._config['local_instance_cmd'].split()
         reactor.spawnProcess(pp, args[0], args)
         d = pp.getDeferred()
         d.addBoth(onLocalInstanceSuccess, onLocalInstanceFailure)
