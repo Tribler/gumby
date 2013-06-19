@@ -1,11 +1,11 @@
-#!/usr/bin/env python
-# run.py ---
+#!/bin/bash -ex
+# run-in-env.sh ---
 #
-# Filename: run.py
+# Filename: run-in-env.sh
 # Description:
 # Author: Elric Milon
 # Maintainer:
-# Created: Wed Jun  5 14:47:19 2013 (+0200)
+# Created: Fri Jun 14 18:07:35 2013 (+0200)
 
 # Commentary:
 #
@@ -37,31 +37,25 @@
 
 # Code:
 
-import sys
-from os.path import dirname
+# Load env variables for this experiment
+source experiment_vars.sh
 
-from configobj import ConfigObj
+# Update PATH
+export PATH=$PATH:$PWD/gumby/scripts
 
-from twisted.python.log import startLogging, msg
-from twisted.internet import reactor
+# Update LD_LIBRARY_PATH and PATH if we are using a SystemTap enabled Python runtime
+if [ "$USE_SYSTEMTAP" -eq True ]; then
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/systemtap/inst/lib
+    export PATH=$PATH:$PWD/systemtap/inst/bin
+fi
 
-from gumby.runner import ExperimentRunner
+# Enter virtualenv in case there's one
+if [ "$USE_SYSTEMTAP" -eq True -o "$USE_VENV" -eq True ]; then
+    source venv/bin/activate
+fi
 
-#setDebugging(True)
-
-if __name__ == '__main__':
-    sys.path.append(dirname(__file__))
-    if len(sys.argv) == 2:
-        startLogging(sys.stdout)
-        # startLogging(open("/tmp/cosa.log",'w'))
-        config = ConfigObj(sys.argv[1])
-
-        exp_runner = ExperimentRunner(config)
-        exp_runner.run()
-        reactor.run()
-        msg("Execution finished, have a nice day.")
-    else:
-        print "Usage:\n%s EXPERIMENT_CONFIG" % sys.argv[0]
+# Run the actual command
+exec $*
 
 #
-# run.py ends here
+# run-in-env.sh ends here
