@@ -57,7 +57,7 @@ echo "nosetests -v --with-xcoverage --xcoverage-file=$PWD/coverage.xml  --with-x
 
 
 mkdir -p output
-../experiments/scripts/process_guard.py process_list.txt output 30 1 ||:
+../experiments/scripts/process_guard.py process_list.txt output 60 1 ||:
 
 
 ESCAPED_PATH=$(echo $PWD| sed 's~/~\\/~g')
