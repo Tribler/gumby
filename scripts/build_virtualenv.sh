@@ -56,18 +56,20 @@ source $VENV/bin/activate
 
 
 #hack for m2crypto to build properly in RH/fedora
-pushd $VENV/src
-wget https://www.openssl.org/source/openssl-1.0.1e.tar.gz
-tar xvzpf openssl*tar.gz
-pushd openssl-*/
+if [ ! -e $VENV/lib/libcrypto.so ]; then
+    pushd $VENV/src
+    wget https://www.openssl.org/source/openssl-1.0.1e.tar.gz
+    tar xvzpf openssl*tar.gz
+    pushd openssl-*/
 
-./config --prefix=$VENV threads zlib shared  --openssldir=$VENV/share/openssl
-#make -j$(grep processor /proc/cpuinfo | wc -l) #Fails when building in multithreaded mode
-make
-make install
-echo "Done"
-popd
-popd
+    ./config --prefix=$VENV threads zlib shared  --openssldir=$VENV/share/openssl
+    #make -j$(grep processor /proc/cpuinfo | wc -l) #Fails when building in multithreaded mode
+    make
+    make install
+    echo "Done"
+    popd
+    popd
+fi
 
 pip install m2crypto ||: # This will fail
 pushd $VENV/build/m2crypto
