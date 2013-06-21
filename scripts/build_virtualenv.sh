@@ -47,13 +47,13 @@ if [ -e $VENV/.completed ]; then
     exit 0
 fi
 
-
-virtualenv --no-site-packages --clear $VENV
+if [ -d $VENV ]; then
+    virtualenv --no-site-packages --clear $VENV
+fi
 
 mkdir -p $VENV/src
 
 source $VENV/bin/activate
-
 
 #hack for m2crypto to build properly in RH/fedora
 if [ ! -e $VENV/lib/libcrypto.so ]; then
