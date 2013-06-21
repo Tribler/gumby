@@ -38,7 +38,7 @@
 # Code:
 set -ex
 
-VENV=$PWD/venv
+VENV=$HOME/venv
 
 if [ -e $VENV/.completed ]; then
     echo "The virtualenv has been successfully built in a previous run of the script."
@@ -56,8 +56,7 @@ source $VENV/bin/activate
 
 
 #hack for m2crypto to build properly in RH/fedora
-rm  -fR build-tmp ; mkdir build-tmp
-pushd build-tmp
+pushd $VENV/src
 wget https://www.openssl.org/source/openssl-1.0.1e.tar.gz
 tar xvzpf openssl*tar.gz
 pushd openssl-*/
@@ -80,7 +79,7 @@ popd
 
 
 # Install apsw manually as it is not available trough pip.
-pushd build-tmp
+pushd $VENV/src
 wget https://apsw.googlecode.com/files/apsw-3.7.16.2-r1.zip
 unzip apsw*.zip
 cd apsw*/
