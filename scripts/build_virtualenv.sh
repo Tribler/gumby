@@ -50,7 +50,7 @@ fi
 
 virtualenv --no-site-packages --clear $VENV
 
-mkdir $VENV/src
+mkdir -p $VENV/src
 
 source $VENV/bin/activate
 
