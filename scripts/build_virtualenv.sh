@@ -135,7 +135,14 @@ if [ ! -e $VENV/lib/pkgconfig/libtorrent-rasterbar.pc ]; then
     cd ../..
 fi
 
-pip install -r requeriments.txt
+echo "
+ipython
+ntplib
+gmpy==1.16
+pyzmq
+twisted
+pysqlite
+" | pip install -r -
 
 deactivate
 
