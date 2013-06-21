@@ -79,7 +79,7 @@ class ExperimentRunner(Logger):
             pp = OneShotProcessProtocol()
             experiment_dir = self._config['workspace_dir']
             args = ("/usr/bin/rsync", "-avz", "--recursive", "--exclude=.git*",
-                    "--exclude=.svn", "--delete-excluded",
+                    "--exclude=.svn", "--exclude=local", "--delete-excluded",
                     experiment_dir + '/', ":".join((host, self._remote_workspace_dir + '/')
                                                    ))
             msg("Running: %s " % ' '.join(args))
@@ -159,15 +159,9 @@ class ExperimentRunner(Logger):
         def onSetupFailure(failure):
             return failure
 
-        remote_cmd_list = []
-        for host in self._config['head_nodes']:
-            msg("Running remote setup on", host)
-            final_cmd = path.join(self._remote_workspace_dir, self._config['remote_setup_cmd'])
-            d = runRemoteCMD(host, final_cmd)
-            remote_cmd_list.append(d)
-        remote_cmd_dlist = DeferredList(remote_cmd_list, fireOnOneErrback=True)
-        remote_cmd_dlist.addCallbacks(onSetupSuccess, onSetupFailure)
-        return remote_cmd_dlist
+        d = self.runCommandOnAllRemotes(self._config['remote_setup_cmd'])
+        d.addCallbacks(onSetupSuccess, onSetupFailure)
+        return d
 
     def runSetupScripts(self):
         msg("Running local and remote setup scripts")

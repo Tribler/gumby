@@ -48,17 +48,17 @@ source experiment_vars.sh
 export PATH=$PATH:$PROJECTROOT/gumby/scripts
 
 # Update LD_LIBRARY_PATH and PATH if we are using a SystemTap enabled Python runtime
-if [ "$USE_SYSTEMTAP" -eq True ]; then
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/systemtap/inst/lib
-    export PATH=$PATH:$PWD/systemtap/inst/bin
-fi
+# if [ "$USE_SYSTEMTAP" == True ]; then
+# fi
 
 # Enter virtualenv in case there's one
-if [ "$USE_LOCAL_SYSTEMTAP" == True -o "$USE_LOCAL_VENV" == True ]; then
-    if [ -d venv ]; then
-        source venv/bin/activate
-    fi
+if [ -d venv ]; then
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/systemtap/inst/lib
+    export PATH=$PATH:$PWD/systemtap/inst/bin
+    source venv/bin/activate
 fi
+# if [ "$USE_LOCAL_SYSTEMTAP" == True -o "$USE_LOCAL_VENV" == True ]; then
+# fi
 
 # Create the experiment output dir if its missing
 export OUTPUTDIR=$PROJECTROOT/output

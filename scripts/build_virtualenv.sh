@@ -38,16 +38,29 @@
 # Code:
 set -ex
 
-VENV=$HOME/venv
+if [ ! -z "$VIRTUALENV_DIR" ]; then
+    VENV=$VIRTUALENV_DIR
+else
+    VENV=$HOME/venv
+fi
 
 if [ -e $VENV/.completed ]; then
     echo "The virtualenv has been successfully built in a previous run of the script."
     echo "If you want to rebuild it or the script has been updated, either delete $VENV/.completed"
     echo "or the full $VENV dir and re-run the script."
+    if [ -e $PROJECTROOT/experiment_vars.sh ]; then
+        echo "export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH" >> $PROJECTROOT/experiment_vars.sh
+        echo "export LD_RUN_PATH=$VENV/lib:$LD_RUN_PATH" >> $PROJECTROOT/experiment_vars.sh
+        echo "export LD_PRELOAD=$VENV/lib/libcrypto.so" >> $PROJECTROOT/experiment_vars.sh
+    fi
     exit 0
 fi
 
-if [ -d $VENV ]; then
+# TODO: Fix this mess properly
+export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
+export LD_RUN_PATH=$VENV/lib:$LD_RUN_PATH
+
+if [ ! -d $VENV ]; then
     virtualenv --no-site-packages --clear $VENV
 fi
 
@@ -94,10 +107,10 @@ if [ ! -e $VENV/lib64/python2.6/site-packages/apsw.so ]; then
     python setup.py fetch --missing-checksum-ok --all build --enable-all-extensions install # test # running the tests makes it segfault...
 fi
 
-# TODO: Fix this mess properly
-export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
-export LD_RUN_PATH=$VENV/lib:$LD_RUN_PATH
+
 export LD_PRELOAD=$VENV/lib/libcrypto.so
+
+
 echo "Testing if the EC stuff is working..."
 python -c "from M2Crypto import EC; print dir(EC)"
 popd
