@@ -58,11 +58,13 @@ class ExperimentRunner(Logger):
         self._remote_workspace_dir = "Experiment_" + basename(config['workspace_dir'])
         # TODO: check if the experiment dir actually exists
         self._experiment_dir = path.abspath(config['workspace_dir'])
+        self._env_runner = "scripts/run_in_env.sh"
 
     def logPrefix(self):
         return "ExperimentRunner"
 
     def copyWorkspaceToHeadNodes(self):
+        msg("Syncing workspaces on remote head nodes...")
         def onCopySuccess(ignored):
             msg("Great copying success!")
 
@@ -88,21 +90,12 @@ class ExperimentRunner(Logger):
         d = gatherResults(copy_list, consumeErrors=True)
         d.addCallbacks(onCopySuccess, onCopyFailure)
 
-    def runRemoteSetupScript(self):
-        def onSetupSuccess(ignored):
-            msg("Remote setup successful!")
 
-        def onSetupFailure(failure):
-            return failure
-
-        remote_cmd_list = []
-        for host in self._config['head_nodes']:
-            final_cmd = path.join(self._remote_workspace_dir, self._config['remote_setup_cmd'])
-            d = runRemoteCMD(host, final_cmd)
-            remote_cmd_list.append(d)
-        remote_cmd_dlist = DeferredList(remote_cmd_list, fireOnOneErrback=True)
-        remote_cmd_dlist.addCallbacks(onSetupSuccess, onSetupFailure)
-        return remote_cmd_dlist
+        ## def runCommandInEnv(self, command):
+        ##     """
+        ##     Runs a command after exporting all needed env variables and virtualenv stuff if the config says so.
+        ##     """
+        ##     final_cmd = path.join(self._remote_workspace_dir, self._config['remote_setup_cmd'])
 
     def spawnTracker(self):
         def onTrackerFailure(failure):
@@ -122,7 +115,27 @@ class ExperimentRunner(Logger):
             host = self._config['head_nodes'][0]
             d = runRemoteCMD(host, final_cmd)
 
-        d.addErrback(onTrackerFailure)
+            d.addErrback(onTrackerFailure)
+
+    def spawnConfigServer(self):
+        def onConfServerFailure(failure):
+            err("Config server died, stopping experiment.")
+            return failure
+
+        cmd = self._config['config_server_cmd']
+        if self._config.as_bool("tracker_run_local"):
+            msg("Spawning local config server with:", cmd)
+            pp = OneShotProcessProtocol()
+            args = cmd.split(' ', 1)
+            reactor.spawnProcess(pp, args[0], args)
+            d = pp.getDeferred()
+        else:
+            msg("Spawning config server on head node with:", cmd)
+            final_cmd = path.join(self._remote_workspace_dir, cmd)
+            host = self._config['head_nodes'][0]
+            d = runRemoteCMD(host, final_cmd)
+
+        d.addErrback(onConfServerFailure)
 
     def runLocalSetup(self):
         def onLocalSetupSuccess(ignored):
@@ -138,6 +151,27 @@ class ExperimentRunner(Logger):
         d = pp.getDeferred()
         d.addCallbacks(onLocalSetupSuccess, onLocalSetupFailure)
         return d
+
+    def runRemoteSetup(self):
+        def onSetupSuccess(ignored):
+            msg("Remote setup successful!")
+
+        def onSetupFailure(failure):
+            return failure
+
+        remote_cmd_list = []
+        for host in self._config['head_nodes']:
+            msg("Running remote setup on", host)
+            final_cmd = path.join(self._remote_workspace_dir, self._config['remote_setup_cmd'])
+            d = runRemoteCMD(host, final_cmd)
+            remote_cmd_list.append(d)
+        remote_cmd_dlist = DeferredList(remote_cmd_list, fireOnOneErrback=True)
+        remote_cmd_dlist.addCallbacks(onSetupSuccess, onSetupFailure)
+        return remote_cmd_dlist
+
+    def runSetupScripts(self):
+        msg("Running local and remote setup scripts")
+        return gatherResults((self.runRemoteSetup(), self.runLocalSetup()), consumeErrors=True)
 
     def spawnLocalInstances(self):
         def onLocalInstanceSuccess(ignored, ignored2):
@@ -165,8 +199,33 @@ class ExperimentRunner(Logger):
             remote_instance_list.append(runRemoteCMD(host, final_cmd))
         return gatherResults(remote_instance_list, consumeErrors=True)
 
+    def runCommand(self, command, remote=False):
+        msg("Running command", command)
+        if remote:
+            msg("Remotely")
+            return self.runCommandOnAllRemotes(command)
+        else:
+            msg("Locally")
+            return self.runLocalCommand(command)
+
+    def runLocalCommand(self, command):
+        args = [self._env_runner, command]
+        pp = OneShotProcessProtocol()
+        reactor.spawnProcess(pp, args[0], args)
+        d = pp.getDeferred()
+        return d
+
+    def runCommandOnAllRemotes(self, command):
+        remote_instance_list = []
+        args = path.join(self._remote_workspace_dir, 'gumby', self._env_runner) + " " + command
+        for host in self._config['head_nodes']:
+            msg("Executing command in %s: %s" % (host, args))
+            remote_instance_list.append(runRemoteCMD(host, args))
+        return gatherResults(remote_instance_list, consumeErrors=True)
+
     @inlineCallbacks
-    def runRemote(self):
+    def runRemoteStuff(self):
+        cfg = self._config
         def onExperimentFinished(_):
             msg("Experiment finished successfully!, collecting data")
             # TODO: Actually collect data
@@ -177,11 +236,11 @@ class ExperimentRunner(Logger):
             return failure
 
         try:
-            msg("Syncing workspaces on remote head nodes...")
-            yield self.copyWorkspaceToHeadNodes()
+            d_cfg_server = self.runCommand(cfg['config_server_cmd'])
+
             msg("Running remote setup scripts on all head nodes")
             # Ok, now that the head nodes have all the necessary files we can run the setup script
-            yield self.runRemoteSetupScript()
+            yield self.runRemoteSetup()
             msg("Spawning remote instances")
             d = self.spawnRemoteInstances()
             d.addCallbacks(onExperimentFinished, onExperimentFailed)
@@ -191,19 +250,33 @@ class ExperimentRunner(Logger):
             raise RuntimeError("Remote execution failed with: %s", e)
 
     @inlineCallbacks
-    def runLocal(self):
+    def runLocalStuff(self):
         try:
             msg('Running local setup scripts')
             yield self.runLocalSetup()
+            # TODO: Spawn tracker and config server on run()
             msg('Spawning tracker')
             self.spawnTracker()
+            msg('Spawning config server')
+            self.spawnConfigServer()
             msg('Spawning local instances')
             yield self.spawnLocalInstances()
             msg('Local instances died')
         except Exception, e:
             raise RuntimeError("Local execution failed with: %s" % e)
 
+    def startTracker(self):
+        cfg = self._config
+        def onTrackerFailure(failure):
+            err("Tracker has died.")
+            # TODO: Add a config option to not shut down the experiment when the tracker dies
+            reactor.stop()
+        self._tracker_d = self.runCommand(cfg['tracker_cmd'], cfg.as_bool('tracker_run_remote'))
+        self._tracker_d.addErrback(onTrackerFailure)
+
     def run(self):
+        cfg = self._config
+
         def onExperimentSucceeded(_):
             msg("experiment suceeded")
 
@@ -216,12 +289,50 @@ class ExperimentRunner(Logger):
 
         chdir(self._experiment_dir)
 
-        d1 = self.runRemote()
-        d2 = self.runLocal()
+        # Step 1:
+        # Write the experiment config variables to a file sourceable by a shell script
+        with open(path.join(self._experiment_dir,"experiment_vars.sh"), 'w') as vars_f:
+            vars_f.write("# Auto generated file, do not modify\n")
+            for key, val in cfg.iteritems():
+                vars_f.write('export %s="%s"\n' % (key.upper(), val))
 
-        d = gatherResults((d1, d2), consumeErrors=True)
-        d.addCallbacks(onExperimentSucceeded, onExperimentFailed)
-        return d
+        # Step 2:
+        # Sync the working dir with the head nodes
+        d = Deferred()
+        d.addCallback(lambda _: self.copyWorkspaceToHeadNodes())
+
+        # Step 3:
+        # Run the set up script, both locally and in the head nodes
+        d.addCallback(lambda _: self.runSetupScripts())
+
+        # Step 4:
+        # Start the tracker, either locally or on the first head node of the list.
+        d.addCallback(lambda _: self.startTracker())
+
+        # TODO: From here onwards
+        reactor.callLater(0, d.callback, None)
+        reactor.callLater(60, reactor.stop)
+        # Step 5:
+        # Start the config server, always locally as the head nodes are firewalled and can't be reached from the outside if not trough SSH.
+
+        # Step 6:
+        # Spawn both local and remote instance runner scripts, which will connect to the config server and wait for all of them to be ready before starting the experiment.
+
+        # Step 7:
+        # Collect all the data from the remote head nodes.
+
+        # Step 8:
+        # Extract the data and graph stuff
+
+
+
+        ## d_remote = self.runRemoteStuff()
+        ## #d_local = self.runLocalStuff()
+
+        ## #d = gatherResults((d_tracker, d_remote, d_local), consumeErrors=True)
+        ## d = gatherResults((d_tracker, d_remote), consumeErrors=True)
+        ## d.addCallbacks(onExperimentSucceeded, onExperimentFailed)
+        ## return d
 
 class OneShotProcessProtocol(ProcessProtocol):
     def __init__(self, *k, **w):

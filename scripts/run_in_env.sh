@@ -37,11 +37,15 @@
 
 # Code:
 
+cd `dirname $0`/../..
+export PROJECTROOT=`pwd`
+echo "Project root is: $PROJECTROOT"
+
 # Load env variables for this experiment
 source experiment_vars.sh
 
 # Update PATH
-export PATH=$PATH:$PWD/gumby/scripts
+export PATH=$PATH:$PROJECTROOT/gumby/scripts
 
 # Update LD_LIBRARY_PATH and PATH if we are using a SystemTap enabled Python runtime
 if [ "$USE_SYSTEMTAP" -eq True ]; then
@@ -50,12 +54,18 @@ if [ "$USE_SYSTEMTAP" -eq True ]; then
 fi
 
 # Enter virtualenv in case there's one
-if [ "$USE_SYSTEMTAP" -eq True -o "$USE_VENV" -eq True ]; then
-    source venv/bin/activate
+if [ "$USE_LOCAL_SYSTEMTAP" == True -o "$USE_LOCAL_VENV" == True ]; then
+    if [ -d venv ]; then
+        source venv/bin/activate
+    fi
 fi
 
+# Create the experiment output dir if its missing
+export OUTPUTDIR=$PROJECTROOT/output
+mkdir -p $OUTPUTDIR
+
 # Run the actual command
-exec $*
+exec $* && echo "Successful execution."
 
 #
 # run-in-env.sh ends here
