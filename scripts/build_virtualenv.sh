@@ -151,7 +151,9 @@ gmpy==1.16
 pyzmq
 twisted
 pysqlite
-" | pip install -r -
+" > ~/requeriments.txt
+pip install -r ~/requeriments.txt
+rm ~/requeriments.txt
 
 deactivate
 
