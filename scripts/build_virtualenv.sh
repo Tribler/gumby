@@ -132,7 +132,7 @@ popd
 
 # Build Libtorrent and its python bindings
 pushd $VENV/src
-if [ ! -e $VENV/lib/pkgconfig/libtorrent-rasterbar.pc ]; then
+if [ ! -e $VENV/lib64/python2.6/site-packages/libtorrent.so ]; then
     wget --no-check-certificate https://libtorrent.googlecode.com/files/libtorrent-rasterbar-0.16.10.tar.gz
     tar xavf libtorrent-rasterbar-*.tar.gz
     cd libtorrent-rasterbar*/
