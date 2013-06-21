@@ -82,11 +82,17 @@ pip install m2crypto || (
 
 
 # Install apsw manually as it is not available trough pip.
-pushd $VENV/src
-wget https://apsw.googlecode.com/files/apsw-3.7.16.2-r1.zip
-unzip apsw*.zip
-cd apsw*/
-python setup.py fetch --missing-checksum-ok --all build --enable-all-extensions install # test # running the tests makes it segfault...
+if [ ! -e $VENV/lib64/python2.6/site-packages/apsw.so ]; then
+    pushd $VENV/src
+    if [ ! -e apsw-*zip ]; then
+        wget https://apsw.googlecode.com/files/apsw-3.7.16.2-r1.zip
+    fi
+    if [ ! -d apsw*/src ]; then
+        unzip apsw*.zip
+    fi
+    cd apsw*/
+    python setup.py fetch --missing-checksum-ok --all build --enable-all-extensions install # test # running the tests makes it segfault...
+fi
 
 # TODO: Fix this mess properly
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
