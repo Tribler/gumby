@@ -71,13 +71,14 @@ if [ ! -e $VENV/lib/libcrypto.so ]; then
     popd
 fi
 
-pip install m2crypto ||: # This will fail
-pushd $VENV/build/m2crypto
-python setup.py build_py
-python setup.py build_ext --openssl=$VENV
-#python setup.py build # Do not run this, it will break the proper stuff made by build_ext
-python setup.py install
-popd
+pip install m2crypto || (
+    pushd $VENV/build/m2crypto
+    python setup.py build_py
+    python setup.py build_ext --openssl=$VENV
+    #python setup.py build # Do not run this, it will break the proper stuff made by build_ext
+    python setup.py install
+    popd
+)
 
 
 # Install apsw manually as it is not available trough pip.
