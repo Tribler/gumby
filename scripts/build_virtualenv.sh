@@ -133,7 +133,7 @@ popd
 # Build Libtorrent and its python bindings
 pushd $VENV/src
 if [ ! -e $VENV/lib/pkgconfig/libtorrent-rasterbar.pc ]; then
-    wget https://libtorrent.googlecode.com/files/libtorrent-rasterbar-0.16.10.tar.gz
+    wget --no-check-certificate https://libtorrent.googlecode.com/files/libtorrent-rasterbar-0.16.10.tar.gz
     tar xavf libtorrent-rasterbar-*.tar.gz
     cd libtorrent-rasterbar*/
     ./configure --with-boost-python --with-boost=$VENV/include/boost --with-boost-libdir=$VENV/lib --with-boost-system=boost_system --prefix=$VENV --enable-python-binding
