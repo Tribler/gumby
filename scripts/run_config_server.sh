@@ -42,7 +42,7 @@ PEER_COUNT=1000
 INITIAL_DELAY=120
 SYNC_PORT=3500
 
-das4-config-sync-server.py $PEER_COUNT $INITIAL_DELAY $SYNC_PORT
+config_server.py $PEER_COUNT $INITIAL_DELAY $SYNC_PORT
 
 #
 # run_config_server.sh ends here

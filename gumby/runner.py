@@ -54,7 +54,7 @@ setDebugging(True)
 
 class ExperimentRunner(Logger):
     def __init__(self, config):
-        self._config = config
+        self._cfg = config
         self._remote_workspace_dir = "Experiment_" + basename(config['workspace_dir'])
         # TODO: check if the experiment dir actually exists
         self._experiment_dir = path.abspath(config['workspace_dir'])
@@ -75,9 +75,9 @@ class ExperimentRunner(Logger):
         copy_list = []
 
         # First, we need to copy the stuff to the das4 clusters we want to use to run the experiment
-        for host in self._config['head_nodes']:
+        for host in self._cfg['head_nodes']:
             pp = OneShotProcessProtocol()
-            experiment_dir = self._config['workspace_dir']
+            experiment_dir = self._cfg['workspace_dir']
             args = ("/usr/bin/rsync", "-avz", "--recursive", "--exclude=.git*",
                     "--exclude=.svn", "--exclude=local", "--delete-excluded",
                     experiment_dir + '/', ":".join((host, self._remote_workspace_dir + '/')
@@ -103,8 +103,8 @@ class ExperimentRunner(Logger):
             err("Tracked died, stopping experiment.")
             return failure
 
-        cmd = self._config['tracker_cmd']
-        if self._config.as_bool("tracker_run_local"):
+        cmd = self._cfg['tracker_cmd']
+        if self._cfg.as_bool("tracker_run_local"):
             msg("Spawning local tracker with:", cmd)
             pp = OneShotProcessProtocol()
             args = cmd.split(' ', 1)
@@ -113,7 +113,7 @@ class ExperimentRunner(Logger):
         else:
             msg("Spawning remote tracker on head node with:", cmd)
             final_cmd = path.join(self._remote_workspace_dir, cmd)
-            host = self._config['head_nodes'][0]
+            host = self._cfg['head_nodes'][0]
             d = runRemoteCMD(host, final_cmd)
 
             d.addErrback(onTrackerFailure)
@@ -123,8 +123,8 @@ class ExperimentRunner(Logger):
             err("Config server died, stopping experiment.")
             return failure
 
-        cmd = self._config['config_server_cmd']
-        if self._config.as_bool("tracker_run_local"):
+        cmd = self._cfg['config_server_cmd']
+        if self._cfg.as_bool("tracker_run_local"):
             msg("Spawning local config server with:", cmd)
             pp = OneShotProcessProtocol()
             args = cmd.split(' ', 1)
@@ -133,7 +133,7 @@ class ExperimentRunner(Logger):
         else:
             msg("Spawning config server on head node with:", cmd)
             final_cmd = path.join(self._remote_workspace_dir, cmd)
-            host = self._config['head_nodes'][0]
+            host = self._cfg['head_nodes'][0]
             d = runRemoteCMD(host, final_cmd)
 
         d.addErrback(onConfServerFailure)
@@ -145,7 +145,7 @@ class ExperimentRunner(Logger):
         def onLocalSetupFailure(failure):
             return failure
         pp = OneShotProcessProtocol()
-        args = self._config['local_setup_cmd'].split()
+        args = self._cfg['local_setup_cmd'].split()
         args = ['pwd']
         reactor.spawnProcess(pp, args[0], args)
 
@@ -160,7 +160,7 @@ class ExperimentRunner(Logger):
         def onSetupFailure(failure):
             return failure
 
-        d = self.runCommandOnAllRemotes(self._config['remote_setup_cmd'])
+        d = self.runCommandOnAllRemotes(self._cfg['remote_setup_cmd'])
         d.addCallbacks(onSetupSuccess, onSetupFailure)
         return d
 
@@ -181,7 +181,7 @@ class ExperimentRunner(Logger):
         #     process_guard_file.write(self._config['local_setup_cmd']+'\n')
         pp = OneShotProcessProtocol()
 
-        args = self._config['local_instance_cmd'].split()
+        args = self._cfg['local_instance_cmd'].split()
         reactor.spawnProcess(pp, args[0], args)
         d = pp.getDeferred()
         d.addBoth(onLocalInstanceSuccess, onLocalInstanceFailure)
@@ -189,8 +189,8 @@ class ExperimentRunner(Logger):
 
     def spawnRemoteInstances(self):
         remote_instance_list = []
-        final_cmd = path.join(self._remote_workspace_dir, self._config['remote_instance_cmd'])
-        for host in self._config['head_nodes']:
+        final_cmd = path.join(self._remote_workspace_dir, self._cfg['remote_instance_cmd'])
+        for host in self._cfg['head_nodes']:
             remote_instance_list.append(runRemoteCMD(host, final_cmd))
         return gatherResults(remote_instance_list, consumeErrors=True)
 
@@ -213,14 +213,13 @@ class ExperimentRunner(Logger):
     def runCommandOnAllRemotes(self, command):
         remote_instance_list = []
         args = path.join(self._remote_workspace_dir, 'gumby', self._env_runner) + " " + command
-        for host in self._config['head_nodes']:
+        for host in self._cfg['head_nodes']:
             msg("Executing command in %s: %s" % (host, args))
             remote_instance_list.append(runRemoteCMD(host, args))
         return gatherResults(remote_instance_list, consumeErrors=True)
 
     @inlineCallbacks
     def runRemoteStuff(self):
-        cfg = self._config
         def onExperimentFinished(_):
             msg("Experiment finished successfully!, collecting data")
             # TODO: Actually collect data
@@ -231,7 +230,7 @@ class ExperimentRunner(Logger):
             return failure
 
         try:
-            d_cfg_server = self.runCommand(cfg['config_server_cmd'])
+            d_cfg_server = self.runCommand(self._cfg['config_server_cmd'])
 
             msg("Running remote setup scripts on all head nodes")
             # Ok, now that the head nodes have all the necessary files we can run the setup script
@@ -261,17 +260,34 @@ class ExperimentRunner(Logger):
             raise RuntimeError("Local execution failed with: %s" % e)
 
     def startTracker(self):
-        cfg = self._config
         def onTrackerFailure(failure):
             err("Tracker has died.")
             # TODO: Add a config option to not shut down the experiment when the tracker dies
             reactor.stop()
-        self._tracker_d = self.runCommand(cfg['tracker_cmd'], cfg.as_bool('tracker_run_remote'))
+        self._tracker_d = self.runCommand(self._cfg['tracker_cmd'], self._cfg.as_bool('tracker_run_remote'))
         self._tracker_d.addErrback(onTrackerFailure)
+        d = Deferred()
+        reactor.callLater(1, d.callback, None)
+        return d
+
+    def startConfigServer(self):
+        def onConfigServerFailure(failure):
+            err("Config server has died.")
+            # TODO: Add a config option to not shut down the experiment when the config server dies???
+            reactor.stop()
+        #Only run it on the DAS head node if we aren't using systemtap.
+        self._config_server_d = self.runCommand(self._cfg['config_server_cmd'], not self._cfg.as_bool('use_local_systemtap'))
+        self._config_server_d.addErrback(onConfigServerFailure)
+        d = Deferred()
+        reactor.callLater(1, d.callback, None)
+        return d
+
+    def startInstances(self):
+        msg("Starting remote instances")
+        # TODO: Run the local stuff too
+        self._instances_d = self.runCommandOnAllRemotes(self._cfg['remote_instance_cmd'])
 
     def run(self):
-        cfg = self._config
-
         def onExperimentSucceeded(_):
             msg("experiment suceeded")
 
@@ -288,7 +304,7 @@ class ExperimentRunner(Logger):
         # Write the experiment config variables to a file sourceable by a shell script
         with open(path.join(self._experiment_dir,"experiment_vars.sh"), 'w') as vars_f:
             vars_f.write("# Auto generated file, do not modify\n")
-            for key, val in cfg.iteritems():
+            for key, val in self._cfg.iteritems():
                 vars_f.write('export %s="%s"\n' % (key.upper(), val))
 
         # Step 2:
@@ -304,14 +320,19 @@ class ExperimentRunner(Logger):
         # Start the tracker, either locally or on the first head node of the list.
         d.addCallback(lambda _: self.startTracker())
 
-        # TODO: From here onwards
-        reactor.callLater(0, d.callback, None)
-        #reactor.callLater(60, reactor.stop)
+
         # Step 5:
-        # Start the config server, always locally as the head nodes are firewalled and can't be reached from the outside if not trough SSH.
+        # Start the config server, always locally if running instances locally as the head nodes are firewalled and
+        # can only be reached from the outside trough SSH.
+        d.addCallback(lambda _: self.startConfigServer())
 
         # Step 6:
         # Spawn both local and remote instance runner scripts, which will connect to the config server and wait for all of them to be ready before starting the experiment.
+        d.addCallback(lambda _: self.startInstances())
+
+        # TODO: From here onwards
+        reactor.callLater(0, d.callback, None)
+        #reactor.callLater(60, reactor.stop)
 
         # Step 7:
         # Collect all the data from the remote head nodes.
