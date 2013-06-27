@@ -64,7 +64,6 @@ fi
 export OUTPUTDIR=$PROJECTROOT/output
 mkdir -p $OUTPUTDIR
 
-env > /tmp/bad.$( echo -n $* | sed 's/ /_/g' ).env
 # Run the actual command
 exec $* && echo "Successful execution."
 

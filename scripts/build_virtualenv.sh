@@ -116,9 +116,6 @@ echo "Testing if the EC stuff is working..."
 python -c "from M2Crypto import EC; print dir(EC)"
 
 
-env > /tmp/good.env
-
-
 #Not sure if we need this:
 #pushd build-tmp
 #wget http://download.zeromq.org/zeromq-3.2.3.tar.gz
