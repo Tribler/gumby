@@ -44,15 +44,21 @@ else
     VENV=$HOME/venv
 fi
 
+write_extra_vars()
+{
+    if [ -e $PROJECTROOT/experiment_vars.sh ]; then
+        echo "export EXTRA_LD_LIBRARY_PATH=$VENV/lib" >> $PROJECTROOT/experiment_vars.sh
+        echo "export EXTRA_LD_RUN_PATH=$VENV/lib" >> $PROJECTROOT/experiment_vars.sh
+        echo "export EXTRA_LD_PRELOAD=$VENV/lib/libcrypto.so" >> $PROJECTROOT/experiment_vars.sh
+    fi
+}
+
 if [ -e $VENV/.completed ]; then
     echo "The virtualenv has been successfully built in a previous run of the script."
     echo "If you want to rebuild it or the script has been updated, either delete $VENV/.completed"
     echo "or the full $VENV dir and re-run the script."
-    if [ -e $PROJECTROOT/experiment_vars.sh ]; then
-        echo "export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH" >> $PROJECTROOT/experiment_vars.sh
-        echo "export LD_RUN_PATH=$VENV/lib:$LD_RUN_PATH" >> $PROJECTROOT/experiment_vars.sh
-        echo "export LD_PRELOAD=$VENV/lib/libcrypto.so" >> $PROJECTROOT/experiment_vars.sh
-    fi
+    write_extra_vars
+
     exit 0
 fi
 
@@ -99,18 +105,19 @@ if [ ! -e $VENV/lib/libcrypto.so ]; then
     popd
 fi
 
-pushd $VENV/src
-wget http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
-tar xvapf M2Crypto-*.tar.gz
-pushd $VENV/src/M2Crypto-*/
-python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
-python setup.py build_py
-python setup.py build_ext --openssl=$VENV
-python setup.py install
+if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
+    pushd $VENV/src
+    wget http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
+    tar xvapf M2Crypto-*.tar.gz
+    pushd $VENV/src/M2Crypto-*/
+    python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
+    python setup.py build_py
+    python setup.py build_ext --openssl=$VENV
+    python setup.py install
+    popd
+fi
 
 export LD_PRELOAD=$VENV/lib/libcrypto.so
-
-popd
 
 echo "Testing if the EC stuff is working..."
 python -c "from M2Crypto import EC; print dir(EC)"
@@ -165,6 +172,7 @@ gmpy==1.16
 pyzmq
 twisted
 pysqlite
+netifaces
 " > ~/requeriments.txt
 pip install -r ~/requeriments.txt
 rm ~/requeriments.txt
@@ -177,6 +185,9 @@ unset LD_PRELOAD
 #rm -fR venv
 #mv $VENV $VENV/../venv
 rm -fR build-tmp
+
+write_extra_vars
+
 touch $VENV/.completed
 
 echo "Done, you can use this virtualenv with:

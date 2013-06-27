@@ -56,6 +56,9 @@ if [ ! -z "$VIRTUALENV_DIR" -a -d "$VIRTUALENV_DIR" ]; then
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/systemtap/inst/lib
     export PATH=$PATH:$PWD/systemtap/inst/bin
     source $VIRTUALENV_DIR/bin/activate
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$EXTRA_LD_LIBRARY_PATH
+    export LD_RUN_PATH=$LD_RUN_PATH:$EXTRA_LD_RUN_PATH
+    export LD_PRELOAD=$LD_PRELOAD:$EXTRA_LD_PRELOAD
 fi
 # if [ "$USE_LOCAL_SYSTEMTAP" == True -o "$USE_LOCAL_VENV" == True ]; then
 # fi
