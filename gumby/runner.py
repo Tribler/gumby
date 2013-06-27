@@ -306,7 +306,7 @@ class ExperimentRunner(Logger):
 
         # TODO: From here onwards
         reactor.callLater(0, d.callback, None)
-        reactor.callLater(60, reactor.stop)
+        #reactor.callLater(60, reactor.stop)
         # Step 5:
         # Start the config server, always locally as the head nodes are firewalled and can't be reached from the outside if not trough SSH.
 
