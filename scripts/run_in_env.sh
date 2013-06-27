@@ -52,10 +52,10 @@ export PATH=$PATH:$PROJECTROOT/gumby/scripts
 # fi
 
 # Enter virtualenv in case there's one
-if [ -d venv ]; then
+if [ ! -z "$VIRTUALENV_DIR" -a -d "$VIRTUALENV_DIR" ]; then
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/systemtap/inst/lib
     export PATH=$PATH:$PWD/systemtap/inst/bin
-    source venv/bin/activate
+    source $VIRTUALENV_DIR/bin/activate
 fi
 # if [ "$USE_LOCAL_SYSTEMTAP" == True -o "$USE_LOCAL_VENV" == True ]; then
 # fi
@@ -64,6 +64,7 @@ fi
 export OUTPUTDIR=$PROJECTROOT/output
 mkdir -p $OUTPUTDIR
 
+env > /tmp/bad.$( echo -n $* | sed 's/ /_/g' ).env
 # Run the actual command
 exec $* && echo "Successful execution."
 

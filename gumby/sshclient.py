@@ -5,16 +5,6 @@
 # Author: Elric Milon
 # Maintainer:
 # Created: Mon May 27 20:19:26 2013 (+0200)
-# Version:
-# Last-Updated:
-#           By:
-#     Update #: 232
-# URL:
-# Doc URL:
-# Keywords:
-# Compatibility:
-#
-#
 
 # Commentary:
 #
@@ -129,10 +119,10 @@ class _CommandChannel(SSHChannel):
         self.conn.sendRequest(self, 'exec', NS(self.command))
 
     def dataReceived(self, bytes_):
-        msg('SSH "%s" STDOUT: %s' % (self.command, bytes_))
+        msg('SSH "%s" STDOUT: %s' % (self.command, bytes_[:-1]))
 
     def extReceived(self, _, bytes_):
-        msg('SSH "%s" STDERR: %s' % (self.command, bytes_))
+        msg('SSH "%s" STDERR: %s' % (self.command, bytes_[:-1]))
 
     def closed(self):
         msg("SSH command channel closed")

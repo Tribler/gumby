@@ -89,6 +89,7 @@ class ExperimentRunner(Logger):
 
         d = gatherResults(copy_list, consumeErrors=True)
         d.addCallbacks(onCopySuccess, onCopyFailure)
+        return d
 
 
         ## def runCommandInEnv(self, command):

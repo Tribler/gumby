@@ -68,31 +68,6 @@ mkdir -p $VENV/src
 
 source $VENV/bin/activate
 
-#hack for m2crypto to build properly in RH/fedora
-if [ ! -e $VENV/lib/libcrypto.so ]; then
-    pushd $VENV/src
-    wget https://www.openssl.org/source/openssl-1.0.1e.tar.gz
-    tar xvzpf openssl*tar.gz
-    pushd openssl-*/
-
-    ./config --prefix=$VENV threads zlib shared  --openssldir=$VENV/share/openssl
-    #make -j$(grep processor /proc/cpuinfo | wc -l) #Fails when building in multithreaded mode
-    make
-    make install
-    echo "Done"
-    popd
-    popd
-fi
-
-pip install m2crypto || (
-    pushd $VENV/build/m2crypto
-    python setup.py build_py
-    python setup.py build_ext --openssl=$VENV
-    #python setup.py build # Do not run this, it will break the proper stuff made by build_ext
-    python setup.py install
-    popd
-)
-
 
 # Install apsw manually as it is not available trough pip.
 if [ ! -e $VENV/lib64/python2.6/site-packages/apsw.so ]; then
@@ -105,15 +80,44 @@ if [ ! -e $VENV/lib64/python2.6/site-packages/apsw.so ]; then
     fi
     cd apsw*/
     python setup.py fetch --missing-checksum-ok --all build --enable-all-extensions install # test # running the tests makes it segfault...
+    popd
 fi
 
+#hack for m2crypto to build properly in RH/fedora
+if [ ! -e $VENV/lib/libcrypto.so ]; then
+    pushd $VENV/src
+    wget https://www.openssl.org/source/openssl-1.0.1e.tar.gz
+    tar xvzpf openssl*tar.gz
+    pushd openssl-*/
+
+    ./config --prefix=$VENV threads zlib shared  --openssldir=$VENV/share/openssl
+    make -j$(grep processor /proc/cpuinfo | wc -l) || make -j4 || make -j2 || make #Fails when building in multithreaded mode
+    #make
+    make install
+    echo "Done"
+    popd
+    popd
+fi
+
+pushd $VENV/src
+wget http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
+tar xvapf M2Crypto-*.tar.gz
+pushd $VENV/src/M2Crypto-*/
+python setup.py build_py
+python setup.py build_ext --openssl=$VENV
+#python setup.py build # Do not run this, it will break the proper stuff made by build_ext
+python setup.py install
 
 export LD_PRELOAD=$VENV/lib/libcrypto.so
 
 
 echo "Testing if the EC stuff is working..."
 python -c "from M2Crypto import EC; print dir(EC)"
+
 popd
+
+env > /tmp/good.env
+
 
 #Not sure if we need this:
 #pushd build-tmp
@@ -184,6 +188,7 @@ And exit from it with:
 	activate
 Enjoy."
 
+env
 
 #
 # setup_env.sh ends here
