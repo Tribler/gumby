@@ -91,7 +91,7 @@ if [ ! -e $VENV/lib/libcrypto.so ]; then
     pushd openssl-*/
 
     ./config --prefix=$VENV threads zlib shared  --openssldir=$VENV/share/openssl
-    make -j$(grep processor /proc/cpuinfo | wc -l) || make -j4 || make -j2 || make #Fails when building in multithreaded mode
+    make -j2 || make #Fails when building in multithreaded mode
     #make
     make install
     echo "Done"
@@ -103,18 +103,18 @@ pushd $VENV/src
 wget http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
 tar xvapf M2Crypto-*.tar.gz
 pushd $VENV/src/M2Crypto-*/
+python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
 python setup.py build_py
 python setup.py build_ext --openssl=$VENV
-#python setup.py build # Do not run this, it will break the proper stuff made by build_ext
 python setup.py install
 
 export LD_PRELOAD=$VENV/lib/libcrypto.so
 
+popd
 
 echo "Testing if the EC stuff is working..."
 python -c "from M2Crypto import EC; print dir(EC)"
 
-popd
 
 env > /tmp/good.env
 
