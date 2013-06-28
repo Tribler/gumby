@@ -48,8 +48,6 @@ write_extra_vars()
 {
     if [ -e $PROJECTROOT/experiment_vars.sh ]; then
         echo "export EXTRA_LD_LIBRARY_PATH=$VENV/lib" >> $PROJECTROOT/experiment_vars.sh
-        echo "export EXTRA_LD_RUN_PATH=$VENV/lib" >> $PROJECTROOT/experiment_vars.sh
-        echo "export EXTRA_LD_PRELOAD=$VENV/lib/libcrypto.so" >> $PROJECTROOT/experiment_vars.sh
     fi
 }
 
@@ -64,7 +62,6 @@ fi
 
 # TODO: Fix this mess properly
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
-export LD_RUN_PATH=$VENV/lib:$LD_RUN_PATH
 
 if [ ! -d $VENV ]; then
     virtualenv --no-site-packages --clear $VENV
@@ -89,17 +86,24 @@ if [ ! -e $VENV/lib64/python2.6/site-packages/apsw.so ]; then
     popd
 fi
 
-#hack for m2crypto to build properly in RH/fedora
-if [ ! -e $VENV/lib/libcrypto.so ]; then
+# M2Crypto needs OpenSSL with EC support, but RH/Fedora doesn't provide it.
+# We install it in a different place so it will not end up in LD_LIBRARY_PATH
+# affecting the system's ssh binary.
+M2CDEPS=$VENV/m2cdeps
+mkdir -p $M2CDEPS
+if [ ! -e $M2CDEPS/lib/libcrypto.so ]; then
     pushd $VENV/src
     wget https://www.openssl.org/source/openssl-1.0.1e.tar.gz
     tar xvzpf openssl*tar.gz
     pushd openssl-*/
 
-    ./config --prefix=$VENV threads zlib shared  --openssldir=$VENV/share/openssl
+    ./config --prefix=$M2CDEPS threads zlib shared --openssldir=$M2CDEPS/share/openssl
     make -j2 || make #Fails when building in multithreaded mode
     #make
     make install
+    # Proper names for M2Crypto
+    ln -s $M2CDEPS/lib/libssl.so.1.0.0 $M2CDEPS/lib/libssl.so.10
+    ln -s $M2CDEPS/lib/libcrypto.so.1.0.0 $M2CDEPS/lib/libcrypto.so.10
     echo "Done"
     popd
     popd
@@ -112,12 +116,11 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
     pushd $VENV/src/M2Crypto-*/
     python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
     python setup.py build_py
-    python setup.py build_ext --openssl=$VENV
+    # This should use our custom libcrypto (explicit RPATH)
+    python setup.py build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib
     python setup.py install
     popd
 fi
-
-export LD_PRELOAD=$VENV/lib/libcrypto.so
 
 echo "Testing if the EC stuff is working..."
 python -c "from M2Crypto import EC; print dir(EC)"
@@ -181,7 +184,6 @@ deactivate
 
 virtualenv --relocatable $VENV
 
-unset LD_PRELOAD
 #rm -fR venv
 #mv $VENV $VENV/../venv
 rm -fR build-tmp
