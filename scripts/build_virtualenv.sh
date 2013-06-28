@@ -86,17 +86,24 @@ if [ ! -e $VENV/lib64/python2.6/site-packages/apsw.so ]; then
     popd
 fi
 
-#hack for m2crypto to build properly in RH/fedora
-if [ ! -e $VENV/lib/libcrypto.so ]; then
+# M2Crypto needs OpenSSL with EC support, but RH/Fedora doesn't provide it.
+# We install it in a different place so it will not end up in LD_LIBRARY_PATH
+# affecting the system's ssh binary.
+M2CDEPS=$VENV/m2cdeps
+mkdir -p $M2CDEPS
+if [ ! -e $M2CDEPS/lib/libcrypto.so ]; then
     pushd $VENV/src
     wget https://www.openssl.org/source/openssl-1.0.1e.tar.gz
     tar xvzpf openssl*tar.gz
     pushd openssl-*/
 
-    ./config --prefix=$VENV threads zlib shared  --openssldir=$VENV/share/openssl
+    ./config --prefix=$M2CDEPS threads zlib shared --openssldir=$M2CDEPS/share/openssl
     make -j2 || make #Fails when building in multithreaded mode
     #make
     make install
+    # Proper names for M2Crypto
+    ln -s $M2CDEPS/lib/libssl.so.1.0.0 $M2CDEPS/lib/libssl.so.10
+    ln -s $M2CDEPS/lib/libcrypto.so.1.0.0 $M2CDEPS/lib/libcrypto.so.10
     echo "Done"
     popd
     popd
@@ -110,7 +117,7 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
     python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
     python setup.py build_py
     # This should use our custom libcrypto (explicit RPATH)
-    python setup.py build_ext --openssl=$VENV --rpath=$VENV/lib
+    python setup.py build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib
     python setup.py install
     popd
 fi
