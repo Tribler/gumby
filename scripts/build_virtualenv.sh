@@ -48,8 +48,6 @@ write_extra_vars()
 {
     if [ -e $PROJECTROOT/experiment_vars.sh ]; then
         echo "export EXTRA_LD_LIBRARY_PATH=$VENV/lib" >> $PROJECTROOT/experiment_vars.sh
-        echo "export EXTRA_LD_RUN_PATH=$VENV/lib" >> $PROJECTROOT/experiment_vars.sh
-        echo "export EXTRA_LD_PRELOAD=$VENV/lib/libcrypto.so" >> $PROJECTROOT/experiment_vars.sh
     fi
 }
 
@@ -64,7 +62,6 @@ fi
 
 # TODO: Fix this mess properly
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
-export LD_RUN_PATH=$VENV/lib:$LD_RUN_PATH
 
 if [ ! -d $VENV ]; then
     virtualenv --no-site-packages --clear $VENV
@@ -116,8 +113,6 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
     python setup.py install
     popd
 fi
-
-export LD_PRELOAD=$VENV/lib/libcrypto.so
 
 echo "Testing if the EC stuff is working..."
 python -c "from M2Crypto import EC; print dir(EC)"
@@ -181,7 +176,6 @@ deactivate
 
 virtualenv --relocatable $VENV
 
-unset LD_PRELOAD
 #rm -fR venv
 #mv $VENV $VENV/../venv
 rm -fR build-tmp
