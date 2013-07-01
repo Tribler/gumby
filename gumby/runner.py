@@ -320,14 +320,14 @@ class ExperimentRunner(Logger):
         # Start the tracker, either locally or on the first head node of the list.
         d.addCallback(lambda _: self.startTracker())
 
-
         # Step 5:
         # Start the config server, always locally if running instances locally as the head nodes are firewalled and
         # can only be reached from the outside trough SSH.
         d.addCallback(lambda _: self.startConfigServer())
 
         # Step 6:
-        # Spawn both local and remote instance runner scripts, which will connect to the config server and wait for all of them to be ready before starting the experiment.
+        # Spawn both local and remote instance runner scripts, which will connect to the config server and wait for all
+        # of them to be ready before starting the experiment.
         d.addCallback(lambda _: self.startInstances())
 
         # TODO: From here onwards
