@@ -51,6 +51,50 @@ write_extra_vars()
     fi
 }
 
+# Build the systemtap enabled python runtime and systemtap itself
+# if dtrace is available, if not, just build python 2.7
+if [ ! -e $VENV/inst/.completed ]; then
+    mkdir -p $VENV/src
+    pushd $VENV/src
+    if [ -e /usr/bin/dtrace ]; then
+        WITH_SYSTEMTAP=yes
+        EXTRA_CONFIG_OPTS=--with-dtrace
+    else
+        EXTRA_CONFIG_OPTS=--without-dtrace
+    fi
+
+    if [ "$WITH_SYSTEMTAP" == yes ]; then
+
+        if [ ! -d systemtap-*/ ]; then
+            if [ ! -e systemtap-*.gz ]; then
+                wget http://sourceware.org/systemtap/ftp/releases/systemtap-2.2.tar.gz
+            fi
+            tar xavf systemtap-*.gz
+        fi
+        cd systemtap-*/
+        ./configure --prefix=$VENV/inst --with-dyninst=$VENV/inst/
+        make -j$(grep process /proc/cpuinfo | wc -l)
+        make install
+    fi
+
+    if [ ! -e $VENV/src/cpython-2011 ]; then
+        hg clone http://hg.jcea.es/cpython-2011
+    fi
+
+    if [ ! -e $VENV/inst/bin/python ]; then
+        pushd cpython-2011
+        hg checkout dtrace-issue13405_2.7
+        sudo apt-get install libncurses-dev systemtap-sdt-dev ||:
+        ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared
+        cp Modules/Setup.dist Modules/Setup
+        make -j$(grep process /proc/cpuinfo | wc -l)
+        make install
+        popd
+    fi
+    touch $VENV/inst/.completed
+    popd
+fi
+
 if [ -e $VENV/.completed ]; then
     echo "The virtualenv has been successfully built in a previous run of the script."
     echo "If you want to rebuild it or the script has been updated, either delete $VENV/.completed"
@@ -60,11 +104,11 @@ if [ -e $VENV/.completed ]; then
     exit 0
 fi
 
-# TODO: Fix this mess properly
-export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$VENV/inst/lib:$VENV/lib:$LD_LIBRARY_PATH
 
-if [ ! -d $VENV ]; then
-    virtualenv --no-site-packages --clear $VENV
+if [ ! -d $VENV/bin/python ]; then
+    #virtualenv   --no-site-packages --clear $VENV
+    virtualenv -p $VENV/inst/bin/python --no-site-packages --system-site-packages --clear $VENV
 fi
 
 mkdir -p $VENV/src
