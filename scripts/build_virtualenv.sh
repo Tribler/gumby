@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # setup_env.sh ---
 #
 # Filename: setup_env.sh
