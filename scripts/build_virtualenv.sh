@@ -173,7 +173,7 @@ source $VENV/bin/activate
 
 
 # Install apsw manually as it is not available trough pip.
-if [ ! -e $VENV/lib64/python2.6/site-packages/apsw.so ]; then
+if [ ! -e $VENV/lib*/python2.*/site-packages/apsw.so ]; then
     pushd $VENV/src
     if [ ! -e apsw-*zip ]; then
         wget https://apsw.googlecode.com/files/apsw-3.7.16.2-r1.zip
