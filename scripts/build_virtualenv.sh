@@ -147,7 +147,7 @@ fi
 
 # Build libevent, not really needed for anything python related, but swift
 # needs a newer version than the one installed on the DAS4
-if [ $VENV/inst/lib/libevent.so ]; then
+if [ ! -e $VENV/inst/lib/libevent.so ]; then
     pushd $VENV/src
     if [ ! -e libevent-*tar.gz ]; then
         wget https://github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz
@@ -158,6 +158,7 @@ if [ $VENV/inst/lib/libevent.so ]; then
     cd libevent-*/
     ./configure --prefix=$VENV/inst
     make -j$(grep process /proc/cpuinfo | wc -l)
+    make install
     popd
 fi
 
@@ -181,6 +182,8 @@ if [ ! -e $VENV/lib64/python2.6/site-packages/apsw.so ]; then
         unzip apsw*.zip
     fi
     cd apsw*/
+    # Fix a bug on apsw's setup.py
+    sed -i "s/part=part.split('=', 1)/part=tuple(part.split('=', 1))/" setup.py
     python setup.py fetch --missing-checksum-ok --all build --enable-all-extensions install # test # running the tests makes it segfault...
     popd
 fi
@@ -192,7 +195,7 @@ M2CDEPS=$VENV/m2cdeps
 mkdir -p $M2CDEPS
 if [ ! -e $M2CDEPS/lib/libcrypto.so ]; then
     pushd $VENV/src
-    wget https://www.openssl.org/source/openssl-1.0.1e.tar.gz
+    wget --no-check-certificate https://www.openssl.org/source/openssl-1.0.1e.tar.gz
     tar xvzpf openssl*tar.gz
     pushd openssl-*/
 
