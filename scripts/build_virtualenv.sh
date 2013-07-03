@@ -100,7 +100,6 @@ if [ ! -e $VENV/inst/.completed ]; then
         ./configure --prefix=$VENV/inst -with-libdwarf-incdir=$VENV/inst/include --with-libdwarf-libdir=$VENV/inst/lib
         #make -j$(grep process /proc/cpuinfo | wc -l)
         make
-        read key
         make install
         popd
 
