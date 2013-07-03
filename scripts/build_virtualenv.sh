@@ -219,7 +219,7 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
     python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
     python setup.py build_py
     # This should use our custom libcrypto (explicit RPATH)
-    python setup.py build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib
+    python setup.py build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib --include-dirs=$M2CDEPS/include
     python setup.py install
     popd
 fi
