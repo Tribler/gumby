@@ -51,6 +51,9 @@ write_extra_vars()
     fi
 }
 
+export LD_LIBRARY_PATH=$VENV/inst/lib:$VENV/lib:$LD_LIBRARY_PATH
+
+
 # Build the systemtap enabled python runtime and systemtap itself
 # if dtrace is available, if not, just build python 2.7
 if [ ! -e $VENV/inst/.completed ]; then
@@ -63,18 +66,57 @@ if [ ! -e $VENV/inst/.completed ]; then
         EXTRA_CONFIG_OPTS=--without-dtrace
     fi
 
+
     if [ "$WITH_SYSTEMTAP" == yes ]; then
 
+        if [ ! -e libdwarf-*gz ]; then
+            wget http://reality.sgiweb.org/davea/libdwarf-20130207.tar.gz
+        fi
+
+        if [ ! -d libdwarf-*/ ]; then
+            tar xavf libdwarf-*gz
+        fi
+
+        if [ ! -e $VENV/inst/lib/libdwarf.so ]; then
+            pushd dwarf-*/libdwarf/
+            ./configure --prefix=$VENV/inst  --enable-shared
+            make -j$(grep process /proc/cpuinfo | wc -l)
+            mkdir -p $VENV/inst/lib $VENV/inst/include
+            cp libdwarf.h dwarf.h $VENV/inst/include/
+            cp libdwarf.so $VENV/inst/lib/
+            popd
+        fi
+
+        # Build Dyininst (Systemtap dependency)
+        if [ ! -e DyninstAPI-*tgz ]; then
+            wget http://www.dyninst.org/sites/default/files/downloads/dyninst/8.1.2/DyninstAPI-8.1.2.tgz
+        fi
+        if [ ! -e DyninstAPI-*/ ]; then
+            tar xavf DyninstAPI-*tgz
+        fi
+        pushd DyninstAPI-*/
+        ls
+        sudo apt-get build-dep systemtap ||:
+        ./configure --prefix=$VENV/inst -with-libdwarf-incdir=$VENV/inst/include --with-libdwarf-libdir=$VENV/inst/lib
+        #make -j$(grep process /proc/cpuinfo | wc -l)
+        make
+        read key
+        make install
+        popd
+
+        # Build systemtap
         if [ ! -d systemtap-*/ ]; then
             if [ ! -e systemtap-*.gz ]; then
-                wget http://sourceware.org/systemtap/ftp/releases/systemtap-2.2.tar.gz
+                wget http://sourceware.org/systemtap/ftp/releases/systemtap-2.2.1.tar.gz
             fi
             tar xavf systemtap-*.gz
         fi
-        cd systemtap-*/
+
+        pushd systemtap-*/
         ./configure --prefix=$VENV/inst --with-dyninst=$VENV/inst/
         make -j$(grep process /proc/cpuinfo | wc -l)
         make install
+        popd
     fi
 
     if [ ! -e $VENV/src/cpython-2011 ]; then
@@ -104,7 +146,21 @@ if [ -e $VENV/.completed ]; then
     exit 0
 fi
 
-export LD_LIBRARY_PATH=$VENV/inst/lib:$VENV/lib:$LD_LIBRARY_PATH
+# Build libevent, not really needed for anything python related, but swift
+# needs a newer version than the one installed on the DAS4
+if [ $VENV/inst/lib/libevent.so ]; then
+    pushd $VENV/src
+    if [ ! -e libevent-*tar.gz ]; then
+        wget https://github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz
+    fi
+    if [ ! -e libevent-*/ ]; then
+        tar xapf libevent-*.tar.gz
+    fi
+    cd libevent-*/
+    ./configure --prefix=$VENV/inst
+    make -j$(grep process /proc/cpuinfo | wc -l)
+    popd
+fi
 
 if [ ! -d $VENV/bin/python ]; then
     #virtualenv   --no-site-packages --clear $VENV
@@ -181,15 +237,15 @@ python -c "from M2Crypto import EC; print dir(EC)"
 
 
 # Build libboost
-pushd $VENV/src
 if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
+    pushd $VENV/src
     wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.53.0/boost_1_53_0.tar.bz2
     tar xavf boost_*.tar.bz2
     cd boost*/
     ./bootstrap.sh
     ./b2 -j$(grep process /proc/cpuinfo | wc -l) --prefix=$VENV install
+    popd
 fi
-popd
 
 
 # Before continuing fix a stupid symlink bug
