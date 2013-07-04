@@ -41,9 +41,6 @@ class ConfigProtocol(LineReceiver):
                 transport.write("END\r\n")
             print " ***"
 
-        print "*** Stopping reactor in 10 seconds ***"
-        reactor.callLater(10, reactor.stop)
-
     def lineReceived(self, line):
         global configlock, subscribers, start_timestamp, initial_peer_delay
 
