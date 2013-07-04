@@ -267,14 +267,18 @@ fi
 # Build Libtorrent and its python bindings
 pushd $VENV/src
 if [ ! -e $VENV/lib64/python2.6/site-packages/libtorrent.so ]; then
-    wget --no-check-certificate https://libtorrent.googlecode.com/files/libtorrent-rasterbar-0.16.10.tar.gz
-    tar xavf libtorrent-rasterbar-*.tar.gz
+    if [ ! -e libtorrent-rasterbar-*gz ]; then
+        wget --no-check-certificate https://libtorrent.googlecode.com/files/libtorrent-rasterbar-0.16.10.tar.gz
+    fi
+    if [ ! -d libtorrent-rasterbar*/ ]; then
+        tar xavf libtorrent-rasterbar-*.tar.gz
+    fi
     cd libtorrent-rasterbar*/
     ./configure --with-boost-python --with-boost=$VENV/include/boost --with-boost-libdir=$VENV/lib --with-boost-system=boost_system --prefix=$VENV --enable-python-binding
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
     cd $VENV/lib
-    ln -s libboost_python.so libboost_python-py27.so.1.53.0
+    ln -fs libboost_python.so libboost_python-py27.so.1.53.0
     cd ../..
 fi
 
