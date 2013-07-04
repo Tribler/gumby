@@ -162,7 +162,7 @@ if [ ! -e $VENV/inst/lib/libevent.so ]; then
     popd
 fi
 
-if [ ! -d $VENV/bin/python ]; then
+if [ ! -e $VENV/bin/python ]; then
     #virtualenv   --no-site-packages --clear $VENV
     virtualenv -p $VENV/inst/bin/python --no-site-packages --system-site-packages --clear $VENV
 fi
@@ -193,19 +193,22 @@ fi
 # affecting the system's ssh binary.
 M2CDEPS=$VENV/m2cdeps
 mkdir -p $M2CDEPS
-if [ ! -e $M2CDEPS/lib/libcrypto.so ]; then
+if [ ! -e $M2CDEPS/lib/libcrypto.a ]; then
     pushd $VENV/src
-    wget --no-check-certificate https://www.openssl.org/source/openssl-1.0.1e.tar.gz
-    tar xvzpf openssl*tar.gz
+    if [ ! -e openssl-*.tar.gz ]; then
+        wget --no-check-certificate https://www.openssl.org/source/openssl-1.0.1e.tar.gz
+    fi
+    if [ ! -d openssl-*/ ]; then
+        tar xvzpf openssl*tar.gz
+    fi
     pushd openssl-*/
 
-    ./config --prefix=$M2CDEPS threads zlib shared --openssldir=$M2CDEPS/share/openssl
-    make -j2 || make #Fails when building in multithreaded mode
-    #make
+    ./config -fPIC --prefix=$M2CDEPS threads --openssldir=$M2CDEPS/share/openssl
+    make -j2 || make #Fails when building in multithreaded mode (at least with -j24)
     make install
     # Proper names for M2Crypto
-    ln -s $M2CDEPS/lib/libssl.so.1.0.0 $M2CDEPS/lib/libssl.so.10
-    ln -s $M2CDEPS/lib/libcrypto.so.1.0.0 $M2CDEPS/lib/libcrypto.so.10
+    #ln -sf $M2CDEPS/lib/libssl.so.1.0.0 $M2CDEPS/lib/libssl.so.10
+    #ln -sf $M2CDEPS/lib/libcrypto.so.1.0.0 $M2CDEPS/lib/libcrypto.so.10
     echo "Done"
     popd
     popd
@@ -213,20 +216,25 @@ fi
 
 if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
     pushd $VENV/src
-    wget http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
-    tar xvapf M2Crypto-*.tar.gz
-    pushd $VENV/src/M2Crypto-*/
-    python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
+    if [ ! -e M2Crypto-*gz ]; then
+        wget http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
+    fi
+    if [ ! -d M2Crypto-*/ ]; then
+        tar xvapf M2Crypto-*.tar.gz
+    fi
+    pushd M2Crypto-*/
+    # python setup.py clean # This does nothing
+    #rm -fR build # this does :D
+    #python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
     python setup.py build_py
     # This should use our custom libcrypto (explicit RPATH)
-    python setup.py build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib --include-dirs=$M2CDEPS/include
+    CFLAGS="$M2CDEPS/lib/libcrypto.a -fPIC" python setup.py --verbose build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib --include-dirs=$M2CDEPS/include
     python setup.py install
     popd
 fi
 
 echo "Testing if the EC stuff is working..."
 python -c "from M2Crypto import EC; print dir(EC)"
-
 
 #Not sure if we need this:
 #pushd build-tmp
