@@ -1,0 +1,100 @@
+global backtrace, ioWriteCounter, filehandles, times, doesIO;
+global i;
+
+global filesWritten;
+function getPyBacktrace(currentTid)
+{
+	pyBacktrace = "";
+	index = 0;
+	foreach ([tid, i2-] in backtrace) {
+		if(index < 20 & tid == currentTid)
+		{
+			if(isinstr(backtrace[tid, i2], "/home/user/src/tribler/Tribler/"))
+				str = substr(backtrace[tid, i2], 30, strlen(backtrace[tid, i2]));
+			else 
+				str = backtrace[tid, i2];
+		
+
+			if(isinstr(str, "/home/user/python-src/virtualenv-attempt/inst/"))
+				str = substr(str, 45, strlen(str));
+
+			pyBacktrace = sprintf("%s<-%s (%d)", pyBacktrace, str, doesIO[tid, i2]);
+			//pyBacktrace = sprintf("%s<-%s", pyBacktrace, str);
+			index += 1;
+		}
+	}
+	return pyBacktrace;
+}
+
+
+probe python.function.entry
+{ 
+	i[tid()] += 1
+	//backtrace[tid(), i[tid()]] = sprintf("%s:%d:%s (%d  %d)", filename, lineno, funcname, tid(), i[tid()]);
+	backtrace[tid(), i[tid()]] = sprintf("%s:%d:%s", filename, lineno, funcname);
+	times[tid(), funcname] = gettimeofday_us();
+	doesIO[tid(), i[tid()]] = 0;
+}
+
+probe python.function.return
+{ 
+	if(i[tid()] > 0)
+	{	
+		foreach ([tid, i2] in ioWriteCounter)	
+		{
+			if(tid == tid() && i2 == i[tid()] && ioWriteCounter[tid, i2] > 0)
+			{
+				bt = getPyBacktrace(tid());
+				execTime =  gettimeofday_us()-times[tid(), funcname];
+					
+				
+				printf("WRITE, %s, %s, %d, %s, %d\n", filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime ); 
+				
+			}
+			
+			
+		}
+
+				
+		delete ioWriteCounter[tid(), i[tid()]];
+		delete backtrace[tid(), i[tid()]];
+		i[tid()] -= 1
+	}
+	
+}
+
+probe syscall.open.return
+{
+	fd = $return;
+	//filehandles[tid(), fd] = sprintf("%s (%d)", user_string($filename), tid());
+	filehandles[tid(), fd] = sprintf("%s", user_string($filename));
+	filesWritten[tid(), i[tid()]] = fd;
+}
+
+probe syscall.write.return {
+	if ($return>0) {
+		doesIO[tid(), i[tid()]] = 1;
+		ioWriteCounter[tid(), i[tid()]] += $return;
+
+	}
+}
+
+/*
+probe syscall.read.return {
+	if ($return>0) {
+		ioReadCounter[tid(), i[tid()]] += $return;		
+	}
+}
+*/
+probe begin {
+	printf("\"TYPE\", \"FILE\", \"TRACE\", \"BYTES\", \"PROCESS\", \"TIME\"\n");
+}
+
+probe timer.s(600)
+{
+	exit()
+}
+
+/*probe kprocess.create {
+	printf("Thread created: %s\n", task_execname(pid2task(new_pid)))
+}*/
