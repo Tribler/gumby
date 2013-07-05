@@ -29,9 +29,9 @@ def readDataframeDump(filename):
 	return var
 	
 def print_html_doc():
-	loader = FileSystemLoader(searchpath = THIS_DIR + '/templates')
+	loader = FileSystemLoader(searchpath = '../templates')
 	env = Environment(loader=loader)
-	template = env.get_template('Template-IOWritesReport.html')
+	template = env.get_template('template_io_writes_report.html')
 	report = template.render(
 		title= 'IO Writes Report',
 		summary = readSummary(),

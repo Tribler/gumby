@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <title>{{ title }}</title>
-	<link type="text/css" href="../css/style.css" rel="stylesheet">
+	<link type="text/css" href="iowritesreport.css" rel="stylesheet">
 </head>
 <body>
     

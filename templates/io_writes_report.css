@@ -1,0 +1,10 @@
+td
+{
+	vertical-align: top;
+}
+
+div.stacktrace
+{
+	overflow: auto;
+	height: 100px;
+}
