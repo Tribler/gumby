@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 EXPECTED_ARGS=2
 if [ $# -ne $EXPECTED_ARGS ]
