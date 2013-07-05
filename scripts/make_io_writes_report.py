@@ -12,11 +12,11 @@ def setReportName():
 	if len(sys.argv) > 1:
 		reportName = sys.argv[1]
 	else:
-		print 'usage python IOWrites.py reportName'
+		print 'usage python make_io_writes_report.py reportName'
 		exit()	
 
 def readSummary():
-	with file(THIS_DIR + reportName + '/Summary.txt') as f:
+	with file(THIS_DIR + reportName + '/summary.txt') as f:
 		s = f.read()
 	return s
 
@@ -35,13 +35,13 @@ def print_html_doc():
 	report = template.render(
 		title= 'IO Writes Report',
 		summary = readSummary(),
-		top20PerStacktrace = readDataframeDump(THIS_DIR + reportName + '/Top20PerStacktrace.csv'),
-		top20PerFilename = readDataframeDump(THIS_DIR + reportName + '/Top20PerFilename.csv'),
-		topLargestWrites = readDataframeDump(THIS_DIR + reportName + '/TopLargestWrites.csv')
+		top20PerStacktrace = readDataframeDump(THIS_DIR + reportName + '/top20_per_stacktrace.csv'),
+		top20PerFilename = readDataframeDump(THIS_DIR + reportName + '/top20_per_filename.csv'),
+		topLargestWrites = readDataframeDump(THIS_DIR + reportName + '/top_largest_writes.csv')
 		
 		
 		)
-	with open(THIS_DIR + reportName + '/IOWritesReport.html', 'wb') as fh:
+	with open(THIS_DIR + reportName + '/io_writes_report.html', 'wb') as fh:
 		fh.write(report)
 
  

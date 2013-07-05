@@ -33,3 +33,12 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# gedit backup files
+*~
+
+# crap R generates automatically
+Rplots.pdf
+
+# output dir
+output/
