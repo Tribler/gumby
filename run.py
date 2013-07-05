@@ -42,18 +42,73 @@ from os.path import dirname
 
 from configobj import ConfigObj
 
-from twisted.python.log import startLogging, msg
+from twisted.python.log import msg, FileLogObserver, textFromEventDict, _safeFormat, startLogging
+from twisted.python import util
 from twisted.internet import reactor
 
 from gumby.runner import ExperimentRunner
 
-#setDebugging(True)
+class ColoredFileLogObserver(FileLogObserver):
+    CANCEL_COLOR = "\x1b[0m"
+    RED_NORMAL = "\x1b[31m"
+    RED_BOLD = "\x1b[31;1m"
+    GREEN_NORMAL = "\x1b[32m"
+    GREEN_BOLD = "\x1b[32;1m"
+    GREY_NORMAL = "\x1b[37m"
+
+    def __init__(self, f=None):
+        if f is None:
+            FileLogObserver.__init__(self, sys.stdout)
+        else:
+            FileLogObserver.__init__(self, f)
+
+    def _colorize(self, text, color=GREY_NORMAL):
+        return color + text + ColoredFileLogObserver.CANCEL_COLOR
+
+    def emit(self, eventDict):
+        text = textFromEventDict(eventDict)
+        if text is None:
+            return
+
+        timeStr = self._colorize(
+            self.formatTime(eventDict['time']),
+            ColoredFileLogObserver.GREY_NORMAL)
+        fmtDict = {
+            'system': eventDict['system'],
+            'text': text.replace("\n", "\n\t")}
+        systemStr = ""
+        systemStr = self._colorize(
+           _safeFormat("[%(system)s]", fmtDict),
+           ColoredFileLogObserver.GREY_NORMAL)
+        textStr = _safeFormat("%(text)s", fmtDict)
+        
+        if textStr.startswith("SSH"):
+            t = textStr.find("STDERR:")
+            if t != -1:
+                textStr = self._colorize(
+                    textStr[t + 8:],
+                    ColoredFileLogObserver.RED_BOLD)
+            else:
+                textStr = self._colorize(
+                    textStr[textStr.find("STDOUT:") + 8:],
+                    ColoredFileLogObserver.GREEN_BOLD)
+            # only text for incoming data
+            msgStr = textStr + "\n"
+        else:
+            # add system to the local logs
+            # TODO: Make system more useful, not just "SSHChannel...".
+            msgStr = systemStr + " " + textStr + "\n"
+
+        util.untilConcludes(self.write, timeStr + " " + msgStr)
+        util.untilConcludes(self.flush)  # Hoorj!
 
 if __name__ == '__main__':
     sys.path.append(dirname(__file__))
     if len(sys.argv) == 2:
-        startLogging(sys.stdout)
-        # startLogging(open("/tmp/cosa.log",'w'))
+        #startLogging(sys.stdout)
+        #startLogging(open("/tmp/cosa.log",'w'))
+        observer = ColoredFileLogObserver()
+        observer.start()
         config = ConfigObj(sys.argv[1])
 
         exp_runner = ExperimentRunner(config)

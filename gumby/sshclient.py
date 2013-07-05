@@ -119,10 +119,14 @@ class _CommandChannel(SSHChannel):
         self.conn.sendRequest(self, 'exec', NS(self.command))
 
     def dataReceived(self, bytes_):
-        msg('SSH "%s" STDOUT: %s' % (self.command, bytes_[:-1]))
+        # we could recv more than 1 line
+        for line in bytes_[:-1].replace("\r\n", "\n").split("\n"):
+            msg('SSH "%s" STDOUT: %s' % (self.command, line))
 
     def extReceived(self, _, bytes_):
-        msg('SSH "%s" STDERR: %s' % (self.command, bytes_[:-1]))
+        # we could recv more than 1 line
+        for line in bytes_[:-1].replace("\r\n", "\n").split("\n"):
+            msg('SSH "%s" STDERR: %s' % (self.command, line))
 
     def closed(self):
         msg("SSH command channel closed")
