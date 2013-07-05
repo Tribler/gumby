@@ -10,4 +10,14 @@ fi
 TESTCASE=$1
 OUTPUT=$2
 
-stap log_io_writes.stp -DMAXMAPENTRIES=10000 -DSTP_NO_OVERLOAD -DMAXSTRINGLEN=4096 -DTRYLOCKDELAY=300 -DMAXSKIPPED=10000 -DMAXACTION=1000 -c "env 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH' $TESTCASE" -o $2
+# Find the stp dir
+SCRIPTDIR=$( dirname $(readlink -f "$0"))
+if [ ! -d "$SCRIPTDIR" ]; then
+    SCRIPTDIR=$( dirname $(readlink -f $(which "$0")))
+fi
+if [ ! -d "$SCRIPTDIR" ]; then
+    echo "Couldn't find this script path, bailing out."
+    exit 1
+fi
+
+stap "$SCRIPTDIR"/stp/log_io_writes.stp -DMAXMAPENTRIES=10000 -DSTP_NO_OVERLOAD -DMAXSTRINGLEN=4096 -DTRYLOCKDELAY=300 -DMAXSKIPPED=10000 -DMAXACTION=1000 -c "env 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH' $TESTCASE" -o $2
