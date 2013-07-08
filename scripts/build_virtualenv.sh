@@ -291,6 +291,7 @@ pysqlite
 netifaces
 twisted # Used by the config server/clients
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
+nose
 " > ~/requeriments.txt
 pip install -r ~/requeriments.txt
 rm ~/requeriments.txt
