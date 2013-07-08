@@ -4,7 +4,7 @@ if(length(args) > 2) {
   reportName = args[1]
   csvFile = args[2]
   description = args[3]
-  outputDir = "../output/perf_reports"
+  outputDir = "../output"
 } else {
   reportName = 'test'
   csvFile = '/home/corpaul/gumby/gumby/scripts/csv/nosetests_test_magnetlink1.csv'
