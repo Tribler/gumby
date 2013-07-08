@@ -7,7 +7,7 @@ then
 	exit 65
 fi
 
-OUTPUTDIR=../output/perf_reports
+OUTPUTDIR=../output/
 
 mkdir -p $OUTPUTDIR/$1
 
@@ -23,6 +23,7 @@ fi
 
 Rscript $SCRIPTDIR/r/io_writes_report.R $1 $2 "$3"
 
-python $SCRIPTDIR/make_io_writes_report.py $1
-cp $SCRIPTDIR/../templates/io_writes_report.css $OUTPUTDIR/$1/io_writes_report.css
+cd $SCRIPTDIR
+python make_io_writes_report.py $1
+cp ../templates/io_writes_report.css $OUTPUTDIR/$1/io_writes_report.css
 echo "Report created in $OUTPUTDIR/$1 ok"
