@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 EXPECTED_ARGS=3
 if [ $# -ne $EXPECTED_ARGS ]
