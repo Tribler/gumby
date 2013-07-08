@@ -7,7 +7,7 @@ then
 	exit 65
 fi
 
-OUTPUTDIR=../output/$1
+OUTPUTDIR=$1
 
 mkdir -p $OUTPUTDIR
 
