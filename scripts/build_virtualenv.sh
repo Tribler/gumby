@@ -287,9 +287,10 @@ ipython
 ntplib
 gmpy==1.16
 pyzmq
-twisted
 pysqlite
 netifaces
+twisted # Used by the config server/clients
+Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 " > ~/requeriments.txt
 pip install -r ~/requeriments.txt
 rm ~/requeriments.txt
