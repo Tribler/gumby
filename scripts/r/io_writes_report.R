@@ -23,7 +23,7 @@ csvData = read.csv(csvFile)
 rowCount = nrow(csvData)
 #totalBytes = sum(as.numeric(as.character(data$BYTES)))
 totalBytes = sum(csvData$BYTES)
-sink(sprintf("%s/%s/summary.txt", outputDir, reportName))
+sink(sprintf("%s/summary.txt", outputDir))
 
 cat(sprintf("Report name: %s\n", reportName))
 cat(sprintf("Data monitored for: %s\n", description))
