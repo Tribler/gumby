@@ -7,9 +7,9 @@ then
 	exit 65
 fi
 
-OUTPUTDIR=../output/
+OUTPUTDIR=../output/$1
 
-mkdir -p $OUTPUTDIR/$1
+mkdir -p $OUTPUTDIR
 
 # Find the stp dir
 SCRIPTDIR=$( dirname $(readlink -f "$0"))
@@ -24,6 +24,6 @@ fi
 Rscript $SCRIPTDIR/r/io_writes_report.R $1 $2 "$3"
 
 cd $SCRIPTDIR
-python make_io_writes_report.py $1
-cp ../templates/io_writes_report.css $OUTPUTDIR/$1/io_writes_report.css
-echo "Report created in $OUTPUTDIR/$1 ok"
+python make_io_writes_report.py $OUTPUTDIR
+cp ../templates/io_writes_report.css $OUTPUTDIR/io_writes_report.css
+echo "Report created in $OUTPUTDIR ok"
