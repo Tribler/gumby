@@ -4,11 +4,11 @@ if(length(args) > 2) {
   reportName = args[1]
   csvFile = args[2]
   description = args[3]
-  outputDir = "../output"
+  outputDir = args[1]
 } else {
   reportName = 'test'
   csvFile = '/home/corpaul/gumby/gumby/scripts/csv/nosetests_test_magnetlink1.csv'
-  description = 'Test run from R console'  
+  description = 'Test run from R console'
   outputDir = "/home/corpaul/gumby/gumby/output/perf_reports/"
 }
 
@@ -48,17 +48,17 @@ bytescountPerStacktrace = merge(bytescountPerStacktrace, counts, by = "TRACE")
 colnames(bytescountPerStacktrace) <- c("TRACE", "FILE", "PROCESS", "BYTES", "COUNT")
 
 top20PerStacktrace = bytescountPerStacktrace [with(bytescountPerStacktrace , order(-BYTES))[1:30],]
-write.csv(top20PerStacktrace, file=sprintf("%s/%s/top20_per_stacktrace.csv", outputDir, reportName))
+write.csv(top20PerStacktrace, file=sprintf("%s/top20_per_stacktrace.csv", outputDir))
 
 # calculate percentage and write to file for comparison
 library(plyr)
-perc<-ddply(bytescountPerStacktrace,.(TRACE=TRACE), summarize, PERC = (BYTES/totalBytes)*100) 
+perc<-ddply(bytescountPerStacktrace,.(TRACE=TRACE), summarize, PERC = (BYTES/totalBytes)*100)
 bytescountPerStacktrace = merge(bytescountPerStacktrace, perc, by = "TRACE")
 
 #totalBytes
 sum(bytescountPerStacktrace$PERC)
 
-write.csv(bytescountPerStacktrace, file=sprintf("%s/%s/summary_per_stacktrace.csv", outputDir, reportName))
+write.csv(bytescountPerStacktrace, file=sprintf("%s/summary_per_stacktrace.csv", outputDir))
 
 # get top 20 IO writes per filename
 bytescountPerFilename = aggregate(csvData$BYTES, by=list(csvData$FILE, csvData$type, csvData$PROCESS), FUN=sum)
@@ -67,12 +67,12 @@ bytescountPerFilename = aggregate(csvData$BYTES, by=list(csvData$FILE, csvData$t
 colnames(bytescountPerFilename) = c("FILE", "type", "PROCESS", "BYTES")
 topsize = min(30, length(bytescountPerFilename$FILE))
 top20PerFilename = bytescountPerFilename[with(bytescountPerFilename, order(-BYTES))[1:topsize],]
-write.csv(top20PerFilename , file=sprintf("%s/%s/top20_per_filename.csv", outputDir, reportName))
+write.csv(top20PerFilename , file=sprintf("%s/top20_per_filename.csv", outputDir))
 
 
 # get top 20 IO writes per filename
 topLargestWrites = csvData[with(csvData, order(-BYTES))[1:topsize],]
-write.csv(topLargestWrites , file=sprintf("%s/%s/top_largest_writes.csv", outputDir, reportName))
+write.csv(topLargestWrites , file=sprintf("%s/top_largest_writes.csv", outputDir))
 
 
 # graph top 50 writes per filename
@@ -107,17 +107,17 @@ ticksSeq = seq(0, maxVal, by=maxVal/10)
 topPerFilename$FILE <- reorder(topPerFilename$FILE, -topPerFilename$BYTES)
 
 
-#p = ggplot(data = topPerFilename, aes(x = topPerFilename$BYTES, y = topPerFilename$FILE, colour = topPerFilename$type))
-#p + geom_point() + 
-#  scale_x_continuous(breaks=ticksSeq, limits = c(0,maxVal), expand = c(0,0)) +
-#  theme(axis.text.x=element_text(angle = 90))
-#ggsave(file=sprintf("%s/%s/top_per_filename.svg", outputDir, reportName), width=12, height=6, dpi=100)
+p = ggplot(data = topPerFilename, aes(x = topPerFilename$BYTES, y = topPerFilename$FILE, colour = topPerFilename$type))
+p + geom_point() +
+ scale_x_continuous(breaks=ticksSeq, limits = c(0,maxVal), expand = c(0,0)) +
+ theme(axis.text.x=element_text(angle = 90))
+ggsave(file=sprintf("%s/top_per_filename.svg", outputDir), width=12, height=6, dpi=100)
 
 
 
 #dotchart(topPerFilename$BYTES,labels=topPerFilename$FILE,cex=.7,groups= topPerFilename$type,
 #        main="Bytes written to file\ngrouped by type of write",
-#       xlab="Bytes written", gcolor="black", color=topPerFilename$color) 
+#       xlab="Bytes written", gcolor="black", color=topPerFilename$color)
 #jpeg(filename = sprintf("python/PerformanceReports/%s/topPerFilename.jpg", reportName))
 
 
@@ -126,5 +126,3 @@ topPerFilename$FILE <- reorder(topPerFilename$FILE, -topPerFilename$BYTES)
 #top20TimePerStacktrace = timePerStacktrace [with(timePerStacktrace , order(-x))[1:20],]
 #colnames(top20TimePerStacktrace) <- c("TRACE", "FILE", "PROCESS", "TIME(us)")
 #write.csv(top20TimePerStacktrace, file=sprintf("python/PerformanceReports/%s/Top20TimePerStacktrace.csv", reportName))
-
-
