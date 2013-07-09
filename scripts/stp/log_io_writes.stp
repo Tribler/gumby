@@ -48,7 +48,7 @@ probe python.function.return
 				execTime =  gettimeofday_us()-times[tid(), funcname];
 					
 				
-				printf("WRITE, %s, %s, %d, %s, %d\n", filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime ); 
+				printf("WRITE,%s,%s,%d,%s,%d\n", filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime ); 
 				
 			}
 			
@@ -87,13 +87,14 @@ probe syscall.read.return {
 }
 */
 probe begin {
-	printf("\"TYPE\", \"FILE\", \"TRACE\", \"BYTES\", \"PROCESS\", \"TIME\"\n");
+	printf("\"TYPE\",\"FILE\",\"TRACE\",\"BYTES\",\"PROCESS\",\"TIME\"\n");
 }
 
+/*
 probe timer.s(600)
 {
 	exit()
-}
+}*/
 
 /*probe kprocess.create {
 	printf("Thread created: %s\n", task_execname(pid2task(new_pid)))
