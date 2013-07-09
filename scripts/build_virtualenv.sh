@@ -234,7 +234,7 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
 fi
 
 echo "Testing if the EC stuff is working..."
-python -c "from M2Crypto import EC; print dir(EC)"
+python -c "from M2Crypto import EC"
 
 #Not sure if we need this:
 #pushd build-tmp
@@ -257,16 +257,9 @@ if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
     popd
 fi
 
-
-# Before continuing fix a stupid symlink bug
-#cd $VENV
-#rm lib64
-#ln -s lib lib64
-#cd
-
 # Build Libtorrent and its python bindings
 pushd $VENV/src
-if [ ! -e $VENV/lib64/python2.6/site-packages/libtorrent.so ]; then
+if [ ! -e $VENV/lib*/python*/site-packages/libtorrent.so ]; then
     if [ ! -e libtorrent-rasterbar-*gz ]; then
         wget --no-check-certificate https://libtorrent.googlecode.com/files/libtorrent-rasterbar-0.16.10.tar.gz
     fi
@@ -281,6 +274,33 @@ if [ ! -e $VENV/lib64/python2.6/site-packages/libtorrent.so ]; then
     ln -fs libboost_python.so libboost_python-py27.so.1.53.0
     cd ../..
 fi
+
+# wxpython
+pushd $VENV/src
+if [ ! -e wxPython-*.tar.bz2 ]; then
+    wget http://garr.dl.sourceforge.net/project/wxpython/wxPython/2.8.12.1/wxPython-src-2.8.12.1.tar.bz2
+fi
+if [ ! -d wxPython*/ ]; then
+    tar xavf wxPython-*.tar.bz2
+fi
+pushd wxPython*/
+if [ ! -e $VENV/lib/libwx_gtk2u_gizmos_xrc-*.so ]; then
+    ./configure --prefix=$VENV --enable-unicode
+    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make install
+    pushd contrib
+    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make install
+    popd
+fi
+pwd
+if [ ! -e ./lib/python*/site-packages/wx-*/wxPython/_wx.py ]; then
+    pushd wxPython
+    python setup.py build BUILD_GLCANVAS=0 #BUILD_STC=0
+    python setup.py install BUILD_GLCANVAS=0 #BUILD_STC=0
+    popd
+fi
+popd
 
 echo "
 ipython
@@ -313,8 +333,6 @@ echo "Done, you can use this virtualenv with:
 And exit from it with:
 	activate
 Enjoy."
-
-env
 
 #
 # setup_env.sh ends here
