@@ -96,6 +96,4 @@ probe timer.s(600)
 	exit()
 }*/
 
-/*probe kprocess.create {
-	printf("Thread created: %s\n", task_execname(pid2task(new_pid)))
-}*/
+
