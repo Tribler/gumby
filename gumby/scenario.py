@@ -8,10 +8,16 @@
 # Created: Mon Jul  15 15:14:19 2013 (+0200)
 
 # Commentary:
+# This module parses events from a scenario file and schedules them on the main
+# Twisted thread. Based on Dispersy's scenario parser by Boudewijn Schoon (uses
+# the same syntax).
 #
-#
-#
-#
+# Usage example:
+#     t = Tribler(...)
+#     t.start()
+#     s = ScenarioRunner("./scenario", int(t.peerid))
+#     s.register(t.test_method)
+#     s.run()
 
 # Change Log:
 #
@@ -43,22 +49,20 @@ import sys
 from time import time
 from itertools import ifilter
 from random import random
-from threading import Thread
 from re import compile as re_compile
+from twisted.internet import reactor
 
-class ScenarioRunner(Thread):
+class ScenarioRunner():
     """
-    Reads, parses and schedules events from scenario file in a separate thread.
+    Reads, parses and schedules events from scenario file.
     
     Use expstartstamp to synchronize all peers (usually you can get this from
     the gumby config server before starting the experiment). Each peer should
     set an unique peernumber.
 
-    Users should register callables using register() before calling start() on
-    this thread. All scenario events (lines) using unregistered callable names
-    will be silently ignored. Also, the callables should be thread-safe since
-    they will be executed on separate Twisted threads (because users might want
-    to execute concurrent actions).
+    Users should register callables using register() before calling run(). All
+    scenario events (lines) using unregistered callable names will be silently
+    ignored. The callables will be executed on the main Twisted thread.
 
     Scenario line format:
         TIMESPEC CALLABLE [ARGS] [PEERSPEC]
@@ -86,10 +90,9 @@ class ScenarioRunner(Thread):
             event for peers 3 to 6 (including 3 and 6).
     """
     def __init__(self, filename, peernumber, expstartstamp=None):
-        super(ScenarioRunner, self).__init__(name="ScenarioRunner")
         self.filename = filename
 
-        self._functions = {}
+        self._callables = {}
         self._expstartstamp = expstartstamp
         self._peernumber = peernumber
         self._re_line = re_compile(
@@ -106,7 +109,7 @@ class ScenarioRunner(Thread):
             r"{(?P<peers>\s*!?\d+(?:-\d+)?(?:\s*,\s*!?\d+(?:-\d+)?)*\s*)}"
             r")?\s*(?:\n)?$"
         )
-        self._origin = None # will be set just before starting the thread
+        self._origin = None # will be set just before run()-ing
 
     def register(self, clb, name=None):
         """
@@ -115,9 +118,9 @@ class ScenarioRunner(Thread):
         """
         if name is None:
             name = clb.__name__
-        self._functions[name] = clb
+        self._callables[name] = clb
 
-    def start(self):
+    def _init_origin_time(self):
         # initialize origin start times
         # _parse_scenario_line() will choose one of them for each lines
         now = time()
@@ -126,14 +129,29 @@ class ScenarioRunner(Thread):
                 if self._expstartstamp is not None else now,
             "+" : now
         }
-        super(ScenarioRunner, self).start() 
 
     def run(self):
+        """
+        Schedules calls for each scenario line.
+
+        TODO(vladum): Add support for concurrent events. Should schedule on
+        different Twisted threads.
+        """
+        self._init_origin_time()
+
         print "Running scenario from file:", self.filename
 
-        for cmd in self._parse_scenario(self.filename):
-            print cmd
-            # TODO(vladum): Schedule calls on Twisted.
+        for (tstmp, lineno, clb, args) in self._parse_scenario(self.filename):
+            if clb not in self._callables:
+                # ignore non-registered callables
+                continue
+            # TODO(vladum): Handle errors while calling.
+            delay = tstmp - time()
+            reactor.callLater(
+                delay if delay > 0.0 else 0,
+                self._callables[clb],
+                *args
+            )
 
     # TODO(vladum): Move _parse_*() stuff to separate class.
 
@@ -145,15 +163,13 @@ class ScenarioRunner(Thread):
         the name of a function, method, etc. registered with this scenario using
         the register() method.
         """
-        commands = []
         try:
             for lineno, line in enumerate(open(filename, "r")):
                 cmd = self._parse_scenario_line(lineno, line)
                 if cmd is not None:
-                    commands.append(cmd)
+                    yield cmd
         except EnvironmentError:
-            print >> sys.stderr, "Cannot open/read scenario file", filename
-        return commands
+            print >> sys.stderr, "Scenario file open/read error", filename
 
     def _parse_scenario_line(self, lineno, line):
         """
@@ -167,7 +183,7 @@ class ScenarioRunner(Thread):
         if match:
             # remove all entries that are None (to get default per key)
             dic = dict(ifilter(
-                lambda key, value: value is not None,
+                lambda (key, value): value is not None,
                 match.groupdict().iteritems()
             ))
 
