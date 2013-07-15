@@ -33,6 +33,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+.ropeproject/
 
 # gedit backup files
 *~
