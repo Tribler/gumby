@@ -40,7 +40,7 @@
 import sys
 from os.path import dirname
 
-from configobj import ConfigObj
+from gumby.settings import loadConfig
 
 from twisted.python.log import msg, FileLogObserver, textFromEventDict, _safeFormat, startLogging
 from twisted.python import util
@@ -81,7 +81,7 @@ class ColoredFileLogObserver(FileLogObserver):
            _safeFormat("[%(system)s]", fmtDict),
            ColoredFileLogObserver.GREY_NORMAL)
         textStr = _safeFormat("%(text)s", fmtDict)
-        
+
         if textStr.startswith("SSH"):
             t = textStr.find("STDERR:")
             if t != -1:
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         #startLogging(open("/tmp/cosa.log",'w'))
         observer = ColoredFileLogObserver()
         observer.start()
-        config = ConfigObj(sys.argv[1])
+        config = loadConfig(sys.argv[1])
 
         exp_runner = ExperimentRunner(config)
         exp_runner.run()
