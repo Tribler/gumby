@@ -4,8 +4,8 @@ Created on Jul 4, 2013
 @author: corpaul
 '''
 import unittest
-from performanceprofile import *
-import databasehelper
+from spectraperf.performanceprofile import *
+from spectraperf.databasehelper import *
 
 DATABASE = "performance_test.db"
 
@@ -99,7 +99,7 @@ class TestPerformanceFunctions(unittest.TestCase):
 
     def testProfileHelper(self):
         # reset database before testing
-        databasehelper.InitDatabase(DATABASE)
+        InitDatabase(DATABASE)
 
         s1 = MonitoredStacktrace("test1", 10, 25)
         s2 = MonitoredStacktrace("test2", 25, 25)

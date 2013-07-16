@@ -10,8 +10,8 @@ Created on Jul 16, 2013
 
 import sys
 import os
-from performanceprofile import *
-import databasehelper
+from spectraperf.performanceprofile import *
+from spectraperf.databasehelper import *
 
 if __name__ == '__main__':
 
@@ -30,7 +30,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if not os.path.isfile(DATABASE):
-        dbHelper = databasehelper.InitDatabase(DATABASE)
+        dbHelper = InitDatabase(DATABASE)
 
     helper = SessionHelper(DATABASE)
     sess1 = helper.loadSessionFromCSV(revision, testcase, csvPath)

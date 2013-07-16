@@ -10,8 +10,8 @@ Created on Jul 16, 2013
 
 import sys
 import os
-import databasehelper
-from performanceprofile import *
+from spectraperf.databasehelper import *
+from spectraperf.performanceprofile import *
 
 
 if __name__ == '__main__':
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     testcase = sys.argv[2]
 
     if not os.path.isfile(DATABASE):
-        dbHelper = databasehelper.InitDatabase(DATABASE)
+        dbHelper = InitDatabase(DATABASE)
 
     helper = SessionHelper(DATABASE)
     # load all sessions for this revision and testcase

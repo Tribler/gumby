@@ -45,7 +45,7 @@ echo "Project root is: $PROJECTROOT"
 source experiment_vars.sh
 
 # Update PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:$PROJECTROOT/spectraperf
+export PYTHONPATH=$PYTHONPATH:$PROJECTROOT
 
 # Update PATH
 export PATH=$PATH:$PROJECTROOT/gumby/scripts
