@@ -57,7 +57,7 @@ class ExperimentRunner(Logger):
         self._remote_workspace_dir = "Experiment_" + path.basename(config['workspace_dir'])
         # TODO: check if the experiment dir actually exists
         self._experiment_dir = path.abspath(config['workspace_dir'])
-        self._env_runner = path.abspath(path.join(path.dirname(__file__), "../scripts/run_in_env.sh"))
+        self._env_runner = "scripts/run_in_env.sh"
 
     def logPrefix(self):
         return "ExperimentRunner"
@@ -203,7 +203,9 @@ class ExperimentRunner(Logger):
             return self.runLocalCommand(command)
 
     def runLocalCommand(self, command):
-        args = [self._env_runner, command]
+        # use the local _env_runner
+        env_runner = path.abspath(path.join(path.dirname(__file__), "..", self._env_runner))
+        args = [env_runner, command]
         pp = OneShotProcessProtocol()
         reactor.spawnProcess(pp, args[0], args)
         d = pp.getDeferred()
@@ -211,6 +213,7 @@ class ExperimentRunner(Logger):
 
     def runCommandOnAllRemotes(self, command):
         remote_instance_list = []
+        # use remote _env_runner
         args = path.join(self._remote_workspace_dir, 'gumby', self._env_runner) + " " + command
         for host in self._cfg['head_nodes']:
             msg("Executing command in %s: %s" % (host, args))
