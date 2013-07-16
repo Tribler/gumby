@@ -14,7 +14,7 @@ class Profile(object):
     classdocs
     '''
 
-    def __init__(self, rev, tc, DATABASE="performance.db"):
+    def __init__(self, rev, tc, DATABASE="../database/performance.db"):
         '''
         Constructor
         '''
@@ -115,7 +115,7 @@ class Profile(object):
 
 class ProfileHelper(object):
 
-    def __init__(self, DATABASE="performance.db"):
+    def __init__(self, DATABASE="../database/performance.db"):
         self.DATABASE = DATABASE
         self.con = sqlite3.connect(self.DATABASE)
         self.con.row_factory = sqlite3.Row
@@ -214,7 +214,7 @@ class MonitoredStacktraceRange(object):
     classdocs
     '''
 
-    def __init__(self, st, DATABASE="performance.db"):
+    def __init__(self, st, DATABASE="../database/performance.db"):
         '''
         Constructor
         '''
@@ -317,7 +317,7 @@ class MonitoredSession(object):
 
 
 class SessionHelper(object):
-    def __init__(self, DATABASE="performance.db"):
+    def __init__(self, DATABASE="../database/performance.db"):
         self.DATABASE = DATABASE
         self.con = sqlite3.connect(self.DATABASE)
         self.con.row_factory = sqlite3.Row
