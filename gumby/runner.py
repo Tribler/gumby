@@ -51,6 +51,7 @@ from sshclient import runRemoteCMD
 
 setDebugging(True)
 
+
 class ExperimentRunner(Logger):
     def __init__(self, config):
         self._cfg = config
@@ -64,6 +65,7 @@ class ExperimentRunner(Logger):
 
     def copyWorkspaceToHeadNodes(self):
         msg("Syncing workspaces on remote head nodes...")
+
         def onCopySuccess(ignored):
             msg("Great copying success!")
 
@@ -89,13 +91,6 @@ class ExperimentRunner(Logger):
         d = gatherResults(copy_list, consumeErrors=True)
         d.addCallbacks(onCopySuccess, onCopyFailure)
         return d
-
-
-        ## def runCommandInEnv(self, command):
-        ##     """
-        ##     Runs a command after exporting all needed env variables and virtualenv stuff if the config says so.
-        ##     """
-        ##     final_cmd = path.join(self._remote_workspace_dir, self._config['remote_setup_cmd'])
 
     def spawnTracker(self):
         def onTrackerFailure(failure):
