@@ -10,7 +10,7 @@ For each revision r:
 			$OUTPUTDIR = "output folder, /output in gumby project"
 		1. Run probe on a specific test case, store output in $OUTPUTDIR/stap/stap_output_%i.csv
 			(output: CSV file with all writes during the test case) 
-		2. Run 'makeIOWritesReport.sh report_%i $OUTPUTDIR/stap/stap_output_%i.csv "%description"'
+		2. Run 'make_io_writes_report.sh report_%i $OUTPUTDIR/stap/stap_output_%i.csv "%description"'
 			(output: HTML report and aggregate csv files)
 		3. Run 'python store_run_in_database.py $OUTPUTDIR/report_%i/summary_per_stacktrace.csv $REVISION $TESTCASE'
 			(output: run is stored in database)
