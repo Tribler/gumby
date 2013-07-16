@@ -252,7 +252,6 @@ class ExperimentRunner(Logger):
             dr = self._instances_d = self.runCommandOnAllRemotes(self._cfg['remote_instance_cmd'])
         else:
             dr = succeed(None)
-        # TODO: Run the local stuff too
         if self._cfg['local_instance_cmd']:
             dl = self.runCommand(self._cfg['local_instance_cmd'])
         else:
@@ -262,6 +261,7 @@ class ExperimentRunner(Logger):
     def run(self):
         def onExperimentSucceeded(_):
             msg("experiment suceeded")
+            reactor.stop()
 
         def onExperimentFailed(failure):
             err("Experiment execution failed, exiting with error.")
@@ -319,8 +319,8 @@ class ExperimentRunner(Logger):
 
         ## #d = gatherResults((d_tracker, d_remote, d_local), consumeErrors=True)
         ## d = gatherResults((d_tracker, d_remote), consumeErrors=True)
-        ## d.addCallbacks(onExperimentSucceeded, onExperimentFailed)
-        ## return d
+        d.addCallbacks(onExperimentSucceeded, onExperimentFailed)
+        return d
 
 class OneShotProcessProtocol(ProcessProtocol):
     def __init__(self, *k, **w):
