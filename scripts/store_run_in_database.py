@@ -14,32 +14,24 @@ from performanceprofile import *
 import databasehelper
 
 if __name__ == '__main__':
-    
+
     DATABASE = "../database/performance.db"
-    
-    
+
     if len(sys.argv) < 4:
         print "Usage: python store_run_in_database.py csvPath revision testcase"
         sys.exit(0)
-        
-        
+
     csvPath = sys.argv[1]
     revision = sys.argv[2]
     testcase = sys.argv[3]
-    
-    
+
     if not os.path.isfile(csvPath):
         print "Not a valid CSV file"
         sys.exit(0)
-    
-    
+
     if not os.path.isfile(DATABASE):
         dbHelper = databasehelper.InitDatabase(DATABASE)
-    
+
     helper = SessionHelper(DATABASE)
     sess1 = helper.loadSessionFromCSV(revision, testcase, csvPath)
     helper.storeInDatabase(sess1)
-    
-    
-        
-        

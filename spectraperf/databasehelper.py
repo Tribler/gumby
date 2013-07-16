@@ -6,6 +6,7 @@ Created on Jul 12, 2013
 
 import sqlite3
 
+
 class InitDatabase(object):
     '''
     classdocs
@@ -36,8 +37,9 @@ class InitDatabase(object):
                             revision TEXT NOT NULL, \
                             testcase TEXT NOT NULL);"
         cur.execute(createProfile)
-        
-        unqProfile = "CREATE UNIQUE INDEX IF NOT EXISTS profile_unq ON profile (revision, testcase)"
+
+        unqProfile = "CREATE UNIQUE INDEX IF NOT EXISTS profile_unq \
+                            ON profile (revision, testcase)"
         cur.execute(unqProfile)
 
         createRange = "CREATE TABLE range ( \
@@ -48,16 +50,18 @@ class InitDatabase(object):
                             profile_id INTEGER NOT NULL, \
                             type_id INTEGER NOT NULL);"
         cur.execute(createRange)
-        
-        unqRange = "CREATE UNIQUE INDEX IF NOT EXISTS range_unq ON range (profile_id, stacktrace_id, type_id)"
+
+        unqRange = "CREATE UNIQUE INDEX IF NOT EXISTS range_unq \
+                            ON range (profile_id, stacktrace_id, type_id)"
         cur.execute(unqRange)
 
         createStacktrace = "CREATE TABLE stacktrace ( \
                             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
                             stacktrace TEXT NOT NULL);"
         cur.execute(createStacktrace)
-        
-        unqStacktrace = "CREATE UNIQUE INDEX IF NOT EXISTS stacktrace_unq ON stacktrace (stacktrace)"
+
+        unqStacktrace = "CREATE UNIQUE INDEX IF NOT EXISTS stacktrace_unq \
+                            ON stacktrace (stacktrace)"
         cur.execute(unqStacktrace)
 
         createStacktrace = "CREATE TABLE type ( \
@@ -69,15 +73,11 @@ class InitDatabase(object):
         unqType = "CREATE UNIQUE INDEX IF NOT EXISTS type_unq ON type (type)"
         cur.execute(unqType)
 
-
         createRun = "CREATE TABLE run ( \
                             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
                             revision TEXT NOT NULL, \
                             testcase TEXT NOT NULL);"
         cur.execute(createRun)
-
-        # unqRun = "CREATE UNIQUE INDEX IF NOT EXISTS run_unq ON run (revision, testcase)"
-        # cur.execute(unqRun)
 
         createMonitoredValue = "CREATE TABLE monitored_value ( \
                             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
@@ -87,6 +87,8 @@ class InitDatabase(object):
                             type_id INTEGER NOT NULL);"
         cur.execute(createMonitoredValue)
 
-        unqMonitoredValue = "CREATE UNIQUE INDEX IF NOT EXISTS monitored_value_unq ON monitored_value (stacktrace_id, run_id, type_id)"
+        unqMonitoredValue = "CREATE UNIQUE INDEX IF NOT EXISTS \
+                            monitored_value_unq \
+                            ON monitored_value \
+                            (stacktrace_id, run_id, type_id)"
         cur.execute(unqMonitoredValue)
-
