@@ -10,11 +10,15 @@ Created on Jul 16, 2013
 
 import sys
 import os
-from PerformanceProfile import *
-import DatabaseHelper
+from performanceprofile import *
+import databasehelper
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
+    
+    DATABASE = "../database/performance.db"
+    
+    
+    if len(sys.argv) < 4:
         print "Usage: python store_run_in_database.py csvPath revision testcase"
         sys.exit(0)
         
@@ -29,10 +33,10 @@ if __name__ == '__main__':
         sys.exit(0)
     
     
-    if not os.path.isfile("performance.db"):
-        dbHelper = DatabaseHelper.InitDatabase("performance.db")
+    if not os.path.isfile(DATABASE):
+        dbHelper = databasehelper.InitDatabase(DATABASE)
     
-    helper = SessionHelper("performance.db")
+    helper = SessionHelper(DATABASE)
     sess1 = helper.loadSessionFromCSV(revision, testcase, csvPath)
     helper.storeInDatabase(sess1)
     

@@ -4,8 +4,8 @@ Created on Jul 4, 2013
 @author: corpaul
 '''
 import unittest
-from PerformanceProfile import *
-import DatabaseHelper
+from performanceprofile import *
+import databasehelper
 
 DATABASE = "performance_test.db"
 
@@ -72,8 +72,8 @@ class TestPerformanceFunctions(unittest.TestCase):
         p.addToRange("test1", 20)
 
 
-        #p.addToRange("test2", 10)
-        #p.addToRange("test2", 20)
+        # p.addToRange("test2", 10)
+        # p.addToRange("test2", 20)
 
 
         fits = p.fitsProfile(sess1)
@@ -81,8 +81,8 @@ class TestPerformanceFunctions(unittest.TestCase):
 
         sess1.addStacktrace(s2)
         # should raise AssertionError because we did not add a range for test2 yet
-       # with self.assertRaises(AssertionError):
-       #     fits = p.fitsProfile(sess1)
+        # with self.assertRaises(AssertionError):
+        #     fits = p.fitsProfile(sess1)
 
         p.addToRange("test2", 10)
         p.addToRange("test2", 20)
@@ -109,7 +109,7 @@ class TestPerformanceFunctions(unittest.TestCase):
 
     def testProfileHelper(self):
         # reset database before testing
-        i = DatabaseHelper.InitDatabase(DATABASE)
+        i = databasehelper.InitDatabase(DATABASE)
 
         s1 = MonitoredStacktrace("test1", 10, 25)
         s2 = MonitoredStacktrace("test2", 25, 25)
@@ -130,20 +130,20 @@ class TestPerformanceFunctions(unittest.TestCase):
 
         # empty profile
         self.assertEqual(h.getDatabaseId(p), -1)
-        #print p
+        # print p
         h.storeInDatabase(p)
 
         self.assertNotEqual(h.getDatabaseId(p), -1)
 
         p.addSession(sess1)
-        #print p
+        # print p
         
         h.storeInDatabase(p)
 
         # load p from the database
 
         p = h.loadFromDatabase("rev1", "test_batch")
-        #print p        
+        # print p        
         self.assertTrue(p.getRange("test1").isInRange(15))
         self.assertTrue(p.getRange("test1").isInRange(10))
         self.assertFalse(p.getRange("test1").isInRange(9))
@@ -153,13 +153,13 @@ class TestPerformanceFunctions(unittest.TestCase):
         helper = SessionHelper(DATABASE)
         sess1 = helper.loadSessionFromCSV("rev1", "test_batch", "data/test_session1.csv")
         sess2 = helper.loadSessionFromCSV("rev1", "test_batch", "data/test_session2.csv")
-        #print sess1
-        #print sess2
+        # print sess1
+        # print sess2
         
         p = Profile("rev1", "test_batch")
         p.addSession(sess1)
         p.addSession(sess2)
-        #print p
+        # print p
         self.assertTrue(p.getRange("test1").isInRange(15))
         self.assertTrue(p.getRange("test1").isInRange(10))
         self.assertFalse(p.getRange("test1").isInRange(9))
@@ -175,5 +175,5 @@ class TestPerformanceFunctions(unittest.TestCase):
         
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
+    # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

@@ -5,7 +5,6 @@ Created on Jul 12, 2013
 '''
 
 import sqlite3
-import sys
 
 class InitDatabase(object):
     '''
@@ -77,8 +76,8 @@ class InitDatabase(object):
                             testcase TEXT NOT NULL);"
         cur.execute(createRun)
 
- #       unqRun = "CREATE UNIQUE INDEX IF NOT EXISTS run_unq ON run (revision, testcase)"
- #       cur.execute(unqRun)
+        # unqRun = "CREATE UNIQUE INDEX IF NOT EXISTS run_unq ON run (revision, testcase)"
+        # cur.execute(unqRun)
 
         createMonitoredValue = "CREATE TABLE monitored_value ( \
                             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
