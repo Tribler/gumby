@@ -53,8 +53,8 @@ class TestGuiGeneral(TestGuiAsServer):
             self.quit()
 
         def do_page():
-            if "TRIBLER_RUN_TIME" in os.environ:
-                run_time = int(os.environ["TRIBLER_RUN_TIME"])
+            if "TRIBLER_EXECUTION_TIME" in os.environ:
+                run_time = int(os.environ["TRIBLER_EXECUTION_TIME"])
             else:
                 run_time = 60*10 # Run for 10 minutes by default
             self.Call(run_time, end)
