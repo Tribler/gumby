@@ -95,6 +95,8 @@ class Profile(object):
         ones = 0
         for i in v.itervalues():
             ones += i
+        if ones == 0:
+            return 0
         d2 = sqrt(ones)
         sim = ones / (d1 * d2)
         return sim
@@ -252,6 +254,7 @@ class MonitoredStacktraceRange(object):
             cur.execute(sqlCheck)
             rows = cur.fetchall()
             if len(rows) == 1:
+                self.databaseId = rows[0][0]
                 return rows[0][0]
             else:
                 return -1
