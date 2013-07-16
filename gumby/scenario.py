@@ -133,9 +133,6 @@ class ScenarioRunner():
     def run(self):
         """
         Schedules calls for each scenario line.
-
-        TODO(vladum): Add support for concurrent events. Should schedule on
-        different Twisted threads.
         """
         self._init_origin_time()
 
