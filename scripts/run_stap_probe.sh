@@ -7,9 +7,10 @@ then
 	exit 65
 fi
 
-TESTCASE=$1
+TEST_COMMAND=$1
 OUTPUT=$2
-STAPPATH=/home/jenkins/venv/inst/bin
+# TODO: Read the env variables to find out where stap is
+STAPPATH=$HOME/venv/inst/bin
 
 # Find the stp dir
 SCRIPTDIR=$( dirname $(readlink -f "$0"))
@@ -21,4 +22,4 @@ if [ ! -d "$SCRIPTDIR" ]; then
     exit 1
 fi
 
-$STAPPATH/stap "$SCRIPTDIR"/stp/log_io_writes.stp -I $SCRIPTDIR/stp/tapsets/ -DMAXMAPENTRIES=10000 -DSTP_NO_OVERLOAD -DMAXSTRINGLEN=4096 -DTRYLOCKDELAY=300 -DMAXSKIPPED=10000 -DMAXACTION=1000 -c "env 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH' $TESTCASE" -o $2
+$STAPPATH/stap "$SCRIPTDIR"/stp/log_io_writes.stp -I $SCRIPTDIR/stp/tapsets/ -DMAXMAPENTRIES=10000 -DSTP_NO_OVERLOAD -DMAXSTRINGLEN=4096 -DTRYLOCKDELAY=300 -DMAXSKIPPED=10000 -DMAXACTION=1000 -c "env 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH' $TEST_COMMAND" -o $2

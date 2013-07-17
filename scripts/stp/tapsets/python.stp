@@ -2,6 +2,7 @@
 /*
    Define python.function.entry/return:
 */
+# TODO: un-hardcode this path too
 probe python.function.entry = process("/home/jenkins/venv/bin/python").library("/home/jenkins/venv/inst/lib/libpython2.7.so.1.0").mark("function__entry")
 {
     filename = user_string($arg1);
@@ -14,4 +15,3 @@ probe python.function.return = process("/home/jenkins/venv/bin/python").library(
     funcname = user_string($arg2);
     lineno = $arg3;
 }
-

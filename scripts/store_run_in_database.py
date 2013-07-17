@@ -16,7 +16,7 @@ from spectraperf.databasehelper import *
 
 if __name__ == '__main__':
 
-    DATABASE = "../database/performance.db"
+    DATABASE = os.path.abspath("../database/performance.db")
 
     if len(sys.argv) < 4:
         print "Usage: python store_run_in_database.py csvPath revision testcase"

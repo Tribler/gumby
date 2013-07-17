@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash -xe
 
 EXPECTED_ARGS=3
 if [ $# -ne $EXPECTED_ARGS ]
@@ -7,7 +7,7 @@ then
 	exit 65
 fi
 
-OUTPUTDIR=$1
+OUTPUTDIR=$(readlink -f "$1")
 
 mkdir -p $OUTPUTDIR
 
