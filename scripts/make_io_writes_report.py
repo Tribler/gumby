@@ -29,7 +29,7 @@ def readDataframeDump(filename):
 
 def print_html_doc():
     template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../templates'))
-    print "Writing to: %s" % template_dir
+    print "Getting templates from: %s" % template_dir
     loader = FileSystemLoader(searchpath = template_dir)
     env = Environment(loader=loader)
     template = env.get_template('template_io_writes_report.html')
