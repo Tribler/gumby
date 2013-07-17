@@ -160,6 +160,15 @@ class TestPerformanceFunctions(unittest.TestCase):
 
         sess3 = helper.loadFromDatabase("rev1", "test_batch")
         self.assertEqual(len(sess3), 2)
+        for s in sess3:
+            self.assertEqual(s.isTestRun, 0)
+
+        sess1 = MonitoredSession("rev2", "test_batch", 1)
+        helper.storeInDatabase(sess1)
+        sess3 = helper.loadFromDatabase("rev2", "test_batch")
+        self.assertEqual(len(sess3), 1)
+        for s in sess3:
+            self.assertEqual(s.isTestRun, 1)
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']

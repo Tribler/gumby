@@ -264,7 +264,7 @@ class MonitoredSession(object):
     '''
     classdocs
     '''
-    def __init__(self, rev, tc):
+    def __init__(self, rev, tc, isTestRun=0):
         '''
         Constructor
         '''
@@ -272,6 +272,7 @@ class MonitoredSession(object):
         self.testCase = tc
         self.stacktraces = {}
         self.databaseId = -1
+        self.isTestRun = isTestRun
         # self.lookupDict = {}
         # if filename != "":
         #    self.loadSession()
@@ -325,9 +326,9 @@ class SessionHelper(object):
         self.con = sqlite3.connect(self.DATABASE)
         self.con.row_factory = sqlite3.Row
 
-    def loadSessionFromCSV(self, rev, tc, filename=""):
+    def loadSessionFromCSV(self, rev, tc, filename="", isTestRun=0):
         assert filename != "", "Filename not set for session"
-        s = MonitoredSession(rev, tc)
+        s = MonitoredSession(rev, tc, isTestRun)
         # read CSV
         with open(filename, 'rb') as csvfile:
             reader = csv.DictReader(csvfile, delimiter=',')
@@ -351,8 +352,8 @@ class SessionHelper(object):
 
             if s.databaseId == -1:
                 # insert profile
-                sqlProfile = "INSERT OR REPLACE INTO run (revision, testcase) VALUES ('%s', '%s')" \
-                    % (s.revision, s.testCase)
+                sqlProfile = "INSERT OR REPLACE INTO run (revision, testcase, is_test_run) VALUES ('%s', '%s', '%s')" \
+                    % (s.revision, s.testCase, s.isTestRun)
                 cur.execute(sqlProfile)
                 s.databaseId = cur.lastrowid
 
@@ -376,14 +377,14 @@ class SessionHelper(object):
         '''
         with self.con:
             cur = self.con.cursor()
-            sql = "SELECT id FROM run WHERE revision = '%s' AND testcase = '%s'" % (rev, tc)
+            sql = "SELECT id, is_test_run FROM run WHERE revision = '%s' AND testcase = '%s'" % (rev, tc)
             cur.execute(sql)
             rows = cur.fetchall()
             assert len(rows) > 0, "run does not exist"
             sessions = []
             for r1 in rows:
 
-                m = MonitoredSession(rev, tc)
+                m = MonitoredSession(rev, tc, r1['is_test_run'])
                 m.databaseId = r1['id']
 
                 sql = "select * from monitored_value JOIN stacktrace ON stacktrace.id = monitored_value.stacktrace_id \

@@ -76,7 +76,8 @@ class InitDatabase(object):
         createRun = "CREATE TABLE run ( \
                             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
                             revision TEXT NOT NULL, \
-                            testcase TEXT NOT NULL);"
+                            testcase TEXT NOT NULL, \
+                            is_test_run INTEGER NOT NULL);"
         cur.execute(createRun)
 
         createMonitoredValue = "CREATE TABLE monitored_value ( \
