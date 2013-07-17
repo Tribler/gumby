@@ -1,0 +1,34 @@
+Experiment for running the last n revisions in Git
+
+Goal first part: Generate profiles for all revisions
+
+For each revision r:
+	for i in range(1,10):
+		0. Define:
+			$REVISION = %r
+			$TESTCASE = "name of the test case we are running"
+			$OUTPUTDIR = "output folder, /output in gumby project"
+		1. Run probe on a specific test case, store output in $OUTPUTDIR/stap/stap_output_%i.csv
+			(output: CSV file with all writes during the test case) 
+		2. Run 'make_io_writes_report.sh report_%i $OUTPUTDIR/stap/stap_output_%i.csv "%description"'
+			(output: HTML report and aggregate csv files)
+		3. Run 'python store_run_in_database.py $OUTPUTDIR/report_%i/summary_per_stacktrace.csv $REVISION $TESTCASE'
+			(output: run is stored in database)
+	
+	4. Run 'python generate_profile.py $REVISION $TESTCASE'
+		(output: generates a profile and stores it in the database)
+		
+----------------------
+
+
+Goal second part: Run all revisions again, record 3 runs and verify whether they fit in the profile which was defined in the previous part of the experiment.	
+	for i in range(1,3):
+		0. Define:
+			$REVISION = %r
+			$TESTCASE = "name of the test case we are running"
+			$OUTPUTDIR = "output folder, /output in gumby project"	
+		1. Run probe on a specific test case, store output in $OUTPUTDIR/stap/stap_output_%i.csv
+			(output: CSV file with all writes during the test case) 
+		2. Run 'makeIOWritesReport.sh report_%i $OUTPUTDIR/stap/stap_output_%i.csv "%description"'
+			(output: HTML report and aggregate csv files)
+		3. Run 'python calculate_similarity.py $OUTPUTDIR/report_%i/summary_per_stacktrace.csv $REVISION $TESTCASE 
