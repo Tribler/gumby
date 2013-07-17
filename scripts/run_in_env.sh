@@ -44,6 +44,9 @@ echo "Project root is: $PROJECTROOT"
 # Load env variables for this experiment
 source experiment_vars.sh
 
+# Update PYTHONPATH
+export PYTHONPATH=$PYTHONPATH:$PROJECTROOT
+
 # Update PATH
 export PATH=$PATH:$PROJECTROOT/gumby/scripts
 
