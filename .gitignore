@@ -43,3 +43,5 @@ Rplots.pdf
 
 # output dir
 output/
+
+*.db

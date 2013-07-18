@@ -7,6 +7,10 @@ import csv
 from decimal import Decimal
 from math import sqrt
 import sqlite3
+import sys
+import os
+from gumby.settings import loadConfig
+from spectraperf.databasehelper import getDatabaseConn
 
 
 class Profile(object):
@@ -14,7 +18,7 @@ class Profile(object):
     classdocs
     '''
 
-    def __init__(self, rev, tc, DATABASE="../database/performance.db"):
+    def __init__(self, rev, tc, config):
         '''
         Constructor
         '''
@@ -26,7 +30,10 @@ class Profile(object):
         # contains MonitoredStackRange objects
         self.ranges = {}
         self.databaseId = -1
-        self.DATABASE = DATABASE
+        # self.DATABASE = DATABASE
+
+        self._config = config
+        self._conn = getDatabaseConn(config)
 #        self.helper = ProfileHelper(DATABASE)
 
     def addSession(self, s):
@@ -35,6 +42,7 @@ class Profile(object):
         stacktraces in s.
         '''
         self.runs.append(s)
+
         for st in s.stacktraces.itervalues():
             self.addToRange(st.stacktrace, st.rawBytes)
 
@@ -44,7 +52,7 @@ class Profile(object):
         i.e. extend the range if necessary.
         '''
         if st not in self.ranges:
-            self.ranges[st] = MonitoredStacktraceRange(st, self.DATABASE)
+            self.ranges[st] = MonitoredStacktraceRange(st, self._config)
         r = self.ranges.get(st)
         r.addToRange(value)
 
@@ -114,36 +122,33 @@ class Profile(object):
             s += "%s\n" % r
         return "%s]" % s
 
+    def getDatabaseId(self):
+        if self.databaseId != -1:
+            return self.databaseId
+        with self._conn:
+            cur = self._conn.cursor()
+            sql = "SELECT id FROM profile WHERE revision = '%s' AND testcase = '%s'" % (self.revision, self.testCase)
+            cur.execute(sql)
+            rows = cur.fetchall()
+            if len(rows) == 0:
+                return -1
+            self.databaseId = rows[0]['id']
+            return self.databaseId
+
 
 class ProfileHelper(object):
 
-    def __init__(self, DATABASE="../database/performance.db"):
-        self.DATABASE = DATABASE
-        self.con = sqlite3.connect(self.DATABASE)
-        self.con.row_factory = sqlite3.Row
-
-    def getDatabaseId(self, p):
-        if p.databaseId != -1:
-            return p.databaseId
-
-        with self.con:
-            cur = self.con.cursor()
-            sqlCheck = "SELECT id FROM profile WHERE revision = '%s' AND testcase = '%s'" % (p.revision, p.testCase)
-            cur.execute(sqlCheck)
-            rows = cur.fetchall()
-            if len(rows) == 1:
-                self.databaseId = rows[0][0]
-                return rows[0][0]
-            else:
-                return -1
+    def __init__(self, config):
+        self._config = config
+        self._conn = getDatabaseConn(config)
 
     def storeInDatabase(self, p):
-        with self.con:
-            cur = self.con.cursor()
+        with self._conn:
+            cur = self._conn.cursor()
 
-            if p.databaseId == -1:
+            if p.getDatabaseId() == -1:
                 # insert profile
-                sqlProfile = "INSERT OR REPLACE INTO profile (revision, testcase) VALUES ('%s', '%s')" \
+                sqlProfile = "INSERT INTO profile (revision, testcase) VALUES ('%s', '%s')" \
                     % (p.revision, p.testCase)
                 cur.execute(sqlProfile)
                 p.databaseId = cur.lastrowid
@@ -151,7 +156,7 @@ class ProfileHelper(object):
             # insert ranges
             for st in p.ranges.itervalues():
                 if st.getDatabaseId() == -1:
-                    sqlStacktrace = "INSERT OR REPLACE INTO stacktrace (stacktrace) VALUES ('%s')" % (st.stacktrace)
+                    sqlStacktrace = "INSERT INTO stacktrace (stacktrace) VALUES ('%s')" % (st.stacktrace)
                     cur.execute(sqlStacktrace)
                     st.databaseId = cur.lastrowid
 
@@ -160,17 +165,17 @@ class ProfileHelper(object):
                     % (st.databaseId, st.minValue, st.maxValue, p.databaseId, 1)
                 cur.execute(sqlRange)
 
-            self.con.commit()
+            self._conn.commit()
 
     def loadFromDatabase(self, rev, tc):
-        with self.con:
-            cur = self.con.cursor()
+        with self._conn:
+            cur = self._conn.cursor()
             sql = "SELECT id FROM profile WHERE revision = '%s' AND testcase = '%s'" % (rev, tc)
             cur.execute(sql)
             rows = cur.fetchall()
             assert len(rows) > 0, "profile does not exist"
 
-            p = Profile(rev, tc)
+            p = Profile(rev, tc, self._config)
             p.databaseId = rows[0]['id']
 
             sql = "select * from range JOIN stacktrace ON stacktrace.id = range.stacktrace_id where profile_id = '%d'" \
@@ -183,7 +188,7 @@ class ProfileHelper(object):
                 max_value = r['max_value']
                 dbId = r['id']
 
-                stRange = MonitoredStacktraceRange(st)
+                stRange = MonitoredStacktraceRange(st, self._config)
                 stRange.addToRange(min_value)
                 stRange.addToRange(max_value)
                 stRange.databaseId = dbId
@@ -197,7 +202,7 @@ class MonitoredStacktrace(object):
     classdocs
     '''
 
-    def __init__(self, st, raw, perc):
+    def __init__(self, st, raw, perc, config):
         '''
         Constructor
         '''
@@ -205,6 +210,22 @@ class MonitoredStacktrace(object):
         self.rawBytes = raw
         self.percentage = perc
         self.databaseId = -1
+
+        self._config = config
+        self._conn = getDatabaseConn(config)
+
+    def getDatabaseId(self):
+        if self.databaseId != -1:
+            return self.databaseId
+        with self._conn:
+            cur = self._conn.cursor()
+            sql = "SELECT id FROM stacktrace WHERE stacktrace = '%s'" % self.stacktrace
+            cur.execute(sql)
+            rows = cur.fetchall()
+            if len(rows) == 0:
+                return -1
+            self.databaseId = rows[0]['id']
+            return self.databaseId
 
     def __str__(self):
         return "[MonitoredStacktrace: %s, rawBytes: %d, percentage: %d]" \
@@ -216,7 +237,7 @@ class MonitoredStacktraceRange(object):
     classdocs
     '''
 
-    def __init__(self, st, DATABASE="../database/performance.db"):
+    def __init__(self, st, config):
         '''
         Constructor
         '''
@@ -224,9 +245,8 @@ class MonitoredStacktraceRange(object):
         self.minValue = None
         self.maxValue = None
         self.databaseId = -1
-        self.DATABASE = DATABASE
-        # self.mean = None
-        # self.stdev = None
+        self._config = config
+        self._conn = getDatabaseConn(config)
 
     def addToRange(self, i):
         '''
@@ -247,9 +267,8 @@ class MonitoredStacktraceRange(object):
         if self.databaseId != -1:
             return self.databaseId
 
-        self.con = sqlite3.connect(self.DATABASE)
-        with self.con:
-            cur = self.con.cursor()
+        with self._conn:
+            cur = self._conn.cursor()
             sqlCheck = "SELECT id FROM stacktrace WHERE stacktrace = '%s'" % self.stacktrace
             cur.execute(sqlCheck)
             rows = cur.fetchall()
@@ -264,7 +283,7 @@ class MonitoredSession(object):
     '''
     classdocs
     '''
-    def __init__(self, rev, tc, isTestRun=0):
+    def __init__(self, rev, tc, config, isTestRun=0):
         '''
         Constructor
         '''
@@ -273,6 +292,8 @@ class MonitoredSession(object):
         self.stacktraces = {}
         self.databaseId = -1
         self.isTestRun = isTestRun
+
+        self._config = config
         # self.lookupDict = {}
         # if filename != "":
         #    self.loadSession()
@@ -321,10 +342,23 @@ class MonitoredSession(object):
 
 
 class SessionHelper(object):
-    def __init__(self, DATABASE="../database/performance.db"):
-        self.DATABASE = DATABASE
-        self.con = sqlite3.connect(self.DATABASE)
-        self.con.row_factory = sqlite3.Row
+    def __init__(self, config):
+        self._config = config
+        self._conn = getDatabaseConn(config)
+
+    def getAllRevisions(self, testcase):
+        sql = "SELECT DISTINCT(revision) FROM run"
+        with self._conn:
+            cur = self._conn.cursor()
+            cur.execute(sql)
+            rows = cur.fetchall()
+            revisions = []
+            if len(rows) == 0:
+                print "No revisions found for testcase '%s'" % testcase
+                sys.exit(0)
+            for r in rows:
+                revisions.append(r['revision'])
+            return revisions
 
     def loadSessionFromCSV(self, rev, tc, filename="", isTestRun=0):
         assert filename != "", "Filename not set for session"
@@ -337,7 +371,7 @@ class SessionHelper(object):
                 b = Decimal(line['BYTES'])
                 # perc = Decimal(line['PERC'])
                 # note: perc is unused at the moment
-                record = MonitoredStacktrace(st, b, 0)
+                record = MonitoredStacktrace(st, b, 0, self._config)
                 s.stacktraces[st] = record
 
         return s
@@ -347,8 +381,8 @@ class SessionHelper(object):
         Sessions are immutable, so only store in the database if it
         does not have a databaseId yet.
         '''
-        with self.con:
-            cur = self.con.cursor()
+        with self._conn:
+            cur = self._conn.cursor()
 
             if s.databaseId == -1:
                 # insert profile
@@ -359,24 +393,24 @@ class SessionHelper(object):
 
             # insert ranges
             for st in s.stacktraces.itervalues():
-                if st.databaseId == -1:
-                    sqlStacktrace = "INSERT OR REPLACE INTO stacktrace (stacktrace) VALUES ('%s')" % (st.stacktrace)
+                if st.getDatabaseId() == -1:
+                    sqlStacktrace = "INSERT INTO stacktrace (stacktrace) VALUES ('%s')" % (st.stacktrace)
                     cur.execute(sqlStacktrace)
                     st.databaseId = cur.lastrowid
 
                 sqlRange = "INSERT OR REPLACE INTO monitored_value (stacktrace_id, run_id, type_id, value) VALUES \
-                    (%d, %d, %d, %d) " % (st.databaseId, s.databaseId, 1, st.rawBytes)
+                    (%d, %d, %d, %d) " % (st.getDatabaseId(), s.databaseId, 1, st.rawBytes)
                 cur.execute(sqlRange)
 
-            self.con.commit()
+            self._conn.commit()
 
     def loadFromDatabase(self, rev, tc):
         '''
         Note: returns array of MonitoredSession objects, because we may have multiple sessions
         for the same revision and test case (in contrast to a profile, of which we have only one.
         '''
-        with self.con:
-            cur = self.con.cursor()
+        with self._conn:
+            cur = self._conn.cursor()
             sql = "SELECT id, is_test_run FROM run WHERE revision = '%s' AND testcase = '%s'" % (rev, tc)
             cur.execute(sql)
             rows = cur.fetchall()
@@ -384,7 +418,7 @@ class SessionHelper(object):
             sessions = []
             for r1 in rows:
 
-                m = MonitoredSession(rev, tc, r1['is_test_run'])
+                m = MonitoredSession(rev, tc, self._config, r1['is_test_run'])
                 m.databaseId = r1['id']
 
                 sql = "select * from monitored_value JOIN stacktrace ON stacktrace.id = monitored_value.stacktrace_id \
@@ -395,7 +429,7 @@ class SessionHelper(object):
                     st = r2['stacktrace']
                     value = r2['value']
                     dbId = r2['id']
-                    s = MonitoredStacktrace(st, value, 0)
+                    s = MonitoredStacktrace(st, value, 0, self._config)
                     s.databaseId = dbId
                     m.stacktraces[st] = s
 
