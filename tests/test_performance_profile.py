@@ -119,7 +119,6 @@ class TestPerformanceFunctions(unittest.TestCase):
 
         h = ProfileHelper(config)
 
-
         # empty profile
         self.assertEqual(p.getDatabaseId(), -1)
         # print p

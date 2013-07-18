@@ -6,7 +6,6 @@ Created on Jul 12, 2013
 
 import sqlite3
 from gumby.settings import loadConfig
-import sys
 import os
 
 

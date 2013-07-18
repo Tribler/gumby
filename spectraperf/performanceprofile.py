@@ -6,9 +6,7 @@ Created on Jul 4, 2013
 import csv
 from decimal import Decimal
 from math import sqrt
-import sqlite3
 import sys
-import os
 from gumby.settings import loadConfig
 from spectraperf.databasehelper import getDatabaseConn
 
