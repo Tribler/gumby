@@ -31,7 +31,8 @@ probe python.function.entry
 { 
 	i[tid()] += 1
 	//backtrace[tid(), i[tid()]] = sprintf("%s:%d:%s (%d  %d)", filename, lineno, funcname, tid(), i[tid()]);
-	backtrace[tid(), i[tid()]] = sprintf("%s:%d:%s", filename, lineno, funcname);
+	//backtrace[tid(), i[tid()]] = sprintf("%s:%d:%s", filename, lineno, funcname);
+	backtrace[tid(), i[tid()]] = sprintf("%s:%s", filename, funcname);
 	times[tid(), funcname] = gettimeofday_us();
 	doesIO[tid(), i[tid()]] = 0;
 }
