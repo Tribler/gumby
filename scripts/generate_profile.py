@@ -13,32 +13,38 @@ import sys
 import os
 from spectraperf.databasehelper import *
 from spectraperf.performanceprofile import *
+from gumby.settings import loadConfig
 
 
 if __name__ == '__main__':
 
-    DATABASE = "../database/performance.db"
-
     if len(sys.argv) < 3:
-        print "Usage: python generate_profile.py revision testcase"
+        print "This script will generate profiles for all revisions for a testcase."
+        print "Usage: python generate_profile.py configFile testcase"
         sys.exit(0)
 
-    revision = sys.argv[1]
+    config = loadConfig(sys.argv[1])
+
+    # revision = sys.argv[2]
     testcase = sys.argv[2]
 
-    if not os.path.isfile(DATABASE):
-        dbHelper = InitDatabase(DATABASE)
+    helper = SessionHelper(config)
+    # get all revisions in the database for this testcase
+    revs = helper.getAllRevisions(testcase)
 
-    helper = SessionHelper(DATABASE)
-    # load all sessions for this revision and testcase
-    sessions = helper.loadFromDatabase(revision, testcase)
-    if len(sessions) == 0:
-        print "No sessions found."
-        sys.exit(0)
+    # build profiles for all revisions
+    for r in revs:
+        # load all sessions for this revision and testcase
+        sessions = helper.loadFromDatabase(r, testcase)
+        if len(sessions) == 0:
+            print "No sessions found."
+            sys.exit(0)
 
-    p = Profile(revision, testcase)
-    for s in sessions:
-        p.addSession(s)
+        p = Profile(r, testcase, config)
+        for s in sessions:
+            print "adding session to profile for %s " % r
+            p.addSession(s)
 
-    profileHelper = ProfileHelper(DATABASE)
-    profileHelper.storeInDatabase(p)
+        profileHelper = ProfileHelper(config)
+        print "Saving profile for: %s" % r
+        profileHelper.storeInDatabase(p)

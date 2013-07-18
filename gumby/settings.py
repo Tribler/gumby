@@ -39,7 +39,7 @@
 from configobj import ConfigObj
 from validate import Validator
 
-conf_spec='''
+conf_spec = '''
 workspace_dir = string
 head_nodes = list(default=[])
 tracker_cmd = string(default="run_tracker.sh")
@@ -55,6 +55,8 @@ remote_instance_cmd = string(default="")
 
 use_local_venv = boolean(default=True)
 use_local_systemtap = boolean(default=False)
+
+spectraperf_db_path = string(default="")
 '''
 
 
@@ -65,7 +67,7 @@ def loadConfig(path):
     config.validate(validator)
     # TODO: Find a better way to do this (If the default value for a list is an empty list, it just doesn't set the value at all)
     if 'head_nodes' not in config:
-        config["head_nodes"]=[]
+        config["head_nodes"] = []
     return config
 
 #

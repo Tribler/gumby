@@ -12,27 +12,30 @@ Created on Jul 16, 2013
 import sys
 import os
 from spectraperf.performanceprofile import *
-from spectraperf.databasehelper import *
+from spectraperf.databasehelper import InitDatabase, getDatabaseConn
+from gumby.settings import loadConfig
 
 if __name__ == '__main__':
 
-    DATABASE = os.path.abspath("../database/performance.db")
-
-    if len(sys.argv) < 4:
-        print "Usage: python store_run_in_database.py csvPath revision testcase"
+    if len(sys.argv) < 5:
+        print "Usage: python store_run_in_database.py configFile csvPath revision testcase"
         sys.exit(0)
 
-    csvPath = sys.argv[1]
-    revision = sys.argv[2]
-    testcase = sys.argv[3]
+    config = loadConfig(sys.argv[1])
+
+    # DATABASE = os.path.abspath("../database/performance.db")
+    print "Setting database: %s " % config['spectraperf_db_path']
+    DATABASE = os.path.abspath(config['spectraperf_db_path'])
+
+    csvPath = sys.argv[2]
+    revision = sys.argv[3]
+    testcase = sys.argv[4]
 
     if not os.path.isfile(csvPath):
         print "Not a valid CSV file"
         sys.exit(0)
 
-    if not os.path.isfile(DATABASE):
-        dbHelper = InitDatabase(DATABASE)
-
-    helper = SessionHelper(DATABASE)
+    helper = SessionHelper(config)
     sess1 = helper.loadSessionFromCSV(revision, testcase, csvPath)
     helper.storeInDatabase(sess1)
+    print "Run stored"

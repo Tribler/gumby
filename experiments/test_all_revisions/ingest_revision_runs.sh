@@ -47,8 +47,8 @@ for CSV in $(ls -1tr); do
     REP_DIR=report_$(echo $CSV | cut -f2 -d_ )
     REVISION=$(echo $CSV | cut -f2 -d_ ) # TODO, change this when we use the new csv files with counter field
     make_io_writes_report.sh $REP_DIR $CSV "LALALAL arr"
-    store_run_in_database.py $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTCASE
-    generate_profile.py $REVISION $TESTCASE
+    store_run_in_database.py $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTCASE # TODO add config file to use for database as param
+    generate_profile.py $REVISION $TESTCASE # TODO add config file to use for database as param, remove $REVISION param (script now generates profiles for all revisions)
 done
 
 

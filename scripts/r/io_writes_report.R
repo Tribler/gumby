@@ -7,9 +7,10 @@ if(length(args) > 2) {
   outputDir = args[1]
 } else {
   reportName = 'test'
-  csvFile = '/home/corpaul/gumby/gumby/scripts/csv/nosetests_test_magnetlink1.csv'
+  csvFile = '/home/corpaul/workspace/gumby/tests/data/test_session1.csv'
+  #csvFile = '/home/corpaul/workspace/gumby/tests/data/nosetests_test_magnetlink1.csv'
   description = 'Test run from R console'
-  outputDir = "/home/corpaul/gumby/gumby/output/perf_reports/"
+  outputDir = "/home/corpaul/workspace/gumby/output/perf_reports/"
 }
 
 
@@ -86,17 +87,17 @@ write.csv(topLargestWrites , file=sprintf("%s/top_largest_writes.csv", outputDir
 
 topPerFilename = bytescountPerFilename[with(bytescountPerFilename, order(-BYTES))[1:topsize],]
 
-
-
 library(ggplot2)
 
 
 # Remove specific paths
 
 
-topPerFilename = as.data.frame(sapply(topPerFilename,gsub,pattern="/home/user/Desktop/TriblerDownloads",replacement=""))
-topPerFilename$BYTES = as.numeric(levels(topPerFilename$BYTES)[topPerFilename$BYTES])
-#topPerFilename$BYTES = as.numeric(topPerFilename$BYTES)
+#topPerFilename = as.data.frame(sapply(topPerFilename,gsub,pattern="/home/user/Desktop/TriblerDownloads",replacement=""))
+
+#topPerFilename$BYTES = as.numeric(levels(topPerFilename$BYTES)[topPerFilename$BYTES])
+
+
 minVal = min(topPerFilename$BYTES)
 maxVal = max(topPerFilename$BYTES)
 

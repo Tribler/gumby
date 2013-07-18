@@ -8,17 +8,18 @@ from spectraperf.performanceprofile import *
 from spectraperf.databasehelper import *
 
 DATABASE = "performance_test.db"
+config = loadConfig("../test.conf")
 
 
 class TestPerformanceFunctions(unittest.TestCase):
 
     def testAddToRange(self):
-        s = MonitoredStacktrace("test", 10, 25)
+        s = MonitoredStacktrace("test", 10, 25, config)
 
-        sess = MonitoredSession("rev1", "test_batch")
+        sess = MonitoredSession("rev1", "test_batch", config)
         sess.addStacktrace(s)
 
-        p = Profile("rev1", "test_batch")
+        p = Profile("rev1", "test_batch", config)
         p.addSession(sess)
 
         self.assertEqual(p.getRange("test").minValue, 10)
@@ -37,15 +38,15 @@ class TestPerformanceFunctions(unittest.TestCase):
         self.assertEqual(p.getRange("test").maxValue, 20)
 
     def testIsInRange(self):
-        st1 = MonitoredStacktrace("test", 10, 25)
-        st2 = MonitoredStacktrace("test", 20, 25)
+        st1 = MonitoredStacktrace("test", 10, 25, config)
+        st2 = MonitoredStacktrace("test", 20, 25, config)
 
-        sess1 = MonitoredSession("rev1", "test_batch")
+        sess1 = MonitoredSession("rev1", "test_batch", config)
         sess1.addStacktrace(st1)
-        sess2 = MonitoredSession("rev1", "test_batch")
+        sess2 = MonitoredSession("rev1", "test_batch", config)
         sess2.addStacktrace(st2)
 
-        p = Profile("rev1", "test_batch")
+        p = Profile("rev1", "test_batch", config)
         p.addSession(sess1)
         p.addSession(sess2)
 
@@ -57,13 +58,13 @@ class TestPerformanceFunctions(unittest.TestCase):
         self.assertFalse(p.getRange(st1.stacktrace).isInRange(21))
 
     def testFitsProfile(self):
-        s1 = MonitoredStacktrace("test1", 10, 25)
-        s2 = MonitoredStacktrace("test2", 25, 25)
+        s1 = MonitoredStacktrace("test1", 10, 25, config)
+        s2 = MonitoredStacktrace("test2", 25, 25, config)
 
-        sess1 = MonitoredSession("rev1", "test_batch")
+        sess1 = MonitoredSession("rev1", "test_batch", config)
         sess1.addStacktrace(s1)
 
-        p = Profile("rev1", "test_batch")
+        p = Profile("rev1", "test_batch", config)
         p.addToRange("test1", 10)
         p.addToRange("test1", 20)
 
@@ -82,10 +83,10 @@ class TestPerformanceFunctions(unittest.TestCase):
         self.assertEqual(fits["test1"], 1)
         self.assertEqual(fits["test2"], 0)
 
-        p2 = Profile("rev1", "test_batch")
+        p2 = Profile("rev1", "test_batch", config)
         p2.addToRange("test2", 10)
         p2.addToRange("test2", 20)
-        sess2 = MonitoredSession("rev1", "test_batch")
+        sess2 = MonitoredSession("rev1", "test_batch", config)
         sess2.addStacktrace(s2)
         fits = p2.fitsProfile(sess2)
         self.assertEqual(fits["test2"], 0)
@@ -93,22 +94,22 @@ class TestPerformanceFunctions(unittest.TestCase):
     def testSimilarity(self):
         v1 = {"test1": 1, "test2": 1, "test3": 1, "test4": 1, "test5": 0}
         v2 = {"test1": 1, "test2": 1, "test3": 1, "test4": 1, "test5": 1}
-        p = Profile("24435a", "test_batch")
+        p = Profile("24435a", "test_batch", config)
         self.assertAlmostEqual(p.similarity(v2), 1)
         self.assertAlmostEqual(p.similarity(v1), 0.894427191)
 
     def testProfileHelper(self):
         # reset database before testing
-        InitDatabase(DATABASE)
+        InitDatabase(config)
 
-        s1 = MonitoredStacktrace("test1", 10, 25)
-        s2 = MonitoredStacktrace("test2", 25, 25)
+        s1 = MonitoredStacktrace("test1", 10, 25, config)
+        s2 = MonitoredStacktrace("test2", 25, 25, config)
 
-        sess1 = MonitoredSession("rev1", "test_batch")
+        sess1 = MonitoredSession("rev1", "test_batch", config)
         sess1.addStacktrace(s1)
         sess1.addStacktrace(s2)
 
-        p = Profile("rev1", "test_batch", DATABASE)
+        p = Profile("rev1", "test_batch", config)
 
         # add a max value for the range
         p.addToRange("test1", 10)
@@ -116,14 +117,14 @@ class TestPerformanceFunctions(unittest.TestCase):
         p.addToRange("test2", 10)
         p.addToRange("test2", 20)
 
-        h = ProfileHelper(DATABASE)
+        h = ProfileHelper(config)
 
         # empty profile
-        self.assertEqual(h.getDatabaseId(p), -1)
+        self.assertEqual(p.getDatabaseId(), -1)
         # print p
         h.storeInDatabase(p)
 
-        self.assertNotEqual(h.getDatabaseId(p), -1)
+        self.assertNotEqual(p.getDatabaseId(), -1)
 
         p.addSession(sess1)
         # print p
@@ -140,13 +141,13 @@ class TestPerformanceFunctions(unittest.TestCase):
         self.assertFalse(p.getRange("test1").isInRange(21))
 
     def testSessionHelper(self):
-        helper = SessionHelper(DATABASE)
+        helper = SessionHelper(config)
         sess1 = helper.loadSessionFromCSV("rev1", "test_batch", "data/test_session1.csv")
         sess2 = helper.loadSessionFromCSV("rev1", "test_batch", "data/test_session2.csv")
         # print sess1
         # print sess2
 
-        p = Profile("rev1", "test_batch")
+        p = Profile("rev1", "test_batch", config)
         p.addSession(sess1)
         p.addSession(sess2)
         # print p
@@ -158,13 +159,18 @@ class TestPerformanceFunctions(unittest.TestCase):
         helper.storeInDatabase(sess1)
         helper.storeInDatabase(sess2)
 
+        revs = helper.getAllRevisions("test_batch")
+        self.assertEqual(len(revs), 1)
+
         sess3 = helper.loadFromDatabase("rev1", "test_batch")
         self.assertEqual(len(sess3), 2)
         for s in sess3:
             self.assertEqual(s.isTestRun, 0)
 
-        sess1 = MonitoredSession("rev2", "test_batch", 1)
+        sess1 = MonitoredSession("rev2", "test_batch", config, 1)
         helper.storeInDatabase(sess1)
+        revs = helper.getAllRevisions("test_batch")
+        self.assertEqual(len(revs), 2)
         sess3 = helper.loadFromDatabase("rev2", "test_batch")
         self.assertEqual(len(sess3), 1)
         for s in sess3:
