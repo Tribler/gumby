@@ -5,6 +5,8 @@ Created on Jul 12, 2013
 '''
 
 import sqlite3
+from gumby.settings import loadConfig
+import os
 
 
 class InitDatabase(object):
@@ -12,17 +14,18 @@ class InitDatabase(object):
     classdocs
     '''
 
-    def __init__(self, db):
+    def __init__(self, config):
         '''
         Constructor
         '''
-        print "Initializing database.. %s" % db
-        self.con = sqlite3.connect(db)
-        with self.con:
+        print "Initializing database.. %s" % config['spectraperf_db_path']
+        self._config = config
+        self._conn = getDatabaseConn(config, True)
+        with self._conn:
             self.createTables()
 
     def createTables(self):
-        cur = self.con.cursor()
+        cur = self._conn.cursor()
 
         # TODO: add keys
         cur.execute("DROP TABLE IF EXISTS profile")
@@ -93,3 +96,16 @@ class InitDatabase(object):
                             ON monitored_value \
                             (stacktrace_id, run_id, type_id)"
         cur.execute(unqMonitoredValue)
+
+
+def getDatabaseConn(config, init=False):
+    DATABASE = os.path.abspath(config['spectraperf_db_path'])
+    initDB = False
+    # if we already know we are initializing the database skip this step
+    if not init and not os.path.isfile(DATABASE):
+        initDB = True
+    con = sqlite3.connect(DATABASE)
+    con.row_factory = sqlite3.Row
+    if not init and initDB:
+        InitDatabase(config)
+    return con

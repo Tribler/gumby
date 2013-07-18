@@ -48,6 +48,7 @@ from twisted.internet import reactor
 
 from gumby.runner import ExperimentRunner
 
+
 class ColoredFileLogObserver(FileLogObserver):
     CANCEL_COLOR = "\x1b[0m"
     RED_NORMAL = "\x1b[31m"
@@ -105,8 +106,8 @@ class ColoredFileLogObserver(FileLogObserver):
 if __name__ == '__main__':
     sys.path.append(dirname(__file__))
     if len(sys.argv) == 2:
-        #startLogging(sys.stdout)
-        #startLogging(open("/tmp/cosa.log",'w'))
+        # startLogging(sys.stdout)
+        # startLogging(open("/tmp/cosa.log",'w'))
         observer = ColoredFileLogObserver()
         observer.start()
         config = loadConfig(sys.argv[1])
