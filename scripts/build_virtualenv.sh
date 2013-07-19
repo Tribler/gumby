@@ -217,7 +217,7 @@ fi
 if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
     pushd $VENV/src
     if [ ! -e M2Crypto-*gz ]; then
-        wget http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
+        wget --no-check-certificate http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
     fi
     if [ ! -d M2Crypto-*/ ]; then
         tar xvapf M2Crypto-*.tar.gz
