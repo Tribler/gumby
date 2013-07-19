@@ -4,9 +4,10 @@ Created on Jul 16, 2013
 
 @author: corpaul
 
-@arg1: path to summary csv file
-@arg2: revision
-@arg3: testcase name
+@arg1: path to config file
+@arg2: path to summary csv file
+@arg3: revision
+@arg4: testcase name
 '''
 
 import sys

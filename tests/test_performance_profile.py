@@ -95,8 +95,8 @@ class TestPerformanceFunctions(unittest.TestCase):
         v1 = {"test1": 1, "test2": 1, "test3": 1, "test4": 1, "test5": 0}
         v2 = {"test1": 1, "test2": 1, "test3": 1, "test4": 1, "test5": 1}
         p = Profile("24435a", "test_batch", config)
-        self.assertAlmostEqual(p.similarity(v2), 1)
-        self.assertAlmostEqual(p.similarity(v1), 0.894427191)
+        self.assertAlmostEqual(p.similarity(v2).value, 1)
+        self.assertAlmostEqual(p.similarity(v1).value, 0.894427191)
 
     def testProfileHelper(self):
         # reset database before testing
@@ -175,6 +175,15 @@ class TestPerformanceFunctions(unittest.TestCase):
         self.assertEqual(len(sess3), 1)
         for s in sess3:
             self.assertEqual(s.isTestRun, 1)
+
+        # TODO: verify this in some way, for now just see it doesnt throw
+        # sql errors
+        sess1 = helper.loadSessionFromCSV("rev1", "test_batch", "data/test_session1.csv")
+        fits = p.fitsProfile(sess1)
+        metricValue = p.similarity(fits)
+        helper.storeInDatabase(sess1)
+        helper.storeMetricInDatabase(sess1, metricValue)
+
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
