@@ -47,7 +47,7 @@ fi
 write_extra_vars()
 {
     if [ -e $PROJECTROOT/experiment_vars.sh ]; then
-        echo "export EXTRA_LD_LIBRARY_PATH=$VENV/lib" >> $PROJECTROOT/experiment_vars.sh
+        echo "export EXTRA_LD_LIBRARY_PATH=$VENV/lib:$VENV/inst/lib" >> $PROJECTROOT/experiment_vars.sh
     fi
 }
 
