@@ -102,10 +102,12 @@ class Profile(object):
         for i in v.itervalues():
             ones += i
         if ones == 0:
-            return 0
-        d2 = sqrt(ones)
-        sim = ones / (d1 * d2)
-        return sim
+            sim = 0
+        else:
+            d2 = sqrt(ones)
+            sim = ones / (d1 * d2)
+        metricValue = MetricValue(MetricType.COSINESIM, sim, self.getDatabaseId())
+        return metricValue
 
     def addRange(self, range):
         if range.stacktrace in self.ranges:
@@ -160,7 +162,7 @@ class ProfileHelper(object):
 
                 sqlRange = "INSERT OR REPLACE INTO range (stacktrace_id, \
                     min_value, max_value, profile_id, type_id) VALUES (%d, %d, %d, %d, %d) " \
-                    % (st.databaseId, st.minValue, st.maxValue, p.databaseId, 1)
+                    % (st.databaseId, st.minValue, st.maxValue, p.databaseId, Type.BYTESWRITTEN)
                 cur.execute(sqlRange)
 
             self._conn.commit()
@@ -397,7 +399,7 @@ class SessionHelper(object):
                     st.databaseId = cur.lastrowid
 
                 sqlRange = "INSERT OR REPLACE INTO monitored_value (stacktrace_id, run_id, type_id, value) VALUES \
-                    (%d, %d, %d, %d) " % (st.getDatabaseId(), s.databaseId, 1, st.rawBytes)
+                    (%d, %d, %d, %d) " % (st.getDatabaseId(), s.databaseId, Type.BYTESWRITTEN, st.rawBytes)
                 cur.execute(sqlRange)
 
             self._conn.commit()
@@ -434,3 +436,26 @@ class SessionHelper(object):
                 sessions.append(m)
 
             return sessions
+
+    def storeMetricInDatabase(self, s, m):
+        assert s.databaseId != -1, "please store session in database first"
+        with self._conn:
+            cur = self._conn.cursor()
+            sql = "INSERT INTO metric_value (run_id, metric_type_id, value, profile_id) VALUES \
+                    (%d, %d, %f, %d)" % (s.databaseId, m.typeId, m.value, m.profileId)
+            cur.execute(sql)
+
+
+class MetricValue(object):
+    def __init__(self, typeId, value, profileId):
+        self.typeId = typeId
+        self.value = value
+        self.profileId = profileId
+
+
+# enums for different types of data monitored, note: for now only 1 type exists
+def enum(**enums):
+    return type('Enum', (), enums)
+
+Type = enum(BYTESWRITTEN=1)
+MetricType = enum(COSINESIM=1)
