@@ -4,7 +4,7 @@ Created on Jul 16, 2013
 
 @author: corpaul
 
-@arg1: revision
+@arg1: path to config file
 @arg2: testcase
 
 '''

@@ -34,6 +34,8 @@ class InitDatabase(object):
         cur.execute("DROP TABLE IF EXISTS type")
         cur.execute("DROP TABLE IF EXISTS monitored_value")
         cur.execute("DROP TABLE IF EXISTS run")
+        cur.execute("DROP TABLE IF EXISTS metric_type")
+        cur.execute("DROP TABLE IF EXISTS metric_value")
 
         createProfile = "CREATE TABLE profile ( \
                             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
@@ -96,6 +98,29 @@ class InitDatabase(object):
                             ON monitored_value \
                             (stacktrace_id, run_id, type_id)"
         cur.execute(unqMonitoredValue)
+
+        createMetricType = "CREATE TABLE metric_type ( \
+                            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
+                            metric_type TEXT NOT NULL, \
+                            type_id INTEGER NOT NULL);"
+        cur.execute(createMetricType)
+        cur.execute("INSERT INTO metric_type (metric_type, type_id) VALUES ('Similarity', 1)")
+
+        unqMetricType = "CREATE UNIQUE INDEX IF NOT EXISTS metric_type_unq ON metric_type (metric_type, type_id)"
+        cur.execute(unqMetricType)
+
+        createMetricValue = "CREATE TABLE metric_value ( \
+                            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
+                            run_id INTEGER NOT NULL, \
+                            metric_type_id INTEGER NOT NULL, \
+                            value REAL NOT NULL, \
+                            profile_id INTEGER NOT NULL);"
+        cur.execute(createMetricValue)
+        unqMetricValue = "CREATE UNIQUE INDEX IF NOT EXISTS \
+                            metric_value_unq \
+                            ON metric_value \
+                            (metric_type_id, run_id, profile_id)"
+        cur.execute(unqMetricValue)
 
 
 def getDatabaseConn(config, init=False):
