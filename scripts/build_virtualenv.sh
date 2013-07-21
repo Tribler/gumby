@@ -314,9 +314,9 @@ twisted # Used by the config server/clients
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 nose
 PIL
-" > ~/requeriments.txt
-pip install -r ~/requeriments.txt
-rm ~/requeriments.txt
+" > ~/requirements.txt
+pip install -r ~/requirements.txt
+rm ~/requirements.txt
 
 deactivate
 
