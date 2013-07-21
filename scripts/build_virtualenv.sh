@@ -248,15 +248,16 @@ python -c "from M2Crypto import EC"
 
 
 # Build libboost
-if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
-    pushd $VENV/src
-    wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.53.0/boost_1_53_0.tar.bz2
-    tar xavf boost_*.tar.bz2
-    cd boost*/
-    ./bootstrap.sh
-    ./b2 -j$(grep process /proc/cpuinfo | wc -l) --prefix=$VENV install
-    popd
-fi
+# TODO(vladum): If you use this, see TODO about libtorrent's bug.
+# if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
+#     pushd $VENV/src
+#     wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.53.0/boost_1_53_0.tar.bz2
+#     tar xavf boost_*.tar.bz2
+#     cd boost*/
+#     ./bootstrap.sh
+#     ./b2 -j$(grep process /proc/cpuinfo | wc -l) --prefix=$VENV install
+#     popd
+# fi
 
 # Build Libtorrent and its python bindings
 pushd $VENV/src
@@ -268,11 +269,17 @@ if [ ! -e $VENV/lib*/python*/site-packages/libtorrent.so ]; then
         tar xavf libtorrent-rasterbar-*.tar.gz
     fi
     cd libtorrent-rasterbar*/
-    ./configure --with-boost-python --with-boost=$VENV/include/boost --with-boost-libdir=$VENV/lib --with-boost-system=boost_system --prefix=$VENV --enable-python-binding
+    # TODO(vladum): libtorrent uses boost::system::get_system_category() in a
+    # few places, instead of their get_system_category() wrapper. This method
+    # has been renamed in version 1.43.0 to boost::system::system_category().
+    # Using a newer Boost requires patching libtorrent, so, for now, we will use
+    # the system's Boost, which is 1.41.0 on DAS4 and works fine.
+    ./configure --with-boost-python --with-boost-system=boost_system --prefix=$VENV --enable-python-binding
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
     cd $VENV/lib
-    ln -fs libboost_python.so libboost_python-py27.so.1.53.0
+    # TODO(vladum): Uncomment for custom Boost, but see upper comment.
+    # ln -fs libboost_python.so libboost_python-py27.so.1.53.0
     cd ../..
 fi
 
