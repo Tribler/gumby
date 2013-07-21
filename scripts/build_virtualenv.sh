@@ -165,6 +165,7 @@ fi
 if [ ! -e $VENV/bin/python ]; then
     #virtualenv   --no-site-packages --clear $VENV
     virtualenv -p $VENV/inst/bin/python --no-site-packages --system-site-packages --clear $VENV
+    $VENV/bin/easy_install --upgrade pip
 fi
 
 mkdir -p $VENV/src
