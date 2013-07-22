@@ -57,7 +57,7 @@ class ExperimentRunner(Logger):
         self._cfg = config
         self._remote_workspace_dir = "Experiment_" + path.basename(config['workspace_dir'])
         # TODO: check if the experiment dir actually exists
-        self._experiment_dir = path.abspath(config['workspace_dir'])
+        self._workspace_dir = path.abspath(config['workspace_dir'])
         self._env_runner = "scripts/run_in_env.sh"
 
     def logPrefix(self):
@@ -78,10 +78,10 @@ class ExperimentRunner(Logger):
         # First, we need to copy the stuff to the das4 clusters we want to use to run the experiment
         for host in self._cfg['head_nodes']:
             pp = OneShotProcessProtocol()
-            experiment_dir = self._cfg['workspace_dir']
+            workspace_dir = self._cfg['workspace_dir']
             args = ("/usr/bin/rsync", "-avz", "--recursive", "--exclude=.git*",
                     "--exclude=.svn", "--exclude=local", "--delete-excluded",
-                    experiment_dir + '/', ":".join((host, self._remote_workspace_dir + '/')
+                    workspace_dir + '/', ":".join((host, self._remote_workspace_dir + '/')
                                                    ))
             msg("Running: %s " % ' '.join(args))
             reactor.spawnProcess(pp, args[0], args)
@@ -268,11 +268,11 @@ class ExperimentRunner(Logger):
                 reactor.stop()
             reactor.addSystemEventTrigger('after', 'shutdown', sys.exit, 1)
 
-        chdir(self._experiment_dir)
+        chdir(self._workspace_dir)
 
         # Step 1:
         # Write the experiment config variables to a file sourceable by a shell script
-        with open(path.join(self._experiment_dir,"experiment_vars.sh"), 'w') as vars_f:
+        with open(path.join(self._workspace_dir,"experiment_vars.sh"), 'w') as vars_f:
             vars_f.write("# Auto generated file, do not modify\n")
             for key, val in self._cfg.iteritems():
                 vars_f.write('export %s="%s"\n' % (key.upper(), val))
