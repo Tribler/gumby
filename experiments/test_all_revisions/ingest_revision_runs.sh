@@ -42,15 +42,17 @@ if [ ! -e $1 ]; then
     echo "Usage: $0 OUTPUT_DIR_NAME"
 fi
 
+CONFFILE=$(readlink -f "test.conf")
 TESTCASE=Whatever
 for CSV in $(ls -1tr); do
     REP_DIR=report_$(echo $CSV | cut -f2 -d_ )
     REVISION=$(echo $CSV | cut -f2 -d_ ) # TODO, change this when we use the new csv files with counter field
     make_io_writes_report.sh $REP_DIR $CSV "LALALAL arr"
-    store_run_in_database.py $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTCASE # TODO add config file to use for database as param
-    generate_profile.py $REVISION $TESTCASE # TODO add config file to use for database as param, remove $REVISION param (script now generates profiles for all revisions)
+    store_run_in_database.py $CONFFILE $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTCASE 
 done
-
+# generate_profile.py now refreshes/generates all profiles for a test case, 
+# so it is not necessary to give a revision as argument
+generate_profile.py $CONFFILE $TESTCASE 
 
 #
 # ingest_revision_runs.sh ends here
