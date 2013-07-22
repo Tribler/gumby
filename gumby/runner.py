@@ -45,6 +45,7 @@ from twisted.python.log import err, msg, Logger
 from twisted.internet.defer import Deferred, DeferredList, inlineCallbacks, setDebugging, gatherResults, succeed
 
 from twisted.internet.protocol import ProcessProtocol
+from twisted.internet.error import ProcessTerminated
 from twisted.internet import reactor
 
 from sshclient import runRemoteCMD
@@ -325,9 +326,8 @@ class OneShotProcessProtocol(ProcessProtocol):
         self._d = Deferred()
 
     def processExited(self, reason):
-        msg("Process exited with reason: %s" % reason)
-        msg("exit code %s" % reason.value.exitCode)
-        if reason.value.exitCode:
+        msg(reason.getErrorMessage())
+        if isinstance(reason.value, ProcessTerminated):
             self._d.errback(reason)
         else:
             self._d.callback(None)
