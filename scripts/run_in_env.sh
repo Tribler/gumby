@@ -66,6 +66,7 @@ fi
 # is disabled as we could be using systemtap from within the experiment.
 mkdir -p $VIRTUALENV_DIR/tapsets
 for TAP in gumby/scripts/stp/tapsets/* ; do
+    echo "$TAP  ->>  $VIRTUALENV_DIR/tapsets/$(basename -s .i $TAP) "
     sed "s\\__VIRTUALENV_PATH__\\$VIRTUALENV_DIR\\g" < $TAP >  $VIRTUALENV_DIR/tapsets/$(basename -s .i $TAP)
 done
 
