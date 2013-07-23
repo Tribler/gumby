@@ -65,7 +65,7 @@ fi
 ITERATION=0
 COUNT=0
 
-for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); do
+for REV in $(cd dispersy ; git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
 
     git checkout $REV
