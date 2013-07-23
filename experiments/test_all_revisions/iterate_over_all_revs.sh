@@ -84,6 +84,8 @@ for REV in $(git log --quiet --reverse 4dd183ee07..HEAD | grep ^"commit " | cut 
     export REVISION=$REV
     #sed -i 's/assert message.distribution.global_time/#&/' Tribler/Core/dispersy/dispersy.py
     rm -fR sqlite
+    rgrep "update_revision_information(" dispersy
+
     #python -O Tribler/Main/dispersy.py --script dispersy-batch || exit
     run_stap_probe.sh "python -c 'from dispersy.tool.main import main; main()' --script dispersy.script.DispersySyncScript" $OUTPUTDIR/${TESTNAME}_${COUNT}_${REVISION}_${ITERATION}.csv ||:
     #python -O Tribler/dispersy/tool/main.py --script dispersy-crypto
