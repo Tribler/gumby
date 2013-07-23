@@ -44,7 +44,7 @@ from zope.interface import implements
 from twisted.python.log import err, msg, Logger
 from twisted.python.failure import Failure
 from twisted.internet import reactor
-from twisted.internet.error import ConnectionDone, ProcessTerminated
+from twisted.internet.error import ConnectionDone, ProcessTerminated, ConnectionLost
 from twisted.internet.defer import Deferred, DeferredList, succeed, setDebugging
 from twisted.internet.interfaces import IStreamClientEndpoint
 from twisted.internet.protocol import Factory, Protocol, ClientFactory
@@ -56,10 +56,16 @@ from twisted.conch.ssh.transport import SSHClientTransport
 from twisted.conch.ssh.connection import SSHConnection
 from twisted.conch.client.default import SSHUserAuthClient
 from twisted.conch.client.options import ConchOptions
+from twisted.conch.ssh.session import packRequest_pty_req
 
-from struct import unpack
+from struct import unpack, pack
 
 #setDebugging(True)
+
+_ERROR_REASONS = (
+    ProcessTerminated,
+    ConnectionLost
+)
 
 class _CommandTransport(SSHClientTransport):
     _secured = False
@@ -79,13 +85,21 @@ class _CommandTransport(SSHClientTransport):
         self.requestService(userauth)
 
     def connectionLost(self, reason):
-        msg("Connection lost with reason:", reason)
+        nreason = None
         if self._secured and reason.type is ConnectionDone:
-            if isinstance(self.connection.reason, ProcessTerminated):
-                reason = Failure(self.connection.reason)
-            else:
-                reason = None
-        self.factory.finished.callback(reason)
+            if isinstance(self.connection.reason, _ERROR_REASONS):
+                nreason = Failure(self.connection.reason)
+        if nreason is not None:
+            err("Connection lost with reason: %s" % self.connection.reason)
+        else:
+            msg("Connection lost with reason:", reason)
+
+        self.factory.finished.callback(nreason)
+
+    def receiveError(self, reason, desc):
+        err_msg = "Received error: %s (reasonCode=%d)" % (desc, reason)
+        err(err_msg)
+        self.connection.reason = ConnectionLost(err_msg)
 
 
 class _CommandConnection(SSHConnection):
@@ -116,7 +130,22 @@ class _CommandChannel(SSHChannel):
     #     self._commandConnected.errback(reason)
 
     def channelOpen(self, _):
-        self.conn.sendRequest(self, 'exec', NS(self.command))
+        def ptyReqFailed(reason):
+            # TODO(vladum): Why is this never called? Looks like the Transport
+            # received the error (at least the packet integrity ones).
+            err("SSH PTY Request failed")
+            self.reason = reason
+            self.conn.sendClose(self)
+
+        modes = pack("<B", 0x00) # only TTY_OP_END
+        win_size = (0, 0, 0, 0)  # 0s are ignored
+        pty_req_data = packRequest_pty_req('vt100', win_size, modes)
+        d = self.conn.sendRequest(self, 'pty-req', pty_req_data, wantReply=True)
+        d.addCallback(
+            # send command after we get the pty
+            lambda _: self.conn.sendRequest(self, 'exec', NS(self.command))
+        )
+        d.addErrback(ptyReqFailed)
 
     def dataReceived(self, bytes_):
         # we could recv more than 1 line
