@@ -61,7 +61,6 @@ cd dispersy
 git clean -fd
 git checkout devel
 
-ITERATION=0
 COUNT=0
 
 for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); do
@@ -71,6 +70,7 @@ for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); d
     git submodule sync
     git submodule update
     export REVISION=$REV
+    ITERATION=0
     while [ $ITERATION -lt $STAP_RUN_ITERATIONS ]; do
         let ITERATION=1+$ITERATION
 
@@ -78,9 +78,9 @@ for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); d
         cd ..
         run_stap_probe.sh "nosetests dispersy/tests/test_sync.py" $OUTPUTDIR/${TESTNAME}_${COUNT}_${REVISION}_${ITERATION}.csv
         cd -
-        echo $? $REV >> /tmp/results.log
+        echo $? $ITERATION $REV >> /tmp/results.log
+        git clean -fd
     done
-    git clean -fd
 done
 
 #
