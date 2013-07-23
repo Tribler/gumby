@@ -46,8 +46,10 @@ if [ ! -d dispersy ]; then
     git clone https://github.com/Tribler/dispersy.git
 fi
 
+cd dispersy
 git clean -fd
 git checkout devel
+cd ..
 
 export PYTHONPATH=.
 export TESTNAME="Whatever"
