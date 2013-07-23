@@ -96,7 +96,7 @@ for REV in $(git log --quiet 6fc1a54..HEAD | grep ^"commit " | cut -f2 -d" "); d
 
     #python -O Tribler/Main/dispersy.py --script dispersy-batch || exit
     #run_stap_probe.sh "python -c 'from dispersy.tool.main import main; main()' --script dispersy.script.DispersySyncScript" $OUTPUTDIR/${TESTNAME}_${COUNT}_${REVISION}_${ITERATION}.csv ||:
-    run_stap_probe.sh nosetests dispersy/tests/test_sync.py $OUTPUTDIR/${TESTNAME}_${COUNT}_${REVISION}_${ITERATION}.csv ||:
+    run_stap_probe.sh "nosetests dispersy/tests/test_sync.py" $OUTPUTDIR/${TESTNAME}_${COUNT}_${REVISION}_${ITERATION}.csv ||:
     #python -O Tribler/dispersy/tool/main.py --script dispersy-crypto
     echo $? $REV >> /tmp/results.log
     #git checkout -- dispersy.py
