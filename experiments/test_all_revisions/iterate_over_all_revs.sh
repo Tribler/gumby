@@ -88,7 +88,7 @@ for REV in $(git log --quiet --reverse 4dd183ee07..HEAD | grep ^"commit " | cut 
     if [ -e dispersy/revision.py ]; then
         cat dispersy/revision.py
         echo "#####################################################"
-        sed -i s/_revision_information[url[10:-2]] = int(revision[11:-2])/pass/g dispersy/revision.py
+        sed -i 's/_revision_information[url[10:-2]] = int(revision[11:-2])/pass/g' dispersy/revision.py
         cat dispersy/revision.py
         exit 1
     fi
