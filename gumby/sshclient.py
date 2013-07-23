@@ -85,11 +85,10 @@ class _CommandTransport(SSHClientTransport):
         self.requestService(userauth)
 
     def connectionLost(self, reason):
+        nreason = None
         if self._secured and reason.type is ConnectionDone:
             if isinstance(self.connection.reason, _ERROR_REASONS):
                 nreason = Failure(self.connection.reason)
-            else:
-                nreason = None
         if nreason is not None:
             err("Connection lost with reason: %s" % self.connection.reason)
         else:
