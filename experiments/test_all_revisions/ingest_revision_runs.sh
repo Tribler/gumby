@@ -42,7 +42,19 @@ if [ ! -e $1 ]; then
     echo "Usage: $0 OUTPUT_DIR_NAME"
 fi
 
-CONFFILE=$(readlink -f "test.conf")
+# Find the experiment dir
+EXPERIMENT_DIR=$( dirname $(readlink -f "$0"))
+if [ ! -d "$EXPERIMENT_DIR" ]; then
+    EXPERIMENT_DIR=$( dirname $(readlink -f $(which "$0")))
+fi
+if [ ! -d "$EXPERIMENT_DIR" ]; then
+    echo "Couldn't figure out where the experiment is, bailing out."
+    exit 1
+fi
+
+CONFFILE=$EXPERIMENT_DIR"/test.conf"
+
+# TODO: Put this in the config file
 TESTCASE=Whatever
 for CSV in $(ls -1tr); do
     REP_DIR=report_$(echo $CSV | cut -f2 -d_ )

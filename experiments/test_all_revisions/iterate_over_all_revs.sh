@@ -57,7 +57,7 @@ mkdir -p output
 export OUTPUTDIR=$(readlink -f output)
 CONFFILE=$(readlink -f "test.conf")
 
-cd dispersy
+pushd dispersy
 git clean -fd
 git checkout devel
 
@@ -82,6 +82,10 @@ for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); d
         git clean -fd
     done
 done
+
+popd
+
+ingest_revision_runs.sh output
 
 #
 # parallel_runner.sh ends here
