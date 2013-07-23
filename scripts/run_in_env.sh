@@ -50,6 +50,9 @@ export PYTHONPATH=$PYTHONPATH:$PROJECTROOT
 # Update PATH
 export PATH=$PATH:$PROJECTROOT/gumby/scripts
 
+# R User lib dir
+export R_LIBS_USER=$R_LIBS_USER${R_LIBS_USER:+:}$HOME/R
+
 # Update LD_LIBRARY_PATH and PATH if we are using a SystemTap enabled Python runtime
 # if [ "$USE_SYSTEMTAP" == True ]; then
 # fi
