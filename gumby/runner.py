@@ -333,10 +333,12 @@ class OneShotProcessProtocol(ProcessProtocol):
             self._d.callback(None)
 
     def outReceived(self, data):
-        msg("STDOUT: %s" % data.strip())
+        for line in data[:-1].split("\n"):
+            msg("STDOUT: %s" % line)
 
     def errReceived(self, data):
-        msg("STDERR: %s" % data.strip())
+        for line in data[:-1].split("\n"):
+            msg("STDERR: %s" % line)
 
     def getDeferred(self):
         return self._d
