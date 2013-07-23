@@ -56,8 +56,8 @@ export PATH=$PATH:$PROJECTROOT/gumby/scripts
 
 # Enter virtualenv in case there's one
 if [ ! -z "$VIRTUALENV_DIR" -a -d "$VIRTUALENV_DIR" ]; then
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/systemtap/inst/lib
-    export PATH=$PATH:$PWD/systemtap/inst/bin
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$VIRTUALENV_DIR/inst/lib
+    export PATH=$PATH:$VIRTUALENV_DIR/inst/bin
     source $VIRTUALENV_DIR/bin/activate
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$EXTRA_LD_LIBRARY_PATH
 fi
