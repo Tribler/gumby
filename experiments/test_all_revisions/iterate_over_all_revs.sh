@@ -42,22 +42,6 @@ set -ex
 
 rm -f /tmp/results.log
 
-# if [ ! -d tribler ]; then
-#     svn co http://svn.tribler.org/abc/branches/release-5.5.x tribler
-#     #rm -R tribler/Tribler/dispersy
-#     rm -R tribler/Tribler/Core/dispersy
-# fi
-
-# cd tribler/Tribler/Core
-
-# if [ ! -d dispersy ]; then
-#     git clone https://github.com/Tribler/dispersy.git
-# fi
-
-# cd dispersy
-
-# git checkout devel
-
 if [ ! -d tribler ]; then
     git clone https://github.com/Tribler/tribler.git --recursive
 fi
@@ -72,40 +56,35 @@ mkdir -p ../output
 export OUTPUTDIR=$(readlink -f "../output/")
 CONFFILE=$(readlink -f "test.conf")
 
+# Do only one iteration by default
+if [ -z "$STAP_RUN_ITERATIONS" ]; then
+    STAP_RUN_ITERATIONS=1
+fi
+
+ITERATION=0
 COUNT=0
-#for REV in $(git log --quiet --reverse 6fc1a54..HEAD | grep ^"commit " | cut -f2 -d" "); do
+
 for REV in $(git log --quiet 6fc1a54..HEAD | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
-    ITERATION=1
+
     git checkout $REV
     git submodule sync
     git submodule update
     cd Tribler
-    #set +e
     export REVISION=$REV
-    #sed -i 's/assert message.distribution.global_time/#&/' Tribler/Core/dispersy/dispersy.py
-    rm -fR sqlite
+    while [ $ITERATION -lt $STAP_RUN_ITERATIONS ]; do
+        let ITERATION=1+$ITERATION
 
-    if [ -e dispersy/revision.py ]; then
-        cat dispersy/revision.py
-        echo "#####################################################"
-        sed -i 's/_revision_information[url[10:-2]] = int(revision[11:-2])/pass/g' dispersy/revision.py
-        cat dispersy/revision.py
-        exit 1
-    fi
+        rm -fR sqlite
 
-    #python -O Tribler/Main/dispersy.py --script dispersy-batch || exit
-    #run_stap_probe.sh "python -c 'from dispersy.tool.main import main; main()' --script dispersy.script.DispersySyncScript" $OUTPUTDIR/${TESTNAME}_${COUNT}_${REVISION}_${ITERATION}.csv ||:
-    run_stap_probe.sh "nosetests dispersy/tests/test_sync.py" $OUTPUTDIR/${TESTNAME}_${COUNT}_${REVISION}_${ITERATION}.csv
-    #python -O Tribler/dispersy/tool/main.py --script dispersy-crypto
-    echo $? $REV >> /tmp/results.log
-    #git checkout -- dispersy.py
-    set -e
+        run_stap_probe.sh "nosetests dispersy/tests/test_sync.py" $OUTPUTDIR/${TESTNAME}_${COUNT}_${REVISION}_${ITERATION}.csv
+
+        echo $? $REV >> /tmp/results.log
+    done
     cd ..
     #find -iname "*tdebug.py*" -exec sleep 10000 \;
     git clean -fd
 done
-
 
 #
 # parallel_runner.sh ends here
