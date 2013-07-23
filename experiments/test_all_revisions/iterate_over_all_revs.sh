@@ -64,7 +64,7 @@ git checkout devel
 COUNT=0
 
 #for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); do
-for REV in $(git log --quiet HEAD~5..HEAD | grep ^"commit " | cut -f2 -d" "); do
+for REV in $(git log --quiet HEAD~2..HEAD | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
 
     git checkout $REV
@@ -88,7 +88,7 @@ done
 
 popd
 
-ingest_revision_runs.sh output
+gumby/experiments/test_all_revisions/ingest_revision_runs.sh output
 
 #
 # parallel_runner.sh ends here
