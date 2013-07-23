@@ -56,8 +56,9 @@ from twisted.conch.ssh.transport import SSHClientTransport
 from twisted.conch.ssh.connection import SSHConnection
 from twisted.conch.client.default import SSHUserAuthClient
 from twisted.conch.client.options import ConchOptions
+from twisted.conch.ssh.session import packRequest_pty_req
 
-from struct import unpack
+from struct import unpack, pack
 
 #setDebugging(True)
 
@@ -116,7 +117,22 @@ class _CommandChannel(SSHChannel):
     #     self._commandConnected.errback(reason)
 
     def channelOpen(self, _):
-        self.conn.sendRequest(self, 'exec', NS(self.command))
+        def ptyReqFailed(reason):
+            # TODO(vladum): Why is this never called? Looks like the Transport
+            # received the error (at least the packet integrity ones).
+            err("SSH PTY Request failed")
+            self.reason = reason
+            self.conn.sendClose(self)
+
+        modes = pack("<B", 0x00) # only TTY_OP_END
+        win_size = (0, 0, 0, 0)  # 0s are ignored
+        pty_req_data = packRequest_pty_req('vt100', win_size, modes)
+        d = self.conn.sendRequest(self, 'pty-req', pty_req_data, wantReply=True)
+        d.addCallback(
+            # send command after we get the pty
+            lambda _: self.conn.sendRequest(self, 'exec', NS(self.command))
+        )
+        d.addErrback(ptyReqFailed)
 
     def dataReceived(self, bytes_):
         # we could recv more than 1 line
