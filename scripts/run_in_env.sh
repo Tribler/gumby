@@ -61,6 +61,14 @@ if [ ! -z "$VIRTUALENV_DIR" -a -d "$VIRTUALENV_DIR" ]; then
     source $VIRTUALENV_DIR/bin/activate
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$EXTRA_LD_LIBRARY_PATH
 fi
+
+# Path substitution for the tapsets, needs to be done even in case of USE_LOCAL_SYSTEMTAP
+# is disabled as we could be using systemtap from within the experiment.
+mkdir -p $VIRTUALENV_DIR/tapsets
+for TAP in gumby/scripts/stp/tapsets/* ; do
+    sed "s\\__VIRTUALENV_PATH__\\$VIRTUALENV_DIR\\g" < $TAP >  $VIRTUALENV_DIR/tapsets/$(basename -s .i $TAP)
+done
+
 # if [ "$USE_LOCAL_SYSTEMTAP" == True -o "$USE_LOCAL_VENV" == True ]; then
 # fi
 
