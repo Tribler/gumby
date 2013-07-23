@@ -44,7 +44,7 @@ from zope.interface import implements
 from twisted.python.log import err, msg, Logger
 from twisted.python.failure import Failure
 from twisted.internet import reactor
-from twisted.internet.error import ConnectionDone, ProcessTerminated
+from twisted.internet.error import ConnectionDone, ProcessTerminated, ConnectionLost
 from twisted.internet.defer import Deferred, DeferredList, succeed, setDebugging
 from twisted.internet.interfaces import IStreamClientEndpoint
 from twisted.internet.protocol import Factory, Protocol, ClientFactory
@@ -61,6 +61,11 @@ from twisted.conch.ssh.session import packRequest_pty_req
 from struct import unpack, pack
 
 #setDebugging(True)
+
+_ERROR_REASONS = (
+    ProcessTerminated,
+    ConnectionLost
+)
 
 class _CommandTransport(SSHClientTransport):
     _secured = False
@@ -80,13 +85,22 @@ class _CommandTransport(SSHClientTransport):
         self.requestService(userauth)
 
     def connectionLost(self, reason):
-        msg("Connection lost with reason:", reason)
         if self._secured and reason.type is ConnectionDone:
-            if isinstance(self.connection.reason, ProcessTerminated):
-                reason = Failure(self.connection.reason)
+            if isinstance(self.connection.reason, _ERROR_REASONS):
+                nreason = Failure(self.connection.reason)
             else:
-                reason = None
-        self.factory.finished.callback(reason)
+                nreason = None
+        if nreason is not None:
+            err("Connection lost with reason: %s" % self.connection.reason)
+        else:
+            msg("Connection lost with reason:", reason)
+
+        self.factory.finished.callback(nreason)
+
+    def receiveError(self, reason, desc):
+        err_msg = "Received error: %s (reasonCode=%d)" % (desc, reason)
+        err(err_msg)
+        self.connection.reason = ConnectionLost(err_msg)
 
 
 class _CommandConnection(SSHConnection):
