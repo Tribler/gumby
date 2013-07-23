@@ -42,18 +42,17 @@ set -ex
 
 rm -f /tmp/results.log
 
-if [ ! -d tribler ]; then
-    git clone https://github.com/Tribler/tribler.git --recursive
+if [ ! -d dispersy ]; then
+    git clone https://github.com/Tribler/dispersy.git
 fi
 
-cd tribler
 git clean -fd
 git checkout devel
 
 export PYTHONPATH=.
 export TESTNAME="Whatever"
-mkdir -p ../output
-export OUTPUTDIR=$(readlink -f "../output/")
+mkdir -p output
+export OUTPUTDIR=$(readlink -f output)
 CONFFILE=$(readlink -f "test.conf")
 
 # Do only one iteration by default
@@ -64,13 +63,12 @@ fi
 ITERATION=0
 COUNT=0
 
-for REV in $(git log --quiet 6fc1a54..HEAD | grep ^"commit " | cut -f2 -d" "); do
+for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
 
     git checkout $REV
     git submodule sync
     git submodule update
-    cd Tribler
     export REVISION=$REV
     while [ $ITERATION -lt $STAP_RUN_ITERATIONS ]; do
         let ITERATION=1+$ITERATION
@@ -81,8 +79,6 @@ for REV in $(git log --quiet 6fc1a54..HEAD | grep ^"commit " | cut -f2 -d" "); d
 
         echo $? $REV >> /tmp/results.log
     done
-    cd ..
-    #find -iname "*tdebug.py*" -exec sleep 10000 \;
     git clean -fd
 done
 
