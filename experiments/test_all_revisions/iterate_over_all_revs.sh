@@ -78,7 +78,7 @@ for REV in $(git log --quiet HEAD~2..HEAD | grep ^"commit " | cut -f2 -d" "); do
         rm -fR sqlite
         cd ..
         set +e
-        run_stap_probe.sh "nosetests dispersy/tests/test_sync.py" $OUTPUTDIR/${TESTNAME}_${COUNT}_${REVISION}_${ITERATION}.csv ||:
+        run_stap_probe.sh "nosetests dispersy/tests/test_sync.py" $OUTPUTDIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
         set -e
         cd -
         echo $? $ITERATION $REV >> /tmp/results.log
