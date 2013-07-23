@@ -46,10 +46,10 @@ if [ ! -d dispersy ]; then
     git clone https://github.com/Tribler/dispersy.git
 fi
 
-cd dispersy
-git clean -fd
-git checkout devel
-cd ..
+# Do only one iteration by default
+if [ -z "$STAP_RUN_ITERATIONS" ]; then
+    STAP_RUN_ITERATIONS=1
+fi
 
 export PYTHONPATH=.
 export TESTNAME="Whatever"
@@ -57,15 +57,14 @@ mkdir -p output
 export OUTPUTDIR=$(readlink -f output)
 CONFFILE=$(readlink -f "test.conf")
 
-# Do only one iteration by default
-if [ -z "$STAP_RUN_ITERATIONS" ]; then
-    STAP_RUN_ITERATIONS=1
-fi
+cd dispersy
+git clean -fd
+git checkout devel
 
 ITERATION=0
 COUNT=0
 
-for REV in $(cd dispersy ; git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); do
+for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
 
     git checkout $REV
@@ -76,9 +75,9 @@ for REV in $(cd dispersy ; git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut
         let ITERATION=1+$ITERATION
 
         rm -fR sqlite
-
+        cd ..
         run_stap_probe.sh "nosetests dispersy/tests/test_sync.py" $OUTPUTDIR/${TESTNAME}_${COUNT}_${REVISION}_${ITERATION}.csv
-
+        cd -
         echo $? $REV >> /tmp/results.log
     done
     git clean -fd
