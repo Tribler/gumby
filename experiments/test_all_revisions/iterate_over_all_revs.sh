@@ -50,12 +50,13 @@ fi
 if [ -z "$STAP_RUN_ITERATIONS" ]; then
     STAP_RUN_ITERATIONS=1
 fi
+if [ -z "$TESTNAME" ]; then
+    TESTNAME="Whatever"
+fi
 
 export PYTHONPATH=.
-export TESTNAME="Whatever"
 mkdir -p output
 export OUTPUTDIR=$(readlink -f output)
-CONFFILE=$(readlink -f "test.conf")
 
 pushd dispersy
 git clean -fd
