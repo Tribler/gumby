@@ -42,17 +42,36 @@ if [ ! -e $1 ]; then
     echo "Usage: $0 OUTPUT_DIR_NAME"
 fi
 
-CONFFILE=$(readlink -f "test.conf")
-TESTCASE=Whatever
+# Find the experiment dir
+EXPERIMENT_DIR=$( dirname $(readlink -f "$0"))
+if [ ! -d "$EXPERIMENT_DIR" ]; then
+    EXPERIMENT_DIR=$( dirname $(readlink -f $(which "$0")))
+fi
+if [ ! -d "$EXPERIMENT_DIR" ]; then
+    echo "Couldn't figure out where the experiment is, bailing out."
+    exit 1
+fi
+
+CONFFILE=$EXPERIMENT_DIR"/test.conf"
+
+# TODO: Put this in the config file
+if [ -z "$TESTNAME" ]; then
+    TESTNAME="Whatever"
+fi
+if [ -z "$TEST_DESCRIPTION" ]; then
+    TEST_DESCRIPTION="Lalla arr"
+fi
+
+cd $1
 for CSV in $(ls -1tr); do
     REP_DIR=report_$(echo $CSV | cut -f2 -d_ )
-    REVISION=$(echo $CSV | cut -f2 -d_ ) # TODO, change this when we use the new csv files with counter field
-    make_io_writes_report.sh $REP_DIR $CSV "LALALAL arr"
-    store_run_in_database.py $CONFFILE $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTCASE 
+    REVISION=$(echo $CSV | cut -f3 -d_ ) # TODO, change this when we use the new csv files with counter field
+    make_io_writes_report.sh $REP_DIR $CSV $TEST_DESCRIPTION
+    store_run_in_database.py $CONFFILE $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTNAME
 done
-# generate_profile.py now refreshes/generates all profiles for a test case, 
+# generate_profile.py now refreshes/generates all profiles for a test case,
 # so it is not necessary to give a revision as argument
-generate_profile.py $CONFFILE $TESTCASE 
+generate_profile.py $CONFFILE $TESTNAME
 
 #
 # ingest_revision_runs.sh ends here
