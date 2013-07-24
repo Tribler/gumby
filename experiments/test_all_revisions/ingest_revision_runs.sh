@@ -64,7 +64,7 @@ if [ -z "$TEST_DESCRIPTION" ]; then
 fi
 
 cd $1
-for CSV in $(ls -1tr); do
+for CSV in $(ls $TESTNAME*.csv -1tr); do
     REP_DIR=report_$(echo $CSV | cut -f2 -d_ )
     REVISION=$(echo $CSV | cut -f3 -d_ ) # TODO, change this when we use the new csv files with counter field
     make_io_writes_report.sh $REP_DIR $CSV "$TEST_DESCRIPTION"
