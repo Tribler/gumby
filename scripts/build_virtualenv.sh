@@ -321,6 +321,7 @@ twisted # Used by the config server/clients
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 nose
 PIL
+configobj
 " > ~/requirements.txt
 pip install -r ~/requirements.txt
 rm ~/requirements.txt
