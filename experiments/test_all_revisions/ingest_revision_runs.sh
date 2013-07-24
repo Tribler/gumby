@@ -38,7 +38,7 @@
 
 set -xe
 
-if [ ! -e $1 ]; then
+if [ ! -d "$1" ]; then
     echo "Usage: $0 OUTPUT_DIR_NAME"
 fi
 
