@@ -40,6 +40,7 @@ set -xe
 
 if [ ! -d "$1" ]; then
     echo "Usage: $0 OUTPUT_DIR_NAME"
+    exit 1
 fi
 
 # Find the experiment dir
