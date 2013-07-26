@@ -42,8 +42,13 @@ set -ex
 
 rm -f /tmp/results.log
 
-if [ ! -d $REPOSITORY_DIR ]; then
-    git clone $REPOSITORY_URL
+if [ -z "$REPOSITORY_DIR" ]; then
+    echo "ERROR: REPOSITORY_DIR variable not set, bailing out."
+    exit 2
+fi
+
+if [ ! -d $REPOSITORY_DIR -a ! -z $REPOSITORY_URL ]; then
+    git clone $REPOSITORY_URL $REPOSITORY_DIR
 fi
 
 # Do only one iteration by default
@@ -60,6 +65,7 @@ export OUTPUTDIR=$(readlink -f output)
 
 pushd $REPOSITORY_DIR
 git clean -fd
+if [ ! -z "$REPOSITORY_BRANCH" ]
 git checkout $REPOSITORY_BRANCH
 
 COUNT=0
