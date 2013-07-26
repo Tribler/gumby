@@ -47,7 +47,7 @@ Xvnc $DISPLAY -localhost -SecurityTypes None &
 
 $* || FAILURE=$?
 
-kill %Xvnc
+kill %Xvnc || (sleep 1 ; kill -9 %Xvnc) ||:
 
 exit $FAILURE
 
