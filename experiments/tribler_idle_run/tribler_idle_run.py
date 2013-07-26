@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # tribler_idle_run.py ---
 #
 # Filename: test_30m_run.py

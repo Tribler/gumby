@@ -42,8 +42,8 @@ set -ex
 
 rm -f /tmp/results.log
 
-if [ ! -d dispersy ]; then
-    git clone https://github.com/Tribler/dispersy.git
+if [ ! -d $REPOSITORY_DIR ]; then
+    git clone $REPOSITORY_URL
 fi
 
 # Do only one iteration by default
@@ -58,17 +58,18 @@ export PYTHONPATH=.
 mkdir -p output
 export OUTPUTDIR=$(readlink -f output)
 
-pushd dispersy
+pushd $REPOSITORY_DIR
 git clean -fd
-git checkout devel
+git checkout $REPOSITORY_BRANCH
 
 COUNT=0
 
 #for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); do
-for REV in $(git log --quiet HEAD~100..HEAD | grep ^"commit " | cut -f2 -d" "); do
+for REV in $(git log --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
 
     git checkout $REV
+    # TOOD make submodules configurable?
     git submodule sync
     git submodule update
     export REVISION=$REV
@@ -79,7 +80,7 @@ for REV in $(git log --quiet HEAD~100..HEAD | grep ^"commit " | cut -f2 -d" "); 
         rm -fR sqlite
         cd ..
         set +e
-        run_stap_probe.sh "nosetests dispersy/tests/test_sync.py" $OUTPUTDIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
+        run_stap_probe.sh "$TEST_COMMAND" $OUTPUTDIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
         set -e
         cd -
         echo $? $ITERATION $REV >> /tmp/results.log

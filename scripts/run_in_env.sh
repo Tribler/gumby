@@ -50,14 +50,17 @@ export PYTHONPATH=$PYTHONPATH:$PROJECTROOT
 # Update PATH
 export PATH=$PATH:$PROJECTROOT/gumby/scripts
 
+# R User lib dir
+export R_LIBS_USER=$R_LIBS_USER${R_LIBS_USER:+:}$HOME/R
+
 # Update LD_LIBRARY_PATH and PATH if we are using a SystemTap enabled Python runtime
 # if [ "$USE_SYSTEMTAP" == True ]; then
 # fi
 
 # Enter virtualenv in case there's one
 if [ ! -z "$VIRTUALENV_DIR" -a -d "$VIRTUALENV_DIR" ]; then
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/systemtap/inst/lib
-    export PATH=$PATH:$PWD/systemtap/inst/bin
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$VIRTUALENV_DIR/inst/lib
+    export PATH=$PATH:$VIRTUALENV_DIR/inst/bin
     source $VIRTUALENV_DIR/bin/activate
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$EXTRA_LD_LIBRARY_PATH
 fi
