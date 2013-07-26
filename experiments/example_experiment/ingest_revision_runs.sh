@@ -53,7 +53,7 @@ if [ ! -d "$EXPERIMENT_DIR" ]; then
     exit 1
 fi
 
-CONFFILE=$EXPERIMENT_DIR"/test.conf"
+CONFFILE=$EXPERIMENT_DIR"/config.conf"
 
 # TODO: Put this in the config file
 if [ -z "$TESTNAME" ]; then
@@ -66,7 +66,7 @@ fi
 cd $1
 for CSV in $(ls $TESTNAME*.csv -1tr); do
     REP_DIR=report_$(echo $CSV | cut -f2 -d_ )_$(echo $CSV | cut -f3 -d_ )
-    REVISION=$(echo $CSV | cut -f4 -d_ | sed "s/....$//" )
+    REVISION=$(basename $CSV .csv | cut -f4 -d_ )
     make_io_writes_report.sh $REP_DIR $CSV "$TEST_DESCRIPTION"
     store_run_in_database.py $CONFFILE $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTNAME
 done
