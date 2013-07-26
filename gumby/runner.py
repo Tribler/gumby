@@ -104,7 +104,7 @@ class ExperimentRunner(Logger):
                 msg("Spawning local tracker with:", cmd)
                 pp = OneShotProcessProtocol()
                 args = cmd.split(' ', 1)
-                reactor.spawnProcess(pp, args[0], args)
+                reactor.spawnProcess(pp, args[0], args, env=None) # Inherit env from parent
                 d = pp.getDeferred()
             else:
                 msg("Spawning remote tracker on head node with:", cmd)
@@ -124,7 +124,7 @@ class ExperimentRunner(Logger):
             msg("Spawning local config server with:", cmd)
             pp = OneShotProcessProtocol()
             args = cmd.split(' ', 1)
-            reactor.spawnProcess(pp, args[0], args)
+            reactor.spawnProcess(pp, args[0], args, env=None) # Inherit env from parent
             d = pp.getDeferred()
         else:
             msg("Spawning config server on head node with:", cmd)
@@ -140,13 +140,10 @@ class ExperimentRunner(Logger):
 
         def onLocalSetupFailure(failure):
             return failure
-        if self._cfg['local_setup_cmd']:
-            pp = OneShotProcessProtocol()
-            args = self._cfg['local_setup_cmd'].split()
-            args = ['pwd']
-            reactor.spawnProcess(pp, args[0], args)
 
-            d = pp.getDeferred()
+        if self._cfg['local_setup_cmd']:
+            cmd = self._cfg['local_setup_cmd']
+            d = self.runLocalCommand(cmd)
             d.addCallbacks(onLocalSetupSuccess, onLocalSetupFailure)
             return d
         else:
@@ -177,9 +174,6 @@ class ExperimentRunner(Logger):
             err("Meh, local instance spawning failed.")
             return failure
 
-        # process_guard_file = open(mkstemp()[1], 'w')
-        # for i in xrange(0,self._config.as_int('local_instances_amount')):
-        #     process_guard_file.write(self._config['local_setup_cmd']+'\n')
         pp = OneShotProcessProtocol()
 
         args = self._cfg['local_instance_cmd'].split()
@@ -189,12 +183,11 @@ class ExperimentRunner(Logger):
         return d
 
     def runCommand(self, command, remote=False):
-        msg("Running command", command)
         if remote:
-            msg("Remotely")
+            msg("Remotely running command", command)
             return self.runCommandOnAllRemotes(command)
         else:
-            msg("Locally")
+            msg("Locally running command", command)
             return self.runLocalCommand(command)
 
     def runLocalCommand(self, command):
@@ -202,7 +195,7 @@ class ExperimentRunner(Logger):
         env_runner = path.abspath(path.join(path.dirname(__file__), "..", self._env_runner))
         args = [env_runner, command]
         pp = OneShotProcessProtocol()
-        reactor.spawnProcess(pp, args[0], args)
+        reactor.spawnProcess(pp, args[0], args, env=None) #Inherit env from parent
         d = pp.getDeferred()
         return d
 

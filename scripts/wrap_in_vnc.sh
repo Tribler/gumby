@@ -39,7 +39,7 @@
 
 export DISPLAY=:$RANDOM
 export HOME=$(mktemp -d)
-mkdir -p $HOME/.vnc
+mkdir -p $HOME/.vnc # TODO: I think this is no longer needed
 
 chmod -fR og-rwx $HOME
 
