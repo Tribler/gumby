@@ -293,7 +293,24 @@ if [ ! -d wxPython*/ ]; then
 fi
 pushd wxPython*/
 if [ ! -e $VENV/lib/libwx_gtk2u_gizmos_xrc-*.so ]; then
-    ./configure --prefix=$VENV --enable-unicode
+    sudo apt-get install libpangox-1.0-dev ||:
+    sudo apt-get build-dep wxwidgets2.8 ||:
+    make uninstall ||:
+    make clean ||:
+    ./configure --prefix=$VENV \
+        --with-gtk \
+        --without-gnomeprint \
+        --without-opengl \
+        --enable-sound \
+        --with-sdl \
+        --enable-display \
+        --enable-geometry \
+        --enable-graphics_ctx \
+        --with-libjpeg=sys \
+        --with-libpng=sys \
+        --with-libtiff=sys \
+        --with-zlib=sys \
+        --with-expat=sys
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
     pushd contrib
@@ -321,6 +338,7 @@ twisted # Used by the config server/clients
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 nose
 PIL
+configobj
 " > ~/requirements.txt
 pip install -r ~/requirements.txt
 rm ~/requirements.txt
