@@ -53,7 +53,7 @@ if [ ! -d "$EXPERIMENT_DIR" ]; then
     exit 1
 fi
 
-CONFFILE=$EXPERIMENT_DIR"/test.conf"
+CONFFILE=$EXPERIMENT_DIR"/config.conf"
 
 # TODO: Put this in the config file
 if [ -z "$TESTNAME" ]; then
