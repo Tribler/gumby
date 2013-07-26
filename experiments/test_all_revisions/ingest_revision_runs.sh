@@ -66,7 +66,7 @@ fi
 cd $1
 for CSV in $(ls $TESTNAME*.csv -1tr); do
     REP_DIR=report_$(echo $CSV | cut -f2 -d_ )
-    REVISION=$(echo $CSV | cut -f3 -d_ ) # TODO, change this when we use the new csv files with counter field
+    REVISION=$(echo $CSV | cut -f4 -d_ | sed "s/....$//" )
     make_io_writes_report.sh $REP_DIR $CSV "$TEST_DESCRIPTION"
     store_run_in_database.py $CONFFILE $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTNAME
 done
