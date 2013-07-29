@@ -65,7 +65,7 @@ export OUTPUTDIR=$(readlink -f output)
 
 pushd $REPOSITORY_DIR
 git clean -fd
-if [ ! -z "$REPOSITORY_BRANCH" ]
+if [ ! -z "$REPOSITORY_BRANCH" ]; then
     git checkout $REPOSITORY_BRANCH
 fi
 
