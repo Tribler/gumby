@@ -1,7 +1,7 @@
 #!/bin/bash
-# parallel_runner.sh ---
+# iterate_over_all_revs.sh ---
 #
-# Filename: parallel_runner.sh
+# Filename: iterate_over_all_revs.sh
 # Description:
 # Author: Elric Milon
 # Maintainer:
@@ -66,7 +66,8 @@ export OUTPUTDIR=$(readlink -f output)
 pushd $REPOSITORY_DIR
 git clean -fd
 if [ ! -z "$REPOSITORY_BRANCH" ]
-git checkout $REPOSITORY_BRANCH
+    git checkout $REPOSITORY_BRANCH
+fi
 
 COUNT=0
 
@@ -95,8 +96,7 @@ for REV in $(git log --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f
 done
 
 popd
-
 gumby/experiments/test_all_revisions/ingest_revision_runs.sh output
 
 #
-# parallel_runner.sh ends here
+# iterate_over_all_revs.sh ends here
