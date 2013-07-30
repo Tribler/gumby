@@ -28,7 +28,6 @@ def readDataframeDump(filename):
     var = []
     with open(filename, 'rb') as csvfile:
         reader = unicodecsv.DictReader(csvfile, delimiter=',')
-        # reader = UnicodeDictReader(csvfile)
         for line in reader:
             var.append(line)
     return var
