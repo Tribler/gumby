@@ -5,7 +5,6 @@ import sys
 import os
 from jinja2 import Environment, FileSystemLoader
 import unicodecsv
-import codecs
 
 # THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
