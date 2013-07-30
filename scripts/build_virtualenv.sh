@@ -339,6 +339,7 @@ Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 nose
 PIL
 configobj
+unicodecsv # used for report generation scripts from Cor-Paul
 " > ~/requirements.txt
 pip install -r ~/requirements.txt
 rm ~/requirements.txt
