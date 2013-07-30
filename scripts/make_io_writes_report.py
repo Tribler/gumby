@@ -39,11 +39,10 @@ def print_html_doc():
     loader = FileSystemLoader(searchpath=template_dir)
     env = Environment(loader=loader)
     template = env.get_template('template_io_writes_report.html')
-    top20perSt = readDataframeDump(THIS_DIR + '/top20_per_stacktrace.csv')
     report = template.render(
             title='IO Writes Report',
             summary=readSummary(),
-            top20PerStacktrace=top20perSt,
+            top20PerStacktrace=readDataframeDump(THIS_DIR + '/top20_per_stacktrace.csv'),
             top20PerFilename=readDataframeDump(THIS_DIR + '/top20_per_filename.csv'),
             topLargestWrites=readDataframeDump(THIS_DIR + '/top_largest_writes.csv')
 
