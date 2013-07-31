@@ -50,7 +50,7 @@ class Profile(object):
         i.e. extend the range if necessary.
         '''
         if st not in self.ranges:
-            self.ranges[st] = MonitoredStacktraceRange(st, self._config)
+            self.ranges[st] = MonitoredStacktraceRange(st, self._config, self._conn)
         r = self.ranges.get(st)
         r.addToRange(value)
 
@@ -202,7 +202,7 @@ class MonitoredStacktrace(object):
     classdocs
     '''
 
-    def __init__(self, st, raw, perc, config):
+    def __init__(self, st, raw, perc, config, dbConn=None):
         '''
         Constructor
         '''
@@ -212,7 +212,10 @@ class MonitoredStacktrace(object):
         self.databaseId = -1
 
         self._config = config
-        self._conn = getDatabaseConn(config)
+        if dbConn == None:
+            self._conn = getDatabaseConn(config)
+        else:
+            self._conn = dbConn
 
     def getDatabaseId(self):
         if self.databaseId != -1:
@@ -237,7 +240,7 @@ class MonitoredStacktraceRange(object):
     classdocs
     '''
 
-    def __init__(self, st, config):
+    def __init__(self, st, config, dbConn=None):
         '''
         Constructor
         '''
@@ -246,7 +249,10 @@ class MonitoredStacktraceRange(object):
         self.maxValue = None
         self.databaseId = -1
         self._config = config
-        self._conn = getDatabaseConn(config)
+        if dbConn == None:
+            self._conn = getDatabaseConn(config)
+        else:
+            self._conn = dbConn
 
     def addToRange(self, i):
         '''
@@ -429,7 +435,7 @@ class SessionHelper(object):
                     st = r2['stacktrace']
                     value = r2['value']
                     dbId = r2['id']
-                    s = MonitoredStacktrace(st, value, 0, self._config)
+                    s = MonitoredStacktrace(st, value, 0, self._config, self._conn)
                     s.databaseId = dbId
                     m.stacktraces[st] = s
 
