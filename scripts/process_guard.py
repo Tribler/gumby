@@ -11,6 +11,7 @@ from signal import SIGKILL, SIGTERM, signal
 from glob import iglob
 from math import ceil
 
+
 class ResourceMonitor(object):
     # adapted after http://stackoverflow.com/questions/276052/how-to-get-current-cpu-and-ram-usage-in-python
 
@@ -52,15 +53,13 @@ class ResourceMonitor(object):
                 yield ' '.join(stats)
 
             except IOError:
-                # print "Process with PID %s died." % pid
                 self.pid_list.remove(pid)
 
     def is_everyone_dead(self):
         return len(self.pid_list) == 0
 
     def update_pid_tree(self):
-        """Update the list of all PIDs in the process group"""
-        # print 'i',parent_pids
+        """Update the list of PIDs contained in the process group"""
         for pid_dir in iglob('/proc/[1-9]*'):
             pid = int(pid_dir.split('/')[-1])
             if pid in self.pid_list or pid in self.ignore_pid_list:
@@ -71,16 +70,11 @@ class ResourceMonitor(object):
             if access(stat_file, R_OK) and access(io_file, R_OK):
                 pgrp = int(open(stat_file, 'r').read().split()[4])  # 4 is PGRP
                 if pgrp == self.process_group_id:
-                    # This process if from our process group, add it to the pid list.
-                    # print "New process with PID %s found in the group, adding it" % pid
-                    # print "   ", open(stat_file, 'r').read()
                     self.pid_list.append(pid)
                 else:
                     self.ignore_pid_list.append(pid)
 
-
 class ProcessController(object):
-
     def __init__(self, output_dir, commands):
         self.cmd_id = 0
         self.pid_list = {}
@@ -88,7 +82,7 @@ class ProcessController(object):
         self.files = []
         self.output_dir = output_dir
 
-        setpgrp()  # creat new process group and become its leader
+        setpgrp()  # create new process group and become its leader
 
         self.nr_commands = len(commands)
         for command in commands:
@@ -124,6 +118,7 @@ class ProcessController(object):
         print "TERMinating group..."
         killpg(0, SIGTERM)  # kill the entire process group, we are ignoring the SIGTERM.
         sleep(2)
+        # TODO: Try to kill the child processes one by one first so we don't kill ourselves.
         print "Nuking the whole thing, have a nice day..."
         killpg(0, SIGKILL)  # kill the entire process group
 
