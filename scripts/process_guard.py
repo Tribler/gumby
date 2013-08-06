@@ -217,15 +217,14 @@ class ProcessMonitor(object):
                 for line in self._rm.get_raw_stats():
                     self.monitor_file.write("%f %s\n" % (r_timestamp, line))
 
-                if self.end_time and timestamp > self.end_time: # if self.end_time == 0 the time out is disabled.
-                    print "End time reached, killing monitored processes."
-                    return self.stop()
-
                 sleep_time = next_wake - timestamp
                 if sleep_time < 0:
                     print "Can't keep up with this interval, try a higher value!", sleep_time
                     self.stop()
 
+            if self.end_time and timestamp > self.end_time: # if self.end_time == 0 the time out is disabled.
+                print "Time out, killing monitored processes."
+                return self.stop()
         sleep(sleep_time)
 
 if __name__ == "__main__":
