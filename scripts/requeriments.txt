@@ -1,6 +1,0 @@
-ipython
-ntplib
-gmpy==1.16
-pyzmq
-twisted
-pysqlite
