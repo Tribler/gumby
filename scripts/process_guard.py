@@ -5,8 +5,8 @@
 
 import subprocess
 from time import sleep, time
-from sys import argv, exit
-from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path
+from sys import exit
+from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path, kill, errno
 from signal import SIGKILL, SIGTERM, signal
 from glob import iglob
 from math import ceil
@@ -15,13 +15,61 @@ from math import ceil
 class ResourceMonitor(object):
     # adapted after http://stackoverflow.com/questions/276052/how-to-get-current-cpu-and-ram-usage-in-python
 
-    def __init__(self, pid_list):
+    def __init__(self, output_dir, commands):
         """Create new ResourceMonitor instance."""
+
+        self.cmd_counter = 0
+        self.pid_dict = {}
+        self.files = []
+        self.output_dir = output_dir
+
+        setpgrp()  # create new process group and become its leader
+
+        self.nr_commands = len(commands)
+        for command in commands:
+            self.run(command)
+
         self.pid_list = []
-        self.ignore_pid_list = pid_list
+        self.pid_list.extend(self.pid_dict.keys())
+        self.ignore_pid_list = []
         self.ignore_pid_list.append(getpid())
 
         self.process_group_id = getpgrp()
+
+        self.last_died = False
+
+    def prune_pid_list(self):
+        """
+        Remove all finished processes from pid_dict and pid_list.
+        """
+        def pid_exists(pid):
+            """Check whether pid exists in the current process table."""
+            # From: http://stackoverflow.com/questions/568271/check-if-pid-is-not-in-use-in-python
+            if pid < 0:
+                return False
+            try:
+                kill(pid, 0)
+            except OSError as e:
+                return e.errno == errno.EPERM
+            else:
+                return True
+        pids_to_remove = set()
+        for pid, popen in self.pid_dict.iteritems():
+            if popen.poll() is not None:
+                pids_to_remove.add(pid)
+
+        for pid in self.pid_list:
+            if not pid_exists(pid):
+                pids_to_remove.add(pid)
+
+        for pid in pids_to_remove:
+            if pid in self.pid_dict:
+                del self.pid_dict[pid]
+            if pid in self.pid_list:
+                self.pid_list.remove(pid)
+
+        if not self.pid_list and pids_to_remove:  # If the pid list is empty and we have removed any PID, it means we can exit as no more processes will appear.
+            self.last_died = True
 
     def get_raw_stats(self):
         for pid in self.pid_list:
@@ -54,9 +102,11 @@ class ResourceMonitor(object):
 
             except IOError:
                 self.pid_list.remove(pid)
+                if not self.pid_list:
+                    self.last_died = True
 
     def is_everyone_dead(self):
-        return len(self.pid_list) == 0
+        return self.last_died or not self.pid_list
 
     def update_pid_tree(self):
         """Update the list of PIDs contained in the process group"""
@@ -74,24 +124,10 @@ class ResourceMonitor(object):
                 else:
                     self.ignore_pid_list.append(pid)
 
-class ProcessController(object):
-    def __init__(self, output_dir, commands):
-        self.cmd_id = 0
-        self.pid_list = {}
-        self.processes = []
-        self.files = []
-        self.output_dir = output_dir
-
-        setpgrp()  # create new process group and become its leader
-
-        self.nr_commands = len(commands)
-        for command in commands:
-            self.run(command)
-
     def run(self, cmd):
-        if self.nr_commands > 1:
-            output_filename = output_dir + "/%05d.out" % self.cmd_id
-            error_filename = output_dir + "/%05d.err" % self.cmd_id
+        if self.output_dir:
+            output_filename = self.output_dir + "/%05d.out" % self.cmd_counter
+            error_filename = self.output_dir + "/%05d.err" % self.cmd_counter
 
             stdout = open(output_filename, "w")
             stderr = open(error_filename, "w")
@@ -101,11 +137,10 @@ class ProcessController(object):
         else:
             stdout = stderr = None
 
-        print >> stdout, "Starting #%05d: %s" % (self.cmd_id, cmd)
-        p = subprocess.Popen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True)
-        self.processes.append(p)
-        self.pid_list[p.pid] = self.cmd_id
-        self.cmd_id = self.cmd_id + 1
+        print >> stdout, "Starting #%05d: %s" % (self.cmd_counter, cmd)
+        p = subprocess.Popen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=None)
+        self.pid_dict[p.pid] = p
+        self.cmd_counter = self.cmd_counter + 1
 
     def terminate(self):
         for file in self.files:
@@ -115,39 +150,43 @@ class ProcessController(object):
             except:
                 pass
 
-        print "TERMinating group..."
-        killpg(0, SIGTERM)  # kill the entire process group, we are ignoring the SIGTERM.
-        sleep(2)
-        # TODO: Try to kill the child processes one by one first so we don't kill ourselves.
-        print "Nuking the whole thing, have a nice day..."
-        killpg(0, SIGKILL)  # kill the entire process group
+        self.prune_pid_list()
+        if self.pid_dict:
+            print "TERMinating group. Still %i process(es) running." % len(self.pid_dict)
+            killpg(0, SIGTERM)  # kill the entire process group, we are ignoring the SIGTERM.
+            if self.pid_dict:
+                sleep(0.1)
+                self.prune_pid_list()
+                if self.pid_dict:
+                    # TODO: Try to kill the child processes one by one first so we don't kill ourselves.
+                    print "Some processes survived SIGTERM."
+                    print "Nuking the whole thing, have a nice day..."
+                    killpg(0, SIGKILL)  # kill the entire process group
 
     def get_pid_list(self):
-        return self.pid_list.keys()
+        return self.pid_dict.keys()
 
 
 class ProcessMonitor(object):
-
-    def __init__(self, process_list_file, output_dir, time_limit, interval):
+    def __init__(self, commands, timeout, interval, output_dir=None, monitor_dir=None):
         self.start_time = time()
-        self.end_time = self.start_time + time_limit
+        self.end_time = self.start_time + timeout if timeout else 0 # Do not time out if time_limit is 0.
         self._interval = interval
 
-        commands = [cmd.strip() for cmd in open(process_list_file).readlines()]
-        commands = [cmd for cmd in open(process_list_file).readlines() if cmd]
-
-        self._pc = ProcessController(output_dir, commands)
-        self._rm = ResourceMonitor(self._pc.get_pid_list())
-        self.monitor_file = open(output_dir + "/resource_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
-
+        self._rm = ResourceMonitor(output_dir, commands)
+        if monitor_dir:
+            self.monitor_file = open(monitor_dir + "/resource_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
+        else:
+            self.monitor_file = None
         # Capture SIGTERM to kill all the child processes before dying
         self.stopping = False
         signal(SIGTERM, self._termTrap)
 
     def stop(self):
         self.stopping = True
-        self.monitor_file.close()
-        self._pc.terminate()
+        if self.monitor_file:
+            self.monitor_file.close()
+        self._rm.terminate()
 
     def _termTrap(self, *argv):
         print "Captured TERM signal"
@@ -164,39 +203,82 @@ class ProcessMonitor(object):
             timestamp = time()
             r_timestamp = ceil(timestamp / self._interval) * self._interval  # rounding timestamp to nearest interval to try to overlap multiple nodes
 
-            # Look for new subprocesses only once a second and only during the first 30 seconds
+            self._rm.prune_pid_list()
+            # Look for new subprocesses only once a second and only during the first "check_for_new_processes" seconds
             if (timestamp < time_start + check_for_new_processes) and (timestamp - last_subprocess_update >= 1):
                 self._rm.update_pid_tree()
                 last_subprocess_update = timestamp
 
-            if (timestamp > time_start + check_for_new_processes) and self._rm.is_everyone_dead():
+            if self._rm.is_everyone_dead():
                 print "All child processes have died, exiting"
-                self.stop()
+                return self.stop()
 
-            else:
+            elif self.monitor_file:
                 next_wake = timestamp + self._interval
 
                 for line in self._rm.get_raw_stats():
                     self.monitor_file.write("%f %s\n" % (r_timestamp, line))
 
-                if timestamp > self.end_time:
+                if self.end_time and timestamp > self.end_time: # if self.end_time == 0 the time out is disabled.
                     print "End time reached, killing monitored processes."
-                    self.stop()
+                    return self.stop()
 
                 sleep_time = next_wake - timestamp
                 if sleep_time < 0:
                     print "Can't keep up with this interval, try a higher value!", sleep_time
                     self.stop()
 
-                sleep(sleep_time)
+        sleep(sleep_time)
 
 if __name__ == "__main__":
-    process_list_file = argv[1]
-    output_dir = argv[2]
-    time_limit = int(argv[3]) * 60
-    interval = float(argv[4])
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("-t", "--timeout",
+                      metavar='TIMEOUT',
+                      default=0,
+                      type   =int,
+                      help   ="Hard timeout, after this amount of seconds all the child processes will be killed."
+                      )
+    parser.add_option("-m", "--monitor-dir",
+                      metavar='OUTDIR',
+                      help   ="Monitor individual process/thread resource consumption and write the logs in the specified dir."
+                      )
+    parser.add_option("-o", "--output-dir",
+                      metavar='OUTDIR',
+                      help   ="Capture individual process/thread std{out|err} and write the logs in the specified dir."
+                      )
+    parser.add_option("-f", "--commands-file",
+                      metavar='COMMANDS_FILE',
+                      help   ="Read this file and spawn a subprocess using each line as the command line."
+                      )
+    parser.add_option("-c", "--command",
+                      metavar='COMMAND',
+                      action ="append",
+                      dest="commands",
+                      help   ="Run this command (can be specified multiple times and in addition of --commands-file)"
+                      )
+    parser.add_option("-i", "--interval",
+                      metavar='FLOAT',
+                      default=1.0,
+                      type   =float,
+                      action ="store",
+                      help   ="Sample monitoring stats and check processes/threads every FLOAT seconds"
+                      )
+    (options, args) = parser.parse_args()
+    if not (options.commands_file or options.commands):
+        parser.error("Please specify at least one of --command or --commands-file (run with -h to see command usage).")
 
-    pm = ProcessMonitor(process_list_file, output_dir, time_limit, interval)
+    commands = [cmd.strip() for cmd in options.commands if cmd.strip()]
+    if options.commands_file:
+        with open(options.commands_file) as file:
+            for cmd in [line.strip() for line in file.read().splitlines()]:
+                if cmd and not cmd.startswith('#'):
+                    commands.append(cmd)
+
+    if not commands:
+        parser.error("Could not collect a list of commands to run.\nMake sure that the commands file is not empty or has all the lines commented out.")
+
+    pm = ProcessMonitor(commands,  options.timeout, options.interval, options.output_dir, options.monitor_dir)
     try:
         pm.monitoring_loop()
 
