@@ -47,8 +47,8 @@ if [ -z "$REPOSITORY_DIR" ]; then
     exit 2
 fi
 
-if [ ! -d $REPOSITORY_DIR -a ! -z $REPOSITORY_URL ]; then
-    git clone $REPOSITORY_URL $REPOSITORY_DIR
+if [ ! -d "$REPOSITORY_DIR" -a ! -z "$REPOSITORY_URL" ]; then
+    git clone "$REPOSITORY_URL" "$REPOSITORY_DIR"
 fi
 
 # Do only one iteration by default
