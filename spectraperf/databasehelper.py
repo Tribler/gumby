@@ -82,6 +82,7 @@ class InitDatabase(object):
                             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
                             revision TEXT NOT NULL, \
                             testcase TEXT NOT NULL, \
+                            exit_code INTEGER, \
                             is_test_run INTEGER NOT NULL);"
         cur.execute(createRun)
 
