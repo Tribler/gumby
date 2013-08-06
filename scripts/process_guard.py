@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 # Mircea Bardac
-# Partial rewrite by Elric Milon (Dec. 2012)
-# TODO: needs documentation
+# Rewritten by Elric Milon (Dec. 2012 and Aug. 2013)
 
 import subprocess
 from time import sleep, time
-from sys import exit
 from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path, kill, errno
 from signal import SIGKILL, SIGTERM, signal
 from glob import iglob
