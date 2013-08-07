@@ -38,7 +38,7 @@
 # Code:
 
 import sys
-from os.path import dirname
+from os.path import dirname, exists
 
 from gumby.settings import loadConfig
 
@@ -110,7 +110,11 @@ if __name__ == '__main__':
         # startLogging(open("/tmp/cosa.log",'w'))
         observer = ColoredFileLogObserver()
         observer.start()
-        config = loadConfig(sys.argv[1])
+        conf_path = sys.argv[1]
+        if not exists(conf_path):
+            print "Error: The specified configuration file doesn't exist."
+            exit(1)
+        config = loadConfig(conf_path)
 
         exp_runner = ExperimentRunner(config)
         exp_runner.run()
