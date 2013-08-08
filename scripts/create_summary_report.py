@@ -8,15 +8,22 @@ import sys
 from spectraperf.performanceprofile import *
 from spectraperf.databasehelper import InitDatabase, getDatabaseConn
 from gumby.settings import loadConfig
-
+import numpy
 
 def getNrRevisions(conn, testcase):
+    return len(getRevisions(conn, testcase))
+
+
+def getRevisions(conn, testcase):
     with conn:
         cur = conn.cursor()
-        sqlCheck = "SELECT COUNT(*) AS cnt FROM profile WHERE testcase = '%s'" % testcase
+        sqlCheck = "SELECT DISTINCT(revision) as rev FROM profile WHERE testcase = '%s'" % testcase
         cur.execute(sqlCheck)
         rows = cur.fetchall()
-        return rows[0]['cnt']
+        revs = []
+        for r in rows:
+            revs.append(r['rev'])
+        return revs
 
 
 def getNrRuns(conn, testcase):
@@ -59,17 +66,35 @@ def getNrStacktracesPerRev(conn, testcase):
             rev = r['revision']
             if not rev in summary.keys():
                 summary[rev] = {}
-                summary[rev]['min'] = 999999999999999999999999999
+                summary[rev]['min'] = sys.maxint
                 summary[rev]['max'] = 0
+                summary[rev]['cnt'] = []
                 summary[rev]['avg'] = r['cnt']
 
             summary[rev]['avg'] = (summary[rev]['avg'] + r['cnt']) / 2
+            summary[rev]['cnt'].append(r['cnt'])
             if r['cnt'] > summary[rev]['max']:
                 summary[rev]['max'] = r['cnt']
             if r['cnt'] < summary[rev]['min']:
                 summary[rev]['min'] = r['cnt']
 
+        # iterate and calculate stdev
+        for rev in summary.itervalues():
+            rev['std'] = numpy.std(rev['cnt'])
+
         return summary
+
+
+def getRangePrecision(conn, testcase):
+    with conn:
+        cur = conn.cursor()
+        sql = "SELECT stacktrace_id, AVG((max_value*1.0-min_value)/max_value) as avg, COUNT(*) as cnt \
+                FROM range JOIN profile ON profile.id = profile_id WHERE testcase = '%s' \
+                GROUP BY stacktrace_id ORDER BY stacktrace_id" % testcase
+        cur.execute(sql)
+        rows = cur.fetchall()
+        return rows
+
 
 if __name__ == '__main__':
 
@@ -81,7 +106,8 @@ if __name__ == '__main__':
     testcase = sys.argv[2]
     conn = getDatabaseConn(config)
 
-    nrRevisions = getNrRevisions(conn, testcase)
+    revisions = getRevisions(conn, testcase)
+    nrRevisions = len(revisions)
     print "# revisions: %d " % nrRevisions
 
     nrRuns = getNrRuns(conn, testcase)
@@ -94,6 +120,17 @@ if __name__ == '__main__':
     print "# runs exited OK: %d/%d" % (nrOkRuns, nrRuns)
 
     nrStacktracesPerRev = getNrStacktracesPerRev(conn, testcase)
-    print nrStacktracesPerRev
 
+    print "# recorded stacktraces per revision \t\t min \t avg \t max \t std"
 
+    for r in revisions:
+        print "%s \t %d \t %d \t %d \t %f" % (r, nrStacktracesPerRev[r]['min'], nrStacktracesPerRev[r]['avg'], \
+                                            nrStacktracesPerRev[r]['max'], nrStacktracesPerRev[r]['std'])
+
+    rangePrecision = getRangePrecision(conn, testcase)
+
+    print "\nRange precision"
+    print "stacktrace_id \t avg (max_value-min_value)/max_value \t cnt"
+
+    for r in rangePrecision:
+        print "%s \t %f \t %d" % (r['stacktrace_id'], r['avg'], r['cnt'])
