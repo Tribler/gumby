@@ -60,6 +60,7 @@ def generate(peers_directory):
     start = int(get_first_datetime(peers_directory, node_count))
 
     searches = defaultdict(list)
+    search_responses = {}
     if len(list(get_nodes(peers_directory, node_count))) > 0:
         node_list = [x for x in get_nodes(peers_directory, node_count)]
         def node_cmp(a, b):
@@ -71,7 +72,7 @@ def generate(peers_directory):
         for node in node_list:
             nodename = node[-5:]
             print  nodename, " ",
-            for lineno, time, message, kargs in parse(node + "/output/dispersy.log", interests=['search-statistics']):
+            for lineno, time, message, kargs in parse(node + "/output/dispersy.log", interests=['search-statistics', 'search-response']):
                 timeoffset = time - start
 
                 if message == "search-statistics":
@@ -80,6 +81,10 @@ def generate(peers_directory):
                     cycle = kargs.get('cycle', False)
 
                     searches[identifier].append((timeoffset, created_by_me, cycle, nodename))
+
+                if message == "search-response":
+                    identifier = kargs['identifier']
+                    search_responses[identifier] = min(search_responses.get(identifier, timeoffset), timeoffset)
 
         if searches:
             f = open(peers_directory + "/output/searches.txt", 'w')
@@ -95,7 +100,12 @@ def generate(peers_directory):
                 nr_messages = len(nodes) - 1  # substracting search creator
                 nr_unique_nodes = len(set(nodename for _, _, _, nodename in nodes)) - 1
 
-                print >> f, identifier, duration, nr_messages, nr_cycles, nr_unique_nodes
+                if identifier in search_responses:
+                    took = search_responses[identifier] - min(timeoffset for timeoffset, _, _, _ in nodes)
+                else:
+                    took = -1
+
+                print >> f, identifier, duration, nr_messages, nr_cycles, nr_unique_nodes, took
 
             f.close()
 
