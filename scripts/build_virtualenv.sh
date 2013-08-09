@@ -340,6 +340,7 @@ nose
 PIL
 configobj
 unicodecsv # used for report generation scripts from Cor-Paul
+numpy # used for report generation scripts from Cor-Paul
 " > ~/requirements.txt
 pip install -r ~/requirements.txt
 rm ~/requirements.txt

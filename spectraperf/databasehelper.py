@@ -82,6 +82,7 @@ class InitDatabase(object):
                             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
                             revision TEXT NOT NULL, \
                             testcase TEXT NOT NULL, \
+                            exit_code INTEGER, \
                             is_test_run INTEGER NOT NULL);"
         cur.execute(createRun)
 
@@ -90,7 +91,8 @@ class InitDatabase(object):
                             stacktrace_id INTEGER NOT NULL, \
                             value INTEGER NOT NULL, \
                             run_id INTEGER NOT NULL, \
-                            type_id INTEGER NOT NULL);"
+                            type_id INTEGER NOT NULL, \
+                            avg_value INTEGER NOT NULL);"
         cur.execute(createMonitoredValue)
 
         unqMonitoredValue = "CREATE UNIQUE INDEX IF NOT EXISTS \
