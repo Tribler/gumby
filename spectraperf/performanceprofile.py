@@ -202,7 +202,7 @@ class MonitoredStacktrace(object):
     classdocs
     '''
 
-    def __init__(self, st, raw, perc, config, dbConn=None):
+    def __init__(self, st, raw, perc, config, dbConn=None, avg_value=0):
         '''
         Constructor
         '''
@@ -210,6 +210,7 @@ class MonitoredStacktrace(object):
         self.rawBytes = raw
         self.percentage = perc
         self.databaseId = -1
+        self.avg_value = avg_value
 
         self._config = config
         if dbConn == None:
@@ -231,8 +232,8 @@ class MonitoredStacktrace(object):
             return self.databaseId
 
     def __str__(self):
-        return "[MonitoredStacktrace: %s, rawBytes: %d, percentage: %d]" \
-            % (self.stacktrace, self.rawBytes, self.percentage)
+        return "[MonitoredStacktrace: %s, rawBytes: %d, percentage: %d, avg value: %d]" \
+            % (self.stacktrace, self.rawBytes, self.percentage, self.avg_value)
 
 
 class MonitoredStacktraceRange(object):
@@ -375,9 +376,11 @@ class SessionHelper(object):
             for line in reader:
                 st = line['TRACE'].strip()
                 b = Decimal(line['BYTES'])
+                count = Decimal(line['COUNT'])
+                avgValue = b / count
                 # perc = Decimal(line['PERC'])
                 # note: perc is unused at the moment
-                record = MonitoredStacktrace(st, b, 0, self._config)
+                record = MonitoredStacktrace(st, b, 0, self._config, avg_value=avgValue)
                 s.stacktraces[st] = record
 
         return s
@@ -403,9 +406,9 @@ class SessionHelper(object):
                     sqlStacktrace = "INSERT INTO stacktrace (stacktrace) VALUES ('%s')" % (st.stacktrace)
                     cur.execute(sqlStacktrace)
                     st.databaseId = cur.lastrowid
-
-                sqlRange = "INSERT OR REPLACE INTO monitored_value (stacktrace_id, run_id, type_id, value) VALUES \
-                    (%d, %d, %d, %d) " % (st.getDatabaseId(), s.databaseId, Type.BYTESWRITTEN, st.rawBytes)
+                sqlRange = "INSERT OR REPLACE INTO monitored_value (stacktrace_id, run_id, type_id, value, avg_value) \
+                    VALUES (%d, %d, %d, %d, %d) "  \
+                    % (st.getDatabaseId(), s.databaseId, Type.BYTESWRITTEN, st.rawBytes, st.avg_value)
                 cur.execute(sqlRange)
 
             self._conn.commit()
@@ -435,7 +438,8 @@ class SessionHelper(object):
                     st = r2['stacktrace']
                     value = r2['value']
                     dbId = r2['id']
-                    s = MonitoredStacktrace(st, value, 0, self._config, self._conn)
+                    avgValue = r2['avg_value']
+                    s = MonitoredStacktrace(st, value, 0, self._config, self._conn, avgValue)
                     s.databaseId = dbId
                     m.stacktraces[st] = s
 

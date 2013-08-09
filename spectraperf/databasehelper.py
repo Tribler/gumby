@@ -91,7 +91,8 @@ class InitDatabase(object):
                             stacktrace_id INTEGER NOT NULL, \
                             value INTEGER NOT NULL, \
                             run_id INTEGER NOT NULL, \
-                            type_id INTEGER NOT NULL);"
+                            type_id INTEGER NOT NULL, \
+                            avg_value INTEGER NOT NULL);"
         cur.execute(createMonitoredValue)
 
         unqMonitoredValue = "CREATE UNIQUE INDEX IF NOT EXISTS \
