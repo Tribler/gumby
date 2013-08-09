@@ -10,7 +10,7 @@ if(length(args) > 2) {
   csvFile = '/home/corpaul/workspace/gumby/tests/data/test_session1.csv'
   #csvFile = '/home/corpaul/workspace/gumby/tests/data/nosetests_test_magnetlink1.csv'
   description = 'Test run from R console'
-  outputDir = "/home/corpaul/workspace/gumby/output/perf_reports/"
+  outputDir = "/tmp/perf_reports/"
 }
 
 
