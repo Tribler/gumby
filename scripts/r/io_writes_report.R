@@ -7,8 +7,7 @@ if(length(args) > 2) {
   outputDir = args[1]
 } else {
   reportName = 'test'
-  csvFile = '/home/corpaul/workspace/gumby/tests/data/test_session1.csv'
-  #csvFile = '/home/corpaul/workspace/gumby/tests/data/nosetests_test_magnetlink1.csv'
+  csvFile = '/home/corpaul/workspace/gumbydata/data/Test_performance_Tribler_idle_all_revs_with_guard/output/IdleTribler_1_5_6ccb7518d0ea78248108513065a53efd9125332a.csv'
   description = 'Test run from R console'
   outputDir = "/tmp/perf_reports/"
 }
@@ -40,15 +39,22 @@ csvData$type[grep("torrent", csvData$FILE)] <- "torrent"
 
 
 # get top 20 IO writes per stacktrace
-bytescountPerStacktrace = aggregate(csvData$BYTES, by=list(csvData$TRACE, csvData$type, csvData$PROCESS), FUN=sum)
+bytescountPerStacktraceTop20 = aggregate(csvData$BYTES, by=list(csvData$TRACE, csvData$type, csvData$PROCESS), FUN=sum)
+colnames(bytescountPerStacktraceTop20) <- c("TRACE", "FILE", "PROCESS", "BYTES")
+
+bytescountPerStacktrace = aggregate(csvData$BYTES, by=list(csvData$TRACE), FUN=sum)
+colnames(bytescountPerStacktrace) <- c("TRACE", "BYTES")
+
 counts <- aggregate(csvData$BYTES, by=list(csvData$TRACE),FUN="length")
-colnames(bytescountPerStacktrace) <- c("TRACE", "FILE", "PROCESS", "BYTES")
 colnames(counts) <- c("TRACE", "count")
+
 bytescountPerStacktrace = merge(bytescountPerStacktrace, counts, by = "TRACE")
+colnames(bytescountPerStacktrace) <- c("TRACE", "BYTES", "COUNT")
 
-colnames(bytescountPerStacktrace) <- c("TRACE", "FILE", "PROCESS", "BYTES", "COUNT")
+bytescountPerStacktraceTop20 = merge(bytescountPerStacktraceTop20, counts, by = "TRACE")
+colnames(bytescountPerStacktraceTop20) <- c("TRACE", "FILE", "PROCESS", "BYTES", "COUNT")
 
-top20PerStacktrace = bytescountPerStacktrace [with(bytescountPerStacktrace , order(-BYTES))[1:30],]
+top20PerStacktrace = bytescountPerStacktraceTop20 [with(bytescountPerStacktraceTop20 , order(-BYTES))[1:30],]
 write.csv(top20PerStacktrace, file=sprintf("%s/top20_per_stacktrace.csv", outputDir))
 
 # calculate percentage and write to file for comparison
