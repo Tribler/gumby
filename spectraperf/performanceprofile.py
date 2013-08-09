@@ -42,7 +42,9 @@ class Profile(object):
         self.runs.append(s)
 
         for st in s.stacktraces.itervalues():
-            self.addToRange(st.stacktrace, st.rawBytes)
+            # try with bytes/calls
+            # self.addToRange(st.stacktrace, st.rawBytes)
+            self.addToRange(st.stacktrace, st.avgValue)
 
     def addToRange(self, st, value):
         '''
@@ -210,7 +212,7 @@ class MonitoredStacktrace(object):
         self.rawBytes = raw
         self.percentage = perc
         self.databaseId = -1
-        self.avg_value = avg_value
+        self.avgValue = avg_value
 
         self._config = config
         if dbConn == None:
@@ -408,7 +410,7 @@ class SessionHelper(object):
                     st.databaseId = cur.lastrowid
                 sqlRange = "INSERT OR REPLACE INTO monitored_value (stacktrace_id, run_id, type_id, value, avg_value) \
                     VALUES (%d, %d, %d, %d, %d) "  \
-                    % (st.getDatabaseId(), s.databaseId, Type.BYTESWRITTEN, st.rawBytes, st.avg_value)
+                    % (st.getDatabaseId(), s.databaseId, Type.BYTESWRITTEN, st.rawBytes, st.avgValue)
                 cur.execute(sqlRange)
 
             self._conn.commit()
