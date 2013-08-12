@@ -11,9 +11,9 @@ function getPyBacktrace(currentTid)
 		{
 			if(isinstr(backtrace[tid, i2], "/home/user/src/tribler/Tribler/"))
 				str = substr(backtrace[tid, i2], 30, strlen(backtrace[tid, i2]));
-			else 
+			else
 				str = backtrace[tid, i2];
-		
+
 
 			if(isinstr(str, "/home/user/python-src/virtualenv-attempt/inst/"))
 				str = substr(str, 45, strlen(str));
@@ -28,7 +28,7 @@ function getPyBacktrace(currentTid)
 
 
 probe python.function.entry
-{ 
+{
 	i[tid()] += 1
 	//backtrace[tid(), i[tid()]] = sprintf("%s:%d:%s (%d  %d)", filename, lineno, funcname, tid(), i[tid()]);
 	//backtrace[tid(), i[tid()]] = sprintf("%s:%d:%s", filename, lineno, funcname);
@@ -38,30 +38,30 @@ probe python.function.entry
 }
 
 probe python.function.return
-{ 
+{
 	if(i[tid()] > 0)
-	{	
-		foreach ([tid, i2] in ioWriteCounter)	
+	{
+		foreach ([tid, i2] in ioWriteCounter)
 		{
 			if(tid == tid() && i2 == i[tid()] && ioWriteCounter[tid, i2] > 0)
 			{
 				bt = getPyBacktrace(tid());
 				execTime =  gettimeofday_us()-times[tid(), funcname];
-					
-				
-				printf("WRITE,%s,%s,%d,%s,%d\n", filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime ); 
-				
+
+
+				printf("%d,WRITE,%s,%s,%d,%s,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime );
+
 			}
-			
-			
+
+
 		}
 
-				
+
 		delete ioWriteCounter[tid(), i[tid()]];
 		delete backtrace[tid(), i[tid()]];
 		i[tid()] -= 1
 	}
-	
+
 }
 
 probe syscall.open.return
@@ -83,12 +83,12 @@ probe syscall.write.return {
 /*
 probe syscall.read.return {
 	if ($return>0) {
-		ioReadCounter[tid(), i[tid()]] += $return;		
+		ioReadCounter[tid(), i[tid()]] += $return;
 	}
 }
 */
 probe begin {
-	printf("\"TYPE\",\"FILE\",\"TRACE\",\"BYTES\",\"PROCESS\",\"TIME\"\n");
+	printf("\"TIMESTAMP\",\"TYPE\",\"FILE\",\"TRACE\",\"BYTES\",\"PROCESS\",\"TIME\"\n");
 }
 
 /*
