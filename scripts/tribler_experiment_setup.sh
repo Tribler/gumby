@@ -44,6 +44,8 @@ if [ -e tribler/Tribler/SwiftEngine/ ]; then
     buildswift.sh
 fi
 
+pycompile .
+
 build_virtualenv.sh
 
 #
