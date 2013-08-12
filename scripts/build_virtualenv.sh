@@ -36,7 +36,7 @@
 #
 
 # Code:
-set -ex
+set -e
 
 if [ ! -z "$VIRTUALENV_DIR" ]; then
     VENV=$VIRTUALENV_DIR

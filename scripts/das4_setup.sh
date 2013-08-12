@@ -37,13 +37,7 @@
 
 # Code:
 
-if [ -z "$VIRTUALENV_DIR" ]; then
-    export VIRTUALENV_DIR=$HOME/venv
-fi
-
 build_virtualenv.sh
-
-echo "export VIRTUALENV_DIR=$VIRTUALENV_DIR" >> $PROJECTROOT/experiment_vars.sh
 
 #
 # das4_setup.sh ends here

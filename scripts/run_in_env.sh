@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 # run-in-env.sh ---
 #
 # Filename: run-in-env.sh
@@ -37,12 +37,11 @@
 
 # Code:
 
+#TODO: Move all this to runner.py?
+
 cd `dirname $0`/../..
 export PROJECTROOT=`pwd`
 echo "Project root is: $PROJECTROOT"
-
-# Load env variables for this experiment
-source experiment_vars.sh
 
 # Update PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$PROJECTROOT
@@ -81,7 +80,7 @@ export OUTPUTDIR=$PROJECTROOT/output
 mkdir -p $OUTPUTDIR
 
 # Run the actual command
-exec $* && echo "Successful execution."
+exec $*
 
 #
 # run-in-env.sh ends here
