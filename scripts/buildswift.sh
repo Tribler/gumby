@@ -1,7 +1,6 @@
 #!/bin/bash -ex
 
 cd Tribler/SwiftEngine
-#make -j$CONCURRENCY_LEVEL
-scons -j$CONCURRENCY_LEVEL
+scons -j$(grep processor /proc/cpuinfo | wc -l)
 cp swift ../..
-git clean -fd
+git clean -fd ||:
