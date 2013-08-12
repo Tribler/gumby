@@ -44,13 +44,6 @@ else
     VENV=$HOME/venv
 fi
 
-write_extra_vars()
-{
-    if [ -e $PROJECTROOT/experiment_vars.sh ]; then
-        echo "export EXTRA_LD_LIBRARY_PATH=$VENV/lib:$VENV/inst/lib" >> $PROJECTROOT/experiment_vars.sh
-    fi
-}
-
 export LD_LIBRARY_PATH=$VENV/inst/lib:$VENV/lib:$LD_LIBRARY_PATH
 
 
@@ -351,8 +344,6 @@ virtualenv --relocatable $VENV
 #rm -fR venv
 #mv $VENV $VENV/../venv
 rm -fR build-tmp
-
-write_extra_vars
 
 touch $VENV/.completed
 
