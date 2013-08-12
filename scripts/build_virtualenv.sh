@@ -133,8 +133,6 @@ if [ -e $VENV/.completed ]; then
     echo "The virtualenv has been successfully built in a previous run of the script."
     echo "If you want to rebuild it or the script has been updated, either delete $VENV/.completed"
     echo "or the full $VENV dir and re-run the script."
-    write_extra_vars
-
     exit 0
 fi
 
