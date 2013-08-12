@@ -42,7 +42,9 @@ class Profile(object):
         self.runs.append(s)
 
         for st in s.stacktraces.itervalues():
-            self.addToRange(st.stacktrace, st.rawBytes)
+            # try with bytes/calls
+            # self.addToRange(st.stacktrace, st.rawBytes)
+            self.addToRange(st.stacktrace, st.avgValue)
 
     def addToRange(self, st, value):
         '''
@@ -50,7 +52,7 @@ class Profile(object):
         i.e. extend the range if necessary.
         '''
         if st not in self.ranges:
-            self.ranges[st] = MonitoredStacktraceRange(st, self._config)
+            self.ranges[st] = MonitoredStacktraceRange(st, self._config, self._conn)
         r = self.ranges.get(st)
         r.addToRange(value)
 
@@ -202,7 +204,7 @@ class MonitoredStacktrace(object):
     classdocs
     '''
 
-    def __init__(self, st, raw, perc, config):
+    def __init__(self, st, raw, perc, config, dbConn=None, avg_value=0):
         '''
         Constructor
         '''
@@ -210,9 +212,13 @@ class MonitoredStacktrace(object):
         self.rawBytes = raw
         self.percentage = perc
         self.databaseId = -1
+        self.avgValue = avg_value
 
         self._config = config
-        self._conn = getDatabaseConn(config)
+        if dbConn == None:
+            self._conn = getDatabaseConn(config)
+        else:
+            self._conn = dbConn
 
     def getDatabaseId(self):
         if self.databaseId != -1:
@@ -228,8 +234,8 @@ class MonitoredStacktrace(object):
             return self.databaseId
 
     def __str__(self):
-        return "[MonitoredStacktrace: %s, rawBytes: %d, percentage: %d]" \
-            % (self.stacktrace, self.rawBytes, self.percentage)
+        return "[MonitoredStacktrace: %s, rawBytes: %d, percentage: %d, avg value: %d]" \
+            % (self.stacktrace, self.rawBytes, self.percentage, self.avg_value)
 
 
 class MonitoredStacktraceRange(object):
@@ -237,7 +243,7 @@ class MonitoredStacktraceRange(object):
     classdocs
     '''
 
-    def __init__(self, st, config):
+    def __init__(self, st, config, dbConn=None):
         '''
         Constructor
         '''
@@ -246,7 +252,10 @@ class MonitoredStacktraceRange(object):
         self.maxValue = None
         self.databaseId = -1
         self._config = config
-        self._conn = getDatabaseConn(config)
+        if dbConn == None:
+            self._conn = getDatabaseConn(config)
+        else:
+            self._conn = dbConn
 
     def addToRange(self, i):
         '''
@@ -369,9 +378,11 @@ class SessionHelper(object):
             for line in reader:
                 st = line['TRACE'].strip()
                 b = Decimal(line['BYTES'])
+                count = Decimal(line['COUNT'])
+                avgValue = b / count
                 # perc = Decimal(line['PERC'])
                 # note: perc is unused at the moment
-                record = MonitoredStacktrace(st, b, 0, self._config)
+                record = MonitoredStacktrace(st, b, 0, self._config, avg_value=avgValue)
                 s.stacktraces[st] = record
 
         return s
@@ -397,9 +408,9 @@ class SessionHelper(object):
                     sqlStacktrace = "INSERT INTO stacktrace (stacktrace) VALUES ('%s')" % (st.stacktrace)
                     cur.execute(sqlStacktrace)
                     st.databaseId = cur.lastrowid
-
-                sqlRange = "INSERT OR REPLACE INTO monitored_value (stacktrace_id, run_id, type_id, value) VALUES \
-                    (%d, %d, %d, %d) " % (st.getDatabaseId(), s.databaseId, Type.BYTESWRITTEN, st.rawBytes)
+                sqlRange = "INSERT OR REPLACE INTO monitored_value (stacktrace_id, run_id, type_id, value, avg_value) \
+                    VALUES (%d, %d, %d, %d, %d) "  \
+                    % (st.getDatabaseId(), s.databaseId, Type.BYTESWRITTEN, st.rawBytes, st.avgValue)
                 cur.execute(sqlRange)
 
             self._conn.commit()
@@ -429,7 +440,8 @@ class SessionHelper(object):
                     st = r2['stacktrace']
                     value = r2['value']
                     dbId = r2['id']
-                    s = MonitoredStacktrace(st, value, 0, self._config)
+                    avgValue = r2['avg_value']
+                    s = MonitoredStacktrace(st, value, 0, self._config, self._conn, avgValue)
                     s.databaseId = dbId
                     m.stacktraces[st] = s
 
