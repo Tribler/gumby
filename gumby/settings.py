@@ -53,7 +53,7 @@ remote_setup_cmd = string(default="das4_setup.sh")
 local_instance_cmd = string(default="")
 remote_instance_cmd = string(default="")
 
-post_process_cmd = string("default=")
+post_process_cmd = string(default="")
 
 use_local_venv = boolean(default=True)
 use_local_systemtap = boolean(default=False)
