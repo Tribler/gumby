@@ -36,20 +36,13 @@
 #
 
 # Code:
-set -ex
+set -e
 
 if [ ! -z "$VIRTUALENV_DIR" ]; then
     VENV=$VIRTUALENV_DIR
 else
     VENV=$HOME/venv
 fi
-
-write_extra_vars()
-{
-    if [ -e $PROJECTROOT/experiment_vars.sh ]; then
-        echo "export EXTRA_LD_LIBRARY_PATH=$VENV/lib:$VENV/inst/lib" >> $PROJECTROOT/experiment_vars.sh
-    fi
-}
 
 export LD_LIBRARY_PATH=$VENV/inst/lib:$VENV/lib:$LD_LIBRARY_PATH
 
@@ -140,8 +133,6 @@ if [ -e $VENV/.completed ]; then
     echo "The virtualenv has been successfully built in a previous run of the script."
     echo "If you want to rebuild it or the script has been updated, either delete $VENV/.completed"
     echo "or the full $VENV dir and re-run the script."
-    write_extra_vars
-
     exit 0
 fi
 
@@ -352,8 +343,6 @@ virtualenv --relocatable $VENV
 #rm -fR venv
 #mv $VENV $VENV/../venv
 rm -fR build-tmp
-
-write_extra_vars
 
 touch $VENV/.completed
 

@@ -1,11 +1,12 @@
 #!/bin/bash -ex
-# das4_setup.sh ---
+# tribler_experiment_setup.sh ---
 #
-# Filename: das4_setup.sh
+# Filename: tribler_experiment_setup.sh
 # Description:
 # Author: Elric Milon
 # Maintainer:
-# Created: Fri Jun 21 16:10:45 2013 (+0200)
+# Created: Mon Aug 12 17:56:58 2013 (+0200)
+# Version:
 
 # Commentary:
 #
@@ -37,7 +38,15 @@
 
 # Code:
 
+
+if [ -e tribler/Tribler/SwiftEngine/ ]; then
+    cd tribler
+    buildswift.sh
+fi
+
+pycompile .
+
 build_virtualenv.sh
 
 #
-# das4_setup.sh ends here
+# tribler_experiment_setup.sh ends here
