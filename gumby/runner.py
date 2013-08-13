@@ -222,7 +222,7 @@ class ExperimentRunner(Logger):
             return succeed(None)
 
     def startInstances(self):
-        msg("Starting remote instances")
+        msg("Starting local and remote instances")
         if self._cfg['remote_instance_cmd']:
             dr = self._instances_d = self.runCommandOnAllRemotes(self._cfg['remote_instance_cmd'])
         else:
@@ -232,6 +232,11 @@ class ExperimentRunner(Logger):
         else:
             dl = succeed(None)
         return gatherResults([dr, dl], consumeErrors=True)
+
+    def runPostProcess(self):
+        if self._cfg['post_process_cmd']:
+            msg("Post processing collected data")
+            return self.runCommand(self._cfg['post_process_cmd'])
 
     def run(self):
         def onExperimentSucceeded(_):
@@ -283,23 +288,19 @@ class ExperimentRunner(Logger):
         # of them to be ready before starting the experiment.
         d.addCallback(lambda _: self.startInstances())
 
+        # Step 7:
+        # Collect all the data from the remote head nodes.
+        # TODO: implement this.
+
+        # Step 8:
+        # Extract the data and graph stuff
+        d.addCallback(lambda _: self.runPostProcess())
+
         # TODO: From here onwards
         reactor.callLater(0, d.callback, None)
         # reactor.callLater(60, reactor.stop)
 
-        # Step 7:
-        # Collect all the data from the remote head nodes.
-
-        # Step 8:
-        # Extract the data and graph stuff
-
-        # d_remote = self.runRemoteStuff()
-        # d_local = self.runLocalStuff()
-        # d = gatherResults((d_tracker, d_remote, d_local), consumeErrors=True)
-        # d = gatherResults((d_tracker, d_remote), consumeErrors=True)
-        d.addCallbacks(onExperimentSucceeded, onExperimentFailed)
-        return d
-
+        return d.addCallbacks(onExperimentSucceeded, onExperimentFailed)
 
 class OneShotProcessProtocol(ProcessProtocol):
 
