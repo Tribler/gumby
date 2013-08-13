@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 # run-in-env.sh ---
 #
 # Filename: run-in-env.sh
@@ -37,12 +37,11 @@
 
 # Code:
 
+#TODO: Move all this to runner.py?
+
 cd `dirname $0`/../..
 export PROJECTROOT=`pwd`
 echo "Project root is: $PROJECTROOT"
-
-# Load env variables for this experiment
-source experiment_vars.sh
 
 # Update PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$PROJECTROOT
@@ -59,7 +58,8 @@ export R_LIBS_USER=$R_LIBS_USER${R_LIBS_USER:+:}$HOME/R
 
 # Enter virtualenv in case there's one
 if [ ! -z "$VIRTUALENV_DIR" -a -d "$VIRTUALENV_DIR" ]; then
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$VIRTUALENV_DIR/inst/lib
+    echo "Enabling virtualenv at $VIRTUALENV_DIR"
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$VIRTUALENV_DIR/inst/lib:$VIRTUALENV_DIR/lib
     export PATH=$PATH:$VIRTUALENV_DIR/inst/bin
     source $VIRTUALENV_DIR/bin/activate
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$EXTRA_LD_LIBRARY_PATH
@@ -81,7 +81,7 @@ export OUTPUTDIR=$PROJECTROOT/output
 mkdir -p $OUTPUTDIR
 
 # Run the actual command
-exec $* && echo "Successful execution."
+exec $*
 
 #
 # run-in-env.sh ends here

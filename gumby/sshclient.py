@@ -76,7 +76,7 @@ class _CommandTransport(SSHClientTransport):
 
     def connectionSecure(self):
         self._secured = True
-        connection = _CommandConnection(self.factory.command)
+        connection = _CommandConnection(self.factory.command, self.factory.env)
         self.connection = connection
         userauth = SSHUserAuthClient(
             self.factory.user,
@@ -103,13 +103,14 @@ class _CommandTransport(SSHClientTransport):
 
 
 class _CommandConnection(SSHConnection):
-    def __init__(self, command):
+    def __init__(self, command, env={}):
         SSHConnection.__init__(self)
         self.command_str = command
+        self.env = env
         self.reason = None
 
     def serviceStarted(self):
-        channel = _CommandChannel(self.command_str, conn=self)
+        channel = _CommandChannel(self.command_str, conn=self, env=self.env)
         self.openChannel(channel)
 
     def channelClosed(self, channel):
@@ -121,9 +122,10 @@ class _CommandConnection(SSHConnection):
 class _CommandChannel(SSHChannel):
     name = 'session'
 
-    def __init__(self, command, **k):
+    def __init__(self, command, env={}, **k):
         SSHChannel.__init__(self, **k)
         self.command = command
+        self.env = env
         self.reason = None
 
     # def openFailed(self, reason):
@@ -141,6 +143,11 @@ class _CommandChannel(SSHChannel):
         win_size = (0, 0, 0, 0)  # 0s are ignored
         pty_req_data = packRequest_pty_req('vt100', win_size, modes)
         d = self.conn.sendRequest(self, 'pty-req', pty_req_data, wantReply=True)
+        #Set all the env variables we've got
+        for key, value in self.env:
+            d.addCallback(
+                lambda _: self.conn.sendRequest(self, 'env', NS(key), NS(value), wantReply=True)
+            )
         d.addCallback(
             # send command after we get the pty
             lambda _: self.conn.sendRequest(self, 'exec', NS(self.command))
@@ -190,9 +197,10 @@ class _CommandChannel(SSHChannel):
 
 
 class CommandFactory(ClientFactory):
-    def __init__(self, command, user):
+    def __init__(self, command, user, env={}):
         self.command = command
         self.user = user
+        self.env = env
         self.protocol = _CommandTransport
         self.finished = Deferred()
 
@@ -205,18 +213,7 @@ class CommandFactory(ClientFactory):
                 self.finished.errback(reason)
 
 
-def runRemoteCMD(host, command):
-    def checkExitStatus(reason):
-        if reason:
-            return reason
-            # if reason.type is ConnectionDone:
-            #     return 0
-            # elif reason.type is ProcessTerminated:
-            #     if reason.value.exitCode:
-            #         return reason.value.exitCode
-            #     else:
-            #         return -reason.value.signal
-
+def runRemoteCMD(host, command, env=[]):
     if '@' in host:
         user, host = host.split('@')
     else:
@@ -227,10 +224,9 @@ def runRemoteCMD(host, command):
     else:
         port = 22
 
-    factory = CommandFactory(command, user)
+    factory = CommandFactory(command, user, env)
     reactor.connectTCP(host, port, factory)
 
-    factory.finished.addBoth(checkExitStatus)
     return factory.finished
 
 #
