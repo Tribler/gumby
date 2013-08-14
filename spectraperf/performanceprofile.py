@@ -9,6 +9,7 @@ from math import sqrt
 import sys
 from gumby.settings import loadConfig
 from spectraperf.databasehelper import getDatabaseConn
+import operator
 
 
 class Profile(object):
@@ -54,7 +55,7 @@ class Profile(object):
         if st not in self.ranges:
             self.ranges[st] = MonitoredStacktraceRange(st, self._config, self._conn)
         r = self.ranges.get(st)
-        r.addToRange(value)
+        r.addToRange(value, 2)
 
     def isInRange(self, st, value):
         '''
@@ -74,10 +75,11 @@ class Profile(object):
         '''
         fits = {}
         for st in s.stacktraces.itervalues():
-            if self.getRange(st.stacktrace) != None and self.isInRange(st.stacktrace, st.rawBytes):
+            if self.getRange(st.stacktrace) != None and self.isInRange(st.stacktrace, st.avgValue):
                 f = 1
             else:
                 f = 0
+            # print "Fits: %s, %.2f, %s" % (f, st.avgValue, self.getRange(st.stacktrace))
             fits[st.stacktrace] = f
         return fits
 
@@ -163,7 +165,7 @@ class ProfileHelper(object):
                     st.databaseId = cur.lastrowid
 
                 sqlRange = "INSERT OR REPLACE INTO range (stacktrace_id, \
-                    min_value, max_value, profile_id, type_id) VALUES (%d, %d, %d, %d, %d) " \
+                    min_value, max_value, profile_id, type_id) VALUES (%d, %.2f, %.2f, %d, %d) " \
                     % (st.databaseId, st.minValue, st.maxValue, p.databaseId, Type.BYTESWRITTEN)
                 cur.execute(sqlRange)
 
@@ -186,8 +188,8 @@ class ProfileHelper(object):
             rows = cur.fetchall()
             for r in rows:
                 st = r['stacktrace']
-                min_value = r['min_value']
-                max_value = r['max_value']
+                min_value = round(r['min_value'], 2)
+                max_value = round(r['max_value'], 2)
                 dbId = r['id']
 
                 stRange = MonitoredStacktraceRange(st, self._config)
@@ -234,7 +236,7 @@ class MonitoredStacktrace(object):
             return self.databaseId
 
     def __str__(self):
-        return "[MonitoredStacktrace: %s, rawBytes: %d, percentage: %d, avg value: %d]" \
+        return "[MonitoredStacktrace: %s, rawBytes: %d, percentage: %d, avg value: %.2f]" \
             % (self.stacktrace, self.rawBytes, self.percentage, self.avg_value)
 
 
@@ -270,7 +272,7 @@ class MonitoredStacktraceRange(object):
         return value >= self.minValue and value <= self.maxValue
 
     def __str__(self):
-        return "[MonitoredStacktraceRange: (min: %d, max: %d) %s]" % (self.minValue, self.maxValue, self.stacktrace)
+        return "[MonitoredStacktraceRange: (min: %.2f, max: %.2f) %s]" % (self.minValue, self.maxValue, self.stacktrace)
 
     def getDatabaseId(self):
         if self.databaseId != -1:
@@ -379,7 +381,7 @@ class SessionHelper(object):
                 st = line['TRACE'].strip()
                 b = Decimal(line['BYTES'])
                 count = Decimal(line['COUNT'])
-                avgValue = b / count
+                avgValue = round(b / count, 2)
                 # perc = Decimal(line['PERC'])
                 # note: perc is unused at the moment
                 record = MonitoredStacktrace(st, b, 0, self._config, avg_value=avgValue)
@@ -409,7 +411,7 @@ class SessionHelper(object):
                     cur.execute(sqlStacktrace)
                     st.databaseId = cur.lastrowid
                 sqlRange = "INSERT OR REPLACE INTO monitored_value (stacktrace_id, run_id, type_id, value, avg_value) \
-                    VALUES (%d, %d, %d, %d, %d) "  \
+                    VALUES (%d, %d, %d, %d, %.2f) "  \
                     % (st.getDatabaseId(), s.databaseId, Type.BYTESWRITTEN, st.rawBytes, st.avgValue)
                 cur.execute(sqlRange)
 
@@ -440,7 +442,7 @@ class SessionHelper(object):
                     st = r2['stacktrace']
                     value = r2['value']
                     dbId = r2['id']
-                    avgValue = r2['avg_value']
+                    avgValue = round(r2['avg_value'], 2)
                     s = MonitoredStacktrace(st, value, 0, self._config, self._conn, avgValue)
                     s.databaseId = dbId
                     m.stacktraces[st] = s
@@ -459,10 +461,129 @@ class SessionHelper(object):
 
 
 class MetricValue(object):
-    def __init__(self, typeId, value, profileId):
+    def __init__(self, typeId, value, profileId, instances=1):
         self.typeId = typeId
         self.value = value
         self.profileId = profileId
+        self.instances = instances
+
+    def __str__(self):
+        return "[MetricValue: %.2f, %d (%d)]" % (self.value, self.typeId, self.instances)
+
+    def __eq__(self, other):
+        return self.value == other.value
+
+    def __lt__(self, other):
+        return self.value < other.value
+
+    def __gt__(self, other):
+        return self.value > other.value
+
+
+class ActivityMatrix(object):
+    def __init__(self, profileId, runs, typeId, revision, testcase):
+        self.matrix = {}
+        self.metrics = {}
+        self.databaseId = -1
+        self.profileId = profileId
+        self.runs = runs
+        self.typeId = typeId
+        self.revision = revision
+        self.testcase = testcase
+
+    def addFitsVector(self, v):
+        for st in v:
+            if not st in self.matrix:
+                self.matrix[st] = []
+            self.matrix[st].append(v[st])
+        # print self.matrix
+
+    def calcSimilarity(self):
+        '''
+        Returns the (simplified) cosine similarity for fit vector v
+        and a vector with the same total number of items, all initialized
+        to 1's.
+
+        The rationale behind this is that we want to see how different the
+        fit vector is compared to the profile (which is the fit vector with
+        all 1's).
+
+        A similarity of 1 means all elements are equal, hence all elements
+        of the new vector fit in the ranges defined in the profile.
+
+        A similarity of 0 means all elements are different, hence no elements
+        fit in the defined ranges.
+
+        A value between 0 and 1 means the vectors are partly different.
+        '''
+        self.metrics[MetricType.COSINESIM] = {}
+        for st in self.matrix:
+            v = self.matrix[st]
+            d1 = sqrt(len(v))
+            ones = 0
+            for i in v:
+                ones += i
+            if ones == 0:
+                sim = 0
+            else:
+                d2 = sqrt(ones)
+                sim = ones / (d1 * d2)
+            metricValue = MetricValue(MetricType.COSINESIM, sim, -1, len(v))
+            self.metrics[MetricType.COSINESIM][st] = metricValue
+
+    def printMatrix(self):
+        for t in self.metrics:
+            sorted_metrics = sorted(self.metrics[t].iteritems(), key=operator.itemgetter(1))
+            print "Type: %d" % t
+            for st in sorted_metrics:
+                print "%s - %s" % (st[1], st[0])
+
+
+class MatrixHelper(object):
+
+    def __init__(self, config):
+        self._config = config
+        self._conn = getDatabaseConn(config)
+
+    def getStacktraceId(self, st):
+        with self._conn:
+            cur = self._conn.cursor()
+
+            sql = "SELECT id FROM stacktrace WHERE stacktrace = '%s'" % st
+            cur.execute(sql)
+            rows = cur.fetchall()
+            if len(rows) == 0:
+                return -1
+            return rows[0]['id']
+
+    def storeInDatabase(self, m):
+        with self._conn:
+            cur = self._conn.cursor()
+
+            if m.databaseId == -1:
+                # insert profile
+                sql = "INSERT INTO activity_matrix (revision, testcase, checked_profile, runs, type_id) " \
+                            " VALUES ('%s', '%s', '%d', '%d', '%d')" \
+                            % (m.revision, m.testcase, m.profileId, m.runs, m.typeId)
+                cur.execute(sql)
+                m.databaseId = cur.lastrowid
+
+            # insert ranges
+            for t in m.metrics:
+                for mt in m.metrics[t].iteritems():
+                    st = mt[0]
+                    stacktraceId = self.getStacktraceId(st)
+                    if stacktraceId == -1:
+                        sql = "INSERT INTO stacktrace (stacktrace) VALUES ('%s')" % (mt[0])
+                        cur.execute(sql)
+                        stacktraceId = cur.lastrowid
+                    metric = mt[1]
+                    sqlRange = "INSERT INTO activity_metric (matrix_id, \
+                        value, runs, stacktrace_id, type_id) VALUES (%d, %.2f, %d, %d, %d) " \
+                        % (m.databaseId, metric.value, metric.instances, stacktraceId, metric.typeId)
+                    cur.execute(sqlRange)
+
+            self._conn.commit()
 
 
 # enums for different types of data monitored, note: for now only 1 type exists
@@ -470,4 +591,4 @@ def enum(**enums):
     return type('Enum', (), enums)
 
 Type = enum(BYTESWRITTEN=1)
-MetricType = enum(COSINESIM=1)
+MetricType = enum(COSINESIM=1, OCHIAI=2)
