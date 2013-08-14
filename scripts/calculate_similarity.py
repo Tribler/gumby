@@ -26,7 +26,7 @@ if __name__ == '__main__':
         useDefault = False
 
     if not useDefault and len(sys.argv) < 5:
-        print "Usage: python calculate_similarity.py configFile csvPath testcase"
+        print "Usage: python calculate_similarity.py configFile csvPath rev(id) testcase"
         sys.exit(0)
 
     if useDefault:
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     else:
         config = loadConfig(sys.argv[1])
         csvPath = sys.argv[2]
-        revision = sys.argv[3]
+        rev = sys.argv[3]
         testcase = sys.argv[4]
 
     while rev > 0:
