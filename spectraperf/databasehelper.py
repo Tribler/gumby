@@ -36,6 +36,8 @@ class InitDatabase(object):
         cur.execute("DROP TABLE IF EXISTS run")
         cur.execute("DROP TABLE IF EXISTS metric_type")
         cur.execute("DROP TABLE IF EXISTS metric_value")
+        cur.execute("DROP TABLE IF EXISTS activity_matrix")
+        cur.execute("DROP TABLE IF EXISTS activity_metric")
 
         createProfile = "CREATE TABLE profile ( \
                             id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
@@ -123,6 +125,24 @@ class InitDatabase(object):
                             ON metric_value \
                             (metric_type_id, run_id, profile_id)"
         cur.execute(unqMetricValue)
+
+        createActivityMatrix = "CREATE TABLE activity_matrix ( \
+                            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
+                            revision TEXT NOT NULL, \
+                            testcase TEXT NOT NULL, \
+                            checked_profile INTEGER NOT NULL, \
+                            runs INTEGER NOT NULL, \
+                            type_id INTEGER NOT NULL);"
+        cur.execute(createActivityMatrix)
+
+        createActivityMetric = "CREATE TABLE activity_metric ( \
+                            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \
+                            matrix_id INTEGER NOT NULL, \
+                            value INTEGER NOT NULL, \
+                            stacktrace_id INTEGER NOT NULL, \
+                            runs INTEGER NOT NULL, \
+                            type_id INTEGER NOT NULL);"
+        cur.execute(createActivityMetric)
 
 
 def getDatabaseConn(config, init=False):

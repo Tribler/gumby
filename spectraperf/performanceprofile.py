@@ -79,7 +79,7 @@ class Profile(object):
                 f = 1
             else:
                 f = 0
-            print "Fits: %s, %.2f, %s" % (f, st.avgValue, self.getRange(st.stacktrace))
+            # print "Fits: %s, %.2f, %s" % (f, st.avgValue, self.getRange(st.stacktrace))
             fits[st.stacktrace] = f
         return fits
 
@@ -481,16 +481,22 @@ class MetricValue(object):
 
 
 class ActivityMatrix(object):
-    def __init__(self):
+    def __init__(self, profileId, runs, typeId, revision, testcase):
         self.matrix = {}
         self.metrics = {}
+        self.databaseId = -1
+        self.profileId = profileId
+        self.runs = runs
+        self.typeId = typeId
+        self.revision = revision
+        self.testcase = testcase
 
     def addFitsVector(self, v):
         for st in v:
             if not st in self.matrix:
                 self.matrix[st] = []
             self.matrix[st].append(v[st])
-        print self.matrix
+        # print self.matrix
 
     def calcSimilarity(self):
         '''
@@ -526,11 +532,58 @@ class ActivityMatrix(object):
             self.metrics[MetricType.COSINESIM][st] = metricValue
 
     def printMatrix(self):
-        for type in self.metrics:
-            sorted_metrics = sorted(self.metrics[type].iteritems(), key=operator.itemgetter(1))
-            print "Type: %d" % type
+        for t in self.metrics:
+            sorted_metrics = sorted(self.metrics[t].iteritems(), key=operator.itemgetter(1))
+            print "Type: %d" % t
             for st in sorted_metrics:
                 print "%s - %s" % (st[1], st[0])
+
+
+class MatrixHelper(object):
+
+    def __init__(self, config):
+        self._config = config
+        self._conn = getDatabaseConn(config)
+
+    def getStacktraceId(self, st):
+        with self._conn:
+            cur = self._conn.cursor()
+
+            sql = "SELECT id FROM stacktrace WHERE stacktrace = '%s'" % st
+            cur.execute(sql)
+            rows = cur.fetchall()
+            if len(rows) == 0:
+                return -1
+            return rows[0]['id']
+
+    def storeInDatabase(self, m):
+        with self._conn:
+            cur = self._conn.cursor()
+
+            if m.databaseId == -1:
+                # insert profile
+                sql = "INSERT INTO activity_matrix (revision, testcase, checked_profile, runs, type_id) " \
+                            " VALUES ('%s', '%s', '%d', '%d', '%d')" \
+                            % (m.revision, m.testcase, m.profileId, m.runs, m.typeId)
+                cur.execute(sql)
+                m.databaseId = cur.lastrowid
+
+            # insert ranges
+            for t in m.metrics:
+                for mt in m.metrics[t].iteritems():
+                    st = mt[0]
+                    stacktraceId = self.getStacktraceId(st)
+                    if stacktraceId == -1:
+                        sql = "INSERT INTO stacktrace (stacktrace) VALUES ('%s')" % (mt[0])
+                        cur.execute(sql)
+                        stacktraceId = cur.lastrowid
+                    metric = mt[1]
+                    sqlRange = "INSERT INTO activity_metric (matrix_id, \
+                        value, runs, stacktrace_id, type_id) VALUES (%d, %.2f, %d, %d, %d) " \
+                        % (m.databaseId, metric.value, metric.instances, stacktraceId, metric.typeId)
+                    cur.execute(sqlRange)
+
+            self._conn.commit()
 
 
 # enums for different types of data monitored, note: for now only 1 type exists
