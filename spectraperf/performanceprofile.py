@@ -585,6 +585,16 @@ class MatrixHelper(object):
 
             self._conn.commit()
 
+    def getMetricPerStacktrace(self, typeId):
+        with self._conn:
+            cur = self._conn.cursor()
+            sql = "SELECT value, stacktrace, matrix_id FROM activity_metric " \
+                " JOIN stacktrace ON stacktrace_id = stacktrace.id " \
+                " WHERE stacktrace_id = 1 AND type_id = '%d' ORDER BY matrix_id" % typeId
+            cur.execute(sql)
+            rows = cur.fetchall()
+            return rows
+
 
 # enums for different types of data monitored, note: for now only 1 type exists
 def enum(**enums):
