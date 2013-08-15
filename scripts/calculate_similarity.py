@@ -20,12 +20,7 @@ from spectraperf.performanceprofile import *
 
 if __name__ == '__main__':
 
-    if len(sys.argv) == 1:
-        useDefault = True
-    else:
-        useDefault = False
-
-    if not useDefault and len(sys.argv) < 5:
+    if len(sys.argv) < 5:
         print "Usage: python calculate_similarity.py configFile csvPath rev(id) testcase"
         sys.exit(0)
 
@@ -76,7 +71,6 @@ if __name__ == '__main__':
             fits = p.fitsProfile(sess)
             matrix.addFitsVector(fits)
 
-            # TODO: where should we save the similarity?
             sim = p.similarity(fits)
             metricValue = p.similarity(fits)
             helper.storeMetricInDatabase(sess, metricValue)
@@ -87,6 +81,7 @@ if __name__ == '__main__':
         matrix.calcSimilarity()
 
         helper = MatrixHelper(config)
+        # slow but why?
         helper.storeInDatabase(matrix)
 
         matrix.printMatrix()

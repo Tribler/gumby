@@ -83,14 +83,25 @@ class Profile(object):
         '''
         fits = {}
         for st in s.stacktraces.itervalues():
-            if self.getRange(st.stacktrace) != None and self.isInRange(st.stacktrace, st.avgValue):
-                f = 1
+            f = {}
+            r = self.getRange(st.stacktrace)
+            f['bytesOff'] = st.avgValue
+            if r == None:
+                f['fits'] = 0
+                f['rangeDiff'] = -1
+            elif self.isInRange(st.stacktrace, st.avgValue):
+                f['fits'] = 1
+                f['bytesOff'] = 0
+                f['rangeDiff'] = r.maxValue - r.minValue
             else:
-                f = 0
-                bytesOff = self.getBytesOff(st.stacktrace, st.avgValue)
-                print "bytesOff: %d" % bytesOff
+                f['fits'] = 0
+                f['bytesOff'] = self.getBytesOff(st.stacktrace, st.avgValue)
+                f['rangeDiff'] = r.maxValue - r.minValue
+
             # print "Fits: %s, %.2f, %s" % (f, st.avgValue, self.getRange(st.stacktrace))
             fits[st.stacktrace] = f
+            print "bytesOff: %d / %d (%d)" % (f['bytesOff'], f['rangeDiff'], fits[st.stacktrace]['fits'])
+
         return fits
 
     def similarity(self, v):
@@ -114,7 +125,7 @@ class Profile(object):
         d1 = sqrt(len(v))
         ones = 0
         for i in v.itervalues():
-            ones += i
+            ones += i['fits']
         if ones == 0:
             sim = 0
         else:
@@ -287,8 +298,9 @@ class MonitoredStacktraceRange(object):
         '''
         if value > self.maxValue:
             return value - self.maxValue
-        if value < self.minValue:
-            return self.minValue - value
+        elif value < self.minValue:
+            # TODO check if this makes sense... or should we use minValue - value?
+            return value - self.minValue
         else:
             return 0
 
@@ -482,14 +494,17 @@ class SessionHelper(object):
 
 
 class MetricValue(object):
-    def __init__(self, typeId, value, profileId, instances=1):
+    def __init__(self, typeId, value, profileId, instances=1, bytesOff=0, rangeDiff=0):
         self.typeId = typeId
         self.value = value
         self.profileId = profileId
         self.instances = instances
+        self.bytesOff = bytesOff
+        self.rangeDiff = rangeDiff
 
     def __str__(self):
-        return "[MetricValue: %.2f, %d (%d)]" % (self.value, self.typeId, self.instances)
+        return "[MetricValue: %.2f, %d (%d) off: %.2f / %.2f]" \
+            % (self.value, self.typeId, self.instances, self.bytesOff, self.rangeDiff)
 
     def __eq__(self, other):
         return self.value == other.value
@@ -539,18 +554,24 @@ class ActivityMatrix(object):
         '''
         self.metrics[MetricType.COSINESIM] = {}
         for st in self.matrix:
+            avgBytesOff = 0
+            avgRangeDiff = 0
             v = self.matrix[st]
             d1 = sqrt(len(v))
             ones = 0
             for i in v:
-                ones += i
+                ones += i['fits']
+                # doesn't really belong here but store this in the metric to give extra info
+                avgBytesOff = avgBytesOff + i['bytesOff']
+                avgRangeDiff = avgRangeDiff + i['rangeDiff']
             if ones == 0:
                 sim = 0
             else:
                 d2 = sqrt(ones)
                 sim = ones / (d1 * d2)
-            metricValue = MetricValue(MetricType.COSINESIM, sim, -1, len(v))
+            metricValue = MetricValue(MetricType.COSINESIM, sim, -1, len(v), avgBytesOff / len(v), avgRangeDiff / len(v))
             self.metrics[MetricType.COSINESIM][st] = metricValue
+
 
     def printMatrix(self):
         for t in self.metrics:
@@ -588,7 +609,6 @@ class MatrixHelper(object):
                             % (m.revision, m.testcase, m.profileId, m.runs, m.typeId)
                 cur.execute(sql)
                 m.databaseId = cur.lastrowid
-
             # insert ranges
             for t in m.metrics:
                 for mt in m.metrics[t].iteritems():
@@ -599,11 +619,11 @@ class MatrixHelper(object):
                         cur.execute(sql)
                         stacktraceId = cur.lastrowid
                     metric = mt[1]
-                    sqlRange = "INSERT INTO activity_metric (matrix_id, \
-                        value, runs, stacktrace_id, type_id) VALUES (%d, %.2f, %d, %d, %d) " \
-                        % (m.databaseId, metric.value, metric.instances, stacktraceId, metric.typeId)
+                    sqlRange = "INSERT INTO activity_metric (matrix_id, value, runs, stacktrace_id, type_id, \
+                        bytes_off, range_diff) VALUES (%d, %.2f, %d, %d, %d, %.2f, %.2f) " \
+                        % (m.databaseId, metric.value, metric.instances, stacktraceId, metric.typeId, metric.bytesOff,
+                           metric.rangeDiff)
                     cur.execute(sqlRange)
-
             self._conn.commit()
 
     def getMetricPerStacktrace(self, typeId):
