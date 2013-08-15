@@ -636,6 +636,15 @@ class MatrixHelper(object):
             rows = cur.fetchall()
             return rows
 
+    def getAvgMetricPerRevision(self, typeId):
+        with self._conn:
+            cur = self._conn.cursor()
+            sql = "select profile_id, avg(value) as value from metric_value WHERE metric_type_id = '%d' GROUP BY profile_id" \
+                    % typeId
+            cur.execute(sql)
+            rows = cur.fetchall()
+            return rows
+
 
 # enums for different types of data monitored, note: for now only 1 type exists
 def enum(**enums):
