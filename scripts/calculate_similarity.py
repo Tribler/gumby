@@ -29,17 +29,10 @@ if __name__ == '__main__':
         print "Usage: python calculate_similarity.py configFile csvPath rev(id) testcase"
         sys.exit(0)
 
-    if useDefault:
-        config = loadConfig("/home/corpaul/workspace/gumby/experiments/test_all_revisions/test.conf")
-        csvPath = "/home/corpaul/workspace/gumbydata/data/Test_performance_Tribler_idle_all_revs_with_guard/output"
-        rev = 100
-        # revision = "6befdb5a1c1f69e5f460dd1bedd3d4bced982f96"
-        testcase = "IdleTribler"
-    else:
-        config = loadConfig(sys.argv[1])
-        csvPath = sys.argv[2]
-        rev = sys.argv[3]
-        testcase = sys.argv[4]
+    config = loadConfig(sys.argv[1])
+    csvPath = sys.argv[2]
+    rev = int(sys.argv[3])
+    testcase = sys.argv[4]
 
     while rev > 0:
         start = "%s/%s_%d_1_" % (csvPath, testcase, rev)
