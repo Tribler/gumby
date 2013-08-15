@@ -55,7 +55,8 @@ class Profile(object):
         if st not in self.ranges:
             self.ranges[st] = MonitoredStacktraceRange(st, self._config, self._conn)
         r = self.ranges.get(st)
-        r.addToRange(value, 2)
+        # add the value
+        r.addToRange(value)
 
     def isInRange(self, st, value):
         '''
@@ -63,6 +64,13 @@ class Profile(object):
         '''
         assert self.getRange(st) != None, "No range set for %s" % st
         return self.getRange(st).isInRange(value)
+
+    def getBytesOff(self, st, value):
+        '''
+        Returns true iff value is in the range of stacktrace st.
+        '''
+        assert self.getRange(st) != None, "No range set for %s" % st
+        return self.getRange(st).getBytesOff(value)
 
     def getRange(self, st):
         return self.ranges.get(st)
@@ -79,6 +87,8 @@ class Profile(object):
                 f = 1
             else:
                 f = 0
+                bytesOff = self.getBytesOff(st.stacktrace, st.avgValue)
+                print "bytesOff: %d" % bytesOff
             # print "Fits: %s, %.2f, %s" % (f, st.avgValue, self.getRange(st.stacktrace))
             fits[st.stacktrace] = f
         return fits
@@ -270,6 +280,17 @@ class MonitoredStacktraceRange(object):
 
     def isInRange(self, value):
         return value >= self.minValue and value <= self.maxValue
+
+    def getBytesOff(self, value):
+        '''
+        Returns the number of bytes value is outside this range.
+        '''
+        if value > self.maxValue:
+            return value - self.maxValue
+        if value < self.minValue:
+            return self.minValue - value
+        else:
+            return 0
 
     def __str__(self):
         return "[MonitoredStacktraceRange: (min: %.2f, max: %.2f) %s]" % (self.minValue, self.maxValue, self.stacktrace)
