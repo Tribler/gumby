@@ -324,6 +324,8 @@ gmpy==1.16
 pyzmq
 pysqlite
 netifaces
+nose
+nosexcover
 twisted # Used by the config server/clients
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 nose
