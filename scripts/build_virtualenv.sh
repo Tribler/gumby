@@ -318,21 +318,20 @@ fi
 popd
 
 echo "
-ipython
-ntplib
+Jinja2 # Used for systemtap report generation scripts from Cor-Paul
+PIL
+configobj
 gmpy==1.16
-pyzmq
-pysqlite
+ipython
 netifaces
 nose
 nosexcover
-twisted # Used by the config server/clients
-Jinja2 # Used for systemtap report generation scripts from Cor-Paul
-nose
-PIL
-configobj
-unicodecsv # used for report generation scripts from Cor-Paul
+ntplib
 numpy # used for report generation scripts from Cor-Paul
+pysqlite
+pyzmq
+twisted # Used by the config server/clients
+unicodecsv # used for report generation scripts from Cor-Paul
 " > ~/requirements.txt
 pip install -r ~/requirements.txt
 rm ~/requirements.txt
