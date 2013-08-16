@@ -35,6 +35,8 @@
 #
 #
 
+SCRIPT_VERSION=1
+
 # Code:
 set -e
 
@@ -49,7 +51,7 @@ export LD_LIBRARY_PATH=$VENV/inst/lib:$VENV/lib:$LD_LIBRARY_PATH
 
 # Build the systemtap enabled python runtime and systemtap itself
 # if dtrace is available, if not, just build python 2.7
-if [ ! -e $VENV/inst/.completed ]; then
+if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
     mkdir -p $VENV/src
     pushd $VENV/src
     if [ -e /usr/bin/dtrace ]; then
@@ -125,15 +127,12 @@ if [ ! -e $VENV/inst/.completed ]; then
         make install
         popd
     fi
-    touch $VENV/inst/.completed
+    touch $VENV/inst/.completed.$SCRIPT_VERSION
     popd
 fi
 
-if [ -e $VENV/.completed ]; then
-    echo "The virtualenv has been successfully built in a previous run of the script."
-    echo "If you want to rebuild it or the script has been updated, either delete $VENV/.completed"
-    echo "or the full $VENV dir and re-run the script."
-    exit 0
+if [ -e $VENV/.completed.$SCRIPT_VERSION ]; then
+    exit
 fi
 
 # Build libevent, not really needed for anything python related, but swift
@@ -344,7 +343,7 @@ virtualenv --relocatable $VENV
 #mv $VENV $VENV/../venv
 rm -fR build-tmp
 
-touch $VENV/.completed
+touch $VENV/.completed.$SCRIPT_VERSION
 
 echo "Done, you can use this virtualenv with:
 	source venv/bin/activate
