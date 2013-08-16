@@ -21,6 +21,12 @@ def getAvgMetricPerRevision():
     return sim
 
 
+def getMatrix(revision):
+    m = MatrixHelper(config)
+    matrix = m.loadFromDatabase(revision, MetricType.COSINESIM)
+    return matrix
+
+
 def print_html_doc():
     # uses http://softwarebyjosh.com/raphy-charts/
     template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../templates'))
@@ -29,11 +35,12 @@ def print_html_doc():
     loader = FileSystemLoader(searchpath=template_dir)
     env = Environment(loader=loader)
     template = env.get_template('template_similarity_report.html')
-    sim = getAvgMetricPerRevision()
-    print sim
+    matrix1 = getMatrix("7c90df94327eb12d25cc063a191728e5fecb21d6")
+    print matrix1.metrics[MetricType.COSINESIM]
     report = template.render(
             title='Similarity report',
-            similarity=sim
+            similarity=getAvgMetricPerRevision(),
+            matrix=matrix1
             ).encode("utf-8")
     with open(outputPath + '/sim_report.html', 'wb') as fh:
         fh.write(report)
@@ -45,6 +52,6 @@ if __name__ == '__main__':
     else:
         print 'usage python make_similarity_report.py confFile outputPath'
         exit()
-    print outputPath
+    # print outputPath
     # getSimilarityPerStacktrace()
     print_html_doc()

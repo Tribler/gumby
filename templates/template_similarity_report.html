@@ -25,14 +25,16 @@ Similarity of written bytes compared to previous revision
 	var chart = new Charts.LineChart('chart1', {
 			y_axis_scale: [0,1],
 			max_y_labels: 10,
-			max_x_labels: 10
+			max_x_labels: 10,
+			show_grid: true
 		});
 
 	// Data is an array of arrays where the first slot is the x label and the 2nd the (y) value to graph
 	chart.add_line({
 	  data: [
 	  		{% for item in similarity %}
-		        [{{ item.profile_id }}, {{ item.value }}],
+		        [{{ item.profile_id }}, {{ item.value }},
+		         {tooltip: "{{'%.2f (rev: %s)' % (item.value, item.revision)}}"}],
 		    {% endfor %}
 	  		]
 	});
@@ -40,5 +42,27 @@ Similarity of written bytes compared to previous revision
 	chart.draw();
 </script>
 
+<table border=1>
+<tr>
+	<th colspan=5>Similarity report for revision {{ matrix.revision }}</th>
+</tr>
+<tr>
+	<th>Similarity</th>
+	<th>Bytes off</th>
+	<th>Range difference</th>
+	<th>Runs</th>
+	<th>Stacktrace</th>
+</tr>
+
+{% for item in matrix.metrics[1] %}
+<tr>
+	<td>{{ item[1]['value'] }}</td>
+	<td align="right">{{ item[1]['bytesOff'] }}</td>
+	<td align="right">{{ item[1]['rangeDiff'] }}</td>
+	<td align="right">{{ item[1]['runs'] }}</th>
+	<td><div class="stacktrace">{{ item[0]|replace("<-", "", 1)|replace("<-", "<br>")|replace("/home/user/python-src/virtualenv-attempt/venv", "") }}</div></td></td>
+</tr>
+{% endfor %}
+</table>
 </body>
 </html>

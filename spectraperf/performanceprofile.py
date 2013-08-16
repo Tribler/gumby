@@ -494,17 +494,17 @@ class SessionHelper(object):
 
 
 class MetricValue(object):
-    def __init__(self, typeId, value, profileId, instances=1, bytesOff=0, rangeDiff=0):
+    def __init__(self, typeId, value, profileId, runs=1, bytesOff=0, rangeDiff=0):
         self.typeId = typeId
         self.value = value
         self.profileId = profileId
-        self.instances = instances
+        self.runs = runs
         self.bytesOff = bytesOff
         self.rangeDiff = rangeDiff
 
     def __str__(self):
         return "[MetricValue: %.2f, %d (%d) off: %.2f / %.2f]" \
-            % (self.value, self.typeId, self.instances, self.bytesOff, self.rangeDiff)
+            % (self.value, self.typeId, self.runs, self.bytesOff, self.rangeDiff)
 
     def __eq__(self, other):
         return self.value == other.value
@@ -572,7 +572,6 @@ class ActivityMatrix(object):
             metricValue = MetricValue(MetricType.COSINESIM, sim, -1, len(v), avgBytesOff / len(v), avgRangeDiff / len(v))
             self.metrics[MetricType.COSINESIM][st] = metricValue
 
-
     def printMatrix(self):
         for t in self.metrics:
             sorted_metrics = sorted(self.metrics[t].iteritems(), key=operator.itemgetter(1))
@@ -621,7 +620,7 @@ class MatrixHelper(object):
                     metric = mt[1]
                     sqlRange = "INSERT INTO activity_metric (matrix_id, value, runs, stacktrace_id, type_id, \
                         bytes_off, range_diff) VALUES (%d, %.2f, %d, %d, %d, %.2f, %.2f) " \
-                        % (m.databaseId, metric.value, metric.instances, stacktraceId, metric.typeId, metric.bytesOff,
+                        % (m.databaseId, metric.value, metric.runs, stacktraceId, metric.typeId, metric.bytesOff,
                            metric.rangeDiff)
                     cur.execute(sqlRange)
             self._conn.commit()
@@ -639,11 +638,42 @@ class MatrixHelper(object):
     def getAvgMetricPerRevision(self, typeId):
         with self._conn:
             cur = self._conn.cursor()
-            sql = "select profile_id, avg(value) as value from metric_value WHERE metric_type_id = '%d' GROUP BY profile_id" \
-                    % typeId
+            sql = "select revision, profile_id,  avg(value) as value from metric_value " \
+                " JOIN profile ON profile_id = profile.id WHERE metric_type_id = '%d' " \
+                " GROUP BY profile_id" % typeId
             cur.execute(sql)
             rows = cur.fetchall()
             return rows
+
+    def loadFromDatabase(self, revision, typeId):
+        with self._conn:
+            # load matrix
+            cur = self._conn.cursor()
+            sql = "SELECT id, revision, testcase, checked_profile, runs, type_id FROM activity_matrix " \
+                    "WHERE revision = '%s' AND type_id = '%d'" % (revision, typeId)
+            cur.execute(sql)
+            rows = cur.fetchall()
+            if len(rows) == 0:
+                print "No matrix found for revision %s and type %d" % (revision, typeId)
+            r = rows[0]
+            m = ActivityMatrix(r['checked_profile'], r['runs'], typeId, revision, r['testcase'])
+            m.databaseId = r['id']
+
+            # load metrics
+            sql = "SELECT value, stacktrace, runs, bytes_off, range_diff, stacktrace" \
+                    " FROM activity_metric JOIN stacktrace ON stacktrace_id = stacktrace.id WHERE matrix_id = '%d'" \
+                    " ORDER BY value" % m.databaseId
+            cur.execute(sql)
+            rows = cur.fetchall()
+            m.metrics[MetricType.COSINESIM] = {}
+            for r in rows:
+                v = MetricValue(typeId, r['value'], m.profileId, r['runs'], r['bytes_off'], r['range_diff'])
+                m.metrics[typeId][r['stacktrace']] = v
+
+            sorted_metrics = sorted(m.metrics[typeId].iteritems(), key=operator.itemgetter(1))
+            m.metrics[typeId] = sorted_metrics
+            # m.printMatrix()
+            return m
 
 
 # enums for different types of data monitored, note: for now only 1 type exists
