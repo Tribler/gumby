@@ -85,6 +85,8 @@ class InitDatabase(object):
                             revision TEXT NOT NULL, \
                             testcase TEXT NOT NULL, \
                             exit_code INTEGER, \
+                            total_bytes INTEGER, \
+                            total_actions INTEGER, \
                             is_test_run INTEGER NOT NULL);"
         cur.execute(createRun)
 

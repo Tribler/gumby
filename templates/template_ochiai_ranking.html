@@ -1,0 +1,22 @@
+<table border=1>
+	<tr>
+		<th colspan=5>Similarity report for revision {{ matrix.revision }}</th>
+	</tr>
+	<tr>
+		<th>Similarity</th>
+		<th>Bytes off</th>
+		<th>Range difference</th>
+		<th>Runs</th>
+		<th>Stacktrace</th>
+	</tr>
+	
+	{% for item in matrix.metrics[1] %}
+	<tr>
+		<td>{{ item[1]['value'] }}</td>
+		<td align="right">{{ item[1]['bytesOff'] }}</td>
+		<td align="right">{{ item[1]['rangeDiff'] }}</td>
+		<td align="right">{{ item[1]['runs'] }}</th>
+		<td><div class="stacktrace">{{ item[0]|replace("<-", "", 1)|replace("<-", "<br>")|replace("/home/user/python-src/virtualenv-attempt/venv", "") }}</div></td></td>
+	</tr>
+	{% endfor %}
+	</table>

@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<head>
+    <title>{{ title }}</title>
+    <link type="text/css" href="io_writes_report.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/css/style.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/css/color.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/container/assets/container.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/assets/skins/sam/skin.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/container/assets/skins/sam/container.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/button/assets/skins/sam/button.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/menu/assets/skins/sam/menu.css" />
+    <script src="flot/jquery.js"></script>
+	<script src="flot/jquery.flot.js"></script>
+</head>
+<body>
+
+Similarity of written bytes compared to previous revision
+
+	<div id='placeholder' style='width: 1200px; height: 300px;'></div>
+	<div id="clickdata"></div>
+<script>
+	$( document ).ready(function() {
+
+		var plot = $.plot($("#placeholder"), [
+			[{% for item in similarity %} [{{ item.profile_id }}, {{ item.value }}], {% endfor %}]	
+			], { 
+				yaxis: { max: 1 },
+				grid: {
+					hoverable: true,
+					clickable: true
+				},
+				xaxis: {
+					ticks:	[
+								[{% for item in similarity %} [{{ item.profile_id }}, "{{ item.revision }}"], {% endfor %}]	
+							]					
+				}
+		});
+		
+		function showTooltip(x, y, contents) {
+			$("<div id='tooltip'>" + contents + "</div>").css({
+				position: "absolute",
+				display: "none",
+				top: y + 5,
+				left: x + 5,
+				border: "1px solid #fdd",
+				padding: "2px",
+				"background-color": "#fee",
+				opacity: 0.80
+			}).appendTo("body").fadeIn(200);
+		}
+			
+		
+		$("#placeholder").bind("plothover", function (event, pos, item) {
+
+			if ($("#enablePosition:checked").length > 0) {
+				var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
+				$("#hoverdata").text(str);
+			}
+
+			if (item) {
+				if (previousPoint != item.dataIndex) {
+					previousPoint = item.dataIndex;
+					$("#tooltip").remove();
+					//var x = item.datapoint[0].toFixed(0),
+					var x = item.series.xaxis.options.ticks[0][item.dataIndex][1],
+					y = item.datapoint[1].toFixed(2);
+					//y = item.series.xaxis.options.ticks[0][item.dataIndex][1];
+						showTooltip(item.pageX, item.pageY,
+					    "SC of " + x + " = " + y);
+				}
+			} else {
+				$("#tooltip").remove();
+				previousPoint = null;            
+			}
+		
+		});
+		
+		$("#placeholder").bind("plotclick", function (event, pos, item) {
+			if (item) {
+				//$("#clickdata").text(" - click point " + item.dataIndex + " in " + item.series.xaxis.options.ticks[0][item.dataIndex][1]);
+				$("#ranking").load("http://localhost/~corpaul/perf/ranking_" + item.series.xaxis.options.ticks[0][item.dataIndex][1] + ".html");
+				plot.unhighlight();
+				plot.highlight(item.series, item.datapoint);
+				
+			}
+		});
+	});
+</script>
+
+<div id="ranking">
+	
+</div>
+</body>
+</html>

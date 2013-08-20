@@ -327,7 +327,7 @@ class MonitoredSession(object):
     '''
     classdocs
     '''
-    def __init__(self, rev, tc, config, isTestRun=0):
+    def __init__(self, rev, tc, config, isTestRun=0, totalActions=0, totalBytes=0):
         '''
         Constructor
         '''
@@ -338,6 +338,8 @@ class MonitoredSession(object):
         self.isTestRun = isTestRun
 
         self._config = config
+        self._totalActions = totalActions
+        self._totalBytes = totalBytes
         # self.lookupDict = {}
         # if filename != "":
         #    self.loadSession()
@@ -422,6 +424,14 @@ class SessionHelper(object):
 
         return s
 
+    def appendData(self, sess, filename):
+        with open(filename, 'rb') as csvfile:
+            reader = csvfile.readlines()
+            totalActions = reader[2].split(':')[1].strip()
+            totalBytes = reader[3].split(':')[1].strip()
+            sess.totalActions = totalActions
+            sess.totalBytes = totalBytes
+
     def storeInDatabase(self, s):
         '''
         Sessions are immutable, so only store in the database if it
@@ -432,8 +442,9 @@ class SessionHelper(object):
 
             if s.databaseId == -1:
                 # insert profile
-                sqlProfile = "INSERT OR REPLACE INTO run (revision, testcase, is_test_run) VALUES ('%s', '%s', '%s')" \
-                    % (s.revision, s.testCase, s.isTestRun)
+                sqlProfile = "INSERT OR REPLACE INTO run (revision, testcase, is_test_run, total_actions, " \
+                        " total_bytes) VALUES ('%s', '%s', '%s', '%s', '%s')" \
+                         % (s.revision, s.testCase, s.isTestRun, s.totalActions, s.totalBytes)
                 cur.execute(sqlProfile)
                 s.databaseId = cur.lastrowid
 
@@ -655,6 +666,7 @@ class MatrixHelper(object):
             rows = cur.fetchall()
             if len(rows) == 0:
                 print "No matrix found for revision %s and type %d" % (revision, typeId)
+                return None
             r = rows[0]
             m = ActivityMatrix(r['checked_profile'], r['runs'], typeId, revision, r['testcase'])
             m.databaseId = r['id']

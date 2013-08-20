@@ -38,5 +38,6 @@ if __name__ == '__main__':
 
     helper = SessionHelper(config)
     sess1 = helper.loadSessionFromCSV(revision, testcase, csvPath)
+    helper.appendData(sess1, csvPath.replace("summary_per_stacktrace.csv", "summary.txt"))
     helper.storeInDatabase(sess1)
     print "Run stored"
