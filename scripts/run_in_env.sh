@@ -52,10 +52,6 @@ export PATH=$PATH:$PROJECTROOT/gumby/scripts
 # R User lib dir
 export R_LIBS_USER=$R_LIBS_USER${R_LIBS_USER:+:}$HOME/R
 
-# Update LD_LIBRARY_PATH and PATH if we are using a SystemTap enabled Python runtime
-# if [ "$USE_SYSTEMTAP" == True ]; then
-# fi
-
 # Enter virtualenv in case there's one
 if [ ! -z "$VIRTUALENV_DIR" -a -d "$VIRTUALENV_DIR" ]; then
     echo "Enabling virtualenv at $VIRTUALENV_DIR"
@@ -63,18 +59,15 @@ if [ ! -z "$VIRTUALENV_DIR" -a -d "$VIRTUALENV_DIR" ]; then
     export PATH=$PATH:$VIRTUALENV_DIR/inst/bin
     source $VIRTUALENV_DIR/bin/activate
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$EXTRA_LD_LIBRARY_PATH
+
+    # Path substitution for the tapsets, needs to be done even in case of USE_LOCAL_SYSTEMTAP
+    # is disabled as we could be using systemtap from within the experiment.
+    mkdir -p $VIRTUALENV_DIR/tapsets
+    for TAP in gumby/scripts/stp/tapsets/* ; do
+        echo "$TAP  ->  $VIRTUALENV_DIR/tapsets/$(basename $TAP .i) "
+        sed "s\\__VIRTUALENV_PATH__\\$VIRTUALENV_DIR\\g" < $TAP >  $VIRTUALENV_DIR/tapsets/$(basename $TAP .i)
+    done
 fi
-
-# Path substitution for the tapsets, needs to be done even in case of USE_LOCAL_SYSTEMTAP
-# is disabled as we could be using systemtap from within the experiment.
-mkdir -p $VIRTUALENV_DIR/tapsets
-for TAP in gumby/scripts/stp/tapsets/* ; do
-    echo "$TAP  ->  $VIRTUALENV_DIR/tapsets/$(basename $TAP .i) "
-    sed "s\\__VIRTUALENV_PATH__\\$VIRTUALENV_DIR\\g" < $TAP >  $VIRTUALENV_DIR/tapsets/$(basename $TAP .i)
-done
-
-# if [ "$USE_LOCAL_SYSTEMTAP" == True -o "$USE_LOCAL_VENV" == True ]; then
-# fi
 
 # Create the experiment output dir if its missing
 export OUTPUTDIR=$PROJECTROOT/output
