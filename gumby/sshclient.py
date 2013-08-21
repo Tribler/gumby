@@ -144,9 +144,11 @@ class _CommandChannel(SSHChannel):
         pty_req_data = packRequest_pty_req('vt100', win_size, modes)
         d = self.conn.sendRequest(self, 'pty-req', pty_req_data, wantReply=True)
         #Set all the env variables we've got
-        for key, value in self.env:
+        for key, value in self.env.iteritems():
             d.addCallback(
-                lambda _: self.conn.sendRequest(self, 'env', NS(key), NS(value), wantReply=True)
+                lambda _, key, value: self.conn.sendRequest(self, 'env', NS(key), NS(str(value)), wantReply=True),
+                key,
+                value
             )
         d.addCallback(
             # send command after we get the pty
