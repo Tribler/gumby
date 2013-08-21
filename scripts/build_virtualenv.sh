@@ -344,7 +344,14 @@ virtualenv --relocatable $VENV
 #mv $VENV $VENV/../venv
 rm -fR build-tmp
 
-touch $VENV/.completed.$SCRIPT_VERSION
+if [ -u $VENV/inst/bin/staprun -a $(stat -c %U staprun)==root ]
+    touch $VENV/.completed.$SCRIPT_VERSION
+else
+    echo " Please, run those commands as root and re-run the setup script."
+    echo "   chown root $VENV/inst/bin/staprun"
+    echo "   chmod +s   $VENV/inst/bin/staprun"
+    exit 100
+fi
 
 echo "Done, you can use this virtualenv with:
 	source venv/bin/activate
