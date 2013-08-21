@@ -40,7 +40,6 @@
 
 set -ex
 
-rm -f /tmp/results.log
 
 if [ -z "$REPOSITORY_DIR" ]; then
     echo "ERROR: REPOSITORY_DIR variable not set, bailing out."
@@ -59,9 +58,14 @@ if [ -z "$TESTNAME" ]; then
     TESTNAME="Whatever"
 fi
 
+# TODO: I think this is not needed anymore
 export PYTHONPATH=.
+
+# TODO: Use the the output dir specified in the config file
 mkdir -p output
-export OUTPUTDIR=$(readlink -f output)
+export OUTPUT_DIR=$(readlink -f output)
+
+ITERATION_RESULTS_FILE=$OUTPUTDIR/rev_iter_results.log
 
 pushd $REPOSITORY_DIR
 git clean -fd
@@ -90,13 +94,13 @@ for REV in $(git log --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f
         run_stap_probe.sh "$TEST_COMMAND" $OUTPUTDIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
         set -e
         cd -
-        echo $? $ITERATION $REV >> /tmp/results.log
+        echo $? $ITERATION $REV >> $ITERATION_RESULTS_FILE
         git clean -fd
     done
 done
 
 popd
-gumby/experiments/test_all_revisions/ingest_revision_runs.sh output
+gumby/experiments/test_all_revisions/ingest_revision_runs.sh $OUTPUT_DIR
 
 #
 # iterate_over_all_revs.sh ends here
