@@ -38,6 +38,7 @@
 
 import sys
 import os
+import struct
 
 from zope.interface import implements
 
@@ -66,6 +67,7 @@ _ERROR_REASONS = (
     ProcessTerminated,
     ConnectionLost
 )
+
 
 class _CommandTransport(SSHClientTransport):
     _secured = False
@@ -103,6 +105,7 @@ class _CommandTransport(SSHClientTransport):
 
 
 class _CommandConnection(SSHConnection):
+
     def __init__(self, command, env={}):
         SSHConnection.__init__(self)
         self.command_str = command
@@ -132,29 +135,66 @@ class _CommandChannel(SSHChannel):
     #     self._commandConnected.errback(reason)
 
     def channelOpen(self, _):
+
         def ptyReqFailed(reason):
             # TODO(vladum): Why is this never called? Looks like the Transport
             # received the error (at least the packet integrity ones).
             err("SSH PTY Request failed")
             self.reason = reason
             self.conn.sendClose(self)
+            return reason
 
-        modes = pack("<B", 0x00) # only TTY_OP_END
+        def envInjectionFailed(reason):
+            err("SSH env variable injection failed.")
+            err("Reason was:", reason)
+            self.reason = reason
+            self.conn.sendClose(self)
+            return reason
+
+        def sendEnvRequest(_, name, value):
+            # We need to prefix the variables with LC_ as the rest are filtered out by ssh by default
+            # The prefix will be removed by run_in_env on the other side
+            return self.conn.sendRequest(self, 'env', NS("LC_GMB_"+name)+NS(value), wantReply=True)
+
+        # First request the TTY
+        modes = pack("<B", 0x00)  # only TTY_OP_END
         win_size = (0, 0, 0, 0)  # 0s are ignored
         pty_req_data = packRequest_pty_req('vt100', win_size, modes)
         d = self.conn.sendRequest(self, 'pty-req', pty_req_data, wantReply=True)
-        #Set all the env variables we've got
-        for key, value in self.env.iteritems():
-            d.addCallback(
-                lambda _, key, value: self.conn.sendRequest(self, 'env', NS(key), NS(str(value)), wantReply=True),
-                key,
-                value
-            )
+        d.addErrback(ptyReqFailed)
+
+        # Then inject all the config variables
+        #
+        # From SSH RFC (http://tools.ietf.org/html/rfc4254):
+        #
+        # 6.4.  Environment Variable Passing
+        #
+        #    Environment variables may be passed to the shell/command to be
+        #    started later.  Uncontrolled setting of environment variables in a
+        #    privileged process can be a security hazard.  It is recommended that
+        #    implementations either maintain a list of allowable variable names or
+        #    only set environment variables after the server process has dropped
+        #    sufficient privileges.
+        #
+        #       byte      SSH_MSG_CHANNEL_REQUEST
+        #       uint32    recipient channel
+        #       string    "env"
+        #       boolean   want reply
+        #       string    variable name
+        #       string    variable value
+
+        # Set all the env variables we've got
+        for name, value in self.env.iteritems():
+            if str(value):
+                d.addCallback(sendEnvRequest, name, value)
+
+        d.addErrback(envInjectionFailed)
+
+        # And now we are ready to run the command
         d.addCallback(
-            # send command after we get the pty
+            # Send command after we get the pty and env variables are set
             lambda _: self.conn.sendRequest(self, 'exec', NS(self.command))
         )
-        d.addErrback(ptyReqFailed)
 
     def dataReceived(self, bytes_):
         # we could recv more than 1 line
@@ -199,6 +239,7 @@ class _CommandChannel(SSHChannel):
 
 
 class CommandFactory(ClientFactory):
+
     def __init__(self, command, user, env={}):
         self.command = command
         self.user = user

@@ -37,7 +37,12 @@
 
 # Code:
 
-#TODO: Move all this to runner.py?
+# Remove variable prefixes used to avoid SSHD filters.
+while read VARNAME ; do
+    NEWVAR=$(echo $VARNAME | sed 's/^LC_GMB_//')
+    export $NEWVAR="${!VARNAME}" # indirect expansion
+    unset $VARNAME # Unset "Escaped"" var from the env
+done < <(env |grep ^LC_GMB_ | cut -f1 -d= )
 
 cd `dirname $0`/../..
 export PROJECTROOT=`pwd`
@@ -74,6 +79,7 @@ export OUTPUTDIR=$PROJECTROOT/output
 mkdir -p $OUTPUTDIR
 
 # Run the actual command
+echo "Running $*"
 exec $*
 
 #
