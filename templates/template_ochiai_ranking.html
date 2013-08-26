@@ -1,6 +1,6 @@
 <table border=1>
 	<tr>
-		<th colspan=5>Similarity report for revision {{ matrix.revision }}</th>
+		<th colspan=5>Similarity report for revision <a href="https://github.com/Tribler/dispersy/commit/{{ matrix.revision }}" target="_blank">{{ matrix.revision }}<a/></th>
 	</tr>
 	<tr>
 		<th>Similarity</th>
@@ -9,7 +9,7 @@
 		<th>Runs</th>
 		<th>Stacktrace</th>
 	</tr>
-	
+
 	{% for item in matrix.metrics[1] %}
 	<tr>
 		<td>{{ item[1]['value'] }}</td>
