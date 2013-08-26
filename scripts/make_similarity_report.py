@@ -21,6 +21,12 @@ def getAvgMetricPerRevision():
     return sim
 
 
+def getTotalBytesWrittenPerRevision():
+    m = MatrixHelper(config)
+    tb = m.getTotalBytesWrittenPerRevision()
+    return tb
+
+
 def getMatrix(revision):
     m = MatrixHelper(config)
     matrix = m.loadFromDatabase(revision, MetricType.COSINESIM)
@@ -39,7 +45,6 @@ def generateRankingDocs():
     env = Environment(loader=loader)
     template = env.get_template('template_ochiai_ranking.html')
     revs = getAllRevisions()
-    print revs
 
     for rev in revs:
         matrix1 = getMatrix(rev)
@@ -62,11 +67,10 @@ def print_html_doc():
     loader = FileSystemLoader(searchpath=template_dir)
     env = Environment(loader=loader)
     template = env.get_template('template_similarity_report_flot.html')
-    matrix1 = getMatrix("7c90df94327eb12d25cc063a191728e5fecb21d6")
-    print matrix1.metrics[MetricType.COSINESIM]
     report = template.render(
             title='Similarity report',
-            similarity=getAvgMetricPerRevision(),
+            # similarity=getAvgMetricPerRevision(),
+            similarity=getTotalBytesWrittenPerRevision(),
             # matrix=matrix1
             ).encode("utf-8")
     with open(outputPath + '/sim_report.html', 'wb') as fh:

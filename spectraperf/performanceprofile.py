@@ -100,7 +100,7 @@ class Profile(object):
 
             # print "Fits: %s, %.2f, %s" % (f, st.avgValue, self.getRange(st.stacktrace))
             fits[st.stacktrace] = f
-            print "bytesOff: %d / %d (%d)" % (f['bytesOff'], f['rangeDiff'], fits[st.stacktrace]['fits'])
+            # print "bytesOff: %d / %d (%d)" % (f['bytesOff'], f['rangeDiff'], fits[st.stacktrace]['fits'])
 
         return fits
 
@@ -652,6 +652,17 @@ class MatrixHelper(object):
             sql = "select revision, profile_id,  avg(value) as value from metric_value " \
                 " JOIN profile ON profile_id = profile.id WHERE metric_type_id = '%d' " \
                 " GROUP BY profile_id" % typeId
+            cur.execute(sql)
+            rows = cur.fetchall()
+            return rows
+
+    def getTotalBytesWrittenPerRevision(self):
+        with self._conn:
+            cur = self._conn.cursor()
+            sql = "SELECT profile.id as profile_id, AVG(total_bytes) as value, run.revision as revision FROM run " \
+                    " JOIN profile ON profile.revision = run.revision " \
+                    " GROUP BY run.revision ORDER BY profile.id"
+
             cur.execute(sql)
             rows = cur.fetchall()
             return rows

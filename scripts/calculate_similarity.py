@@ -21,7 +21,8 @@ from spectraperf.performanceprofile import *
 if __name__ == '__main__':
 
     if len(sys.argv) < 5:
-        print "Usage: python calculate_similarity.py configFile csvPath rev(id) testcase"
+        print "Usage: python calculate_similarity.py configFile csvPath  rev(id) testcase"
+        print "Note: csvPath is path to csv files, no slash at the end (TODO)"
         sys.exit(0)
 
     config = loadConfig(sys.argv[1])
@@ -41,11 +42,12 @@ if __name__ == '__main__':
 
         start = "%s/%s_%d_1_" % (csvPath, testcase, rev - 1)
         pattern = "%s*%s" % (start, end)
+        print "pattern: %s" % (pattern)
         result = glob.glob(pattern)
         if len(result) == 0:
             print "No profile for previous revision, exiting"
             sys.exit()
-
+            print result
         prevRevision = result[0][len(start):-len(end)]
         print "Current revision: %s" % revision
         print "Previous revision: %s" % prevRevision
@@ -61,11 +63,13 @@ if __name__ == '__main__':
         for i in range(1, 6):
             helper = SessionHelper(config)
             csv = "%s/report_%d_%d/summary_per_stacktrace.csv" % (csvPath, rev, i)
+            csvExtra = "%s/report_%d_%d/summary.txt" % (csvPath, rev, i)
             if not os.path.isfile(csv):
                 print "Not a valid CSV file: %s" % csv
                 continue
             sess = helper.loadSessionFromCSV(prevRevision, testcase, csv)
             sess.isTestRun = 1
+            helper.appendData(sess, csvExtra)
             helper.storeInDatabase(sess)
 
             fits = p.fitsProfile(sess)

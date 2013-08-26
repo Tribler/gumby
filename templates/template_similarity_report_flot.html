@@ -24,20 +24,19 @@ Similarity of written bytes compared to previous revision
 	$( document ).ready(function() {
 
 		var plot = $.plot($("#placeholder"), [
-			[{% for item in similarity %} [{{ item.profile_id }}, {{ item.value }}], {% endfor %}]	
-			], { 
-				yaxis: { max: 1 },
+			[{% for item in similarity %} [{{ item.profile_id }}, {{ item.value }}], {% endfor %}]
+			], {
 				grid: {
 					hoverable: true,
 					clickable: true
 				},
 				xaxis: {
 					ticks:	[
-								[{% for item in similarity %} [{{ item.profile_id }}, "{{ item.revision }}"], {% endfor %}]	
-							]					
+								[{% for item in similarity %} [{{ item.profile_id }}, "{{ item.revision }}"], {% endfor %}]
+							]
 				}
 		});
-		
+
 		function showTooltip(x, y, contents) {
 			$("<div id='tooltip'>" + contents + "</div>").css({
 				position: "absolute",
@@ -50,8 +49,8 @@ Similarity of written bytes compared to previous revision
 				opacity: 0.80
 			}).appendTo("body").fadeIn(200);
 		}
-			
-		
+
+
 		$("#placeholder").bind("plothover", function (event, pos, item) {
 
 			if ($("#enablePosition:checked").length > 0) {
@@ -72,25 +71,25 @@ Similarity of written bytes compared to previous revision
 				}
 			} else {
 				$("#tooltip").remove();
-				previousPoint = null;            
+				previousPoint = null;
 			}
-		
+
 		});
-		
+
 		$("#placeholder").bind("plotclick", function (event, pos, item) {
 			if (item) {
 				//$("#clickdata").text(" - click point " + item.dataIndex + " in " + item.series.xaxis.options.ticks[0][item.dataIndex][1]);
 				$("#ranking").load("http://localhost/~corpaul/perf/ranking_" + item.series.xaxis.options.ticks[0][item.dataIndex][1] + ".html");
 				plot.unhighlight();
 				plot.highlight(item.series, item.datapoint);
-				
+
 			}
 		});
 	});
 </script>
 
 <div id="ranking">
-	
+
 </div>
 </body>
 </html>
