@@ -51,7 +51,7 @@ probe python.function.return
 				execTime =  gettimeofday_us()-times[tid(), funcname];
 
 
-				printf("%d,WRITE,%s,%s,%d,%s,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime );
+				printf("%d,WRITE,%s,%s,%d,%s,%d,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime, filesWritten[tid, i2]);
 
 			}
 
@@ -66,7 +66,7 @@ probe python.function.return
 				execTime =  gettimeofday_us()-times[tid(), funcname];
 
 
-				printf("%d,READ,%s,%s,%d,%s,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioReadCounter[tid(), i2], task_execname(pid2task(pid())), execTime );
+				printf("%d,READ,%s,%s,%d,%s,%d,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioReadCounter[tid(), i2], task_execname(pid2task(pid())), execTime, filesWritten[tid, i2]);
 
 			}
 
@@ -107,7 +107,7 @@ probe syscall.read.return {
 }
 
 probe begin {
-	printf("\"TIMESTAMP\",\"TYPE\",\"FILE\",\"TRACE\",\"BYTES\",\"PROCESS\",\"TIME\"\n");
+	printf("\"TIMESTAMP\",\"TYPE\",\"FILE\",\"TRACE\",\"BYTES\",\"PROCESS\",\"TIME\",\"FD\"\n");
 }
 
 /*
