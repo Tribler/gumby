@@ -90,9 +90,9 @@ for REV in $(git log --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f
 
         rm -fR sqlite
         cd ..
-        set +e
+        [ ! -z "$PRE_PROBE_CMD" ] && $PRE_PROBE_CMD
         run_stap_probe.sh "$TEST_COMMAND" $OUTPUTDIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
-        set -e
+        [ ! -z "$POST_PROBE_CMD" ] && $POST_PROBE_CMD
         cd -
         echo $? $ITERATION $REV >> $ITERATION_RESULTS_FILE
         git clean -fd
