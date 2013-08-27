@@ -36,20 +36,14 @@
 
 # Code:
 
-import sys
 import os
-import struct
 
-from zope.interface import implements
-
-from twisted.python.log import err, msg, Logger
+from twisted.python.log import err, msg
 from twisted.python.failure import Failure
 from twisted.internet import reactor
 from twisted.internet.error import ConnectionDone, ProcessTerminated, ConnectionLost
 from twisted.internet.defer import Deferred, DeferredList, succeed, setDebugging
-from twisted.internet.interfaces import IStreamClientEndpoint
-from twisted.internet.protocol import Factory, Protocol, ClientFactory
-from twisted.internet.endpoints import TCP4ClientEndpoint
+from twisted.internet.protocol import ClientFactory
 
 from twisted.conch.ssh.common import NS
 from twisted.conch.ssh.channel import SSHChannel
@@ -61,7 +55,7 @@ from twisted.conch.ssh.session import packRequest_pty_req
 
 from struct import unpack, pack
 
-#setDebugging(True)
+# setDebugging(True)
 
 _ERROR_REASONS = (
     ProcessTerminated,
@@ -78,7 +72,7 @@ class _CommandTransport(SSHClientTransport):
 
     def connectionSecure(self):
         self._secured = True
-        connection = _CommandConnection(self.factory.command, self.factory.env)
+        connection = _CommandConnection(self.factory.command)
         self.connection = connection
         userauth = SSHUserAuthClient(
             self.factory.user,
@@ -106,14 +100,13 @@ class _CommandTransport(SSHClientTransport):
 
 class _CommandConnection(SSHConnection):
 
-    def __init__(self, command, env={}):
+    def __init__(self, command):
         SSHConnection.__init__(self)
         self.command_str = command
-        self.env = env
         self.reason = None
 
     def serviceStarted(self):
-        channel = _CommandChannel(self.command_str, conn=self, env=self.env)
+        channel = _CommandChannel(self.command_str, conn=self)
         self.openChannel(channel)
 
     def channelClosed(self, channel):
@@ -125,10 +118,9 @@ class _CommandConnection(SSHConnection):
 class _CommandChannel(SSHChannel):
     name = 'session'
 
-    def __init__(self, command, env={}, **k):
+    def __init__(self, command, **k):
         SSHChannel.__init__(self, **k)
         self.command = command
-        self.env = env
         self.reason = None
 
     # def openFailed(self, reason):
@@ -144,18 +136,6 @@ class _CommandChannel(SSHChannel):
             self.conn.sendClose(self)
             return reason
 
-        def envInjectionFailed(reason):
-            err("SSH env variable injection failed.")
-            err("Reason was:", reason)
-            self.reason = reason
-            self.conn.sendClose(self)
-            return reason
-
-        def sendEnvRequest(_, name, value):
-            # We need to prefix the variables with LC_ as the rest are filtered out by ssh by default
-            # The prefix will be removed by run_in_env on the other side
-            return self.conn.sendRequest(self, 'env', NS("LC_GMB_"+name)+NS(value), wantReply=True)
-
         # First request the TTY
         modes = pack("<B", 0x00)  # only TTY_OP_END
         win_size = (0, 0, 0, 0)  # 0s are ignored
@@ -163,36 +143,9 @@ class _CommandChannel(SSHChannel):
         d = self.conn.sendRequest(self, 'pty-req', pty_req_data, wantReply=True)
         d.addErrback(ptyReqFailed)
 
-        # Then inject all the config variables
-        #
-        # From SSH RFC (http://tools.ietf.org/html/rfc4254):
-        #
-        # 6.4.  Environment Variable Passing
-        #
-        #    Environment variables may be passed to the shell/command to be
-        #    started later.  Uncontrolled setting of environment variables in a
-        #    privileged process can be a security hazard.  It is recommended that
-        #    implementations either maintain a list of allowable variable names or
-        #    only set environment variables after the server process has dropped
-        #    sufficient privileges.
-        #
-        #       byte      SSH_MSG_CHANNEL_REQUEST
-        #       uint32    recipient channel
-        #       string    "env"
-        #       boolean   want reply
-        #       string    variable name
-        #       string    variable value
-
-        # Set all the env variables we've got
-        for name, value in self.env.iteritems():
-            if str(value):
-                d.addCallback(sendEnvRequest, name, value)
-
-        d.addErrback(envInjectionFailed)
-
         # And now we are ready to run the command
         d.addCallback(
-            # Send command after we get the pty and env variables are set
+            # Send command after we get the pty
             lambda _: self.conn.sendRequest(self, 'exec', NS(self.command))
         )
 
@@ -240,10 +193,9 @@ class _CommandChannel(SSHChannel):
 
 class CommandFactory(ClientFactory):
 
-    def __init__(self, command, user, env={}):
+    def __init__(self, command, user):
         self.command = command
         self.user = user
-        self.env = env
         self.protocol = _CommandTransport
         self.finished = Deferred()
 
@@ -256,7 +208,7 @@ class CommandFactory(ClientFactory):
                 self.finished.errback(reason)
 
 
-def runRemoteCMD(host, command, env=[]):
+def runRemoteCMD(host, command):
     if '@' in host:
         user, host = host.split('@')
     else:
@@ -267,7 +219,7 @@ def runRemoteCMD(host, command, env=[]):
     else:
         port = 22
 
-    factory = CommandFactory(command, user, env)
+    factory = CommandFactory(command, user)
     reactor.connectTCP(host, port, factory)
 
     return factory.finished

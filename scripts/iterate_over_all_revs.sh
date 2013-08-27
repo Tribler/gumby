@@ -65,7 +65,7 @@ export PYTHONPATH=.
 mkdir -p output
 export OUTPUT_DIR=$(readlink -f output)
 
-ITERATION_RESULTS_FILE=$OUTPUTDIR/rev_iter_results.log
+ITERATION_RESULTS_FILE=$OUTPUT_DIR/rev_iter_results.log
 
 pushd $REPOSITORY_DIR
 git clean -fd

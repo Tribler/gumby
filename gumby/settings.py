@@ -36,8 +36,10 @@
 
 # Code:
 
-from configobj import ConfigObj
+from os import path
 from validate import Validator
+
+from configobj import ConfigObj
 
 conf_spec = '''
 experiment_name = string
@@ -74,5 +76,14 @@ def loadConfig(path):
         config["head_nodes"] = []
     return config
 
+
+def configToEnv(config):
+    """
+    Processes a dictionary of config options so it can be exported as env. variables when running a subprocess.
+    """
+    env = {}
+    for name, val in config.iteritems():
+        env[name.upper()] = path.expanduser(path.expandvars(str(val)))
+    return env
 #
 # settings.py ends here

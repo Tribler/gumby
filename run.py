@@ -40,9 +40,7 @@
 import sys
 from os.path import dirname, exists
 
-from gumby.settings import loadConfig
-
-from twisted.python.log import msg, FileLogObserver, textFromEventDict, _safeFormat, startLogging
+from twisted.python.log import msg, FileLogObserver, textFromEventDict, _safeFormat
 from twisted.python import util
 from twisted.internet import reactor
 
@@ -79,8 +77,8 @@ class ColoredFileLogObserver(FileLogObserver):
             'text': text.replace("\n", "\n\t")}
         systemStr = ""
         systemStr = self._colorize(
-           _safeFormat("[%(system)s]", fmtDict),
-           ColoredFileLogObserver.GREY_NORMAL)
+            _safeFormat("[%(system)s]", fmtDict),
+            ColoredFileLogObserver.GREY_NORMAL)
         textStr = _safeFormat("%(text)s", fmtDict)
 
         if textStr.startswith("SSH"):
@@ -114,9 +112,8 @@ if __name__ == '__main__':
         if not exists(conf_path):
             print "Error: The specified configuration file doesn't exist."
             exit(1)
-        config = loadConfig(conf_path)
 
-        exp_runner = ExperimentRunner(config)
+        exp_runner = ExperimentRunner(conf_path)
         exp_runner.run()
         reactor.run()
         msg("Execution finished, have a nice day.")

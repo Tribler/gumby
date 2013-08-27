@@ -46,6 +46,8 @@ from twisted.internet.defer import Deferred, setDebugging, gatherResults, succee
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import reactor
 
+from .settings import configToEnv, loadConfig
+
 from .sshclient import runRemoteCMD
 
 setDebugging(True)
@@ -53,12 +55,14 @@ setDebugging(True)
 
 class ExperimentRunner(Logger):
 
-    def __init__(self, config):
+    def __init__(self, conf_path):
+        config = loadConfig(conf_path)
+        self._cfg_path = conf_path
         self._cfg = config
         self._remote_workspace_dir = "Experiment_" + path.basename(config['experiment_name'])
         # TODO: check if the experiment dir actually exists
         self._workspace_dir = path.abspath(config['workspace_dir'])
-        self._env_runner = "scripts/run_in_env.sh"
+        self._env_runner = "scripts/run_in_env.py"
 
     def logPrefix(self):
         return "ExperimentRunner"
@@ -111,7 +115,7 @@ class ExperimentRunner(Logger):
                 msg("Spawning remote tracker on head node with:", cmd)
                 final_cmd = path.join(self._remote_workspace_dir, cmd)
                 host = self._cfg['head_nodes'][0]
-                d = runRemoteCMD(host, final_cmd, self.remote_env)
+                d = runRemoteCMD(host, final_cmd)
 
             d.addErrback(onTrackerFailure)
 
@@ -131,7 +135,7 @@ class ExperimentRunner(Logger):
             msg("Spawning config server on head node with:", cmd)
             final_cmd = path.join(self._remote_workspace_dir, cmd)
             host = self._cfg['head_nodes'][0]
-            d = runRemoteCMD(host, final_cmd, self.remote_env)
+            d = runRemoteCMD(host, final_cmd)
 
         d.addErrback(onConfServerFailure)
 
@@ -178,18 +182,19 @@ class ExperimentRunner(Logger):
     def runLocalCommand(self, command):
         # use the local _env_runner
         env_runner = path.abspath(path.join(path.dirname(__file__), "..", self._env_runner))
-        args = [env_runner, command]
+        args = [env_runner, self._cfg_path, command]
         pp = OneShotProcessProtocol()
         reactor.spawnProcess(pp, env_runner, args, env=self.local_env)  # Inherit env from parent + conf vars
         return pp.getDeferred()
 
     def runCommandOnAllRemotes(self, command):
         remote_instance_list = []
+        # TODO: Allow for other venv dirs to be used by setting the path in the config file.
         # use remote _env_runner
-        args = path.join(self._remote_workspace_dir, 'gumby', self._env_runner) + " " + command
+        args = " ".join(("$HOME/venv/bin/python", path.join(self._remote_workspace_dir, 'gumby', self._env_runner), " ", self._cfg_path, " ", command))
         for host in self._cfg['head_nodes']:
             msg("Executing command in %s: %s" % (host, args))
-            remote_instance_list.append(runRemoteCMD(host, args, self.remote_env))
+            remote_instance_list.append(runRemoteCMD(host, args))
         return gatherResults(remote_instance_list, consumeErrors=True)
 
     def startTracker(self):
@@ -262,8 +267,7 @@ class ExperimentRunner(Logger):
         # Step 1:
         # Inject all the config options as env variables to give suprocesses easy acces to them.
         self.local_env = environ.copy()
-        self.local_env.update({name.upper(): path.expanduser(path.expandvars(str(val))) for name, val in self._cfg.iteritems()})
-        self.remote_env = {name.upper(): str(val) for name, val in self._cfg.iteritems()}
+        self.local_env.update(configToEnv(self._cfg))
 
         # Step 2:
         # Sync the working dir with the head nodes
@@ -301,6 +305,7 @@ class ExperimentRunner(Logger):
         # reactor.callLater(60, reactor.stop)
 
         return d.addCallbacks(onExperimentSucceeded, onExperimentFailed)
+
 
 class OneShotProcessProtocol(ProcessProtocol):
 
