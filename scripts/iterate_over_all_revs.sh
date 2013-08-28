@@ -75,7 +75,6 @@ fi
 
 COUNT=0
 
-#for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); do
 for REV in $(git log --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
 
@@ -96,6 +95,7 @@ for REV in $(git log --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f
         [ ! -z "$POST_PROBE_CMD" ] && $POST_PROBE_CMD
         cd -
         echo $? $ITERATION $REV >> $ITERATION_RESULTS_FILE
+        git checkout -- .
         git clean -fd
     done
 done
