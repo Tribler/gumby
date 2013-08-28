@@ -1,4 +1,4 @@
-global backtrace, ioWriteCounter, ioReadCounter, filehandles, times, doesWriteIO, doesReadIO;
+global backtrace, ioWriteCounter, filehandles, times, doesIO;
 global i;
 
 global filesWritten;
@@ -18,9 +18,8 @@ function getPyBacktrace(currentTid)
 			if(isinstr(str, "/home/user/python-src/virtualenv-attempt/inst/"))
 				str = substr(str, 45, strlen(str));
 
-			//pyBacktrace = sprintf("%s<-%s (%d)", pyBacktrace, str, doesWriteIO[tid, i2]);
-
-			pyBacktrace = sprintf("%s<-%s", pyBacktrace, str);
+			pyBacktrace = sprintf("%s<-%s (%d)", pyBacktrace, str, doesIO[tid, i2]);
+			//pyBacktrace = sprintf("%s<-%s", pyBacktrace, str);
 			index += 1;
 		}
 	}
@@ -35,8 +34,7 @@ probe python.function.entry
 	//backtrace[tid(), i[tid()]] = sprintf("%s:%d:%s", filename, lineno, funcname);
 	backtrace[tid(), i[tid()]] = sprintf("%s:%s", filename, funcname);
 	times[tid(), funcname] = gettimeofday_us();
-	doesWriteIO[tid(), i[tid()]] = 0;
-	doesReadIO[tid(), i[tid()]] = 0;
+	doesIO[tid(), i[tid()]] = 0;
 }
 
 probe python.function.return
@@ -51,22 +49,7 @@ probe python.function.return
 				execTime =  gettimeofday_us()-times[tid(), funcname];
 
 
-				printf("%d,WRITE,%s,%s,%d,%s,%d,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime, filesWritten[tid, i2]);
-
-			}
-
-
-		}
-
-		foreach ([tid, i2] in ioReadCounter)
-		{
-			if(tid == tid() && i2 == i[tid()] && ioReadCounter[tid, i2] > 0)
-			{
-				bt = getPyBacktrace(tid());
-				execTime =  gettimeofday_us()-times[tid(), funcname];
-
-
-				printf("%d,READ,%s,%s,%d,%s,%d,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioReadCounter[tid(), i2], task_execname(pid2task(pid())), execTime, filesWritten[tid, i2]);
+				printf("%d,WRITE,%s,%s,%d,%s,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime );
 
 			}
 
@@ -75,7 +58,6 @@ probe python.function.return
 
 
 		delete ioWriteCounter[tid(), i[tid()]];
-		delete ioReadCounter[tid(), i[tid()]];
 		delete backtrace[tid(), i[tid()]];
 		i[tid()] -= 1
 	}
@@ -92,22 +74,21 @@ probe syscall.open.return
 
 probe syscall.write.return {
 	if ($return>0) {
-		doesWriteIO[tid(), i[tid()]] = 1;
+		doesIO[tid(), i[tid()]] = 1;
 		ioWriteCounter[tid(), i[tid()]] += $return;
 
 	}
 }
 
-
+/*
 probe syscall.read.return {
 	if ($return>0) {
-		doesReadIO[tid(), i[tid()]] = 1;
 		ioReadCounter[tid(), i[tid()]] += $return;
 	}
 }
-
+*/
 probe begin {
-	printf("\"TIMESTAMP\",\"TYPE\",\"FILE\",\"TRACE\",\"BYTES\",\"PROCESS\",\"TIME\",\"FD\"\n");
+	printf("\"TIMESTAMP\",\"TYPE\",\"FILE\",\"TRACE\",\"BYTES\",\"PROCESS\",\"TIME\"\n");
 }
 
 /*
