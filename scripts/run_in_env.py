@@ -84,6 +84,7 @@ extend_var(env, "PYTHONPATH", project_dir)
 
 # Add gumby scripts dir to PATH
 extend_var(env, "PATH", path.join(project_dir, "gumby/scripts"))
+extend_var(environ, "PATH", path.join(project_dir, "gumby/scripts"))
 
 # Add ~/R to the R search path
 extend_var(env, "R_LIBS_USER", expand_var("$HOME/R"))
@@ -123,7 +124,7 @@ if 'OUTPUT_DIR' in env:
 # Run the actual command
 cmd = " ".join(sys.argv[2:])
 print "Running", cmd
-exit(call(shlex.split(cmd)))
+exit(call(shlex.split(cmd), env=env))
 
 #
 # run_in_env.py ends here
