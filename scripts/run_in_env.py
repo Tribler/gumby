@@ -44,7 +44,7 @@ import sys
 import shlex
 
 
-def extend_var(env, var, value, prepend=False):
+def extend_var(env, var, value, prepend=True):
     if var in env:
         if prepend:
             env[var] = value + ':' + env[var]
