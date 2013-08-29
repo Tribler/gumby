@@ -76,6 +76,8 @@ else:
     print "Usage:\n%s EXPERIMENT_CONFIG COMMAND" % sys.argv[0]
     exit(1)
 
+# TODO: Update environ instead of copying it, we are using some stuff
+# from this script anyways.
 env = environ.copy()
 env.update(configToEnv(config))
 
@@ -121,6 +123,7 @@ if 'OUTPUT_DIR' in env:
     # the rest of scripts to write into it.
     output_dir = path.abspath(env['OUTPUT_DIR'])
     env['OUTPUT_DIR'] = output_dir
+    environ['OUTPUT_DIR'] = output_dir
     if not path.exists(output_dir):
         makedirs(output_dir)
 
