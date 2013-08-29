@@ -125,10 +125,10 @@ if 'OUTPUT_DIR' in env:
         makedirs(output_dir)
 
 # Run the actual command
-cmd = " ".join(sys.argv[2:])
+cmd = expand_var(" ".join(sys.argv[2:]))
 print "Running", cmd
 
-exit(call(shlex.split(cmd), env=env))
+exit(call((shlex.split(cmd)), env=env))
 
 #
 # run_in_env.py ends here
