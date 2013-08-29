@@ -117,13 +117,17 @@ if "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
 
 # Create the experiment output dir if necessary
 if 'OUTPUT_DIR' in env:
-    output_dir = path.join(venv_dir, env['OUTPUT_DIR'])
+    # Convert the output dir to an absolute path to make it easier for
+    # the rest of scripts to write into it.
+    output_dir = path.abspath(env['OUTPUT_DIR'])
+    env['OUTPUT_DIR'] = output_dir
     if not path.exists(output_dir):
         makedirs(output_dir)
 
 # Run the actual command
 cmd = " ".join(sys.argv[2:])
 print "Running", cmd
+
 exit(call(shlex.split(cmd), env=env))
 
 #
