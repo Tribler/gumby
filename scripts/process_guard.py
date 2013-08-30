@@ -242,7 +242,7 @@ if __name__ == "__main__":
                       )
     parser.add_option("-o", "--output-dir",
                       metavar='OUTDIR',
-                      help   ="Capture individual process/thread std{out|err} and write the logs in the specified dir."
+                      help   ="Capture individual process std{out|err} and write the logs in the specified dir."
                       )
     parser.add_option("-f", "--commands-file",
                       metavar='COMMANDS_FILE',
