@@ -77,6 +77,10 @@ class ExperimentRunner(Logger):
             err("Meh, copy fail.")
             return failure
 
+        def onSingleCopyFailure(failure, host):
+            err("Failed to synchronize the workspace to the remote host: %s.", host)
+            return failure
+
         copy_list = []
 
         # First, we need to copy the stuff to the das4 clusters we want to use to run the experiment
@@ -84,13 +88,45 @@ class ExperimentRunner(Logger):
             pp = OneShotProcessProtocol()
             workspace_dir = self._cfg['workspace_dir']
             args = ("/usr/bin/rsync", "-avz", "--recursive", "--exclude=.git*",
-                    "--exclude=.svn", "--exclude=local", "--delete-excluded",
+                    "--exclude=.svn", "--exclude=local", "--exclude=output", "--delete-excluded",
                     workspace_dir + '/', ":".join((host, self._remote_workspace_dir + '/')
                                                   ))
             msg("Running: %s " % ' '.join(args))
             reactor.spawnProcess(pp, args[0], args)
 
-            copy_list.append(pp.getDeferred())
+            copy_list.append(pp.getDeferred().addErrback(onSingleCopyFailure, host))
+
+        d = gatherResults(copy_list, consumeErrors=True)
+        d.addCallbacks(onCopySuccess, onCopyFailure)
+        return d
+
+    def collectOutputFromHeadNodes(self):
+        msg("Syncing output data back from head nodes...")
+
+        def onCopySuccess(ignored):
+            msg("Great copying success!")
+
+        def onCopyFailure(failure):
+            err("Failed to collect the ouput data from the remote nodes.")
+            return failure
+
+        def onSingleCopyFailure(failure, host):
+            err("Failed to collect the ouput data from the remote host: %s.", host)
+            return failure
+
+        copy_list = []
+
+        for host in self._cfg['head_nodes']:
+            pp = OneShotProcessProtocol()
+            args = ("/usr/bin/rsync", "-avz", "--recursive", "--exclude=.git*",
+                    "--exclude=.svn", "--exclude=local", "--delete-excluded", "--delete-during",
+                    ":".join((host, self._remote_workspace_dir + '/output')),
+                    path.join(self._workspace_dir, "output", host) + "/"
+                    )
+            msg("Running: %s " % ' '.join(args))
+            reactor.spawnProcess(pp, args[0], args)
+
+            copy_list.append(pp.getDeferred().addErrback(onSingleCopyFailure, host))
 
         d = gatherResults(copy_list, consumeErrors=True)
         d.addCallbacks(onCopySuccess, onCopyFailure)
@@ -294,7 +330,7 @@ class ExperimentRunner(Logger):
 
         # Step 7:
         # Collect all the data from the remote head nodes.
-        # TODO: implement this.
+        d.addCallback(lambda _: self.collectOutputFromHeadNodes())
 
         # Step 8:
         # Extract the data and graph stuff
