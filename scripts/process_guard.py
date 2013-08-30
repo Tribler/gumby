@@ -265,7 +265,10 @@ if __name__ == "__main__":
     if not (options.commands_file or options.commands):
         parser.error("Please specify at least one of --command or --commands-file (run with -h to see command usage).")
 
-    commands = [cmd.strip() for cmd in options.commands if cmd.strip()]
+    if options.commands:
+        commands = [cmd.strip() for cmd in options.commands if cmd.strip()]
+    else:
+        commands = []
     if options.commands_file:
         with open(options.commands_file) as file:
             for cmd in [line.strip() for line in file.read().splitlines()]:
