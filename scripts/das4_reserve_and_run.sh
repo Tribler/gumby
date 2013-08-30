@@ -37,10 +37,11 @@
 
 # Code:
 
-let MINUTES=60*$DAS4_RESERVE_DURATION
-echo "Reserving $DAS4_NODE_AMOUNT nodes for $MINUTES  minutes."
-echo "And spawning $DAS4_NODE_AMOUNT processes on each with command: $DAS4_NODE_COMMAND"
-prun  -t $MINUTES -v -np $DAS4_NODE_AMOUNT -"$DAS4_PROCESSES_PER_NODE" $DAS4_NODE_COMMAND
+export OUTPUT_DIR_URI="$(hostname):$OUTPUT_DIR" # This will be used from das4_node_run_job.sh to rsync the output data back to the head node
+
+echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
+
+prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh
 
 #
 # das4_reserve_and_run.sh ends here
