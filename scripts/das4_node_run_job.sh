@@ -50,7 +50,7 @@ cd "$OUTPUT_DIR"
 CMDFILE=$(mktemp --tmpdir=/local/$USER/ process_guard_XXXXXXXXXXXXX_$USER)
 
 for INSTANCE in $(seq 1 1 $DAS4_PROCESSES_PER_NODE); do
-    echo hostname >> $CMDFILE
+    echo "$DAS4_NODE_COMMAND" >> $CMDFILE
 done
 
 cat $CMDFILE
