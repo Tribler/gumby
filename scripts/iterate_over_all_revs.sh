@@ -75,7 +75,7 @@ fi
 
 COUNT=0
 
-for REV in $(git log --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f2 -d" "); do
+for REV in $(git log --topo-order --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
 
     git checkout $REV
