@@ -1,22 +1,36 @@
 <table border=1>
 	<tr>
-		<th colspan=5>Similarity report for revision <a href="https://github.com/Tribler/dispersy/commit/{{ matrix.revision }}" target="_blank">{{ matrix.revision }}<a/></th>
+		<th colspan=6>Similarity report for revision <a href="https://github.com/Tribler/dispersy/commit/{{ matrix.revision }}" target="_blank">{{ matrix.revision }}</a></th>
+		<th>
+			Report 
+			{% for i in range(1,6) %}
+			<a href="report_{{ matrix.revision }}_{{ i }}/io_writes_report.html">{{ i }}</a>
+			{% endfor %}
+		</th>			
 	</tr>
 	<tr>
 		<th>Similarity</th>
+		<th>Total impact</th>
 		<th>Bytes off</th>
 		<th>Range difference</th>
 		<th>Runs</th>
 		<th>Stacktrace</th>
+		<th># calls</th>
 	</tr>
 
-	{% for item in matrix.metrics[1] %}
+	{% for item in matrix.sortedMetrics[1] %}
 	<tr>
 		<td>{{ item[1]['value'] }}</td>
+		<td align="right">{{ item[1]['totalImpact'] }}</td>
 		<td align="right">{{ item[1]['bytesOff'] }}</td>
 		<td align="right">{{ item[1]['rangeDiff'] }}</td>
 		<td align="right">{{ item[1]['runs'] }}</th>
 		<td><div class="stacktrace">{{ item[0]|replace("<-", "", 1)|replace("<-", "<br>")|replace("/home/user/python-src/virtualenv-attempt/venv", "") }}</div></td></td>
+		<td>
+			{% for i in callsPerStacktrace[item[0]] %}
+			{{ i }},
+			{% endfor %}
+		</td>
 	</tr>
 	{% endfor %}
 	</table>

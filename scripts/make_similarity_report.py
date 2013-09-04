@@ -39,6 +39,12 @@ def getAllRevisions():
     return revs
 
 
+def getCallsPerStacktrace(rev):
+    m = MatrixHelper(config)
+    calls = m.getCallsPerStacktrace(rev)
+    return calls
+
+
 def generateRankingDocs():
     template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../templates'))
     loader = FileSystemLoader(searchpath=template_dir)
@@ -48,12 +54,14 @@ def generateRankingDocs():
 
     for rev in revs:
         matrix1 = getMatrix(rev)
+        callsPerStacktrace = getCallsPerStacktrace(rev)
         if matrix1 == None:
             continue
         # print matrix1.metrics[MetricType.COSINESIM]
         report = template.render(
                 title='Ranking for revision: %s' % rev,
-                matrix=matrix1
+                matrix=matrix1,
+                callsPerStacktrace=callsPerStacktrace
                 ).encode("utf-8")
         with open(outputPath + '/ranking_%s.html' % rev, 'wb') as fh:
             fh.write(report)

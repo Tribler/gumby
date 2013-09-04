@@ -198,7 +198,8 @@ class ProfileHelper(object):
             sql = "SELECT id FROM profile WHERE revision = '%s' AND testcase = '%s'" % (rev, tc)
             cur.execute(sql)
             rows = cur.fetchall()
-            assert len(rows) > 0, "profile does not exist"
+            if len(rows) == 0:
+                return -1  # "profile does not exist"
 
             p = Profile(rev, tc, self._config)
             p.databaseId = rows[0]['id']
@@ -505,13 +506,14 @@ class SessionHelper(object):
 
 
 class MetricValue(object):
-    def __init__(self, typeId, value, profileId, runs=1, bytesOff=0, rangeDiff=0):
+    def __init__(self, typeId, value, profileId, runs=1, bytesOff=0, rangeDiff=0, totalImpact=0):
         self.typeId = typeId
         self.value = value
         self.profileId = profileId
         self.runs = runs
         self.bytesOff = bytesOff
         self.rangeDiff = rangeDiff
+        self.totalImpact = totalImpact
 
     def __str__(self):
         return "[MetricValue: %.2f, %d (%d) off: %.2f / %.2f]" \
@@ -537,6 +539,7 @@ class ActivityMatrix(object):
         self.typeId = typeId
         self.revision = revision
         self.testcase = testcase
+        self.sortedMetrics = {}
 
     def addFitsVector(self, v):
         for st in v:
@@ -597,6 +600,20 @@ class MatrixHelper(object):
         self._config = config
         self._conn = getDatabaseConn(config)
 
+    def getPreviousRevision(self, rev=-1):
+        with self._conn:
+            cur = self._conn.cursor()
+            if rev == -1:
+                sql = "SELECT revision FROM git_log ORDER BY id DESC LIMIT 1"
+            else:
+                sql = "SELECT revision FROM git_log WHERE id < (SELECT id FROM git_log WHERE revision = '%s') " \
+                 " ORDER BY id DESC" % rev
+            cur.execute(sql)
+            rows = cur.fetchall()
+            if len(rows) == 0:
+                return -1
+            return rows[0]['revision']
+
     def getStacktraceId(self, st):
         with self._conn:
             cur = self._conn.cursor()
@@ -611,11 +628,10 @@ class MatrixHelper(object):
     def storeInDatabase(self, m):
         with self._conn:
             cur = self._conn.cursor()
-
             if m.databaseId == -1:
                 # insert profile
-                sql = "INSERT INTO activity_matrix (revision, testcase, checked_profile, runs, type_id) " \
-                            " VALUES ('%s', '%s', '%d', '%d', '%d')" \
+                sql = "INSERT INTO activity_matrix (revision, testcase, checked_profile, runs, type_id) \
+                            VALUES ('%s', '%s', '%d', '%d', '%d')" \
                             % (m.revision, m.testcase, m.profileId, m.runs, m.typeId)
                 cur.execute(sql)
                 m.databaseId = cur.lastrowid
@@ -629,10 +645,23 @@ class MatrixHelper(object):
                         cur.execute(sql)
                         stacktraceId = cur.lastrowid
                     metric = mt[1]
+
+                    # add the number of calls to the activity_metric for easier querying
+                    sqlCalls = "SELECT avg(value/avg_value) as v, stacktrace_id FROM monitored_value  \
+                               JOIN run ON monitored_value.run_id = run.id WHERE revision = '%s' \
+                               AND stacktrace_id = '%d'" % (m.revision, stacktraceId)
+                    cur.execute(sqlCalls)
+                    rows = cur.fetchall()
+                    if len(rows) == 0:
+                        calls = 0
+                    else:
+                        calls = rows[0]['v']
+
                     sqlRange = "INSERT INTO activity_metric (matrix_id, value, runs, stacktrace_id, type_id, \
-                        bytes_off, range_diff) VALUES (%d, %.2f, %d, %d, %d, %.2f, %.2f) " \
+                        bytes_off, range_diff, calls) VALUES (%d, %.2f, %d, %d, %d, %.2f, %.2f, %d) " \
                         % (m.databaseId, metric.value, metric.runs, stacktraceId, metric.typeId, metric.bytesOff,
-                           metric.rangeDiff)
+                           metric.rangeDiff, round(calls))
+
                     cur.execute(sqlRange)
             self._conn.commit()
 
@@ -659,13 +688,30 @@ class MatrixHelper(object):
     def getTotalBytesWrittenPerRevision(self):
         with self._conn:
             cur = self._conn.cursor()
-            sql = "SELECT profile.id as profile_id, AVG(total_bytes) as value, run.revision as revision FROM run " \
+            sql = "SELECT profile.id as profile_id, AVG(total_bytes) as value, run.revision as rev FROM run " \
                     " JOIN profile ON profile.revision = run.revision " \
-                    " GROUP BY run.revision ORDER BY profile.id"
+                    " JOIN git_log on run.revision = git_log.revision " \
+                    " WHERE is_test_run = 1 GROUP BY run.revision ORDER BY git_log.id"
 
             cur.execute(sql)
             rows = cur.fetchall()
             return rows
+
+    def getCallsPerStacktrace(self, rev):
+        with self._conn:
+            cur = self._conn.cursor()
+            sql = "select value/avg_value as v, stacktrace_id, stacktrace FROM monitored_value " \
+                " JOIN run ON run_id = run.id JOIN stacktrace ON stacktrace.id = stacktrace_id " \
+                " WHERE revision = '%s' AND is_test_run = 1 ORDER BY stacktrace_id, run_id " % rev
+            print sql
+            cur.execute(sql)
+            rows = cur.fetchall()
+            result = {}
+            for r in rows:
+                if r['stacktrace'] not in result.keys():
+                    result[r['stacktrace']] = []
+                result[r['stacktrace']].append(r['v'])
+            return result
 
     def loadFromDatabase(self, revision, typeId):
         with self._conn:
@@ -683,15 +729,18 @@ class MatrixHelper(object):
             m.databaseId = r['id']
 
             # load metrics
-            sql = "SELECT value, stacktrace, runs, bytes_off, range_diff, stacktrace" \
-                    " FROM activity_metric JOIN stacktrace ON stacktrace_id = stacktrace.id WHERE matrix_id = '%d'" \
-                    " ORDER BY value" % m.databaseId
+            sql = "SELECT bytes_off*calls as total, value, stacktrace, runs, bytes_off, range_diff, stacktrace \
+                    FROM activity_metric JOIN stacktrace ON stacktrace_id = stacktrace.id WHERE matrix_id = '%d' \
+                    ORDER BY value, total DESC, calls DESC, abs(bytes_off) DESC " % m.databaseId
             cur.execute(sql)
             rows = cur.fetchall()
-            m.metrics[MetricType.COSINESIM] = {}
+            m.metrics[typeId] = {}
+            m.sortedMetrics[typeId] = []
             for r in rows:
-                v = MetricValue(typeId, r['value'], m.profileId, r['runs'], r['bytes_off'], r['range_diff'])
+                v = MetricValue(typeId, r['value'], m.profileId, r['runs'], round(r['bytes_off']), r['range_diff'],
+                                    round(r['total']))
                 m.metrics[typeId][r['stacktrace']] = v
+                m.sortedMetrics[typeId].append([r['stacktrace'], v])
 
             sorted_metrics = sorted(m.metrics[typeId].iteritems(), key=operator.itemgetter(1))
             m.metrics[typeId] = sorted_metrics

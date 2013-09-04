@@ -24,15 +24,16 @@ Similarity of written bytes compared to previous revision
 	$( document ).ready(function() {
 
 		var plot = $.plot($("#placeholder"), [
-			[{% for item in similarity %} [{{ item.profile_id }}, {{ item.value }}], {% endfor %}]
+			[{% for item in similarity %} [{{ loop.index }}, {{ item.value }}], {% endfor %}]
 			], {
 				grid: {
 					hoverable: true,
 					clickable: true
 				},
+				series: { lines: { show: true }, points: { show: true } },
 				xaxis: {
 					ticks:	[
-								[{% for item in similarity %} [{{ item.profile_id }}, "{{ item.revision }}"], {% endfor %}]
+								[{% for item in similarity %} [{{ loop.index }}, "{{ item.rev }}"], {% endfor %}]
 							]
 				}
 		});
@@ -79,7 +80,7 @@ Similarity of written bytes compared to previous revision
 		$("#placeholder").bind("plotclick", function (event, pos, item) {
 			if (item) {
 				//$("#clickdata").text(" - click point " + item.dataIndex + " in " + item.series.xaxis.options.ticks[0][item.dataIndex][1]);
-				$("#ranking").load("http://localhost/~corpaul/perf/ranking_" + item.series.xaxis.options.ticks[0][item.dataIndex][1] + ".html");
+				$("#ranking").load("http://localhost/~corpaul/tribler_idle/ranking_" + item.series.xaxis.options.ticks[0][item.dataIndex][1] + ".html");
 				plot.unhighlight();
 				plot.highlight(item.series, item.datapoint);
 
