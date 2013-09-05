@@ -88,7 +88,7 @@ for REV in $(git log --topo-order --quiet $INITIAL_REV..$FINAL_REV | grep ^"comm
         let ITERATION=1+$ITERATION
 
         rm -fR sqlite
-        pycompile .
+        pycompile $([ -z "$PYTHONOPTIMIZE" ] || echo -n "-O" ) .
         cd ..
         [ ! -z "$PRE_PROBE_CMD" ] && $PRE_PROBE_CMD
         run_stap_probe.sh "$TEST_COMMAND" $OUTPUT_DIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
