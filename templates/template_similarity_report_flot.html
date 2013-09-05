@@ -15,8 +15,8 @@
 	<script src="flot/jquery.flot.js"></script>
 </head>
 <body>
-
-Similarity of written bytes compared to previous revision
+<center>
+<h1>Total bytes written per revision (avg. taken from all test executions for that revision) for: {{ tool }}</h1>
 
 	<div id='placeholder' style='width: 1200px; height: 300px;'></div>
 	<div id="clickdata"></div>
@@ -80,7 +80,7 @@ Similarity of written bytes compared to previous revision
 		$("#placeholder").bind("plotclick", function (event, pos, item) {
 			if (item) {
 				//$("#clickdata").text(" - click point " + item.dataIndex + " in " + item.series.xaxis.options.ticks[0][item.dataIndex][1]);
-				$("#ranking").load("http://localhost/~corpaul/tribler_idle/ranking_" + item.series.xaxis.options.ticks[0][item.dataIndex][1] + ".html");
+				$("#ranking").load("http://localhost/~corpaul/{{ tool }}_{{ testcase }}/ranking_" + item.series.xaxis.options.ticks[0][item.dataIndex][1] + ".html");
 				plot.unhighlight();
 				plot.highlight(item.series, item.datapoint);
 
@@ -88,6 +88,7 @@ Similarity of written bytes compared to previous revision
 		});
 	});
 </script>
+(Click on graph to compare revision with previous revision)</center>
 
 <div id="ranking">
 
