@@ -20,9 +20,19 @@
 #                    and its ready to start.
 #
 # When the all of the instances we are waiting for are all ready, all the information will
-# be sent back to them in the form of a JSON document. After this, a "start" command will
+# be sent back to them in the form of a JSON document. After this, a "go" command will
 # be sent to indicate that they should start running the experiment.
 #
+# Example of an expected exchange:
+# [connection is opened by the client]
+# -> time:1378479678.11
+# -> set:asdf:ooooo
+# -> ready
+# <- id:0
+# <- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1": {"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"}, "2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
+# <- go
+# [Connection is closed by the server]
+
 
 # Change Log:
 #
@@ -49,7 +59,8 @@
 # Code:
 
 from getpass import getuser
-from hashlib import md5
+
+from os import environ
 from sys import argv, exit, stdout
 from threading import Lock
 from time import time
@@ -58,8 +69,9 @@ import json
 from twisted.internet import epollreactor
 epollreactor.install()
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred
+from twisted.internet.defer import Deferred, gatherResults
 from twisted.internet.protocol import Factory
+from twisted.internet.task import deferLater
 from twisted.protocols.basic import LineReceiver
 from twisted.python.log import msg, err, startLogging
 
@@ -80,7 +92,7 @@ class ExperimentServiceProto(LineReceiver):
             pto = 'proto_' + self.state
             statehandler = getattr(self, pto)
         except AttributeError:
-            crit('Callback %s not found' % self.state)
+            err('Callback %s not found' % self.state)
             reactor.stop()
         else:
             self.state = statehandler(line)
@@ -97,7 +109,7 @@ class ExperimentServiceProto(LineReceiver):
 
     def proto_init(self, line):
         if line.startswith("time"):
-            self.vars["time_offset"] = str(float(line.strip().split(':')[1]) - time())
+            self.vars["time_offset"] = float(line.strip().split(':')[1]) - time()
             msg("Time offset is %s" % (self.vars["time_offset"]))
             return 'set'
         else:
@@ -128,8 +140,9 @@ class ExperimentServiceProto(LineReceiver):
 class ExperimentServiceFactory(Factory):
     protocol = ExperimentServiceProto
 
-    def __init__(self, expected_subscribers):
+    def __init__(self, expected_subscribers, experiment_start_delay):
         self.expected_subscribers = expected_subscribers
+        self.experiment_start_delay = experiment_start_delay
         self.connection_counter = -1
         self.connections = []
 
@@ -159,27 +172,41 @@ class ExperimentServiceFactory(Factory):
         for subscriber in self.connections:
             subscriber.sendLine("id:%s" % subscriber.id)
             subscriber.sendLine(json_vars)
+        msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
+        reactor.callLater(self.experiment_start_delay, self.startExperiment)
 
+    def startExperiment(self):
         # Give the go signal and disconnect
+        msg("Starting the experiment!")
+        deferreds = []
         for subscriber in self.connections:
             subscriber.sendLine("go")
-            reactor.callLater(0, subscriber.transport.loseConnection)
+            deferreds.append(deferLater(reactor, 0, subscriber.transport.loseConnection))
+        d = gatherResults(deferreds)
+        d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
     def unregisterConnection(self, proto):
         if proto in self.connections:
             self.connections.remove(proto)
         msg("Connection cleanly unregistered.")
 
+    def onExperimentStarted(self, _):
+        msg("Experiment started, exiting.")
+        reactor.stop()
+
+    def onExperimentStartError(self, failure):
+        err("Failed to start experiment")
+        reactor.callLater(0, reactor.stop)
+        return failure
+
 
 def main():
     startLogging(stdout)
-    expected_subscribers = 3
-    # initial_peer_delay = int(argv[2])
-    server_port = 1222
+    expected_subscribers = int(environ['SYNC_SUBSCRIBERS_AMOUNT'])
+    experiment_start_delay = float(environ['SYNC_EXPERIMENT_START_DELAY'])
+    server_port = int(environ['SYNC_PORT'])
 
-    # server_port = int(md5sum.hexdigest()[-16:], 16) % 20000 + 15000
-
-    reactor.listenTCP(server_port, ExperimentServiceFactory(expected_subscribers))
+    reactor.listenTCP(server_port, ExperimentServiceFactory(expected_subscribers, experiment_start_delay))
     reactor.run()
 
 if __name__ == '__main__':
