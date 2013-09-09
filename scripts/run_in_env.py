@@ -72,6 +72,7 @@ if len(sys.argv) >= 3:
         print "Error: The specified configuration file (%s) doesn't exist." % conf_path
         exit(2)
     config = loadConfig(conf_path)
+    experiment_dir = path.abspath(path.dirname(path.abspath(conf_path)))
 else:
     print "Usage:\n%s EXPERIMENT_CONFIG COMMAND" % sys.argv[0]
     exit(1)
@@ -84,9 +85,15 @@ env.update(configToEnv(config))
 # Add project dir to PYTHONPATH
 extend_var(env, "PYTHONPATH", project_dir)
 
+# Add gumby dir to PYTHONPATH
+extend_var(env, "PYTHONPATH", path.join(project_dir, "gumby"))
+
 # Add gumby scripts dir to PATH
 extend_var(env, "PATH", path.join(project_dir, "gumby/scripts"))
 extend_var(environ, "PATH", path.join(project_dir, "gumby/scripts"))
+
+# Add the experiment dir to PATH so we can call custom scripts from there
+extend_var(env, "PATH", experiment_dir)
 
 # Add ~/R to the R search path
 extend_var(env, "R_LIBS_USER", expand_var("$HOME/R"))
