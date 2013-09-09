@@ -36,6 +36,8 @@
 
 # Code:
 
+from getpass import getuser
+from hashlib import md5
 from os import path
 from validate import Validator
 
@@ -75,6 +77,15 @@ def loadConfig(path):
     # TODO: Find a better way to do this (If the default value for a list is an empty list, it just doesn't set the value at all)
     if 'head_nodes' not in config:
         config["head_nodes"] = []
+    for key, value in config.iteritems():
+        # If any config option has the special value __unique_port__, compute a unique port for it by hashing the user running
+        # the experiment, the experiment name and the config option name.
+        if value == '__unique_port__':
+            md5sum = md5()
+            md5sum.update(getuser())
+            md5sum.update(config['experiment_name'])
+            md5sum.update(key)
+            config[key] = int(md5sum.hexdigest()[-16:], 16) % 20000 + 20000
     return config
 
 
