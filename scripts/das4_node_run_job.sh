@@ -40,7 +40,7 @@
 
 set -ex
 
-echo "$(hostname) here reporting, spawning $DAS4_PROCESSES_PER_NODE copies of command: $DAS4_NODE_COMMAND"
+echo "$(hostname) here, spawning $DAS4_PROCESSES_PER_NODE instances of command: $DAS4_NODE_COMMAND"
 
 OUTPUT_DIR=/local/$USER/Experiment_${EXPERIMENT_NAME}_output
 rm -fR "$OUTPUT_DIR"

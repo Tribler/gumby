@@ -247,15 +247,17 @@ class ExperimentRunner(Logger):
         else:
             return succeed(None)
 
-    def startConfigServer(self):
-        def onConfigServerFailure(failure):
-            err("Config server has died.")
+    def startExperimentServer(self):
+        def onConfigServerDied(failure):
+            msg("Config server has exited with status:", failure.getErrorMessage())
             # TODO: Add a config option to not shut down the experiment when the config server dies???
             reactor.stop()
-        if self._cfg['config_server_cmd']:
+        if self._cfg['experiment_server_cmd']:
+            # TODO: This is not very flexible, refactor it to have a background_commands
+            # list instead of experiment_server_cmd, tracker_cmd, etc...
             # Only run it on the DAS head node if we aren't using systemtap.
-            self._config_server_d = self.runCommand(self._cfg['config_server_cmd'], not self._cfg.as_bool('use_local_systemtap'))
-            self._config_server_d.addErrback(onConfigServerFailure)
+            self._config_server_d = self.runCommand(self._cfg['experiment_server_cmd'], not self._cfg.as_bool('use_local_systemtap'))
+            self._config_server_d.addErrback(onConfigServerDied)
             d = Deferred()
             reactor.callLater(1, d.callback, None)
             return d
@@ -321,7 +323,7 @@ class ExperimentRunner(Logger):
         # Step 5:
         # Start the config server, always locally if running instances locally as the head nodes are firewalled and
         # can only be reached from the outside trough SSH.
-        d.addCallback(lambda _: self.startConfigServer())
+        d.addCallback(lambda _: self.startExperimentServer())
 
         # Step 6:
         # Spawn both local and remote instance runner scripts, which will connect to the config server and wait for all

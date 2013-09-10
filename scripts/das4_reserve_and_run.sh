@@ -37,7 +37,9 @@
 
 # Code:
 
-export OUTPUT_DIR_URI="$(hostname):$OUTPUT_DIR" # This will be used from das4_node_run_job.sh to rsync the output data back to the head node
+export HEAD_NODE=$(hostname)
+# This will be used from das4_node_run_job.sh to rsync the output data back to the head node
+export OUTPUT_DIR_URI="$HEAD_NODE:$OUTPUT_DIR"
 
 echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
 

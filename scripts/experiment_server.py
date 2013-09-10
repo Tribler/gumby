@@ -58,149 +58,16 @@
 
 # Code:
 
-from getpass import getuser
-
 from os import environ
-from sys import argv, exit, stdout
-from threading import Lock
-from time import time
-import json
+from sys import stdout
 
-from twisted.internet import epollreactor
-epollreactor.install()
+from gumby.sync import ExperimentServiceFactory
+
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred, gatherResults
-from twisted.internet.protocol import Factory
-from twisted.internet.task import deferLater
-from twisted.protocols.basic import LineReceiver
-from twisted.python.log import msg, err, startLogging
+from twisted.python.log import startLogging
 
 
-class ExperimentServiceProto(LineReceiver):
-
-    def __init__(self, factory, id):
-        self.id = id
-        self.factory = factory
-        self.state = 'init'
-        self.vars = {}
-
-    def connectionMade(self):
-        msg("New connection from: ", str(self.transport.getPeer()))
-
-    def lineReceived(self, line):
-        try:
-            pto = 'proto_' + self.state
-            statehandler = getattr(self, pto)
-        except AttributeError:
-            err('Callback %s not found' % self.state)
-            reactor.stop()
-        else:
-            self.state = statehandler(line)
-            if self.state == 'done':
-                self.transport.loseConnection()
-
-    def connectionLost(self, cosa):
-        self.factory.unregisterConnection(self)
-        LineReceiver.connectionLost(self, cosa)
-
-    #
-    # Protocol state handlers
-    #
-
-    def proto_init(self, line):
-        if line.startswith("time"):
-            self.vars["time_offset"] = float(line.strip().split(':')[1]) - time()
-            msg("Time offset is %s" % (self.vars["time_offset"]))
-            return 'set'
-        else:
-            err("Haven't received the time command as the first line, closing connection")
-            return 'done'
-
-    def proto_set(self, line):
-            if line.startswith('set:'):
-                _, key, value = line.strip().split(':')
-                msg("This subscriber sets %s to %s" % (key, value))
-                self.vars[key] = value
-                return 'set'
-            elif line.strip() == 'ready':
-                msg("This subscriber is ready now.")
-                self.ready = True
-                self.factory.setConnectionReady(self)
-                return 'wait'
-            else:
-                err('Unexpected command received "%s"' % line)
-                err('closing connection.')
-                return 'done'
-
-    def proto_wait(self, line):
-        err('Unexpected command received "%s" while in ready state. Closing connection' % line)
-        return 'done'
-
-
-class ExperimentServiceFactory(Factory):
-    protocol = ExperimentServiceProto
-
-    def __init__(self, expected_subscribers, experiment_start_delay):
-        self.expected_subscribers = expected_subscribers
-        self.experiment_start_delay = experiment_start_delay
-        self.connection_counter = -1
-        self.connections = []
-
-    def buildProtocol(self, addr):
-        self.connection_counter += 1
-        return ExperimentServiceProto(self, self.connection_counter)
-
-    def setConnectionReady(self, proto):
-        self.connections.append(proto)
-        if len(self.connections) >= self.expected_subscribers:
-            msg("All subscribers are ready, pushing data!")
-            self.pushInfoToSubscribers()
-        else:
-            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers))
-
-    def pushInfoToSubscribers(self):
-        # Generate the json doc
-        vars = {}
-        for subscriber in self.connections:
-            subscriber_vars = subscriber.vars.copy()
-            subscriber_vars['port'] = subscriber.id + 12000
-            subscriber_vars['host'] = subscriber.transport.getPeer().host
-            vars[subscriber.id] = subscriber_vars
-        json_vars = json.dumps(vars)
-
-        # Send the ID and json doc to the subscribers
-        for subscriber in self.connections:
-            subscriber.sendLine("id:%s" % subscriber.id)
-            subscriber.sendLine(json_vars)
-        msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
-        reactor.callLater(self.experiment_start_delay, self.startExperiment)
-
-    def startExperiment(self):
-        # Give the go signal and disconnect
-        msg("Starting the experiment!")
-        deferreds = []
-        for subscriber in self.connections:
-            subscriber.sendLine("go")
-            deferreds.append(deferLater(reactor, 0, subscriber.transport.loseConnection))
-        d = gatherResults(deferreds)
-        d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
-
-    def unregisterConnection(self, proto):
-        if proto in self.connections:
-            self.connections.remove(proto)
-        msg("Connection cleanly unregistered.")
-
-    def onExperimentStarted(self, _):
-        msg("Experiment started, exiting.")
-        reactor.stop()
-
-    def onExperimentStartError(self, failure):
-        err("Failed to start experiment")
-        reactor.callLater(0, reactor.stop)
-        return failure
-
-
-def main():
+if __name__ == '__main__':
     startLogging(stdout)
     expected_subscribers = int(environ['SYNC_SUBSCRIBERS_AMOUNT'])
     experiment_start_delay = float(environ['SYNC_EXPERIMENT_START_DELAY'])
@@ -208,10 +75,6 @@ def main():
 
     reactor.listenTCP(server_port, ExperimentServiceFactory(expected_subscribers, experiment_start_delay))
     reactor.run()
-
-if __name__ == '__main__':
-    main()
-
 
 #
 # experiment_server.py ends here
