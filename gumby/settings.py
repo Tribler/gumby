@@ -48,8 +48,8 @@ experiment_name = string
 workspace_dir = string(default="./")
 output_dir = string(default="output")
 head_nodes = list(default=[])
-tracker_cmd = string(default="run_tracker.sh")
-config_server_cmd = string(default="")
+tracker_cmd = string(default="")
+experiment_server_cmd = string(default="")
 tracker_run_remote = boolean(default=True)
 tracker_port = integer(min=1025, max=65535, default=7788)
 
