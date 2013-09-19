@@ -141,6 +141,8 @@ class InitDatabase(object):
                             value INTEGER NOT NULL, \
                             stacktrace_id INTEGER NOT NULL, \
                             runs INTEGER NOT NULL, \
+                            bytes_off INTEGER NOT NULL, \
+                            range_diff INTEGER NOT NULL, \
                             type_id INTEGER NOT NULL);"
         cur.execute(createActivityMetric)
 
