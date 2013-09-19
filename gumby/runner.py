@@ -266,6 +266,11 @@ class ExperimentRunner(Logger):
 
     def startInstances(self):
         msg("Starting local and remote instances")
+
+        def onStartInstancesFailed(failure):
+            err("Running the experiment instances failed, collecting data before failing.")
+            return self.collectOutputFromHeadNodes().addCallback(lambda _: failure)
+
         if self._cfg['remote_instance_cmd']:
             dr = self._instances_d = self.runCommandOnAllRemotes(self._cfg['remote_instance_cmd'])
         else:
@@ -274,7 +279,8 @@ class ExperimentRunner(Logger):
             dl = self.runCommand(self._cfg['local_instance_cmd'])
         else:
             dl = succeed(None)
-        return gatherResults([dr, dl], consumeErrors=True)
+        return gatherResults([dr, dl], consumeErrors=True).addErrback(onStartInstancesFailed)
+
 
     def runPostProcess(self):
         if self._cfg['post_process_cmd']:

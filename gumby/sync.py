@@ -214,6 +214,7 @@ class ExperimentClient(LineReceiver):
 
     def __init__(self, vars):
         self.state = "id"
+        self.my_id = None
         self.vars = vars
         self.all_vars = {}
 
