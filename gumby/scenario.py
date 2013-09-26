@@ -51,7 +51,7 @@ from itertools import ifilter
 from random import random
 from re import compile as re_compile
 from twisted.internet import reactor
-
+from os import environ
 
 class ScenarioRunner():
 
@@ -109,6 +109,8 @@ class ScenarioRunner():
         r"{(?P<peers>\s*!?\d+(?:-\d+)?(?:\s*,\s*!?\d+(?:-\d+)?)*\s*)}"
         r")?\s*(?:\n)?$"
     )
+    _re_substitution = re_compile("(\$\w+)")
+
     # TODO(emilon): Remove all the delta stuff, it's not used at all.
     # TODO(emilon): We should make the minutes and its colon optional, so we can just use secs.
 
@@ -184,6 +186,11 @@ class ScenarioRunner():
 
         The command tuple is described in _parse_scenario().
         """
+        # Look for $VARIABLES to replace with config options from the env.
+        for substitution in self._re_substitution.findall(line):
+            if substitution[1:] in environ:
+                line = line.replace(substitution, environ[substitution[1:]])
+
         match = self._re_line.match(line)
         if match:
             # remove all entries that are None (to get default per key)
