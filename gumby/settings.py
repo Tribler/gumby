@@ -38,7 +38,7 @@
 
 from getpass import getuser
 from hashlib import md5
-from os import path
+from os import path, environ
 from validate import Validator
 
 from configobj import ConfigObj
@@ -86,6 +86,16 @@ def loadConfig(path):
             md5sum.update(config['experiment_name'])
             md5sum.update(key)
             config[key] = int(md5sum.hexdigest()[-16:], 16) % 20000 + 20000
+
+    # Override config options with env. variables.
+    revalidate = False
+    for key, value in environ.iteritems():
+        if key.startswith("GUMBY_"):
+            name = key[6:].lower()  # "GUMBY_".len()
+            config[name] = value
+            revalidate = True
+    if revalidate:
+        config.validate(validator)
     return config
 
 
