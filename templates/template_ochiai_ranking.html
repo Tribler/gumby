@@ -15,7 +15,7 @@
 		<th>KBytes off</th>
 		<th>Range difference (KB)</th>
 		<th>Runs</th>
-		<th>Stacktrace</th>
+		<th>Stack trace</th>
 		<th># calls</th>
 	</tr>
 
@@ -25,7 +25,11 @@
 		<td>{{ item[1]['value'] }}</td>
 		{% set impact = item[1]['totalImpact']/1000 %}
 		{% set bytesOff = item[1]['bytesOff']/1000 %}
-		{% set rangeDiff = item[1]['rangeDiff']/1000 %}
+		{% set rangeDiff = item[1]['rangeDiff'] %}
+		{% if rangeDiff > -1 %}
+		  {% set rangeDiff = item[1]['rangeDiff']/1000 %}
+		{% endif %}
+		
 		<td align="right">{{ '%d' % impact }}</td>
 		<td align="right">{{ '%d' % bytesOff }}</td>
 		<td align="right">{{ '%d' % rangeDiff }}</td>
