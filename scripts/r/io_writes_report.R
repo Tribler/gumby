@@ -22,13 +22,13 @@ csvData = read.csv(csvFile)
 # Make summary
 rowCount = nrow(csvData)
 #totalBytes = sum(as.numeric(as.character(data$BYTES)))
-totalBytes = sum(csvData$BYTES)
+totalBytes = sum(as.numeric(csvData$BYTES))
 sink(sprintf("%s/summary.txt", outputDir))
 
 cat(sprintf("Report name: %s\n", reportName))
 cat(sprintf("Data monitored for: %s\n", description))
 cat(sprintf("Total number of write transactions is: %d\n", rowCount))
-cat(sprintf("Total bytes written is: %d\n", totalBytes))
+cat(sprintf("Total bytes written is: %.0f\n", totalBytes))
 sink()
 
 csvData$type = 'other'
