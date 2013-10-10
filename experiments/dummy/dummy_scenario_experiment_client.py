@@ -45,11 +45,14 @@ from time import time
 import json
 import logging
 
-from twisted.internet import reactor
-from twisted.python.log import startLogging, PythonLoggingObserver, msg
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread
 from gumby.sync import ExperimentClientFactory
+
+# TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
+# The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
+from twisted.internet import reactor
+from twisted.python.log import startLogging, PythonLoggingObserver, msg
 
 # TODO(emilon): Fix this crap
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
