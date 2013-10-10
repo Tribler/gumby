@@ -46,6 +46,7 @@ from configobj import ConfigObj
 conf_spec = '''
 experiment_name = string
 workspace_dir = string(default="./")
+remote_workspace_dir = string(default="./")
 output_dir = string(default="output")
 head_nodes = list(default=[])
 tracker_cmd = string(default="")
