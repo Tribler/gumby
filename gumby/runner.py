@@ -59,7 +59,7 @@ class ExperimentRunner(Logger):
         config = loadConfig(conf_path)
         self._cfg_path = conf_path
         self._cfg = config
-        self._remote_workspace_dir = "Experiment_" + path.basename(config['experiment_name'])
+        self._remote_workspace_dir = path.join(config['remote_workspace_dir'], "Experiment_" + path.basename(config['experiment_name']))
         # TODO: check if the experiment dir actually exists
         self._workspace_dir = path.abspath(config['workspace_dir'])
         self._env_runner = "scripts/run_in_env.py"
