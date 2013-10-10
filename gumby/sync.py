@@ -151,7 +151,7 @@ class ExperimentServiceFactory(Factory):
 
     def buildProtocol(self, addr):
         self.connection_counter += 1
-        return ExperimentServiceProto(self, self.connection_counter)
+        return ExperimentServiceProto(self, self.connection_counter + 1)
 
     def setConnectionReady(self, proto):
         self.connections.append(proto)
