@@ -4,11 +4,11 @@
 
 import subprocess
 from time import sleep, time
-from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path, kill, errno
+from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path, kill, errno, sysconf, sysconf_names
 from signal import SIGKILL, SIGTERM, signal
 from glob import iglob
 from math import ceil
-
+import json
 
 class ResourceMonitor(object):
     # adapted after http://stackoverflow.com/questions/276052/how-to-get-current-cpu-and-ram-usage-in-python
@@ -174,6 +174,13 @@ class ProcessMonitor(object):
         self._rm = ResourceMonitor(output_dir, commands)
         if monitor_dir:
             self.monitor_file = open(monitor_dir + "/resource_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
+            # We read the jiffie -> second conversion rate from the os, by dividing the utime
+            # and stime values by this conversion rate we will get the actual cpu seconds spend during this second.
+            try:
+                sc_clk_tck = float(sysconf(sysconf_names['SC_CLK_TCK']))
+            except AttributeError:
+                sc_clk_tck = 100.0
+            self.monitor_file.write(json.dumps({"sc_clk_tck": sc_clk_tck})+"\n")
         else:
             self.monitor_file = None
         # Capture SIGTERM to kill all the child processes before dying
