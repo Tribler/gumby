@@ -38,13 +38,14 @@
 
 # Code:
 
-
 if [ -e tribler/Tribler/SwiftEngine/ ]; then
     cd tribler
-    buildswift.sh
+    buildswift.sh || echo "Swift failed to build!"
 fi
 
-pycompile .
+find -iname *.py[oc] -delete
+
+pycompile.py .
 
 build_virtualenv.sh
 
