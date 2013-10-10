@@ -53,6 +53,8 @@ from re import compile as re_compile
 from twisted.internet import reactor
 from os import environ
 
+from twisted.python.log import msg
+
 class ScenarioRunner():
 
     """
@@ -150,7 +152,7 @@ class ScenarioRunner():
 
         for (tstmp, lineno, clb, args) in self._parse_scenario(self.filename):
             if clb not in self._callables:
-                # ignore non-registered callables
+                msg(clb, "is not registered as an action!")
                 continue
             # TODO(vladum): Handle errors while calling.
             delay = tstmp - time()
