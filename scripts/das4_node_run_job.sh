@@ -59,7 +59,7 @@ rm $CMDFILE
 
 # Now, lets send the generated data back to the head node
 
-rsync -av --delete-during "$OUTPUT_DIR/" "$OUTPUT_DIR_URI/$(hostname)/" && rm -fR "$OUTPUT_DIR"
+rsync -a --delete-before --exclude="sqlite/" "$OUTPUT_DIR/" "$OUTPUT_DIR_URI/$(hostname)/" 2>&1
 
 #
 # das4_node_run_job.sh ends here
