@@ -53,7 +53,7 @@ for INSTANCE in $(seq 1 1 $DAS4_PROCESSES_PER_NODE); do
     echo "$DAS4_NODE_COMMAND" >> $CMDFILE
 done
 
-process_guard.py -f $CMDFILE -t $DAS4_NODE_TIMEOUT -o $OUTPUT_DIR
+process_guard.py -f $CMDFILE -t $DAS4_NODE_TIMEOUT -o $OUTPUT_DIR -m $OUTPUT_DIR  -i 5 2>&1 | tee process_guard.log ||:
 
 rm $CMDFILE
 
