@@ -87,7 +87,7 @@ class ExperimentRunner(Logger):
         for host in self._cfg['head_nodes']:
             pp = OneShotProcessProtocol()
             workspace_dir = self._cfg['workspace_dir']
-            args = ("/usr/bin/rsync", "-avz", "--recursive", "--exclude=.git*",
+            args = ("/usr/bin/rsync", "-az", "--recursive", "--exclude=.git*",
                     "--exclude=.svn", "--exclude=local", "--exclude=output", "--delete-excluded",
                     workspace_dir + '/', ":".join((host, self._remote_workspace_dir + '/')
                                                   ))
@@ -118,9 +118,9 @@ class ExperimentRunner(Logger):
 
         for host in self._cfg['head_nodes']:
             pp = OneShotProcessProtocol()
-            args = ("/usr/bin/rsync", "-avz", "--recursive", "--exclude=.git*",
+            args = ("/usr/bin/rsync", "-az", "--recursive", "--exclude=.git*",
                     "--exclude=.svn", "--exclude=local", "--delete-excluded", "--delete-during",
-                    ":".join((host, self._remote_workspace_dir + '/output')),
+                    ":".join((host, self._remote_workspace_dir + '/output/')),
                     path.join(self._workspace_dir, "output", host) + "/"
                     )
             msg("Running: %s " % ' '.join(args))
