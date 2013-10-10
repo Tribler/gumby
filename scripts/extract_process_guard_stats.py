@@ -81,7 +81,6 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
             h_records = open(fn_records)
 
             line = h_records.readline()
-            print "ASRARASDFASDFASDFASD", line
             metainfo = json.loads(line)
             sc_clk_tck = float(metainfo['sc_clk_tck'])
 
