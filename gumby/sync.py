@@ -96,7 +96,7 @@ class ExperimentServiceProto(LineReceiver):
             statehandler = getattr(self, pto)
         except AttributeError:
             err('Callback %s not found' % self.state)
-            reactor.stop()
+            stopReactor()
         else:
             self.state = statehandler(line)
             if self.state == 'done':
@@ -195,12 +195,12 @@ class ExperimentServiceFactory(Factory):
         msg("Connection cleanly unregistered.")
 
     def onExperimentStarted(self, _):
-        msg("Experiment started, exiting.")
-        reactor.callLater(1, reactor.stop)
+        msg("Experiment started, shutting down sync server.")
+        reactor.callLater(0, stopReactor)
 
     def onExperimentStartError(self, failure):
         err("Failed to start experiment")
-        reactor.callLater(0, reactor.stop)
+        reactor.callLater(0, stopReactor)
         return failure
 
 #
@@ -231,7 +231,7 @@ class ExperimentClient(LineReceiver):
             statehandler = getattr(self, pto)
         except AttributeError:
             err('Callback %s not found' % self.state)
-            reactor.stop()
+            stopReactor()
         else:
             self.state = statehandler(line)
             if self.state == 'done':
@@ -283,13 +283,22 @@ class ExperimentClientFactory(ClientFactory):
     def clientConnectionFailed(self, connector, reason):
         err("Failed to connect to experiment server, error was: %s" % reason.getErrorMessage())
         reactor.exitCode = 2
-        reactor.stop()
+        stopReactor()
 
     def clientConnectionLost(self, connector, reason):
         msg("The connection with the experiment server was lost with reason: %s" % reason.getErrorMessage())
         if reason.type is not ConnectionDone:
             reactor.exitCode = 3
-            reactor.stop()
+            stopReactor()
+#
+# Aux stuff
+#
+
+
+def stopReactor():
+    if reactor.running:
+        msg("Stopping reactor")
+        reactor.stop()
 
 #
 # sync.py ends here
