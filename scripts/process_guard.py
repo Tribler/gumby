@@ -232,7 +232,7 @@ class ProcessMonitor(object):
             if self.end_time and timestamp > self.end_time: # if self.end_time == 0 the time out is disabled.
                 print "Time out, killing monitored processes."
                 return self.stop()
-        sleep(sleep_time)
+            sleep(sleep_time)
 
 if __name__ == "__main__":
     from optparse import OptionParser
