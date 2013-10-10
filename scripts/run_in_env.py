@@ -61,6 +61,9 @@ def expand_var(var):
 project_dir = path.abspath(path.join(path.dirname(path.abspath(__file__)), '..', '..'))
 print 'Project root is:', project_dir
 
+scripts_dir = path.join(project_dir, "gumby/scripts")
+r_scripts_dir = path.join(scripts_dir, "r")
+
 sys.path.append(path.join(project_dir, "gumby"))
 from gumby.settings import configToEnv, loadConfig
 
@@ -89,14 +92,17 @@ extend_var(env, "PYTHONPATH", project_dir)
 extend_var(env, "PYTHONPATH", path.join(project_dir, "gumby"))
 
 # Add gumby scripts dir to PATH
-extend_var(env, "PATH", path.join(project_dir, "gumby/scripts"))
-extend_var(environ, "PATH", path.join(project_dir, "gumby/scripts"))
+extend_var(env, "PATH", scripts_dir)
+extend_var(environ, "PATH", scripts_dir)
 
 # Add the experiment dir to PATH so we can call custom scripts from there
 extend_var(env, "PATH", experiment_dir)
 
 # Add ~/R to the R search path
 extend_var(env, "R_LIBS_USER", expand_var("$HOME/R"))
+# Export the R scripts path
+extend_var(env, "R_SCRIPTS_PATH", r_scripts_dir)
+extend_var(environ, "R_SCRIPTS_PATH", r_scripts_dir)
 
 # Enter virtualenv in case there's one
 if "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
