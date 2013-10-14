@@ -11,8 +11,8 @@
     <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/container/assets/skins/sam/container.css" />
     <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/button/assets/skins/sam/button.css" />
     <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/menu/assets/skins/sam/menu.css" />
-    <script src="flot/jquery.js"></script>
-	<script src="flot/jquery.flot.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.min.js"></script>
 </head>
 <body>
 <center>
@@ -80,7 +80,7 @@
 		$("#placeholder").bind("plotclick", function (event, pos, item) {
 			if (item) {
 				//$("#clickdata").text(" - click point " + item.dataIndex + " in " + item.series.xaxis.options.ticks[0][item.dataIndex][1]);
-				$("#ranking").load("http://localhost/~corpaul/{{ tool }}_{{ testcase }}/ranking_" + item.series.xaxis.options.ticks[0][item.dataIndex][1] + ".html");
+				$("#ranking").load("ranking_" + item.series.xaxis.options.ticks[0][item.dataIndex][1] + ".html");
 				plot.unhighlight();
 				plot.highlight(item.series, item.datapoint);
 
