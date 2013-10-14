@@ -84,7 +84,7 @@ for REV in $(git log --quiet HEAD~${REVISIONS_TO_ANALYZE}..HEAD | grep ^"commit 
         cd ..
         set +e
         # TODO: put command in config
-        run_stap_probe.sh "nosetests dispersy/tests/test_sync.py" $OUTPUTDIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
+        run_stap_probe.sh "python -O -m unittest discover" $OUTPUTDIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
         set -e
         cd -
         echo $? $ITERATION $REV >> /tmp/results.log
@@ -96,7 +96,7 @@ popd
 
 
 
-gumby/experiments/generic_systemtap_experiment/ingest_revision_runs.sh output
+
 
 #
 # parallel_runner.sh ends here
