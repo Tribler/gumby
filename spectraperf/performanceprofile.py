@@ -703,7 +703,7 @@ class MatrixHelper(object):
             sql = "select value/avg_value as v, stacktrace_id, stacktrace FROM monitored_value " \
                 " JOIN run ON run_id = run.id JOIN stacktrace ON stacktrace.id = stacktrace_id " \
                 " WHERE revision = '%s' AND is_test_run = 1 ORDER BY stacktrace_id, run_id " % rev
-            print sql
+            # print sql
             cur.execute(sql)
             rows = cur.fetchall()
             result = {}

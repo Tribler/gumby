@@ -21,86 +21,60 @@ from spectraperf.performanceprofile import *
 if __name__ == '__main__':
 
     if len(sys.argv) < 5:
-        print "Usage: python calculate_similarity.py configFile csvPath  rev(id) testcase"
+        print "Usage: python calculate_similarity.py configFile csvPath  revision testcase"
         print "Note: csvPath is path to csv files, no slash at the end (TODO)"
         sys.exit(0)
 
     config = loadConfig(sys.argv[1])
     csvPath = sys.argv[2]
-    rev = int(sys.argv[3])
+    rev = sys.argv[3]
     testcase = sys.argv[4]
 
     h = MatrixHelper(config)
     i = 0
-    prevRevision = ""
-    while rev != "645a7eea6919f974a1e286e163961b328e24a296":
-        print "revision: %s" % rev
-        prevRevision = h.getPreviousRevision(rev)
-        print "previous revision: %s" % prevRevision
-        print "__________________"
-        # if i == 10:
-        #    sys.exit()
-        # rev = prevRevision
-        # i = i + 1
-    # while rev < 217:
-    #    start = "%s/%s_%d_*_" % (csvPath, testcase, rev)
-    #    end = ".csv"
-    #    pattern = "%s*%s" % (start, end)
-    #    result = glob.glob(pattern)
-    #    if len(result) == 0:
-    #        print "No profile for previous revision, exiting"
-    #        sys.exit()
-    #    revision = result[0][len(start):-len(end)]
 
-    #    start = "%s/%s_%d_*_" % (csvPath, testcase, rev + 1)
-    #    pattern = "%s*%s" % (start, end)
-    #    print "pattern: %s" % (pattern)
-    #    result = glob.glob(pattern)
-    #    if len(result) == 0:
-    #        print "No profile for previous revision, exiting"
-    #        sys.exit()
-    #        print result
-    #    prevRevision = result[0][len(start):-len(end)]
-    #    print "Current revision: %s" % revision
-    #    print "Previous revision: %s" % prevRevision
+    print "revision: %s" % rev
+    prevRevision = h.getPreviousRevision(rev)
+    print "previous revision: %s" % prevRevision
+    print "__________________"
 
-        # load profile for revision and testcase
-        profileHelper = ProfileHelper(config)
-        p = profileHelper.loadFromDatabase(prevRevision, testcase)
+    # load profile for revision and testcase
+    profileHelper = ProfileHelper(config)
+    p = profileHelper.loadFromDatabase(prevRevision, testcase)
 
-        if p != -1:
-            output = ""
+    if p != -1:
+        output = ""
 
-            matrix = ActivityMatrix(p.getDatabaseId(), 5, Type.BYTESWRITTEN, rev, testcase)
+        matrix = ActivityMatrix(p.getDatabaseId(), 5, Type.BYTESWRITTEN, rev, testcase)
 
-            for i in range(1, 6):
-                helper = SessionHelper(config)
-                csv = "%s/report_%s_%d/summary_per_stacktrace.csv" % (csvPath, rev, i)
-                csvExtra = "%s/report_%s_%d/summary.txt" % (csvPath, rev, i)
-                if not os.path.isfile(csv):
-                    print "Not a valid CSV file: %s" % csv
-                    continue
-                sess = helper.loadSessionFromCSV(rev, testcase, csv)
-                sess.isTestRun = 1
-                helper.appendData(sess, csvExtra)
-                helper.storeInDatabase(sess)
+        for i in range(1, 6):
+            helper = SessionHelper(config)
+            csv = "%s/report_%s_%d/summary_per_stacktrace.csv" % (csvPath, rev, i)
+            csvExtra = "%s/report_%s_%d/summary.txt" % (csvPath, rev, i)
+            if not os.path.isfile(csv):
+                print "Not a valid CSV file: %s" % csv
+                continue
+            sess = helper.loadSessionFromCSV(rev, testcase, csv)
+            sess.isTestRun = 1
+            helper.appendData(sess, csvExtra)
+            helper.storeInDatabase(sess)
 
-                fits = p.fitsProfile(sess)
-                sim = p.similarity(fits)
-                metricValue = p.similarity(fits)
-                matrix.addFitsVector(fits)
+            fits = p.fitsProfile(sess)
+            sim = p.similarity(fits)
+            metricValue = p.similarity(fits)
+            matrix.addFitsVector(fits)
 
-                helper.storeMetricInDatabase(sess, metricValue)
-                output += "------------------------\n%s\n" % csv
-                output += "Metric: cosine sim, value: %f\n" % metricValue.value
+            helper.storeMetricInDatabase(sess, metricValue)
+            output += "------------------------\n%s\n" % csv
+            output += "Metric: cosine sim, value: %f\n" % metricValue.value
 
-            # print output
-            matrix.calcSimilarity()
+        # print output
+        matrix.calcSimilarity()
 
-            helper = MatrixHelper(config)
-            # slow but why?
-            helper.storeInDatabase(matrix)
+        helper = MatrixHelper(config)
+        # slow but why?
+        helper.storeInDatabase(matrix)
 
-            matrix.printMatrix()
+        # matrix.printMatrix()
 
-        rev = prevRevision
+    rev = prevRevision
