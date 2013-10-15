@@ -34,7 +34,7 @@ def readDataframeDump(filename):
 
 
 def print_html_doc():
-    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../templates'))
+    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib/templates'))
     print "Getting templates from: %s" % template_dir
     loader = FileSystemLoader(searchpath=template_dir)
     env = Environment(loader=loader)

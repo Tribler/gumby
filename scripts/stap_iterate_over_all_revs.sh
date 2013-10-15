@@ -1,7 +1,7 @@
 #!/bin/bash
-# iterate_over_all_revs.sh ---
+# stap_iterate_over_all_revs.sh ---
 #
-# Filename: iterate_over_all_revs.sh
+# Filename: stap_iterate_over_all_revs.sh
 # Description:
 # Author: Elric Milon
 # Maintainer:
@@ -40,6 +40,18 @@
 
 set -ex
 
+if [ ! -d "$2" ]; then
+    echo "Usage: $0 CONFFILE OUTPUT_DIR_NAME "
+    exit 1
+fi
+
+if [ -e "$1" ]; then
+	echo "Can't find config file, bailing out"
+	exit 2
+fi
+
+export CONFFILE=$(readlink -f $1) 
+
 rm -f /tmp/results.log
 
 if [ -z "$REPOSITORY_DIR" ]; then
@@ -60,8 +72,8 @@ if [ -z "$TESTNAME" ]; then
 fi
 
 export PYTHONPATH=.
-mkdir -p output
-export OUTPUTDIR=$(readlink -f output)
+mkdir -p $2
+export OUTPUTDIR=$(readlink -f $2)
 
 pushd $REPOSITORY_DIR
 git clean -fd
@@ -96,7 +108,6 @@ for REV in $(git log --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f
 done
 
 popd
-gumby/experiments/test_all_revisions/ingest_revision_runs.sh output
 
 #
-# iterate_over_all_revs.sh ends here
+# stap_iterate_over_all_revs.sh ends here

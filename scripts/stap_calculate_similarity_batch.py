@@ -10,12 +10,11 @@ Created on Jul 16, 2013
 @arg4: testcase
 
 '''
-
 import sys
 import os
-import glob
-from spectraperf.databasehelper import *
-from spectraperf.performanceprofile import *
+from gumby.settings import loadConfig
+from gumby.spectraperf.performanceprofile import MatrixHelper, ProfileHelper, ActivityMatrix, SessionHelper
+from gumby.spectraperf.performanceprofile import Type
 
 
 if __name__ == '__main__':

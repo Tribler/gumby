@@ -4,17 +4,18 @@ Created on Jul 4, 2013
 @author: corpaul
 '''
 import unittest
-from spectraperf.performanceprofile import *
-from spectraperf.databasehelper import *
+from gumby.settings import loadConfig
+from gumby.spectraperf.performanceprofile import *
+from gumby.spectraperf.databasehelper import *
 
 DATABASE = "performance_test.db"
-config = loadConfig("../test.conf")
+config = loadConfig("test.conf")
 
 
 class TestPerformanceFunctions(unittest.TestCase):
 
     def testAddToRange(self):
-        s = MonitoredStacktrace("test", 10, 25, config)
+        s = MonitoredStacktrace("test", 10, 25, config, avg_value=10)
 
         sess = MonitoredSession("rev1", "test_batch", config)
         sess.addStacktrace(s)
@@ -38,8 +39,8 @@ class TestPerformanceFunctions(unittest.TestCase):
         self.assertEqual(p.getRange("test").maxValue, 20)
 
     def testIsInRange(self):
-        st1 = MonitoredStacktrace("test", 10, 25, config)
-        st2 = MonitoredStacktrace("test", 20, 25, config)
+        st1 = MonitoredStacktrace("test", 10, 25, config, avg_value=10)
+        st2 = MonitoredStacktrace("test", 20, 25, config, avg_value=20)
 
         sess1 = MonitoredSession("rev1", "test_batch", config)
         sess1.addStacktrace(st1)
@@ -58,8 +59,8 @@ class TestPerformanceFunctions(unittest.TestCase):
         self.assertFalse(p.getRange(st1.stacktrace).isInRange(21))
 
     def testFitsProfile(self):
-        s1 = MonitoredStacktrace("test1", 10, 25, config)
-        s2 = MonitoredStacktrace("test2", 25, 25, config)
+        s1 = MonitoredStacktrace("test1", 10, 25, config, avg_value=10)
+        s2 = MonitoredStacktrace("test2", 25, 25, config, avg_value=25)
 
         sess1 = MonitoredSession("rev1", "test_batch", config)
         sess1.addStacktrace(s1)
@@ -69,7 +70,7 @@ class TestPerformanceFunctions(unittest.TestCase):
         p.addToRange("test1", 20)
 
         fits = p.fitsProfile(sess1)
-        self.assertEqual(fits["test1"], 1)
+        self.assertEqual(fits["test1"]["fits"], 1)
 
         sess1.addStacktrace(s2)
         # should raise AssertionError because we did not add a range for test2 yet
@@ -80,8 +81,8 @@ class TestPerformanceFunctions(unittest.TestCase):
         p.addToRange("test2", 20)
         fits = p.fitsProfile(sess1)
 
-        self.assertEqual(fits["test1"], 1)
-        self.assertEqual(fits["test2"], 0)
+        self.assertEqual(fits["test1"]["fits"], 1)
+        self.assertEqual(fits["test2"]["fits"], 0)
 
         p2 = Profile("rev1", "test_batch", config)
         p2.addToRange("test2", 10)
@@ -89,21 +90,23 @@ class TestPerformanceFunctions(unittest.TestCase):
         sess2 = MonitoredSession("rev1", "test_batch", config)
         sess2.addStacktrace(s2)
         fits = p2.fitsProfile(sess2)
-        self.assertEqual(fits["test2"], 0)
+        self.assertEqual(fits["test2"]["fits"], 0)
 
     def testSimilarity(self):
-        v1 = {"test1": 1, "test2": 1, "test3": 1, "test4": 1, "test5": 0}
-        v2 = {"test1": 1, "test2": 1, "test3": 1, "test4": 1, "test5": 1}
+        v1 = {"st1": {'fits': 1}, "test2": {'fits': 1}, "test3": {'fits': 1}, "test4": {'fits': 1},
+              "test5": {'fits': 0}}
+        v2 = {"st1": {'fits': 1}, "test2": {'fits': 1}, "test3": {'fits': 1}, "test4": {'fits': 1},
+              "test5": {'fits': 1}}
         p = Profile("24435a", "test_batch", config)
         self.assertAlmostEqual(p.similarity(v2).value, 1)
         self.assertAlmostEqual(p.similarity(v1).value, 0.894427191)
 
     def testProfileHelper(self):
         # reset database before testing
-        InitDatabase(config)
+        # InitDatabase(config)
 
-        s1 = MonitoredStacktrace("test1", 10, 25, config)
-        s2 = MonitoredStacktrace("test2", 25, 25, config)
+        s1 = MonitoredStacktrace("test1", 10, 25, config, avg_value=10)
+        s2 = MonitoredStacktrace("test2", 25, 25, config, avg_value=25)
 
         sess1 = MonitoredSession("rev1", "test_batch", config)
         sess1.addStacktrace(s1)
@@ -119,8 +122,8 @@ class TestPerformanceFunctions(unittest.TestCase):
 
         h = ProfileHelper(config)
 
-        # empty profile
-        self.assertEqual(p.getDatabaseId(), -1)
+        # empty profile should have an id
+        self.assertNotEqual(p.getDatabaseId(), -1)
         # print p
         h.storeInDatabase(p)
 

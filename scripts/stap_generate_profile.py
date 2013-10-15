@@ -9,11 +9,10 @@ Created on Jul 16, 2013
 
 '''
 
+# from gumby.spectraperf.databasehelper import getDatabaseConn
 import sys
-import os
-from spectraperf.databasehelper import *
-from spectraperf.performanceprofile import *
 from gumby.settings import loadConfig
+from gumby.spectraperf.performanceprofile import SessionHelper, Profile, ProfileHelper
 
 
 if __name__ == '__main__':

@@ -4,8 +4,9 @@
 import sys
 import os
 from jinja2 import Environment, FileSystemLoader
-from spectraperf.databasehelper import *
-from spectraperf.performanceprofile import *
+from gumby.settings import loadConfig
+# from spectraperf.databasehelper import *
+from gumby.spectraperf.performanceprofile import MatrixHelper, MetricType, SessionHelper
 # THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -47,7 +48,7 @@ def getCallsPerStacktrace(rev):
 
 def generateRankingDocs():
     global tool
-    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../templates'))
+    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib/templates'))
     loader = FileSystemLoader(searchpath=template_dir)
     env = Environment(loader=loader)
     template = env.get_template('template_ochiai_ranking.html')
@@ -73,7 +74,7 @@ def print_html_doc():
     global tool
     global testcase
     # uses http://softwarebyjosh.com/raphy-charts/
-    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../templates'))
+    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib/templates'))
 
     print "Getting templates from: %s" % template_dir
     loader = FileSystemLoader(searchpath=template_dir)
@@ -104,4 +105,3 @@ if __name__ == '__main__':
     generateRankingDocs()
 
     print_html_doc()
-

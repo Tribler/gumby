@@ -24,6 +24,6 @@ fi
 Rscript $SCRIPTDIR/r/io_writes_report.R $1 $2 "$3"
 
 cd $SCRIPTDIR
-python make_io_writes_report.py $OUTPUTDIR
-cp ../templates/io_writes_report.css $OUTPUTDIR/io_writes_report.css
+python stap_make_io_writes_report.py $OUTPUTDIR
+cp ../lib/templates/io_writes_report.css $OUTPUTDIR/io_writes_report.css
 echo "Report created in $OUTPUTDIR ok"

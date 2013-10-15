@@ -13,9 +13,8 @@ Created on Jul 16, 2013
 
 import sys
 import os
-import glob
-from spectraperf.databasehelper import *
-from spectraperf.performanceprofile import *
+from gumby.settings import loadConfig
+from gumby.spectraperf.performanceprofile import MatrixHelper, ProfileHelper, ActivityMatrix, SessionHelper, Type
 
 
 if __name__ == '__main__':

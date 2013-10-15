@@ -1,6 +1,6 @@
-# ingest_revision_runs.sh ---
+# stap_ingest_revision_runs.sh ---
 #
-# Filename: ingest_revision_runs.sh
+# Filename: stap_ingest_revision_runs.sh
 # Description:
 # Author: Elric Milon
 # Maintainer:
@@ -38,25 +38,42 @@
 
 set -xe
 
-if [ ! -d "$1" ]; then
-    echo "Usage: $0 OUTPUT_DIR_NAME"
-    exit 1
-fi
 
 # Find the experiment dir
-EXPERIMENT_DIR=$( dirname $(readlink -f "$0"))
-if [ ! -d "$EXPERIMENT_DIR" ]; then
-    EXPERIMENT_DIR=$( dirname $(readlink -f $(which "$0")))
+## TODO: remove, use parameter instead
+
+#EXPERIMENT_DIR=$( dirname $(readlink -f "$1"))
+#if [ ! -d "$EXPERIMENT_DIR" ]; then
+#    EXPERIMENT_DIR=$( dirname $(readlink -f $(which "$0")))
+#fi
+#if [ ! -d "$EXPERIMENT_DIR" ]; then
+#    echo "Couldn't figure out where the experiment is, bailing out."
+#    exit 1
+#fi
+
+if [ -z "$CONFFILE" ]; then
+	echo "CONFFILE not set, bailing out"
+	exit 2
 fi
-if [ ! -d "$EXPERIMENT_DIR" ]; then
-    echo "Couldn't figure out where the experiment is, bailing out."
-    exit 1
+if [! -e "$CONFFILE" ]; then
+	echo "Can't find config file, bailing out"
+	exit 2
 fi
 
+if [ -z "$OUTPUTDIR" ]; then
+	echo "OUTPUTDIR not set, bailing out"
+	exit 2
+fi
 
-CONFFILE=$EXPERIMENT_DIR"/test.conf"
+if [ -z "$SIM_REPORT_NAME" ]; then
+	SIM_REPORT_NAME="simreport"
+fi
 
-# TODO: Put this in the config file
+CONFFILE=$(readlink -f $1)
+
+mkdir -p $OUTPUTDIR
+export OUTPUTDIR=$(readlink -f $OUTPUTDIR)
+
 if [ -z "$TESTNAME" ]; then
     TESTNAME="Whatever"
 fi
@@ -64,17 +81,16 @@ if [ -z "$TEST_DESCRIPTION" ]; then
     TEST_DESCRIPTION="Lalla arr"
 fi
 
-cd $1
+cd $OUTPUTDIR
 for CSV in $(ls $TESTNAME*.csv -1tr); do
     REVISION=$(basename $CSV .csv | cut -f4 -d_ )
-    #REP_DIR=report_$(echo $CSV | cut -f2 -d_ )_$(echo $CSV | cut -f3 -d_ )
     REP_DIR=report_$(echo $REVISION)_$(echo $CSV | cut -f3 -d_ )
-    make_io_writes_report.sh $REP_DIR $CSV "$TEST_DESCRIPTION"
-    store_run_in_database.py $CONFFILE $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTNAME
+    stap_make_io_writes_report.sh $REP_DIR $CSV "$TEST_DESCRIPTION"
+    stap_store_run_in_database.py $CONFFILE $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTNAME
 done
 # generate_profile.py now refreshes/generates all profiles for a test case,
 # so it is not necessary to give a revision as argument
-generate_profile.py $CONFFILE $TESTNAME
+stap_generate_profile.py $CONFFILE $TESTNAME
 
 # insert revision into database
 mkdir -p sql
@@ -84,12 +100,12 @@ echo "insert into git_log (revision) values ('$REVISION');" >> sql/gitlog.sql
 sqlite3 $SPECTRAPERF_DB_PATH < sql/gitlog.sql
 
 # calc similarity
-calculate_similarity.py $CONFFILE $1 $REVISION $TESTNAME
+stap_calculate_similarity.py $CONFFILE $OUTPUTDIR $REVISION $TESTNAME
 
 # make report
-mkdir -p simreport
-make_similarity_report.py $CONFFILE simreport $TOOLNAME $TESTNAME
+mkdir -p $SIM_REPORT_NAME
+stap_make_similarity_report.py $CONFFILE $SIM_REPORT_NAME $TOOLNAME $TESTNAME
 
 
 #
-# ingest_revision_runs.sh ends here
+# stap_ingest_revision_runs.sh ends here

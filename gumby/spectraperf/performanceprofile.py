@@ -7,8 +7,7 @@ import csv
 from decimal import Decimal
 from math import sqrt
 import sys
-from gumby.settings import loadConfig
-from spectraperf.databasehelper import getDatabaseConn
+from gumby.spectraperf.databasehelper import getDatabaseConn
 import operator
 
 
@@ -339,8 +338,8 @@ class MonitoredSession(object):
         self.isTestRun = isTestRun
 
         self._config = config
-        self._totalActions = totalActions
-        self._totalBytes = totalBytes
+        self.totalActions = totalActions
+        self.totalBytes = totalBytes
         # self.lookupDict = {}
         # if filename != "":
         #    self.loadSession()

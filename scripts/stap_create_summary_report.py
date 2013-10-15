@@ -5,10 +5,10 @@ Created on Aug 6, 2013
 @author: corpaul
 '''
 import sys
-from spectraperf.performanceprofile import *
-from spectraperf.databasehelper import InitDatabase, getDatabaseConn
 from gumby.settings import loadConfig
+from gumby.spectraperf.databasehelper import getDatabaseConn
 import numpy
+
 
 def getNrRevisions(conn, testcase):
     return len(getRevisions(conn, testcase))

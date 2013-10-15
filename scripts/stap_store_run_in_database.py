@@ -12,9 +12,8 @@ Created on Jul 16, 2013
 
 import sys
 import os
-from spectraperf.performanceprofile import *
-from spectraperf.databasehelper import InitDatabase, getDatabaseConn
 from gumby.settings import loadConfig
+from gumby.spectraperf.performanceprofile import SessionHelper
 
 if __name__ == '__main__':
 
