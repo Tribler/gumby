@@ -40,13 +40,13 @@
 
 set -ex
 
-if [ ! -d "$2" ]; then
-    echo "Usage: $0 CONFFILE OUTPUT_DIR_NAME "
-    exit 1
-fi
 
-if [ -e "$1" ]; then
-	echo "Can't find config file, bailing out"
+if [ -z "$CONFFILE" ]; then
+	echo "CONFFILE not set, bailing out"
+	exit 2
+fi
+if [ -z "$OUTPUT_DIR_NAME" ]; then
+	echo "OUTPUT_DIR_NAME not set, bailing out"
 	exit 2
 fi
 
