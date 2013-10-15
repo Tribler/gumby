@@ -50,7 +50,7 @@ if [ -z "$OUTPUT_DIR_NAME" ]; then
 	exit 2
 fi
 
-export CONFFILE=$(readlink -f $1) 
+export CONFFILE=$(readlink -f $CONFFILE) 
 
 rm -f /tmp/results.log
 
@@ -73,8 +73,8 @@ fi
 
 # TODO: I think this is not needed anymore
 export PYTHONPATH=.
-mkdir -p $2
-export OUTPUTDIR=$(readlink -f $2)
+mkdir -p $OUTPUT_DIR_NAME
+export OUTPUTDIR=$(readlink -f $OUTPUT_DIR_NAME)
 ITERATION_RESULTS_FILE=$OUTPUTDIR/rev_iter_results.log
 
 pushd $REPOSITORY_DIR
