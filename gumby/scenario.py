@@ -51,11 +51,15 @@ from itertools import ifilter
 from random import random
 from re import compile as re_compile
 from twisted.internet import reactor
+from os import environ
+
+from twisted.python.log import msg
 
 class ScenarioRunner():
+
     """
     Reads, parses and schedules events from scenario file.
-    
+
     Use expstartstamp to synchronize all peers (usually you can get this from
     the gumby config server before starting the experiment). Each peer should
     set an unique peernumber.
@@ -68,13 +72,13 @@ class ScenarioRunner():
         TIMESPEC CALLABLE [ARGS] [PEERSPEC]
 
         TIMESPEC = [@+][H:]M:S[-[H:]M:S]
-        
+
             Use @ to schedule events based on experiment startstamp (use this to
-            synchronize all peers) - recommended and default. Use + to schedule
+            synchronize all peers) - recommended. Use + to schedule
             events based on peer's startime. Using just [H:]M:S will schedule
             event hours:minutes:seconds after @ or +, while [H:]M:S-[H:]M:S will
             schedule at a random time in that interval.
-        
+
         CALLABLE = string
 
             Name of a callable previously registered using register()
@@ -86,30 +90,39 @@ class ScenarioRunner():
 
         PEERSPEC = {PEERNR1 [, PEERNR2, ...] [, PEERNR3-PEERNR6, ...]}
 
-            Examples: "1,2" - apply event only for peer 1 and 2, 3-6 - apply
+            Examples: "{1,2}" - apply event only for peer 1 and 2, "{3-6}" - apply
             event for peers 3 to 6 (including 3 and 6).
+
+        Notes:
+             - Have in mind that in case of having several lines with the same
+               time stamp, they will be executed in order.
     """
+    _re_line = re_compile(
+        r"^"
+        r"(?P<origin>[@+])"
+        r"\s*"
+        r"(?:(?P<beginH>\d+):)?(?P<beginM>\d+):(?P<beginS>\d+)"
+        r"(?:\s*-\s*"
+        r"(?:(?P<endH>\d+):)?(?P<endM>\d+):(?P<endS>\d+)"
+        r")?"
+        r"\s+"
+        r"(?P<callable>\w+)(?P<args>\s+(.+?))??"
+        r"(?:\s*"
+        r"{(?P<peers>\s*!?\d+(?:-\d+)?(?:\s*,\s*!?\d+(?:-\d+)?)*\s*)}"
+        r")?\s*(?:\n)?$"
+    )
+    _re_substitution = re_compile("(\$\w+)")
+
+    # TODO(emilon): Remove all the delta stuff, it's not used at all.
+    # TODO(emilon): We should make the minutes and its colon optional, so we can just use secs.
+
     def __init__(self, filename, peernumber, expstartstamp=None):
         self.filename = filename
 
         self._callables = {}
         self._expstartstamp = expstartstamp
         self._peernumber = peernumber
-        self._re_line = re_compile(
-            r"^"
-            r"(?P<origin>[@+])"
-            r"\s*"
-            r"(?:(?P<beginH>\d+):)?(?P<beginM>\d+):(?P<beginS>\d+)"
-            r"(?:\s*-\s*"
-            r"(?:(?P<endH>\d+):)?(?P<endM>\d+):(?P<endS>\d+)"
-            r")?"
-            r"\s+"
-            r"(?P<callable>\w+)(?P<args>\s+(.+?))??"
-            r"(?:\s*"
-            r"{(?P<peers>\s*!?\d+(?:-\d+)?(?:\s*,\s*!?\d+(?:-\d+)?)*\s*)}"
-            r")?\s*(?:\n)?$"
-        )
-        self._origin = None # will be set just before run()-ing
+        self._origin = None  # will be set just before run()-ing
 
     def register(self, clb, name=None):
         """
@@ -125,9 +138,8 @@ class ScenarioRunner():
         # _parse_scenario_line() will choose one of them for each lines
         now = time()
         self._origin = {
-            "@" : float(self._expstartstamp)
-                if self._expstartstamp is not None else now,
-            "+" : now
+            "@": float(self._expstartstamp) if self._expstartstamp is not None else now,
+            "+": now
         }
 
     def run(self):
@@ -140,7 +152,7 @@ class ScenarioRunner():
 
         for (tstmp, lineno, clb, args) in self._parse_scenario(self.filename):
             if clb not in self._callables:
-                # ignore non-registered callables
+                msg(clb, "is not registered as an action!")
                 continue
             # TODO(vladum): Handle errors while calling.
             delay = tstmp - time()
@@ -176,27 +188,32 @@ class ScenarioRunner():
 
         The command tuple is described in _parse_scenario().
         """
+        # Look for $VARIABLES to replace with config options from the env.
+        for substitution in self._re_substitution.findall(line):
+            if substitution[1:] in environ:
+                line = line.replace(substitution, environ[substitution[1:]])
+
         match = self._re_line.match(line)
         if match:
             # remove all entries that are None (to get default per key)
             dic = dict(ifilter(
-                lambda (key, value): value is not None,
+                lambda key_value: key_value[1] is not None,
                 match.groupdict().iteritems()
             ))
 
             # only return lines that belong to this peer
             if self._parse_for_this_peer(dic.get("peers", "")):
                 begin = int(dic.get("beginH", 0)) * 3600.0 + \
-                        int(dic.get("beginM", 0)) * 60.0 + \
-                        int(dic.get("beginS", 0))
+                    int(dic.get("beginM", 0)) * 60.0 + \
+                    int(dic.get("beginS", 0))
                 end = int(dic.get("endH", 0)) * 3600.0 + \
-                      int(dic.get("endM", 0)) * 60.0 + \
-                      int(dic.get("endS", 0))
+                    int(dic.get("endM", 0)) * 60.0 + \
+                    int(dic.get("endS", 0))
                 assert end == 0.0 or begin <= end, \
-                       "if given, end time must be at or after the start time"
+                    "if given, end time must be at or after the start time"
                 timestamp = self._origin[dic.get("origin", "@")] + \
-                            begin + \
-                            (random() * (end - begin) if end else 0.0)
+                    begin + \
+                    (random() * (end - begin) if end else 0.0)
                 return (
                     timestamp,
                     lineno,
@@ -234,11 +251,11 @@ class ScenarioRunner():
                 # parse the peer number (or peer number pair)
                 if "-" in peer:
                     low, high = peer.split("-")
-                    peers.update(xrange(int(low), int(high)+1))
+                    peers.update(xrange(int(low), int(high) + 1))
                 else:
                     peers.add(int(peer))
         return (
-            not (yes_peers or no_peers) or 
+            not (yes_peers or no_peers) or
             (yes_peers and self._peernumber in yes_peers) or
             (no_peers and not self._peernumber in no_peers)
         )

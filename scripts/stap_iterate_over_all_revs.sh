@@ -59,8 +59,8 @@ if [ -z "$REPOSITORY_DIR" ]; then
     exit 2
 fi
 
-if [ ! -d $REPOSITORY_DIR -a ! -z $REPOSITORY_URL ]; then
-    git clone $REPOSITORY_URL $REPOSITORY_DIR
+if [ ! -d "$REPOSITORY_DIR" -a ! -z "$REPOSITORY_URL" ]; then
+    git clone "$REPOSITORY_URL" "$REPOSITORY_DIR"
 fi
 
 # Do only one iteration by default
@@ -71,9 +71,11 @@ if [ -z "$TESTNAME" ]; then
     TESTNAME="Whatever"
 fi
 
+# TODO: I think this is not needed anymore
 export PYTHONPATH=.
 mkdir -p $2
 export OUTPUTDIR=$(readlink -f $2)
+ITERATION_RESULTS_FILE=$OUTPUTDIR/rev_iter_results.log
 
 pushd $REPOSITORY_DIR
 git clean -fd
@@ -83,8 +85,7 @@ fi
 
 COUNT=0
 
-#for REV in $(git log --quiet d1dbf7e..HEAD | grep ^"commit " | cut -f2 -d" "); do
-for REV in $(git log --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f2 -d" "); do
+for REV in $(git log --topo-order --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
 
     git checkout $REV
@@ -97,12 +98,14 @@ for REV in $(git log --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f
         let ITERATION=1+$ITERATION
 
         rm -fR sqlite
+        pycompile $([ -z "$PYTHONOPTIMIZE" ] || echo -n "-O" ) .
         cd ..
-        set +e
-        run_stap_probe.sh "$TEST_COMMAND" $OUTPUTDIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
-        set -e
+        [ ! -z "$PRE_PROBE_CMD" ] && $PRE_PROBE_CMD
+        run_stap_probe.sh "$TEST_COMMAND" $OUTPUT_DIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
+        [ ! -z "$POST_PROBE_CMD" ] && $POST_PROBE_CMD
         cd -
-        echo $? $ITERATION $REV >> /tmp/results.log
+        echo $? $ITERATION $REV >> $ITERATION_RESULTS_FILE
+        git checkout -- .
         git clean -fd
     done
 done

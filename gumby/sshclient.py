@@ -36,19 +36,14 @@
 
 # Code:
 
-import sys
 import os
 
-from zope.interface import implements
-
-from twisted.python.log import err, msg, Logger
+from twisted.python.log import err, msg
 from twisted.python.failure import Failure
 from twisted.internet import reactor
 from twisted.internet.error import ConnectionDone, ProcessTerminated, ConnectionLost
 from twisted.internet.defer import Deferred, DeferredList, succeed, setDebugging
-from twisted.internet.interfaces import IStreamClientEndpoint
-from twisted.internet.protocol import Factory, Protocol, ClientFactory
-from twisted.internet.endpoints import TCP4ClientEndpoint
+from twisted.internet.protocol import ClientFactory
 
 from twisted.conch.ssh.common import NS
 from twisted.conch.ssh.channel import SSHChannel
@@ -60,12 +55,13 @@ from twisted.conch.ssh.session import packRequest_pty_req
 
 from struct import unpack, pack
 
-#setDebugging(True)
+# setDebugging(True)
 
 _ERROR_REASONS = (
     ProcessTerminated,
     ConnectionLost
 )
+
 
 class _CommandTransport(SSHClientTransport):
     _secured = False
@@ -103,6 +99,7 @@ class _CommandTransport(SSHClientTransport):
 
 
 class _CommandConnection(SSHConnection):
+
     def __init__(self, command):
         SSHConnection.__init__(self)
         self.command_str = command
@@ -130,22 +127,27 @@ class _CommandChannel(SSHChannel):
     #     self._commandConnected.errback(reason)
 
     def channelOpen(self, _):
+
         def ptyReqFailed(reason):
             # TODO(vladum): Why is this never called? Looks like the Transport
             # received the error (at least the packet integrity ones).
             err("SSH PTY Request failed")
             self.reason = reason
             self.conn.sendClose(self)
+            return reason
 
-        modes = pack("<B", 0x00) # only TTY_OP_END
+        # First request the TTY
+        modes = pack("<B", 0x00)  # only TTY_OP_END
         win_size = (0, 0, 0, 0)  # 0s are ignored
         pty_req_data = packRequest_pty_req('vt100', win_size, modes)
         d = self.conn.sendRequest(self, 'pty-req', pty_req_data, wantReply=True)
+        d.addErrback(ptyReqFailed)
+
+        # And now we are ready to run the command
         d.addCallback(
-            # send command after we get the pty
+            # Send command after we get the pty
             lambda _: self.conn.sendRequest(self, 'exec', NS(self.command))
         )
-        d.addErrback(ptyReqFailed)
 
     def dataReceived(self, bytes_):
         # we could recv more than 1 line
@@ -190,6 +192,7 @@ class _CommandChannel(SSHChannel):
 
 
 class CommandFactory(ClientFactory):
+
     def __init__(self, command, user):
         self.command = command
         self.user = user
@@ -206,17 +209,6 @@ class CommandFactory(ClientFactory):
 
 
 def runRemoteCMD(host, command):
-    def checkExitStatus(reason):
-        if reason:
-            return reason
-            # if reason.type is ConnectionDone:
-            #     return 0
-            # elif reason.type is ProcessTerminated:
-            #     if reason.value.exitCode:
-            #         return reason.value.exitCode
-            #     else:
-            #         return -reason.value.signal
-
     if '@' in host:
         user, host = host.split('@')
     else:
@@ -230,7 +222,6 @@ def runRemoteCMD(host, command):
     factory = CommandFactory(command, user)
     reactor.connectTCP(host, port, factory)
 
-    factory.finished.addBoth(checkExitStatus)
     return factory.finished
 
 #

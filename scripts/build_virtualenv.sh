@@ -35,8 +35,10 @@
 #
 #
 
+SCRIPT_VERSION=2
+
 # Code:
-set -ex
+set -e
 
 if [ ! -z "$VIRTUALENV_DIR" ]; then
     VENV=$VIRTUALENV_DIR
@@ -44,19 +46,21 @@ else
     VENV=$HOME/venv
 fi
 
-write_extra_vars()
-{
-    if [ -e $PROJECTROOT/experiment_vars.sh ]; then
-        echo "export EXTRA_LD_LIBRARY_PATH=$VENV/lib:$VENV/inst/lib" >> $PROJECTROOT/experiment_vars.sh
-    fi
-}
-
 export LD_LIBRARY_PATH=$VENV/inst/lib:$VENV/lib:$LD_LIBRARY_PATH
 
+echo "If you get any build problems, please, make sure you have all the required deps:
+For SystemTap & co.:
+sudo apt-get build-dep systemtap
+sudo apt-get install libncurses-dev systemtap-sdt-dev:
+
+For WX:
+sudo apt-get build-dep wxwidgets2.8
+sudo apt-get install libpangox-1.0-dev
+"
 
 # Build the systemtap enabled python runtime and systemtap itself
 # if dtrace is available, if not, just build python 2.7
-if [ ! -e $VENV/inst/.completed ]; then
+if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
     mkdir -p $VENV/src
     pushd $VENV/src
     if [ -e /usr/bin/dtrace ]; then
@@ -68,7 +72,6 @@ if [ ! -e $VENV/inst/.completed ]; then
 
 
     if [ "$WITH_SYSTEMTAP" == yes ]; then
-
         if [ ! -e libdwarf-*gz ]; then
             wget http://reality.sgiweb.org/davea/libdwarf-20130207.tar.gz
         fi
@@ -95,8 +98,6 @@ if [ ! -e $VENV/inst/.completed ]; then
             tar xavf DyninstAPI-*tgz
         fi
         pushd DyninstAPI-*/
-        ls
-        sudo apt-get build-dep systemtap ||:
         ./configure --prefix=$VENV/inst -with-libdwarf-incdir=$VENV/inst/include --with-libdwarf-libdir=$VENV/inst/lib
         #make -j$(grep process /proc/cpuinfo | wc -l)
         make
@@ -125,24 +126,18 @@ if [ ! -e $VENV/inst/.completed ]; then
     if [ ! -e $VENV/inst/bin/python ]; then
         pushd cpython-2011
         hg checkout dtrace-issue13405_2.7
-        sudo apt-get install libncurses-dev systemtap-sdt-dev ||:
-        ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared
+        LDFLAGS="-Wl,-rpath=$VENV/inst/lib" ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared
         cp Modules/Setup.dist Modules/Setup
         make -j$(grep process /proc/cpuinfo | wc -l)
         make install
         popd
     fi
-    touch $VENV/inst/.completed
+    touch $VENV/inst/.completed.$SCRIPT_VERSION
     popd
 fi
 
-if [ -e $VENV/.completed ]; then
-    echo "The virtualenv has been successfully built in a previous run of the script."
-    echo "If you want to rebuild it or the script has been updated, either delete $VENV/.completed"
-    echo "or the full $VENV dir and re-run the script."
-    write_extra_vars
-
-    exit 0
+if [ -e $VENV/.completed.$SCRIPT_VERSION ]; then
+    exit
 fi
 
 # Build libevent, not really needed for anything python related, but swift
@@ -174,7 +169,7 @@ source $VENV/bin/activate
 
 
 # Install apsw manually as it is not available trough pip.
-if [ ! -e $VENV/lib*/python2.*/site-packages/apsw.so ]; then
+if [ ! -e $VENV/lib/python2.*/site-packages/apsw.so ]; then
     pushd $VENV/src
     if [ ! -e apsw-*zip ]; then
         wget https://apsw.googlecode.com/files/apsw-3.7.16.2-r1.zip
@@ -185,7 +180,7 @@ if [ ! -e $VENV/lib*/python2.*/site-packages/apsw.so ]; then
     cd apsw*/
     # Fix a bug on apsw's setup.py
     sed -i "s/part=part.split('=', 1)/part=tuple(part.split('=', 1))/" setup.py
-    python setup.py fetch --missing-checksum-ok --all build --enable-all-extensions install # test # running the tests makes it segfault...
+    python setup.py fetch --missing-checksum-ok --all --version=3.7.17 build --enable-all-extensions install # test # running the tests makes it segfault...
     popd
 fi
 
@@ -293,25 +288,26 @@ if [ ! -d wxPython*/ ]; then
 fi
 pushd wxPython*/
 if [ ! -e $VENV/lib/libwx_gtk2u_gizmos_xrc-*.so ]; then
-    sudo apt-get install libpangox-1.0-dev ||:
-    sudo apt-get build-dep wxwidgets2.8 ||:
     make uninstall ||:
     make clean ||:
     ./configure --prefix=$VENV \
-        --with-gtk \
-        --without-gnomeprint \
-        --without-opengl \
-        --enable-sound \
-        --with-sdl \
         --enable-display \
         --enable-geometry \
         --enable-graphics_ctx \
+        --enable-sound \
+        --enable-unicode \
+        --with-gtk \
         --with-libjpeg=sys \
         --with-libpng=sys \
+        --with-libtiff=builtin \
         --with-libtiff=sys \
+        --with-sdl \
         --with-zlib=sys \
+        --without-gnomeprint \
+        --without-opengl \
         --with-expat=sys
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    # TODO(emilon): Are those CFLAGS needed?
+    CFLAGS="-Iinclude" make -j$(grep process /proc/cpuinfo | wc -l) || CFLAGS="-Iinclude" make
     make install
     pushd contrib
     make -j$(grep process /proc/cpuinfo | wc -l) || make
@@ -319,7 +315,8 @@ if [ ! -e $VENV/lib/libwx_gtk2u_gizmos_xrc-*.so ]; then
     popd
 fi
 pwd
-if [ ! -e ./lib/python*/site-packages/wx-*/wxPython/_wx.py ]; then
+
+if [ ! -e $VENV/lib/python*/site-packages/wx-*/wxPython/_wx.py ]; then
     pushd wxPython
     python setup.py build BUILD_GLCANVAS=0 #BUILD_STC=0
     python setup.py install BUILD_GLCANVAS=0 #BUILD_STC=0
@@ -328,21 +325,27 @@ fi
 popd
 
 echo "
-ipython
-ntplib
-gmpy==1.16
-pyzmq
-pysqlite
-netifaces
-twisted # Used by the config server/clients
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
-nose
 PIL
 configobj
-unicodecsv # used for report generation scripts from Cor-Paul
+gmpy==1.16
+ipython
+netifaces
+nose
+nosexcover
+ntplib
 numpy # used for report generation scripts from Cor-Paul
+pysqlite
+pyzmq
+twisted # Used by the config server/clients
+unicodecsv # used for report generation scripts from Cor-Paul
 " > ~/requirements.txt
+
+# For some reason the pip scripts get a python 2.6 shebang, fix it.
+sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
+
 pip install -r ~/requirements.txt
+#$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt
 rm ~/requirements.txt
 
 deactivate
@@ -353,9 +356,14 @@ virtualenv --relocatable $VENV
 #mv $VENV $VENV/../venv
 rm -fR build-tmp
 
-write_extra_vars
-
-touch $VENV/.completed
+if [ ! -e $VENV/inst/bin/staprun -o -u $VENV/inst/bin/staprun -a $(stat -c %U staprun 2> /dev/null)==root ]; then
+    touch $VENV/.completed.$SCRIPT_VERSION
+else
+    echo " Please, run those commands as root and re-run the setup script."
+    echo "   chown root $VENV/inst/bin/staprun"
+    echo "   chmod +s   $VENV/inst/bin/staprun"
+    exit 100
+fi
 
 echo "Done, you can use this virtualenv with:
 	source venv/bin/activate

@@ -1,11 +1,11 @@
-#!/bin/bash -ex
-# das4_setup.sh ---
+#!/usr/bin/env python
+# pycompile.py ---
 #
-# Filename: das4_setup.sh
+# Filename: pycompile.py
 # Description:
 # Author: Elric Milon
 # Maintainer:
-# Created: Fri Jun 21 16:10:45 2013 (+0200)
+# Created: Tue Oct  8 14:14:35 2013 (+0200)
 
 # Commentary:
 #
@@ -37,7 +37,11 @@
 
 # Code:
 
-build_virtualenv.sh
+from compileall import compile_dir
+import re
+from sys import argv
+compile_dir(argv[1], rx=re.compile('/[.]svn'), force=False)
+
 
 #
-# das4_setup.sh ends here
+# pycompile.py ends here

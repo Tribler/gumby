@@ -36,22 +36,31 @@
 
 # Code:
 
-from configobj import ConfigObj
+from getpass import getuser
+from hashlib import md5
+from os import path, environ
 from validate import Validator
 
+from configobj import ConfigObj
+
 conf_spec = '''
-workspace_dir = string
+experiment_name = string
+workspace_dir = string(default="./")
+remote_workspace_dir = string(default="./")
+output_dir = string(default="output")
 head_nodes = list(default=[])
-tracker_cmd = string(default="run_tracker.sh")
-config_server_cmd = string(default="")
+tracker_cmd = string(default="")
+experiment_server_cmd = string(default="")
 tracker_run_remote = boolean(default=True)
 tracker_port = integer(min=1025, max=65535, default=7788)
 
-local_setup_cmd = string(default="gorilla_setup.sh")
+local_setup_cmd = string(default="")
 remote_setup_cmd = string(default="das4_setup.sh")
 
 local_instance_cmd = string(default="")
 remote_instance_cmd = string(default="")
+
+post_process_cmd = string(default="")
 
 use_local_venv = boolean(default=True)
 use_local_systemtap = boolean(default=False)
@@ -69,7 +78,35 @@ def loadConfig(path):
     # TODO: Find a better way to do this (If the default value for a list is an empty list, it just doesn't set the value at all)
     if 'head_nodes' not in config:
         config["head_nodes"] = []
+    for key, value in config.iteritems():
+        # If any config option has the special value __unique_port__, compute a unique port for it by hashing the user running
+        # the experiment, the experiment name and the config option name.
+        if value == '__unique_port__':
+            md5sum = md5()
+            md5sum.update(getuser())
+            md5sum.update(config['experiment_name'])
+            md5sum.update(key)
+            config[key] = int(md5sum.hexdigest()[-16:], 16) % 20000 + 20000
+
+    # Override config options with env. variables.
+    revalidate = False
+    for key, value in environ.iteritems():
+        if key.startswith("GUMBY_"):
+            name = key[6:].lower()  # "GUMBY_".len()
+            config[name] = value
+            revalidate = True
+    if revalidate:
+        config.validate(validator)
     return config
 
+
+def configToEnv(config):
+    """
+    Processes a dictionary of config options so it can be exported as env. variables when running a subprocess.
+    """
+    env = {}
+    for name, val in config.iteritems():
+        env[name.upper()] = path.expanduser(path.expandvars(str(val)))
+    return env
 #
 # settings.py ends here

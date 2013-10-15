@@ -1,15 +1,15 @@
-#!/bin/bash -ex
-# das4_setup.sh ---
+#!/bin/bash
+# das4_reserve_and_run.sh ---
 #
-# Filename: das4_setup.sh
+# Filename: das4_reserve_and_run.sh
 # Description:
 # Author: Elric Milon
 # Maintainer:
-# Created: Fri Jun 21 16:10:45 2013 (+0200)
+# Created: Tue Aug 27 19:27:30 2013 (+0200)
 
 # Commentary:
 #
-#
+# A simple script to run an experiment on the DAS4 trough prun.
 #
 #
 
@@ -37,7 +37,13 @@
 
 # Code:
 
-build_virtualenv.sh
+export HEAD_NODE=$(hostname)
+# This will be used from das4_node_run_job.sh to rsync the output data back to the head node
+export OUTPUT_DIR_URI="$HEAD_NODE:$OUTPUT_DIR"
+
+echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
+
+prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh
 
 #
-# das4_setup.sh ends here
+# das4_reserve_and_run.sh ends here
