@@ -61,6 +61,10 @@ if [ ! -e "$CONFFILE" ]; then
 	exit 2
 fi
 
+# should be unnecessary but gumby seems to re-enter a venv for post process cmd
+# so temp fix
+export OUTPUTDIR=$(readlink -f $OUTPUT_DIR_NAME)
+
 if [ -z "$OUTPUTDIR" ]; then
 	echo "OUTPUTDIR not set, bailing out"
 	exit 2
