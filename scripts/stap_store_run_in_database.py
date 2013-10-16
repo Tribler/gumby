@@ -21,7 +21,7 @@ if __name__ == '__main__':
         print "Usage: python store_run_in_database.py configFile csvPath revision testcase"
         sys.exit(0)
 
-    config = loadConfig(sys.argv[1])
+    config = loadConfig(os.path.abspath(sys.argv[1]))
 
     # DATABASE = os.path.abspath("../database/performance.db")
     print "Setting database: %s " % config['spectraperf_db_path']
