@@ -93,13 +93,7 @@ done
 # so it is not necessary to give a revision as argument
 stap_generate_profile.py $CONFFILE $TESTNAME
 
-# insert revision into database
-mkdir -p sql
-# make sure to remove the previous entry
-rm -f sql/gitlog.sql
-echo "insert into git_log (revision) values ('$REVISION');" >> sql/gitlog.sql
-sqlite3 $SPECTRAPERF_DB_PATH < sql/gitlog.sql
-
+insert_revision.py $CONFFILE $REVISION
 # calc similarity
 stap_calculate_similarity.py $CONFFILE $OUTPUTDIR $REVISION $TESTNAME
 
