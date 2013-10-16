@@ -56,7 +56,7 @@ if [ -z "$CONFFILE" ]; then
 	echo "CONFFILE not set, bailing out"
 	exit 2
 fi
-if [! -e "$CONFFILE" ]; then
+if [ ! -e "$CONFFILE" ]; then
 	echo "Can't find config file, bailing out"
 	exit 2
 fi
