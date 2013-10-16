@@ -90,7 +90,7 @@ for CSV in $(ls $TESTNAME*.csv -1tr); do
     stap_store_run_in_database.py $CONFFILE $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTNAME
 done
 
-for REV IN $(ls *.csv | cut -f4 -d_ | uniq); do
+for REV in $(ls *.csv | cut -f4 -d_ | uniq); do
 	stap_insert_revision.py $CONFFILE $REV
 	# generate_profile.py now refreshes/generates all profiles for a test case,
 	# so it is not necessary to give a revision as argument
