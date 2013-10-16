@@ -74,11 +74,6 @@ if [ -z "$SIM_REPORT_NAME" ]; then
 	SIM_REPORT_NAME="simreport"
 fi
 
-CONFFILE=$(readlink -f $1)
-
-mkdir -p $OUTPUTDIR
-export OUTPUTDIR=$(readlink -f $OUTPUTDIR)
-
 if [ -z "$TESTNAME" ]; then
     TESTNAME="Whatever"
 fi
