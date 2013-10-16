@@ -1,3 +1,4 @@
+#!/bin/bash
 # stap_ingest_revision_runs.sh ---
 #
 # Filename: stap_ingest_revision_runs.sh
