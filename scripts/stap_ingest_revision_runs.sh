@@ -88,14 +88,15 @@ for CSV in $(ls $TESTNAME*.csv -1tr); do
     REP_DIR=report_$(echo $REVISION)_$(echo $CSV | cut -f3 -d_ )
     stap_make_io_writes_report.sh $REP_DIR $CSV "$TEST_DESCRIPTION"
     stap_store_run_in_database.py $CONFFILE $REP_DIR/summary_per_stacktrace.csv $REVISION $TESTNAME
+    stap_insert_revision.py $CONFFILE $REVISION
+    # generate_profile.py now refreshes/generates all profiles for a test case,
+	# so it is not necessary to give a revision as argument
+	stap_generate_profile.py $CONFFILE $TESTNAME
+	# calc similarity
+	stap_calculate_similarity.py $CONFFILE $OUTPUTDIR $REVISION $TESTNAME	    
 done
-# generate_profile.py now refreshes/generates all profiles for a test case,
-# so it is not necessary to give a revision as argument
-stap_generate_profile.py $CONFFILE $TESTNAME
 
-stap_insert_revision.py $CONFFILE $REVISION
-# calc similarity
-stap_calculate_similarity.py $CONFFILE $OUTPUTDIR $REVISION $TESTNAME
+
 
 # make report
 mkdir -p $SIM_REPORT_NAME
