@@ -93,7 +93,7 @@ done
 # so it is not necessary to give a revision as argument
 stap_generate_profile.py $CONFFILE $TESTNAME
 
-insert_revision.py $CONFFILE $REVISION
+stap_insert_revision.py $CONFFILE $REVISION
 # calc similarity
 stap_calculate_similarity.py $CONFFILE $OUTPUTDIR $REVISION $TESTNAME
 
