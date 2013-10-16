@@ -18,32 +18,29 @@ from gumby.spectraperf.performanceprofile import SessionHelper, Profile, Profile
 if __name__ == '__main__':
 
     if len(sys.argv) < 3:
-        print "This script will generate profiles for all revisions for a testcase."
-        print "Usage: python generate_profile.py configFile testcase"
+        print "This script will generate the profile for a revision for a testcase."
+        print "Usage: python generate_profile_batch.py configFile revision testcase"
         sys.exit(0)
 
     config = loadConfig(sys.argv[1])
 
-    # revision = sys.argv[2]
-    testcase = sys.argv[2]
+    revision = sys.argv[2]
+    testcase = sys.argv[3]
 
     helper = SessionHelper(config)
-    # get all revisions in the database for this testcase
-    revs = helper.getAllRevisions(testcase)
 
-    # build profiles for all revisions
-    for r in revs:
-        # load all sessions for this revision and testcase
-        sessions = helper.loadFromDatabase(r, testcase)
-        if len(sessions) == 0:
-            print "No sessions found."
-            sys.exit(0)
+    # build profile
+    # load all sessions for this revision and testcase
+    sessions = helper.loadFromDatabase(revision, testcase)
+    if len(sessions) == 0:
+        print "No sessions found."
+        sys.exit(0)
 
-        p = Profile(r, testcase, config)
-        for s in sessions:
-            print "adding session to profile for %s " % r
-            p.addSession(s)
+    p = Profile(revision, testcase, config)
+    for s in sessions:
+        print "adding session to profile for %s " % revision
+        p.addSession(s)
 
-        profileHelper = ProfileHelper(config)
-        print "Saving profile for: %s" % r
-        profileHelper.storeInDatabase(p)
+    profileHelper = ProfileHelper(config)
+    print "Saving profile for: %s" % revision
+    profileHelper.storeInDatabase(p)

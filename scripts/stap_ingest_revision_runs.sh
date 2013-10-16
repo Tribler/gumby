@@ -91,7 +91,7 @@ for CSV in $(ls $TESTNAME*.csv -1tr); do
     stap_insert_revision.py $CONFFILE $REVISION
     # generate_profile.py now refreshes/generates all profiles for a test case,
 	# so it is not necessary to give a revision as argument
-	stap_generate_profile.py $CONFFILE $TESTNAME
+	stap_generate_profile.py $CONFFILE $REVISION $TESTNAME
 	# calc similarity
 	stap_calculate_similarity.py $CONFFILE $OUTPUTDIR $REVISION $TESTNAME	    
 done
