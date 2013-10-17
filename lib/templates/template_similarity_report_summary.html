@@ -16,7 +16,7 @@
 </head>
 <body>
 <center>
-<strong>Total bytes written per revision</strong>
+<strong>Total MBytes written per revision</strong>
 
 	<div id='placeholder' style='width: 300px; height: 125px; cursor: pointer;'></div>
 	<div id="clickdata"></div>
@@ -37,14 +37,16 @@
 								[{% for item in similarity %} [{{ loop.index }}, "{{ item.rev }}"], {% endfor %}]
 							]
 				},
-				yaxis: { ticks: true  }
+				yaxis: {tickFormatter: function mbytes(x) {
+                          return x/1000000;
+                    }
+                },
 		});
 
 		$("#placeholder").click(function(){
 			window.open('sim_report.html');			
 		});		
 		
-		$("#tabnav").hide();
 	});
 </script>
 </center>
