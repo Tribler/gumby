@@ -37,7 +37,7 @@
 
 # Code:
 
-from os import environ, path, chdir, makedirs
+from os import environ, path, chdir, makedirs, symlink
 from sys import stdout, exit
 import logging.config
 
@@ -92,6 +92,13 @@ class DispersyExperimentScriptClient(ExperimentClient):
         my_dir = path.join(environ['OUTPUT_DIR'], self.my_id)
         makedirs(my_dir)
         chdir(my_dir)
+
+        # TODO(emilon): Fix me or kill me
+        try:
+            symlink(path.join(environ['PROJECT_DIR'], 'tribler', 'bootstraptribler.txt'), 'bootstraptribler.txt')
+        except OSError:
+            pass
+
 
         self.registerCallbacks()
 
