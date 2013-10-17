@@ -18,9 +18,9 @@
 <center>
 <strong>Total bytes written per revision</strong>
 
-	<a href="sim_report.html" target="_blank"><div id='placeholder' style='width: 300px; height: 125px;'></div>
+	<div id='placeholder' style='width: 300px; height: 125px; cursor: pointer;'></div>
 	<div id="clickdata"></div>
-	</a>
+	
 <script>
 	$( document ).ready(function() {
 
@@ -41,7 +41,7 @@
 		});
 
 		$("#placeholder").click(function(){
-			window.location = 'IO_Similarity_report';			
+			window.open('sim_report.html');			
 		});		
 		
 		$("#tabnav").hide();
