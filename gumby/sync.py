@@ -102,9 +102,9 @@ class ExperimentServiceProto(LineReceiver):
             if self.state == 'done':
                 self.transport.loseConnection()
 
-    def connectionLost(self, cosa):
+    def connectionLost(self, reason):
         self.factory.unregisterConnection(self)
-        LineReceiver.connectionLost(self, cosa)
+        LineReceiver.connectionLost(self, reason)
 
     #
     # Protocol state handlers
