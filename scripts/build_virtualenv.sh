@@ -35,7 +35,7 @@
 #
 #
 
-SCRIPT_VERSION=2
+SCRIPT_VERSION=4
 
 # Code:
 set -e
@@ -324,6 +324,27 @@ if [ ! -e $VENV/lib/python*/site-packages/wx-*/wxPython/_wx.py ]; then
 fi
 popd
 
+# recent libgmp needed by pycrypto
+if [ ! -e $VENV/src/gmp-5.1.3.tar.bz2 ]; then
+    pushd $VENV/src
+    wget "ftp://ftp.gmplib.org/pub/gmp-5.1.3/gmp-5.1.3.tar.bz2"
+    popd
+fi
+
+if [ ! -e $VENV/src/gmp-*/ ]; then
+    pushd $VENV/src
+    tar axvf $VENV/src/gmp-5.1.3.tar.bz2
+    popd
+fi
+
+if [ ! -e $VENV/include/gmp.h ]; then
+    pushd $VENV/src/gmp-*/
+    ./configure --prefix=$VENV
+    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make install
+fi
+
+
 echo "
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 PIL
@@ -335,6 +356,8 @@ nose
 nosexcover
 ntplib
 numpy # used for report generation scripts from Cor-Paul
+pyasn1 # for twisted
+pycrypto # Twisted needs it
 pysqlite
 pyzmq
 twisted # Used by the config server/clients
@@ -344,7 +367,7 @@ unicodecsv # used for report generation scripts from Cor-Paul
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
 sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
 
-pip install -r ~/requirements.txt
+CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~/requirements.txt
 #$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt
 rm ~/requirements.txt
 
