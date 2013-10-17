@@ -38,7 +38,7 @@
 							]
 				},
 				yaxis: {tickFormatter: function mbytes(x) {
-                          return x/1000000;
+                          return Math.round(x/1000000);
                     }
                 },
 		});
