@@ -1,0 +1,45 @@
+<table border=1>
+	<tr>
+		<th colspan=7>Similarity report for revision <a href="https://github.com/Tribler/{{ tool }}/commit/{{ matrix.revision }}" target="_blank">{{ matrix.revision }}</a></th>
+		<th>
+			Test execution report 
+			{% for i in range(1,6) %}
+			<a href="../report_{{ matrix.revision }}_{{ i }}/io_writes_report.html" target="_blank">{{ i }}</a>
+			{% endfor %}
+		</th>			
+	</tr>
+	<tr>
+		<th>#</th>
+		<th>Similarity</th>
+		<th>Total impact (KB)</th>
+		<th>KBytes off</th>
+		<th>Range difference (KB)</th>
+		<th>Runs</th>
+		<th>Stack trace</th>
+		<th># calls</th>
+	</tr>
+
+	{% for item in matrix.sortedMetrics[1] %}
+	<tr>
+		<td>{{ loop.index }} </td>
+		<td>{{ item[1]['value'] }}</td>
+		{% set impact = item[1]['totalImpact']/1000 %}
+		{% set bytesOff = item[1]['bytesOff']/1000 %}
+		{% set rangeDiff = item[1]['rangeDiff'] %}
+		{% if rangeDiff > -1 %}
+		  {% set rangeDiff = item[1]['rangeDiff']/1000 %}
+		{% endif %}
+		
+		<td align="right">{{ '%d' % impact }}</td>
+		<td align="right">{{ '%d' % bytesOff }}</td>
+		<td align="right">{{ '%d' % rangeDiff }}</td>
+		<td align="right">{{ item[1]['runs'] }}</th>
+		<td><div class="stacktrace">{{ item[0]|replace("<-", "", 1)|replace("<-", "<br>")|replace("/home/user/python-src/virtualenv-attempt/venv", "") }}</div></td></td>
+		<td>
+			{% for i in callsPerStacktrace[item[0]] %}
+			{{ '%d' % i }},
+			{% endfor %}
+		</td>
+	</tr>
+	{% endfor %}
+	</table>
