@@ -40,13 +40,15 @@
 from os import environ, path, chdir, makedirs, symlink
 from sys import stdout, exit
 import logging.config
+import logging
 
 from gumby.sync import ExperimentClient, ExperimentClientFactory
 from gumby.scenario import ScenarioRunner
 
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
-from twisted.python.log import msg, err, startLogging, PythonLoggingObserver
+from twisted.python.log import msg, startLogging, PythonLoggingObserver
+
 
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):
@@ -86,7 +88,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.stop)
         self.scenario_runner.register(self.set_master_member)
 
-
         # TODO(emilon): Move this to the right place
         # TODO(emilon): Do we want to have the .dbs in the output dirs or should they be dumped to /tmp?
         my_dir = path.join(environ['OUTPUT_DIR'], self.my_id)
@@ -98,7 +99,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
             symlink(path.join(environ['PROJECT_DIR'], 'tribler', 'bootstraptribler.txt'), 'bootstraptribler.txt')
         except OSError:
             pass
-
 
         self.registerCallbacks()
 
@@ -222,6 +222,26 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     def str2bool(self, v):
         return v.lower() in ("yes", "true", "t", "1")
+
+
+def main(client_class):
+    startLogging(stdout)
+    observer = PythonLoggingObserver()
+    observer.start()
+    config_file = path.join(environ['EXPERIMENT_DIR'], "logger.conf")
+    # TODO(emilon): Document this on the user manual
+    if path.exists(config_file):
+        msg("This experiment has a logger.conf, using it.")
+        logging.config.fileConfig(config_file)
+    else:
+        msg("No logger.conf found for this experiment.")
+
+    factory = ExperimentClientFactory({}, client_class)
+    reactor.connectTCP(environ['HEAD_NODE'], int(environ['SYNC_PORT']), factory)
+
+    reactor.exitCode = 0
+    reactor.run()
+    exit(reactor.exitCode)
 
 #
 # dummy_scenario_experiment_client.py ends here

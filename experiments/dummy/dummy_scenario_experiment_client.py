@@ -37,22 +37,22 @@
 
 # Code:
 
-from os import environ, path
+from os import path
 from random import choice
 from string import letters
-from sys import stdout, exit, path as pythonpath
+from sys import path as pythonpath
 from time import time
 import json
-import logging
 
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread
-from gumby.sync import ExperimentClientFactory
+
+from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main
+
 
 # TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
 # The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
 from twisted.internet import reactor
-from twisted.python.log import startLogging, PythonLoggingObserver, msg
+from twisted.python.log import PythonLoggingObserver, msg
 
 # TODO(emilon): Fix this crap
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
@@ -243,30 +243,8 @@ class AllChannelClient(DispersyExperimentScriptClient):
 
             yield 1.0
 
-
-def main():
-    config_file = path.join(environ['EXPERIMENT_DIR'], "logger.conf")
-    # TODO(emilon): Document this on the user manual
-    if path.exists(config_file):
-        msg("This experiment has a logger.conf, using it.")
-        logging.config.fileConfig(config_file)
-    else:
-        msg("No logger.conf found for this experiment.")
-
-    factory = ExperimentClientFactory({"random_key": "random value"}, AllChannelClient)
-    reactor.connectTCP(environ['HEAD_NODE'], int(environ['SYNC_PORT']), factory)
-
-    reactor.exitCode = 0
-    reactor.run()
-    exit(reactor.exitCode)
-
 if __name__ == '__main__':
-    # TODO(emilon): Temporary hack to work around the missing EXPERIMENT_DIR env var, export it in run_in_env
-    environ['EXPERIMENT_DIR'] = path.abspath(path.dirname(__file__))
-    startLogging(stdout)
-    observer = PythonLoggingObserver()
-    observer.start()
-    main()
+    main(AllChannelClient)
 
 #
 # dummy_scenario_experiment_client.py ends here
