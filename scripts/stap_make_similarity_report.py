@@ -70,10 +70,9 @@ def generateRankingDocs():
             fh.write(report)
 
 
-def print_html_doc():
+def generateSimReport():
     global tool
     global testcase
-    # uses http://softwarebyjosh.com/raphy-charts/
     template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../lib/templates'))
 
     print "Getting templates from: %s" % template_dir
@@ -91,6 +90,17 @@ def print_html_doc():
     with open(outputPath + '/sim_report.html', 'wb') as fh:
         fh.write(report)
 
+    # generate summary report for display on the job main page
+    template = env.get_template('template_similarity_report_summary.html')
+    report = template.render(
+            title='Similarity report summary',
+            similarity=getTotalBytesWrittenPerRevision(),
+            tool=tool,
+            testcase=testcase
+            ).encode("utf-8")
+    with open(outputPath + '/sim_report_summary.html', 'wb') as fh:
+        fh.write(report)
+
 if __name__ == '__main__':
     if len(sys.argv) == 5:
         config = loadConfig(sys.argv[1])
@@ -103,5 +113,4 @@ if __name__ == '__main__':
     # print outputPath
     # getSimilarityPerStacktrace()
     generateRankingDocs()
-
-    print_html_doc()
+    generateSimReport()
