@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<head>
+    <title>{{ title }}</title>
+    <link type="text/css" href="io_writes_report.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/css/style.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/css/color.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/container/assets/container.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/assets/skins/sam/skin.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/container/assets/skins/sam/container.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/button/assets/skins/sam/button.css" />
+    <link rel="stylesheet" type="text/css" href="/jenkins/static/5ab39aca/scripts/yui/menu/assets/skins/sam/menu.css" />
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/flot/0.8.1/jquery.flot.min.js"></script>
+</head>
+<body>
+<center>
+<strong>Total MBytes written per revision</strong>
+
+	<div id='placeholder' style='width: 300px; height: 125px; cursor: pointer;'></div>
+	<div id="clickdata"></div>
+	
+<script>
+	$( document ).ready(function() {
+
+		var plot = $.plot($("#placeholder"), [
+			[{% for item in similarity %} [{{ loop.index }}, {{ item.value }}], {% endfor %}]
+			], {
+				grid: {
+					hoverable: false,
+					clickable: false
+				},
+				series: { lines: { show: true }, points: { show: true } },
+				xaxis: {
+					ticks:	[
+								[{% for item in similarity %} [{{ loop.index }}, "{{ item.rev }}"], {% endfor %}]
+							]
+				},
+				yaxis: {tickFormatter: function mbytes(x) {
+                          return Math.round(x/1000000);
+                    }
+                },
+		});
+
+		$("#placeholder").click(function(){
+			window.open('sim_report.html');			
+		});		
+		
+	});
+</script>
+</center>
+
+
+</body>
+</html>
