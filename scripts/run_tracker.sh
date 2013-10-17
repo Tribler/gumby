@@ -49,9 +49,24 @@
 #find_free_port
 #echo "TRACKER_PORT=$TRACKER_PORT" >> experiment_run.conf
 
-cd $PROJECTROOT
+cd $PROJECT_DIR
 
-python -O -c "from dispersy.tool.tracker import main; main()" --port $TRACKER_PORT > "$PROJECTROOT/output/tracker_out.log"
+echo "PWD" $PWD
+if [ -e tribler ]; then
+    cd tribler
+    MODULEPATH=Tribler.dispersy.tool.tracker
+else
+    MODULEPATH=dispersy.tool.tracker
+fi
+
+# TODO: Use HEAD_IP as override for this
+if [ -z "$HEAD_IP" ]; then
+    HEAD_IP=$(hostname)
+fi
+
+echo $HEAD_IP $TRACKER_PORT > bootstraptribler.txt
+
+python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT 2>&1 > "$OUTPUT_DIR/tracker_out.log"
 
 #
 # run_tracker.sh ends here
