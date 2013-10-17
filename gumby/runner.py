@@ -256,7 +256,7 @@ class ExperimentRunner(Logger):
             # TODO: This is not very flexible, refactor it to have a background_commands
             # list instead of experiment_server_cmd, tracker_cmd, etc...
             # Only run it on the DAS head node if we aren't using systemtap.
-            self._config_server_d = self.runCommand(self._cfg['experiment_server_cmd'], not self._cfg.as_bool('use_local_systemtap'))
+            self._config_server_d = self.runCommand(self._cfg['experiment_server_cmd'], self._cfg.as_bool('experiment_server_run_remote'))
             self._config_server_d.addErrback(onConfigServerDied)
             d = Deferred()
             reactor.callLater(1, d.callback, None)

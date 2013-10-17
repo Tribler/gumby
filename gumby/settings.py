@@ -49,10 +49,13 @@ workspace_dir = string(default="./")
 remote_workspace_dir = string(default="./")
 output_dir = string(default="output")
 head_nodes = list(default=[])
+
 tracker_cmd = string(default="")
-experiment_server_cmd = string(default="")
-tracker_run_remote = boolean(default=True)
+tracker_run_remote = boolean(default=False)
 tracker_port = integer(min=1025, max=65535, default=7788)
+
+experiment_server_run_remote = boolean(default=False)
+experiment_server_cmd = string(default="")
 
 local_setup_cmd = string(default="")
 remote_setup_cmd = string(default="das4_setup.sh")
