@@ -64,28 +64,28 @@ reduce_dispersy_statistics.py .  $XMAX
 mkdir -p $R_LIBS_USER
 R --no-save --quiet < $R_SCRIPTS_PATH/install.r
 
+(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/drop.r          ; PID1=$!) 2>&1 > /dev/null | tee drop.r.log &
+(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/total_records.r ; PID2=$!) 2>&1 > /dev/null | tee total_records.r.log &
+(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/connections.r   ; PID3=$!) 2>&1 > /dev/null | tee connections.r.log &
+(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/send_received.r ; PID4=$!) 2>&1 > /dev/null | tee send_received.r.log &
+(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/cputimes.r      ; PID5=$!) 2>&1 > /dev/null | tee cputimes.r.log &
+(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/statistics.r    ; PID6=$!) 2>&1 > /dev/null | tee statistics.r.log &
 
-R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/drop.r > /dev/null &
-PID1=$!
-R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/total_records.r > /dev/null &
-PID2=$!
-R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/connections.r > /dev/null &
-PID3=$!
-R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/send_received.r > /dev/null &
-PID4=$!
-R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/cputimes.r > /dev/null &
-PID5=$!
-R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/statistics.r > /dev/null &
-PID6=$!
 
 wait $PID1
+DROP=$?
 wait $PID2
+RECORDS=$?
 wait $PID3
+CONNECTIONS=$?
 wait $PID4
+SEND_RECVD=$?
 wait $PID5
+CPU=$?
 wait $PID6
+STATISTICS=$?
 
-
+echo "exit statuses:" DROP: $DROP RECORDS: $RECORDS CONNECTIONS: $CONNECTIONS SEND_RECVD: $SEND_RECVD CPU: $CPU STATISTICS: $STATISTICS
 
 #
 # post_process_dispersy_experiment.sh ends here
