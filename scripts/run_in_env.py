@@ -85,6 +85,9 @@ else:
 env = environ.copy()
 env.update(configToEnv(config))
 
+env['PROJECT_DIR'] = project_dir
+environ['PROJECT_DIR'] = project_dir
+
 # Add project dir to PYTHONPATH
 extend_var(env, "PYTHONPATH", project_dir)
 
