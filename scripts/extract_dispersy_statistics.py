@@ -24,6 +24,10 @@ class ExtractStatistics:
             handler.parse(self)
 
         files = sorted(self.yield_files())
+        if not len(files):
+            print >> sys.stderr, "No files found to parse!"
+            sys.exit(1)
+
         print >> sys.stderr, "Starting to parse", len(files), "files"
 
         self.min_timeoffset = sys.maxsize
