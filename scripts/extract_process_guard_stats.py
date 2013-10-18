@@ -70,8 +70,8 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
     prev_readbytes = {}
     prev_times = {}
 
+    filename = 'resource_usage.log'
     for root, dirs, files in os.walk(input_directory):
-        filename = 'resource_usage.log'
         if filename in files:
             print >> sys.stderr, "Parsing resource_usage file %s" % filename
             nodename = root.split('/')[-1]
@@ -149,7 +149,6 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
             for time, values in dictionary.iteritems():
                 for node in all_nodes:
                     if node in values:
-                        print >> sys.stderr, ">>>>>>>>>>>>", values
                         values[node] = sum(values[node])
 
         # write mean for all nodes to separate files
