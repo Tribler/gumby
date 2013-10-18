@@ -40,7 +40,7 @@
 set -x
 export HEAD_NODE=$(hostname)
 # This will be used from das4_node_run_job.sh to rsync the output data back to the head node
-if [ -z "$HEAD_NODES" ]; then
+if [ "$HEAD_NODES" == '[]' ]; then
     # This means we are running the experiment locally
     mkdir $OUTPUT_DIR/localhost
     export OUTPUT_DIR_URI="$HEAD_NODE:$OUTPUT_DIR/localhost"
