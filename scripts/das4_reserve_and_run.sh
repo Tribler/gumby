@@ -37,7 +37,6 @@
 
 # Code:
 
-set -x
 export HEAD_NODE=$(hostname)
 # This will be used from das4_node_run_job.sh to rsync the output data back to the head node
 if [ "$HEAD_NODES" == '[]' ]; then
@@ -50,7 +49,11 @@ fi
 
 echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
 
-prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh
+prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh &
+PID=$?
 
+sleep 1
+preserve -llist
+wait $PID
 #
 # das4_reserve_and_run.sh ends here
