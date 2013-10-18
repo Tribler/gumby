@@ -88,7 +88,7 @@ class ExperimentRunner(Logger):
             pp = OneShotProcessProtocol()
             workspace_dir = self._cfg['workspace_dir']
             args = ("/usr/bin/rsync", "-az", "--recursive", "--exclude=.git*",
-                    "--exclude=.svn", "--exclude=local", "--exclude=output", "--delete-excluded",
+                    "--exclude=.svn", "--exclude=local", "--exclude=output", "--delete-excluded", "--delete-during",
                     workspace_dir + '/', ":".join((host, self._remote_workspace_dir + '/')
                                                   ))
             msg("Running: %s " % ' '.join(args))
