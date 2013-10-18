@@ -24,6 +24,7 @@ class ExtractStatistics:
             handler.parse(self)
 
         files = sorted(self.yield_files())
+        print >> sys.stderr, "Starting to parse", len(files), "files"
 
         self.min_timeoffset = sys.maxsize
         self.max_timeoffset = 0
@@ -34,7 +35,6 @@ class ExtractStatistics:
         after_size = 0
         total_size = len(files)
 
-        print >> sys.stderr, "Starting to parse", len(files), "files"
 
         for node_nr, filename, outputdir in files:
             for handler in self.handlers:
