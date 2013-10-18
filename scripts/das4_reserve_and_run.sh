@@ -50,7 +50,7 @@ fi
 echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
 
 prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh &
-PID=$?
+PID=$!
 
 sleep 1
 preserve -llist
