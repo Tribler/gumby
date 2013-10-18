@@ -116,7 +116,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
                 self.joined_community = community
                 return
 
-        reactor.callLater(1, self.join)
+        self._dispersy.callback.register(self.join, delay=1.0)
 
     @call_on_dispersy_thread
     def publish(self, amount=1):
