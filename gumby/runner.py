@@ -39,7 +39,7 @@
 
 import sys
 from os import path, chdir, environ
-
+from shutil import rmtree
 from twisted.python.log import err, msg, Logger
 from twisted.internet.defer import Deferred, setDebugging, gatherResults, succeed
 
@@ -314,33 +314,39 @@ class ExperimentRunner(Logger):
         self.local_env.update(configToEnv(self._cfg))
 
         # Step 2:
+        # Clear output dir before starting.
+        output_dir = path.join(self._workspace_dir, 'output')
+        if path.exists(output_dir):
+            rmtree(output_dir)
+
+        # Step 3:
         # Sync the working dir with the head nodes
         d = Deferred()
         d.addCallback(lambda _: self.copyWorkspaceToHeadNodes())
 
-        # Step 3:
+        # Step 4:
         # Run the set up script, both locally and in the head nodes
         d.addCallback(lambda _: self.runSetupScripts())
 
-        # Step 4:
+        # Step 5:
         # Start the tracker, either locally or on the first head node of the list.
         d.addCallback(lambda _: self.startTracker())
 
-        # Step 5:
+        # Step 6:
         # Start the config server, always locally if running instances locally as the head nodes are firewalled and
         # can only be reached from the outside trough SSH.
         d.addCallback(lambda _: self.startExperimentServer())
 
-        # Step 6:
+        # Step 7:
         # Spawn both local and remote instance runner scripts, which will connect to the config server and wait for all
         # of them to be ready before starting the experiment.
         d.addCallback(lambda _: self.startInstances())
 
-        # Step 7:
+        # Step 8:
         # Collect all the data from the remote head nodes.
         d.addCallback(lambda _: self.collectOutputFromHeadNodes())
 
-        # Step 8:
+        # Step 9:
         # Extract the data and graph stuff
         d.addCallback(lambda _: self.runPostProcess())
 
