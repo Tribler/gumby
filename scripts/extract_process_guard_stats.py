@@ -149,6 +149,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
             for time, values in dictionary.iteritems():
                 for node in all_nodes:
                     if node in values:
+                        print >> sys.stderr, ">>>>>>>>>>>>", values
                         values[node] = sum(values[node])
 
         # write mean for all nodes to separate files
