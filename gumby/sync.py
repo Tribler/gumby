@@ -67,7 +67,7 @@ epollreactor.install()
 from twisted.internet import reactor
 from twisted.internet.defer import gatherResults
 from twisted.internet.error import ConnectionDone
-from twisted.internet.protocol import Factory, ClientFactory
+from twisted.internet.protocol import Factory, ReconnectingClientFactory
 from twisted.internet.task import deferLater
 from twisted.protocols.basic import LineReceiver
 from twisted.python.log import msg, err
@@ -269,7 +269,7 @@ class ExperimentClient(LineReceiver):
             self.transport.loseConnection()
 
 
-class ExperimentClientFactory(ClientFactory):
+class ExperimentClientFactory(ReconnectingClientFactory):
 
     def __init__(self, vars, protocol=ExperimentClient):
         self.vars = vars
@@ -290,6 +290,9 @@ class ExperimentClientFactory(ClientFactory):
         if reason.type is not ConnectionDone:
             reactor.exitCode = 3
             stopReactor()
+        else:
+            # If the connection is cleanly closed we can stop trying to reconnect.
+            self.stopTrying()
 #
 # Aux stuff
 #
