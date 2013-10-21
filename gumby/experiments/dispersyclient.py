@@ -41,10 +41,14 @@ from os import environ, path, chdir, makedirs, symlink
 from sys import stdout, exit
 import logging.config
 import logging
+import json
+from time import time
 
 from gumby.sync import ExperimentClient, ExperimentClientFactory
 from gumby.scenario import ScenarioRunner
 
+# TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
+# The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 from twisted.python.log import msg, startLogging, PythonLoggingObserver
@@ -87,6 +91,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.stop_dispersy)
         self.scenario_runner.register(self.stop)
         self.scenario_runner.register(self.set_master_member)
+        self.scenario_runner.register(self.reset_dispersy_statistics, 'reset_dispersy_statistics')
 
         # TODO(emilon): Move this to the right place
         # TODO(emilon): Do we want to have the .dbs in the output dirs or should they be dumped to /tmp?
@@ -169,6 +174,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._master_member = self._dispersy.callback.call(self._dispersy.get_member, (self.master_key,))
         self._my_member = self._dispersy.callback.call(self._dispersy.get_new_member, (u"low",))
+
+        self._dispersy.callback.register(self._do_log)
         msg("Finished starting dispersy")
 
     def stop_dispersy(self):
@@ -216,12 +223,104 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 community.unload_community()
             self._community = None
 
+    @call_on_dispersy_thread
+    def reset_dispersy_statistics(self):
+        self._dispersy._statistics.reset()
+
+    def annotate(self, message):
+        self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, "annotate", message))
+
+
     #
     # Aux. functions
     #
 
     def str2bool(self, v):
         return v.lower() in ("yes", "true", "t", "1")
+
+    def _do_log(self):
+        def print_on_change(name, prev_dict, cur_dict):
+            new_values = {}
+            changed_values = {}
+            if cur_dict:
+                for key, value in cur_dict.iteritems():
+                    if not isinstance(key, (basestring, int, long)):
+                        key = str(key)
+
+                    new_values[key] = value
+                    if prev_dict.get(key, None) != value:
+                        changed_values[key] = value
+
+            if changed_values:
+                self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
+                self._stats_file.flush()
+                return new_values
+            return prev_dict
+
+        prev_statistics = {}
+        prev_total_received = {}
+        prev_total_dropped = {}
+        prev_total_delayed = {}
+        prev_total_outgoing = {}
+        prev_total_fail = {}
+        prev_endpoint_recv = {}
+        prev_endpoint_send = {}
+        prev_created_messages = {}
+        prev_bootstrap_candidates = {}
+
+        while True:
+            self._dispersy.statistics.update()
+
+            communities_dict = []
+            for c in self._dispersy.statistics.communities:
+                communities_dict.append({'cid': c.hex_cid,
+                                         'classification': c.classification,
+                                         'global_time': c.global_time,
+                                         'sync_bloom_new': c.sync_bloom_new,
+                                         'sync_bloom_reuse': c.sync_bloom_reuse,
+                                         'sync_bloom_send': c.sync_bloom_send,
+                                         'sync_bloom_skip': c.sync_bloom_skip,
+                                         'nr_candidates': len(c.candidates) if c.candidates else 0})
+
+            statistics_dict = {'conn_type': self._dispersy.statistics.connection_type,
+                               'received_count': self._dispersy.statistics.received_count,
+                               'success_count': self._dispersy.statistics.success_count,
+                               'drop_count': self._dispersy.statistics.drop_count,
+                               'delay_count': self._dispersy.statistics.delay_count,
+                               'delay_success': self._dispersy.statistics.delay_success,
+                               'delay_timeout': self._dispersy.statistics.delay_timeout,
+                               'delay_send': self._dispersy.statistics.delay_send,
+                               'created_count': self._dispersy.statistics.created_count,
+                               'total_up': self._dispersy.statistics.total_up,
+                               'total_down': self._dispersy.statistics.total_down,
+                               'total_send': self._dispersy.statistics.total_send,
+                               'cur_sendqueue': self._dispersy.statistics.cur_sendqueue,
+                               'total_candidates_discovered': self._dispersy.statistics.total_candidates_discovered,
+                               'walk_attempt': self._dispersy.statistics.walk_attempt,
+                               'walk_success': self._dispersy.statistics.walk_success,
+                               'walk_bootstrap_attempt': self._dispersy.statistics.walk_bootstrap_attempt,
+                               'walk_bootstrap_success': self._dispersy.statistics.walk_bootstrap_success,
+                               'walk_reset': self._dispersy.statistics.walk_reset,
+                               'walk_invalid_response_identifier': self._dispersy.statistics.walk_invalid_response_identifier,
+                               'walk_advice_outgoing_request': self._dispersy.statistics.walk_advice_outgoing_request,
+                               'walk_advice_incoming_response': self._dispersy.statistics.walk_advice_incoming_response,
+                               'walk_advice_incoming_response_new': self._dispersy.statistics.walk_advice_incoming_response_new,
+                               'walk_advice_incoming_request': self._dispersy.statistics.walk_advice_incoming_request,
+                               'walk_advice_outgoing_response': self._dispersy.statistics.walk_advice_outgoing_response,
+                               'communities': communities_dict}
+
+            prev_statistics = print_on_change("statistics", prev_statistics, statistics_dict)
+            prev_total_dropped = print_on_change("statistics-dropped-messages", prev_total_dropped, self._dispersy.statistics.drop)
+            prev_total_delayed = print_on_change("statistics-delayed-messages", prev_total_delayed, self._dispersy.statistics.delay)
+            prev_total_received = print_on_change("statistics-successful-messages", prev_total_received, self._dispersy.statistics.success)
+            prev_total_outgoing = print_on_change("statistics-outgoing-messages", prev_total_outgoing, self._dispersy.statistics.outgoing)
+            prev_created_messages = print_on_change("statistics-created-messages", prev_created_messages, self._dispersy.statistics.created)
+            prev_total_fail = print_on_change("statistics-walk-fail", prev_total_fail, self._dispersy.statistics.walk_fail)
+            prev_endpoint_recv = print_on_change("statistics-endpoint-recv", prev_endpoint_recv, self._dispersy.statistics.endpoint_recv)
+            prev_endpoint_send = print_on_change("statistics-endpoint-send", prev_endpoint_send, self._dispersy.statistics.endpoint_send)
+            prev_bootstrap_candidates = print_on_change("statistics-bootstrap-candidates", prev_bootstrap_candidates, self._dispersy.statistics.bootstrap_candidates)
+
+            yield 1.0
 
 
 def main(client_class):
