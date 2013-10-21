@@ -72,7 +72,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.join, 'join')
         self.scenario_runner.register(self.publish, 'publish')
         self.scenario_runner.register(self.post, 'post')
-        self.scenario_runner.register(self.annotate, 'annotate')
 
     def start_dispersy(self):
         from Tribler.community.channel.preview import PreviewChannelCommunity

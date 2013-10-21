@@ -92,6 +92,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.stop)
         self.scenario_runner.register(self.set_master_member)
         self.scenario_runner.register(self.reset_dispersy_statistics, 'reset_dispersy_statistics')
+        self.scenario_runner.register(self.annotate, 'annotate')
 
         # TODO(emilon): Move this to the right place
         # TODO(emilon): Do we want to have the .dbs in the output dirs or should they be dumped to /tmp?
