@@ -47,7 +47,7 @@ cd $OUTPUT_DIR
 #Step 1: Extract the data needed for the graphs from the experiment log file.
 
 TEMPFILE=$(mktemp)
-$DISPERSY_STATISTICS_EXTRACTION_CMD . , > $TEMPFILE
+$DISPERSY_STATISTICS_EXTRACTION_CMD . $MESSAGES_TO_PLOT > $TEMPFILE
 #Get the XMIN XMAX XSTART vars from the extracted data
 source $TEMPFILE
 rm $TEMPFILE

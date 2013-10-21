@@ -39,7 +39,6 @@ class ExtractStatistics:
         after_size = 0
         total_size = len(files)
 
-
         for node_nr, filename, outputdir in files:
             for handler in self.handlers:
                 handler.new_file(node_nr, filename, outputdir)
