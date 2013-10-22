@@ -74,12 +74,10 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.post, 'post')
 
     def start_dispersy(self):
-        from Tribler.community.demers.preview import PreviewChannelCommunity
-        from Tribler.community.demers.community import ChannelCommunity
+        from Tribler.community.demers.community import DemersTest
 
         DispersyExperimentScriptClient.start_dispersy(self)
-        self._dispersy.callback.call(self._dispersy.define_auto_load, (ChannelCommunity, (), {"integrate_with_tribler": False}))
-        self._dispersy.callback.call(self._dispersy.define_auto_load, (PreviewChannelCommunity, (), {"integrate_with_tribler": False}))
+        self._dispersy.callback.call(self._dispersy.define_auto_load, (DemersTest, (), {"integrate_with_tribler": False}))
 
         self.community_args = (self._my_member,)
 
