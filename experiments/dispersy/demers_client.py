@@ -94,7 +94,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
 
         master = self._dispersy.get_member(self.master_key)
         if master:
-            community =  DemersTest.join_community(self._dispersy, master, self.my_member)
+            community =  DemersTest.join_community(self._dispersy, master, self._my_member)
             if community:
                 self._community = community
             else:
