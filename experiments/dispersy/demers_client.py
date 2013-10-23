@@ -50,7 +50,7 @@ from twisted.python.log import msg
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
 
 
-class DemersTest(DispersyExperimentScriptClient):
+class DemersClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
         from Tribler.community.demers.community import DemersTest
@@ -69,8 +69,8 @@ class DemersTest(DispersyExperimentScriptClient):
             self._community.create_text(text)
 
 if __name__ == '__main__':
-    DemersTest.scenario_file = "demers.scenario"
-    main(DemersTest)
+    DemersClient.scenario_file = "demers.scenario"
+    main(DemersClient)
 
 #
 # demers_client.py ends here
