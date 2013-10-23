@@ -50,33 +50,27 @@ from twisted.python.log import msg
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
 
 
-class AllChannelClient(DispersyExperimentScriptClient):
+class DemersTest(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
         from Tribler.community.demers.community import DemersTest
         DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
         self.community_class = DemersTest
 
-        self.joined_community = None
-
-        self._stats_file = None
-
     def registerCallbacks(self):
-        self._stats_file = open("statistics.log", 'w')
-
         self.scenario_runner.register(self.publish, 'publish')
 
     @call_on_dispersy_thread
     def publish(self, amount=1):
         amount = int(amount)
-        if self.my_channel:
-            for _ in xrange(amount):
-                msg('creating-text')
-                text = u''.join(choice(letters) for _ in xrange(100))
-                self._community.create_text(text)
+        for _ in xrange(amount):
+            msg('creating-text')
+            text = u''.join(choice(letters) for _ in xrange(100))
+            self._community.create_text(text)
 
 if __name__ == '__main__':
-    main(AllChannelClient)
+    DemersTest.scenario_file = "demers.scenario"
+    main(DemersTest)
 
 #
 # demers_client.py ends here
