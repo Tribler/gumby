@@ -48,6 +48,7 @@ for FILE in $(find -type f ! -empty -name "*.err"); do
 done
 echo "Done"
 
+# @CONF_OPTION DISPERSY_STATISTICS_EXTRACTION_CMD: Override the default statistics extraction script.
 if [ -z "$DISPERSY_STATISTICS_EXTRACTION_CMD" ]; then
     DISPERSY_STATISTICS_EXTRACTION_CMD=extract_dispersy_statistics.py
 fi
