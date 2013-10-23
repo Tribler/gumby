@@ -39,12 +39,21 @@
 
 set -e
 
+# Step 1: Look for non-empty stderr files and print its contents
+
+echo "Looking for execution errors..."
+for FILE in $(find -type f ! -empty -name "*.err"); do
+    echo "Found in: $FILE"
+    cat "$FILE"
+done
+echo "Done"
+
 if [ -z "$DISPERSY_STATISTICS_EXTRACTION_CMD" ]; then
     DISPERSY_STATISTICS_EXTRACTION_CMD=extract_dispersy_statistics.py
 fi
 
 cd $OUTPUT_DIR
-#Step 1: Extract the data needed for the graphs from the experiment log file.
+#Step 2: Extract the data needed for the graphs from the experiment log file.
 
 TEMPFILE=$(mktemp)
 $DISPERSY_STATISTICS_EXTRACTION_CMD . $MESSAGES_TO_PLOT > $TEMPFILE
@@ -52,13 +61,13 @@ $DISPERSY_STATISTICS_EXTRACTION_CMD . $MESSAGES_TO_PLOT > $TEMPFILE
 source $TEMPFILE
 rm $TEMPFILE
 
-#Step 2: Extract the resource usage data from the process_guard logs.
+#Step 3: Extract the resource usage data from the process_guard logs.
 extract_process_guard_stats.py . . $XSTART
 
-#Step 3: Reduce the data
+#Step 4: Reduce the data
 reduce_dispersy_statistics.py . 300
 
-#Step 4: Graph the stuff
+#Step 5: Graph the stuff
 # TODO(emilon): Maybe move this to the general setup script
 #make sure the R local install dir exists
 mkdir -p $R_LIBS_USER
