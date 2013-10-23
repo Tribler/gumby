@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # dummy_scenario_experiment_client.py ---
 #
-# Filename: dummy_scenario_experiment_client.py
+# Filename: allchannel_client.py
 # Description:
 # Author: Elric Milon
 # Maintainer:
@@ -61,13 +61,9 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.joined_community = None
         self.torrentindex = 1
 
-        self._stats_file = None
-
         self.set_community_kwarg('integrate_with_tribler', False)
 
     def registerCallbacks(self):
-        self._stats_file = open("statistics.log", 'w')
-
         self.scenario_runner.register(self.create, 'create')
         self.scenario_runner.register(self.join, 'join')
         self.scenario_runner.register(self.publish, 'publish')
@@ -144,7 +140,8 @@ class AllChannelClient(DispersyExperimentScriptClient):
 
 
 if __name__ == '__main__':
+    AllChannelClient.scenario_file = 'allchannel_1000.scenario'
     main(AllChannelClient)
 
 #
-# dummy_scenario_experiment_client.py ends here
+# allchannel_client.py ends here

@@ -62,6 +62,7 @@ def call_on_dispersy_thread(func):
 
 
 class DispersyExperimentScriptClient(ExperimentClient):
+    scenario_file = None
 
     def __init__(self, vars):
         ExperimentClient.__init__(self, vars)
@@ -73,10 +74,11 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._strict = True
         self.community_args = []
         self.community_kwargs = {}
+        self._stats_file = None
 
     def startExperiment(self):
         msg("Starting dummy scenario experiment")
-        scenario_file_path = path.join(environ['EXPERIMENT_DIR'], "allchannel_1000.scenario")
+        scenario_file_path = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
 
         self.scenario_runner = ScenarioRunner(scenario_file_path, int(self.my_id))
         # TODO(emilon): Auto-register this stuff
@@ -99,6 +101,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         my_dir = path.join(environ['OUTPUT_DIR'], self.my_id)
         makedirs(my_dir)
         chdir(my_dir)
+        self._stats_file = open("statistics.log", 'w')
 
         # TODO(emilon): Fix me or kill me
         try:
@@ -231,11 +234,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def annotate(self, message):
         self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, "annotate", message))
 
-
     #
     # Aux. functions
     #
-
     def str2bool(self, v):
         return v.lower() in ("yes", "true", "t", "1")
 
