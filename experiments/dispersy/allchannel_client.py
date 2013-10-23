@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # dummy_scenario_experiment_client.py ---
 #
-# Filename: dummy_scenario_experiment_client.py
+# Filename: allchannel_client.py
 # Description:
 # Author: Elric Milon
 # Maintainer:
@@ -144,4 +144,4 @@ if __name__ == '__main__':
     main(AllChannelClient)
 
 #
-# dummy_scenario_experiment_client.py ends here
+# allchannel_client.py ends here
