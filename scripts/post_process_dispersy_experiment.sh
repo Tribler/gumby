@@ -56,7 +56,7 @@ rm $TEMPFILE
 extract_process_guard_stats.py . . $XSTART
 
 #Step 3: Reduce the data
-reduce_dispersy_statistics.py .  $XMAX
+reduce_dispersy_statistics.py . 300
 
 #Step 4: Graph the stuff
 # TODO(emilon): Maybe move this to the general setup script
