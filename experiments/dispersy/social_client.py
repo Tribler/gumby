@@ -86,8 +86,6 @@ class SocialClient(DispersyExperimentScriptClient):
         self._manual_create_introduction_request = self._community.create_introduction_request
         self._community.create_introduction_request = lambda destination, allow_sync: self._manual_create_introduction_request(destination, False)
 
-        self._dispersy.callback.register(self.monitor_friends)
-
     @call_on_dispersy_thread
     def my_key(self, key):
         from Tribler.community.privatesemantic.rsa import bytes_to_key
@@ -116,6 +114,10 @@ class SocialClient(DispersyExperimentScriptClient):
 
         self.friends.add((ip, port))
         self.not_connected_friends.add((ip, port))
+
+
+        self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
+
 
     @call_on_dispersy_thread
     def connect_to_friends(self):
@@ -150,10 +152,8 @@ class SocialClient(DispersyExperimentScriptClient):
             if self.friends:
                 connected_friends = len(self.friends) - len(self.not_connected_friends)
                 bootstrapped = connected_friends / float(len(self.friends))
-
             elif self.not_connected_friends:
                 bootstrapped = 0
-
             else:
                 bootstrapped = 1
 
