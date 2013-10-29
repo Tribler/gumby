@@ -74,7 +74,12 @@ class SocialClient(DispersyExperimentScriptClient):
         self._dispersy.callback.register(self.monitor_friends)
 
     def add_friend(self, peer_id, key):
+        from Tribler.community.privatesemantic.rsa import bytes_to_key
+
         peer_id = int(peer_id)
+        key = key.replace("_", " ")
+        key = bytes_to_key(key)
+
         self._community._db.set_key(peer_id, key)
 
         ip, port = self.get_peer_ip_port(peer_id)
