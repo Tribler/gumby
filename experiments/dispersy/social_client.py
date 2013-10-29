@@ -76,8 +76,8 @@ class SocialClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.add_friend, 'add_friend')
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
 
-    def set_peer_type(self, peertype):
-        DispersyExperimentScriptClient.set_peer_type(self, peertype)
+    def peertype(self, peertype):
+        DispersyExperimentScriptClient.peer_type(self, peertype)
         if peertype == "peercache":
             self.peercache = True
 

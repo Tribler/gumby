@@ -97,7 +97,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.set_master_member)
         self.scenario_runner.register(self.reset_dispersy_statistics, 'reset_dispersy_statistics')
         self.scenario_runner.register(self.annotate)
-        self.scenario_runner.register(self.peer_type)
+        self.scenario_runner.register(self.peertype)
 
         # TODO(emilon): Move this to the right place
         # TODO(emilon): Do we want to have the .dbs in the output dirs or should they be dumped to /tmp?
@@ -236,7 +236,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     def annotate(self, message):
         self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, "annotate", message))
-    def peer_type(self, peertype):
+    def peertype(self, peertype):
         self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, "peertype", peertype))
 
     #
