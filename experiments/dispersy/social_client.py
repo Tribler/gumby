@@ -77,7 +77,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
 
     def peertype(self, peertype):
-        DispersyExperimentScriptClient.peer_type(self, peertype)
+        DispersyExperimentScriptClient.peertype(self, peertype)
         if peertype == "peercache":
             self.peercache = True
 
@@ -163,7 +163,7 @@ class SocialClient(DispersyExperimentScriptClient):
             else:
                 bootstrapped = 0
 
-            connected_foafs = len(list(self._community.yield_taste_buddies())) - len(self.friends)
+            connected_foafs = max(0, len(list(self._community.yield_taste_buddies())) - len(self.friends))
 
             prev_scenario_statistics = self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped': bootstrapped, 'connected_foafs': connected_foafs})
             prev_scenario_debug = self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_friends)})
