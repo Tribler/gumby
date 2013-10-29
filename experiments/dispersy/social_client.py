@@ -70,6 +70,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
 
     def set_peer_type(self, peertype):
+        DispersyExperimentScriptClient.set_peer_type(self, peertype)
         if peertype == "late join":
             self.latejoin = True
 
