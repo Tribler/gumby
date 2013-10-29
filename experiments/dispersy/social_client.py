@@ -65,7 +65,6 @@ class SocialClient(DispersyExperimentScriptClient):
         self.set_community_kwarg('max_prefs', 100)
         self.set_community_kwarg('max_fprefs', 100)
 
-
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
         self.community_args = (self._my_member,)
@@ -148,9 +147,13 @@ class SocialClient(DispersyExperimentScriptClient):
                 else:
                     self.not_connected_friends.add(sock_addr)
 
-            if len(self.friends):
+            if self.friends:
                 connected_friends = len(self.friends) - len(self.not_connected_friends)
                 bootstrapped = connected_friends / float(len(self.friends))
+
+            elif self.not_connected_friends:
+                bootstrapped = 0
+
             else:
                 bootstrapped = 1
 
