@@ -93,7 +93,7 @@ class SocialClient(DispersyExperimentScriptClient):
     def my_key(self, key):
         from Tribler.community.privatesemantic.rsa import bytes_to_key
 
-        keyhash = sha1(str(key)).hexdigest()
+        keyhash = long(sha1(str(key)).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(keyhash, {})
 
         key = key.replace("_", " ")
@@ -104,7 +104,7 @@ class SocialClient(DispersyExperimentScriptClient):
     def add_friend(self, peer_id, key):
         from Tribler.community.privatesemantic.rsa import bytes_to_key
 
-        keyhash = sha1(str(key)).hexdigest()
+        keyhash = long(sha1(str(key)).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(keyhash, {})
 
         peer_id = int(peer_id)
