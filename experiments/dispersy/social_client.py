@@ -94,7 +94,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
     def connect_to_friends(self):
         for ipport in self.friends:
-            self._dispersy.callback.register(self.connect_to_friend, args=ipport)
+            self._dispersy.callback.register(self.connect_to_friend, args=(ipport,))
 
     def connect_to_friend(self, sock_addr):
         from Tribler.dispersy.dispersy import IntroductionRequestCache
