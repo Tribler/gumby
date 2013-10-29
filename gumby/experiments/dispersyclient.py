@@ -55,7 +55,7 @@ from twisted.python.log import msg, startLogging, PythonLoggingObserver
 
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):
-        if not args[0]._dispersy.callback.is_current_thread():
+        if not args[0]._dispersy.callback.is_current_thread:
             args[0]._dispersy.callback.register(func, args, kargs)
         else:
             func(*args, **kargs)
