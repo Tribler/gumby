@@ -243,6 +243,10 @@ class ExperimentClient(LineReceiver):
     def startExperiment(self):
         msg("startExperiment: Call not implemented")
 
+    def get_peer_ip_port(self, peer_id):
+        return self.all_vars[peer_id]['host'], self.all_vars[peer_id]['port']
+
+
     #
     # Protocol state handlers
     #

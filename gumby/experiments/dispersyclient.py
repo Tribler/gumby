@@ -94,7 +94,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.stop)
         self.scenario_runner.register(self.set_master_member)
         self.scenario_runner.register(self.reset_dispersy_statistics, 'reset_dispersy_statistics')
-        self.scenario_runner.register(self.annotate, 'annotate')
+        self.scenario_runner.register(self.annotate)
 
         # TODO(emilon): Move this to the right place
         # TODO(emilon): Do we want to have the .dbs in the output dirs or should they be dumped to /tmp?
@@ -233,6 +233,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     def annotate(self, message):
         self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, "annotate", message))
+    def set_peer_type(self, peertype):
+        self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, "peertype", peertype))
 
     #
     # Aux. functions
@@ -240,25 +242,25 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def str2bool(self, v):
         return v.lower() in ("yes", "true", "t", "1")
 
+    def print_on_change(self, name, prev_dict, cur_dict):
+        new_values = {}
+        changed_values = {}
+        if cur_dict:
+            for key, value in cur_dict.iteritems():
+                if not isinstance(key, (basestring, int, long)):
+                    key = str(key)
+
+                new_values[key] = value
+                if prev_dict.get(key, None) != value:
+                    changed_values[key] = value
+
+        if changed_values:
+            self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
+            self._stats_file.flush()
+            return new_values
+        return prev_dict
+
     def _do_log(self):
-        def print_on_change(name, prev_dict, cur_dict):
-            new_values = {}
-            changed_values = {}
-            if cur_dict:
-                for key, value in cur_dict.iteritems():
-                    if not isinstance(key, (basestring, int, long)):
-                        key = str(key)
-
-                    new_values[key] = value
-                    if prev_dict.get(key, None) != value:
-                        changed_values[key] = value
-
-            if changed_values:
-                self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
-                self._stats_file.flush()
-                return new_values
-            return prev_dict
-
         prev_statistics = {}
         prev_total_received = {}
         prev_total_dropped = {}
@@ -311,16 +313,16 @@ class DispersyExperimentScriptClient(ExperimentClient):
                                'walk_advice_outgoing_response': self._dispersy.statistics.walk_advice_outgoing_response,
                                'communities': communities_dict}
 
-            prev_statistics = print_on_change("statistics", prev_statistics, statistics_dict)
-            prev_total_dropped = print_on_change("statistics-dropped-messages", prev_total_dropped, self._dispersy.statistics.drop)
-            prev_total_delayed = print_on_change("statistics-delayed-messages", prev_total_delayed, self._dispersy.statistics.delay)
-            prev_total_received = print_on_change("statistics-successful-messages", prev_total_received, self._dispersy.statistics.success)
-            prev_total_outgoing = print_on_change("statistics-outgoing-messages", prev_total_outgoing, self._dispersy.statistics.outgoing)
-            prev_created_messages = print_on_change("statistics-created-messages", prev_created_messages, self._dispersy.statistics.created)
-            prev_total_fail = print_on_change("statistics-walk-fail", prev_total_fail, self._dispersy.statistics.walk_fail)
-            prev_endpoint_recv = print_on_change("statistics-endpoint-recv", prev_endpoint_recv, self._dispersy.statistics.endpoint_recv)
-            prev_endpoint_send = print_on_change("statistics-endpoint-send", prev_endpoint_send, self._dispersy.statistics.endpoint_send)
-            prev_bootstrap_candidates = print_on_change("statistics-bootstrap-candidates", prev_bootstrap_candidates, self._dispersy.statistics.bootstrap_candidates)
+            prev_statistics = self.print_on_change("statistics", prev_statistics, statistics_dict)
+            prev_total_dropped = self.print_on_change("statistics-dropped-messages", prev_total_dropped, self._dispersy.statistics.drop)
+            prev_total_delayed = self.print_on_change("statistics-delayed-messages", prev_total_delayed, self._dispersy.statistics.delay)
+            prev_total_received = self.print_on_change("statistics-successful-messages", prev_total_received, self._dispersy.statistics.success)
+            prev_total_outgoing = self.print_on_change("statistics-outgoing-messages", prev_total_outgoing, self._dispersy.statistics.outgoing)
+            prev_created_messages = self.print_on_change("statistics-created-messages", prev_created_messages, self._dispersy.statistics.created)
+            prev_total_fail = self.print_on_change("statistics-walk-fail", prev_total_fail, self._dispersy.statistics.walk_fail)
+            prev_endpoint_recv = self.print_on_change("statistics-endpoint-recv", prev_endpoint_recv, self._dispersy.statistics.endpoint_recv)
+            prev_endpoint_send = self.print_on_change("statistics-endpoint-send", prev_endpoint_send, self._dispersy.statistics.endpoint_send)
+            prev_bootstrap_candidates = self.print_on_change("statistics-bootstrap-candidates", prev_bootstrap_candidates, self._dispersy.statistics.bootstrap_candidates)
 
             yield 1.0
 

@@ -480,20 +480,79 @@ class SuccMessages(AbstractHandler):
 
 class StatisticMessages(AbstractHandler):
 
+    def __init__(self):
+        AbstractHandler.__init__(self)
+
+        self.sum_records = defaultdict(lambda: defaultdict(dict))
+
+        self.peer_peertype = defaultdict(dict)
+        self.peertypes = set('')
+        self.nodes = set()
+
     def new_file(self, node_nr, filename, outputdir):
         self.h_statistics = open(os.path.join(outputdir, "scenario-statistics.txt"), "w+")
         print >> self.h_statistics, "# timestamp timeoffset key value"
+
+        self.prev_peertype = ''
 
     def end_file(self, node_nr, timestamp, timeoffset):
         self.h_statistics.close()
 
     def filter_line(self, node_nr, line_nr, timestamp, timeoffset, key):
-        return key == "scenario-statistics"
+        return key == "scenario-statistics" or key == "peertype"
 
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
-        for key, value in json.iteritems():
-            print >> self.h_statistics, time, timeoffset, key, value
+        if key == "scenario-statistics":
+            for key, value in json.iteritems():
+                print >> self.h_statistics, time, timeoffset, key, value
 
+                self.sum_records[timeoffset][key][node_nr] = value
+
+        elif key == "peertype":
+            self.peer_peertype[timeoffset][node_nr] = json
+            self.peertypes.add(json)
+
+        self.nodes.add(node_nr)
+
+    def all_files_done(self, extract_statistics):
+        timestamps = self.sum_records.keys()
+        timestamps.sort()
+
+        recordkeys = self.sum_records[timestamps[0]].keys()
+
+        keys = []
+        for peertype in self.peertypes:
+            for recordkey in recordkeys:
+                keys.append(recordkey + ("-" + peertype if peertype else ''))
+
+        h_sum_statistics = open(os.path.join(extract_statistics.node_directory, "sum_statistics.txt"), "w+")
+        print >> h_sum_statistics, "time", " ".join(keys)
+
+        cur_peertype = defaultdict(str)
+        prev_value = defaultdict(lambda: defaultdict(int))
+
+        for timestamp in timestamps:
+            print >> h_sum_statistics, timestamp,
+
+            for node_nr, peertype in self.peer_peertype[timestamp].itervalues():
+                cur_peertype[node_nr] = peertype
+
+            for recordkey in keys:
+                for peertype in self.peertypes:
+                    nr_nodes = 0.0
+                    sum_values = 0.0
+                    for node_nr in self.nodes:
+                        if peertype == cur_peertype[node_nr]:
+                            nr_nodes += 1
+
+                            if node_nr in self.sum_records[timestamp][recordkey]:
+                                prev_value[recordkey][node_nr] = self.sum_records[timestamp][recordkey][node_nr]
+                            sum_values += prev_value[recordkey][node_nr]
+
+                    avg = sum_values / nr_nodes
+                    print >> h_sum_statistics, avg,
+            print >> h_sum_statistics, ''
+        h_sum_statistics.close()
 
 class DropMessages(AbstractHandler):
 
@@ -515,7 +574,6 @@ class DropMessages(AbstractHandler):
         for msg, count in self.dispersy_dropped_msg_distribution.iteritems():
             print >> h_dispersy_dropped_msg_distribution, "%s %d %s" % (msg, count[0], count[1])
         h_dispersy_dropped_msg_distribution.close()
-
 
 class BootstrapMessages(AbstractHandler):
 
@@ -541,7 +599,6 @@ class BootstrapMessages(AbstractHandler):
             times = sum(nodes.values())
             print >> h_dispersy_bootstrap_distribution, "%s %d" % (str(sock_addr), times)
         h_dispersy_bootstrap_distribution.close()
-
 
 class DebugMessages(AbstractHandler):
 
