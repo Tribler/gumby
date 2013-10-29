@@ -486,7 +486,7 @@ class StatisticMessages(AbstractHandler):
         self.sum_records = defaultdict(lambda: defaultdict(dict))
 
         self.peer_peertype = defaultdict(dict)
-        self.peertypes = set('')
+        self.peertypes = set([''])
         self.nodes = set()
 
     def new_file(self, node_nr, filename, outputdir):
