@@ -494,8 +494,13 @@ class StatisticMessages(AbstractHandler):
         print >> self.h_statistics, "# timestamp timeoffset key value"
 
         self.prev_peertype = ''
+        self.prev_values = {}
 
     def end_file(self, node_nr, timestamp, timeoffset):
+        for key, value in self.prev_values:
+            print >> self.h_statistics, timestamp, timeoffset, key, value
+            self.sum_records[timeoffset][key][node_nr] = value
+
         self.h_statistics.close()
 
     def filter_line(self, node_nr, line_nr, timestamp, timeoffset, key):
@@ -507,6 +512,7 @@ class StatisticMessages(AbstractHandler):
                 print >> self.h_statistics, time, timeoffset, key, value
 
                 self.sum_records[timeoffset][key][node_nr] = value
+                self.prev_values[key] = value
 
         elif key == "peertype":
             self.peer_peertype[timeoffset][node_nr] = json
