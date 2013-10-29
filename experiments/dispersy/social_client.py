@@ -38,7 +38,7 @@
 # Code:
 
 from os import path
-from random import choice
+from random import choice, sample
 from string import letters
 from sys import path as pythonpath
 from hashlib import sha1
@@ -60,6 +60,8 @@ class SocialClient(DispersyExperimentScriptClient):
         self.friends = set()
         self.not_connected_friends = set()
 
+        self.peercache = False
+
         self.set_community_kwarg('integrate_with_tribler', False)
         self.set_community_kwarg('encryption', False)
         self.set_community_kwarg('max_prefs', 100)
@@ -76,8 +78,8 @@ class SocialClient(DispersyExperimentScriptClient):
 
     def set_peer_type(self, peertype):
         DispersyExperimentScriptClient.set_peer_type(self, peertype)
-        if peertype == "late join":
-            self.latejoin = True
+        if peertype == "peercache":
+            self.peercache = True
 
     @call_on_dispersy_thread
     def online(self):
@@ -115,13 +117,17 @@ class SocialClient(DispersyExperimentScriptClient):
         self.friends.add((ip, port))
         self.not_connected_friends.add((ip, port))
 
-
         self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
-
 
     @call_on_dispersy_thread
     def connect_to_friends(self):
-        for ipport in self.friends:
+        if self.peercache:
+            addresses = sample(self.friends, len(self.friends) * 0.36)
+            self._community.create_introduction_request = self._manual_create_introduction_request
+        else:
+            addresses = self.friends
+
+        for ipport in addresses:
             self._dispersy.callback.register(self.connect_to_friend, args=(ipport,))
 
     def connect_to_friend(self, sock_addr):
