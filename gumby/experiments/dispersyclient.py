@@ -342,7 +342,7 @@ def main(client_class):
         msg("No logger.conf found for this experiment.")
 
     factory = ExperimentClientFactory({}, client_class)
-    reactor.connectTCP(environ['HEAD_NODE'], int(environ['SYNC_PORT']), factory)
+    reactor.connectTCP(environ['HEAD_IP'], int(environ['SYNC_PORT']), factory)
 
     reactor.exitCode = 0
     reactor.run()
