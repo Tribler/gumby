@@ -38,8 +38,7 @@
 # Code:
 
 from os import path
-from random import choice, sample
-from string import letters
+from random import sample
 from sys import path as pythonpath
 from hashlib import sha1
 
@@ -53,9 +52,9 @@ pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..
 class SocialClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
-        from Tribler.community.privatesocial.community import PSearchCommunity
+        from Tribler.community.privatesocial.community import PSocialCommunity
         DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
-        self.community_class = PSearchCommunity
+        self.community_class = PSocialCommunity
 
         self.friends = set()
         self.not_connected_friends = set()
