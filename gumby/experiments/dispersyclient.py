@@ -53,13 +53,15 @@ from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 from twisted.python.log import msg, startLogging, PythonLoggingObserver
 
-
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):
-        args[0]._dispersy.callback.register(func, args, kargs)
+        if not args[0]._dispersy.callback.is_current_thread():
+            args[0]._dispersy.callback.register(func, args, kargs)
+        else:
+            func(*args, **kargs)
+
     helper.__name__ = func.__name__
     return helper
-
 
 class DispersyExperimentScriptClient(ExperimentClient):
     scenario_file = None

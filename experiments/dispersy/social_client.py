@@ -74,6 +74,7 @@ class SocialClient(DispersyExperimentScriptClient):
         if peertype == "late join":
             self.latejoin = True
 
+    @call_on_dispersy_thread
     def online(self):
         DispersyExperimentScriptClient.online(self)
 
