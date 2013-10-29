@@ -152,7 +152,7 @@ class SocialClient(DispersyExperimentScriptClient):
                 connected_friends = len(self.friends) - len(self.not_connected_friends)
                 bootstrapped = connected_friends / float(len(self.friends))
             else:
-                bootstrapped = 0
+                bootstrapped = 1
 
             prev_scenario_statistics = self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped': bootstrapped})
             prev_scenario_debug = self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_friends)})
