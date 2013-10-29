@@ -518,41 +518,42 @@ class StatisticMessages(AbstractHandler):
         timestamps = self.sum_records.keys()
         timestamps.sort()
 
-        recordkeys = self.sum_records[timestamps[0]].keys()
+        if timestamps:
+            recordkeys = self.sum_records[timestamps[0]].keys()
 
-        keys = []
-        for peertype in self.peertypes:
-            for recordkey in recordkeys:
-                keys.append(recordkey + ("-" + peertype if peertype else ''))
+            keys = []
+            for peertype in self.peertypes:
+                for recordkey in recordkeys:
+                    keys.append(recordkey + ("-" + peertype if peertype else ''))
 
-        h_sum_statistics = open(os.path.join(extract_statistics.node_directory, "sum_statistics.txt"), "w+")
-        print >> h_sum_statistics, "time", " ".join(keys)
+            h_sum_statistics = open(os.path.join(extract_statistics.node_directory, "sum_statistics.txt"), "w+")
+            print >> h_sum_statistics, "time", " ".join(keys)
 
-        cur_peertype = defaultdict(str)
-        prev_value = defaultdict(lambda: defaultdict(int))
+            cur_peertype = defaultdict(str)
+            prev_value = defaultdict(lambda: defaultdict(int))
 
-        for timestamp in timestamps:
-            print >> h_sum_statistics, timestamp,
+            for timestamp in timestamps:
+                print >> h_sum_statistics, timestamp,
 
-            for node_nr, peertype in self.peer_peertype[timestamp].itervalues():
-                cur_peertype[node_nr] = peertype
+                for node_nr, peertype in self.peer_peertype[timestamp].itervalues():
+                    cur_peertype[node_nr] = peertype
 
-            for recordkey in keys:
-                for peertype in self.peertypes:
-                    nr_nodes = 0.0
-                    sum_values = 0.0
-                    for node_nr in self.nodes:
-                        if peertype == cur_peertype[node_nr]:
-                            nr_nodes += 1
+                for recordkey in keys:
+                    for peertype in self.peertypes:
+                        nr_nodes = 0.0
+                        sum_values = 0.0
+                        for node_nr in self.nodes:
+                            if peertype == cur_peertype[node_nr]:
+                                nr_nodes += 1
 
-                            if node_nr in self.sum_records[timestamp][recordkey]:
-                                prev_value[recordkey][node_nr] = self.sum_records[timestamp][recordkey][node_nr]
-                            sum_values += prev_value[recordkey][node_nr]
+                                if node_nr in self.sum_records[timestamp][recordkey]:
+                                    prev_value[recordkey][node_nr] = self.sum_records[timestamp][recordkey][node_nr]
+                                sum_values += prev_value[recordkey][node_nr]
 
-                    avg = sum_values / nr_nodes
-                    print >> h_sum_statistics, avg,
-            print >> h_sum_statistics, ''
-        h_sum_statistics.close()
+                        avg = sum_values / nr_nodes
+                        print >> h_sum_statistics, avg,
+                print >> h_sum_statistics, ''
+            h_sum_statistics.close()
 
 class DropMessages(AbstractHandler):
 
