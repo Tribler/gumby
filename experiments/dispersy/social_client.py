@@ -41,6 +41,7 @@ from os import path
 from random import choice
 from string import letters
 from sys import path as pythonpath
+from hashlib import sha1
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main
 
@@ -60,12 +61,17 @@ class SocialClient(DispersyExperimentScriptClient):
         self.not_connected_friends = set()
 
         self.set_community_kwarg('integrate_with_tribler', False)
+        self.set_community_kwarg('encryption', False)
+        self.set_community_kwarg('max_prefs', 100)
+        self.set_community_kwarg('max_fprefs', 100)
+
 
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
         self.community_args = (self._my_member,)
 
     def registerCallbacks(self):
+        self.scenario_runner.register(self.my_key, 'my_key')
         self.scenario_runner.register(self.add_friend, 'add_friend')
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
 
@@ -83,14 +89,27 @@ class SocialClient(DispersyExperimentScriptClient):
 
         self._dispersy.callback.register(self.monitor_friends)
 
+    def my_key(self, key):
+        from Tribler.community.privatesemantic.rsa import bytes_to_key
+
+        keyhash = sha1(str(key)).hexdigest()
+        self._community._mypref_db.addMyPreference(keyhash, {})
+
+        key = key.replace("_", " ")
+        key = bytes_to_key(key)
+        self._community._friend_db.set_my_key(key)
+
     def add_friend(self, peer_id, key):
         from Tribler.community.privatesemantic.rsa import bytes_to_key
 
+        keyhash = sha1(str(key)).hexdigest()
+        self._community._mypref_db.addMyPreference(keyhash, {})
+
         peer_id = int(peer_id)
+
         key = key.replace("_", " ")
         key = bytes_to_key(key)
-
-        self._community._db.set_key(peer_id, key)
+        self._community._friend_db.set_key(peer_id, key)
 
         ip, port = self.get_peer_ip_port(peer_id)
 
