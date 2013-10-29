@@ -123,12 +123,14 @@ class SocialClient(DispersyExperimentScriptClient):
     def connect_to_friends(self):
         if self.peercache:
             addresses = sample(self.friends, len(self.friends) * 0.36)
-            self._community.create_introduction_request = self._manual_create_introduction_request
         else:
             addresses = self.friends
 
         for ipport in addresses:
             self._dispersy.callback.register(self.connect_to_friend, args=(ipport,))
+
+        # enable normal discovery of foafs
+        self._community.create_introduction_request = self._manual_create_introduction_request
 
     def connect_to_friend(self, sock_addr):
         from Tribler.dispersy.dispersy import IntroductionRequestCache
@@ -161,7 +163,9 @@ class SocialClient(DispersyExperimentScriptClient):
             else:
                 bootstrapped = 0
 
-            prev_scenario_statistics = self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped': bootstrapped})
+            connected_foafs = len(list(self._community.yield_taste_buddies())) - len(self.friends)
+
+            prev_scenario_statistics = self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped': bootstrapped, 'connected_foafs': connected_foafs})
             prev_scenario_debug = self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_friends)})
             yield 5.0
 
