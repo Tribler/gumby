@@ -497,7 +497,7 @@ class StatisticMessages(AbstractHandler):
         self.prev_values = {}
 
     def end_file(self, node_nr, timestamp, timeoffset):
-        for key, value in self.prev_values:
+        for key, value in self.prev_values.iteritems():
             print >> self.h_statistics, timestamp, timeoffset, key, value
             self.sum_records[timeoffset][key][node_nr] = value
 
