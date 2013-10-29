@@ -76,6 +76,10 @@ class SocialClient(DispersyExperimentScriptClient):
 
     def online(self):
         DispersyExperimentScriptClient.online(self)
+
+        self._manual_create_introduction_request = self._community.create_introduction_request
+        self._community.create_introduction_request = lambda destination, allow_sync: self._manual_create_introduction_request(destination, False)
+
         self._dispersy.callback.register(self.monitor_friends)
 
     def add_friend(self, peer_id, key):
