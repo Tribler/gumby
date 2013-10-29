@@ -61,6 +61,10 @@ class SocialClient(DispersyExperimentScriptClient):
 
         self.set_community_kwarg('integrate_with_tribler', False)
 
+    def start_dispersy(self):
+        DispersyExperimentScriptClient.start_dispersy(self)
+        self.community_args = (self._my_member,)
+
     def registerCallbacks(self):
         self.scenario_runner.register(self.add_friend, 'add_friend')
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
