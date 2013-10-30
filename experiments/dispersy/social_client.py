@@ -164,8 +164,8 @@ class SocialClient(DispersyExperimentScriptClient):
 
             connected_foafs = max(0, len(list(self._community.yield_taste_buddies())) - len(self.friends))
 
-            prev_scenario_statistics = self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped': bootstrapped, 'connected_foafs': connected_foafs})
-            prev_scenario_debug = self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_friends)})
+            prev_scenario_statistics = self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped': bootstrapped})
+            prev_scenario_debug = self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_friends), 'connected_foafs': connected_foafs})
             yield 5.0
 
 if __name__ == '__main__':
