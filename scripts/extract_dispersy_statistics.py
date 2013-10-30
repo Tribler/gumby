@@ -489,7 +489,7 @@ class StatisticMessages(AbstractHandler):
         self.sum_records = defaultdict(lambda: defaultdict(dict))
 
         self.peer_peertype = defaultdict(dict)
-        self.peertypes = set([''])
+        self.used_peertypes = set()
         self.nodes = set()
 
     def new_file(self, node_nr, filename, outputdir):
@@ -515,11 +515,13 @@ class StatisticMessages(AbstractHandler):
                 print >> self.h_statistics, time, timeoffset, key, value
 
                 self.sum_records[timeoffset][key][node_nr] = value
+
                 self.prev_values[key] = value
+                self.used_peertypes.add(self.prev_peertype)
 
         elif key == "peertype":
+            self.prev_peertype = json
             self.peer_peertype[timeoffset][node_nr] = json
-            self.peertypes.add(json)
 
         self.nodes.add(node_nr)
 
@@ -530,27 +532,15 @@ class StatisticMessages(AbstractHandler):
         if timestamps:
             recordkeys = self.sum_records[timestamps[0]].keys()
 
-            cur_peertype = defaultdict(str)
-
-            # determine active peertypes
-            used_peertypes = set()
-            for timestamp in range(min(timestamps, *self.peer_peertype.keys()), max(timestamps) + 1):
-                for node_nr, peertype in self.peer_peertype[timestamp].iteritems():
-                    cur_peertype[node_nr] = peertype
-
-                if timestamp in self.sum_records:
-                    for node_nr in self.nodes:
-                        used_peertypes.add(cur_peertype[node_nr])
-
             h_sum_statistics = open(os.path.join(extract_statistics.node_directory, "sum_statistics.txt"), "w+")
             print >> h_sum_statistics, "time",
-            for peertype in used_peertypes:
+            for peertype in self.used_peertypes:
                 for recordkey in recordkeys:
                     print >> h_sum_statistics, recordkey + ("-" + peertype if peertype else ''),
             print >> h_sum_statistics, ''
 
             prev_value = defaultdict(lambda: defaultdict(int))
-
+            cur_peertype = defaultdict(str)
             for timestamp in range(min(timestamps, *self.peer_peertype.keys()), max(timestamps) + 1):
                 for node_nr, peertype in self.peer_peertype[timestamp].iteritems():
                     cur_peertype[node_nr] = peertype
@@ -558,7 +548,7 @@ class StatisticMessages(AbstractHandler):
                 if timestamp in self.sum_records:
                     print >> h_sum_statistics, timestamp,
 
-                    for peertype in used_peertypes:
+                    for peertype in self.used_peertypes:
                         for recordkey in recordkeys:
                             nr_nodes = 0.0
                             sum_values = 0.0
