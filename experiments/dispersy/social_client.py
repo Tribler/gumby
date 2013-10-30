@@ -36,7 +36,7 @@
 #
 
 # Code:
-
+import sys
 from os import path
 from random import sample
 from sys import path as pythonpath
@@ -123,7 +123,6 @@ class SocialClient(DispersyExperimentScriptClient):
     @call_on_dispersy_thread
     def add_foaf(self, peer_id):
         peer_id = int(peer_id)
-
         ipport = self.get_peer_ip_port(peer_id)
         if ipport:
             self.foafs.add(ipport)
@@ -138,23 +137,11 @@ class SocialClient(DispersyExperimentScriptClient):
             addresses = sample(addresses, int(len(addresses) * 0.36))
 
         for ipport in addresses:
-            self._dispersy.callback.register(self.connect_to_friend, args=(ipport,))
+            self._community._peercache.add_peer(0, ipport)
 
         # enable normal discovery of foafs
         self._community.create_introduction_request = self._manual_create_introduction_request
-
-    def connect_to_friend(self, sock_addr):
-        from Tribler.dispersy.dispersy import IntroductionRequestCache
-
-        candidate = self._community.get_candidate(sock_addr, replace=False)
-        if not candidate:
-            candidate = self._community.create_candidate(sock_addr, False, sock_addr, sock_addr, u"unknown")
-
-        while not self._community.is_taste_buddy(candidate):
-            msg("sending introduction request to %s" % str(candidate))
-            self._manual_create_introduction_request(candidate, True)
-
-            yield IntroductionRequestCache.timeout_delay + IntroductionRequestCache.cleanup_delay
+        self._community.connect_to_peercache(sys.maxint)
 
     def monitor_friends(self):
         prev_scenario_statistics = {}
