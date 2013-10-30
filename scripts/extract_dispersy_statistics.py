@@ -561,7 +561,7 @@ class StatisticMessages(AbstractHandler):
                                     sum_values += prev_value[recordkey][node_nr]
 
                                     if peertype == '':
-                                        print h_sum_statistics, node_nr,
+                                        print >> h_sum_statistics, node_nr,
 
                             if nr_nodes:
                                 avg = sum_values / nr_nodes
