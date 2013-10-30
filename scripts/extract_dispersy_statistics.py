@@ -541,30 +541,31 @@ class StatisticMessages(AbstractHandler):
             cur_peertype = defaultdict(str)
             prev_value = defaultdict(lambda: defaultdict(int))
 
-            for timestamp in timestamps:
-                print >> h_sum_statistics, timestamp,
-
-                for node_nr, peertype in self.peer_peertype[timestamp].itervalues():
+            for timestamp in range(min(timestamps, *self.peer_peertype.keys()), max(timestamps) + 1):
+                for node_nr, peertype in self.peer_peertype[timestamp].iteritems():
                     cur_peertype[node_nr] = peertype
 
-                for peertype in self.peertypes:
-                    for recordkey in recordkeys:
-                        nr_nodes = 0.0
-                        sum_values = 0.0
-                        for node_nr in self.nodes:
-                            if peertype == cur_peertype[node_nr]:
-                                nr_nodes += 1
+                if timestamp in self.sum_records:
+                    print >> h_sum_statistics, timestamp,
 
-                                if node_nr in self.sum_records[timestamp][recordkey]:
-                                    prev_value[recordkey][node_nr] = self.sum_records[timestamp][recordkey][node_nr]
-                                sum_values += prev_value[recordkey][node_nr]
+                    for peertype in self.peertypes:
+                        for recordkey in recordkeys:
+                            nr_nodes = 0.0
+                            sum_values = 0.0
+                            for node_nr in self.nodes:
+                                if peertype == cur_peertype[node_nr]:
+                                    nr_nodes += 1
 
-                        if nr_nodes:
-                            avg = sum_values / nr_nodes
-                        else:
-                            avg = 0
-                        print >> h_sum_statistics, avg,
-                print >> h_sum_statistics, ''
+                                    if node_nr in self.sum_records[timestamp][recordkey]:
+                                        prev_value[recordkey][node_nr] = self.sum_records[timestamp][recordkey][node_nr]
+                                    sum_values += prev_value[recordkey][node_nr]
+
+                            if nr_nodes:
+                                avg = sum_values / nr_nodes
+                            else:
+                                avg = 0
+                            print >> h_sum_statistics, avg,
+                    print >> h_sum_statistics, ''
             h_sum_statistics.close()
 
 class DropMessages(AbstractHandler):
