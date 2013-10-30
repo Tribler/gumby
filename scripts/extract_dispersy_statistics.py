@@ -180,11 +180,11 @@ class ExtractStatistics:
 
                 parts = line.split()
                 if len(parts) > columnindex:
-                    time = float(parts[1])
+                    timestamp = float(parts[1])
                     record = float(parts[columnindex])
                     if record == 0:
                         continue
-                    sum_records.setdefault(time, {})[node_nr] = record
+                    sum_records.setdefault(timestamp, {})[node_nr] = record
             h_records.close()
 
         diffoutputfile = os.path.join(self.node_directory, diffoutputfilename) if diffoutputfilename else None
@@ -202,12 +202,12 @@ class ExtractStatistics:
                 print >> fp2, 'time', ' '.join(map(str, all_nodes))
 
             prev_records = {}
-            for time in sorted(sum_records.iterkeys()):
-                print >> fp, time,
+            for timestamp in sorted(sum_records.iterkeys()):
+                print >> fp, timestamp,
                 if fp2:
-                    print >> fp2, time,
+                    print >> fp2, timestamp,
 
-                nodes = sum_records[time]
+                nodes = sum_records[timestamp]
                 for node in all_nodes:
                     value = nodes.get(node, prev_records.get(node, 0))
                     print >> fp, value,
@@ -630,9 +630,9 @@ class DebugMessages(AbstractHandler):
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         for key, value in json.iteritems():
             if isinstance(value, (int, float)):
-                self.write_to_debug(time, timeoffset, key, value)
+                self.write_to_debug(timestamp, timeoffset, key, value)
 
-    def write_to_debug(self, time, timeoffset, key, value):
+    def write_to_debug(self, timestamp, timeoffset, key, value):
         self.dispersy_debugstatistics.add(key)
 
         filename = os.path.join(self.outputdir, "scenario-%s-debugstatistics.txt" % key)
@@ -642,7 +642,7 @@ class DebugMessages(AbstractHandler):
         else:
             h_debugstatistics = open(filename, "a")
 
-        print >> h_debugstatistics, time, timeoffset, value
+        print >> h_debugstatistics, timestamp, timeoffset, value
         h_debugstatistics.close()
 
     def all_files_done(self, extract_statistics):
