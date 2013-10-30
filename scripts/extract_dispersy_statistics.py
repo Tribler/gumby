@@ -149,7 +149,7 @@ class ExtractStatistics:
 
         return min(datetimes)
 
-    def yield_files(self):
+    def yield_files(self, file_to_check='statistics.log'):
         pattern = re.compile('[0-9]+')
         for headnode in os.listdir(self.node_directory):
             headdir = os.path.join(self.node_directory, headnode)
@@ -162,7 +162,7 @@ class ExtractStatistics:
                             if os.path.isdir(peerdir) and pattern.match(peer):
                                 peer_nr = int(peer)
 
-                                filename = os.path.join(self.node_directory, headnode, node, peer, 'statistics.log')
+                                filename = os.path.join(self.node_directory, headnode, node, peer, file_to_check)
                                 if os.path.exists(filename):
                                     yield peer_nr, filename, peerdir
 
@@ -170,7 +170,7 @@ class ExtractStatistics:
         all_nodes = []
 
         sum_records = {}
-        for node_nr, _, inputdir in self.yield_files():
+        for node_nr, _, inputdir in self.yield_files(inputfilename):
             all_nodes.append(node_nr)
 
             h_records = open(os.path.join(inputdir, inputfilename))
