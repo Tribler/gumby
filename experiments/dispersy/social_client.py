@@ -133,10 +133,9 @@ class SocialClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def connect_to_friends(self):
+        addresses = self.friends + self.foafs
         if self.peercache:
-            addresses = sample(self.friends, int(len(self.friends) * 0.36))
-        else:
-            addresses = self.friends
+            addresses = sample(addresses, int(len(addresses) * 0.36))
 
         for ipport in addresses:
             self._dispersy.callback.register(self.connect_to_friend, args=(ipport,))
