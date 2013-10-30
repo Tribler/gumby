@@ -11,7 +11,7 @@ if(file.exists("sum_statistics.txt")){
 	df <- subset(df, str_sub(variable, -1) != '_')
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
-	p <- p + geom_line(data = df)
+	p <- p + geom_step(data = df)
 	p <- p + opts(legend.position="bottom", legend.direction="horizontal")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Sum of statistic\n")
 	p <- p + xlim(minX, maxX)
