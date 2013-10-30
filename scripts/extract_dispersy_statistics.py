@@ -560,11 +560,15 @@ class StatisticMessages(AbstractHandler):
                                         prev_value[recordkey][node_nr] = self.sum_records[timestamp][recordkey][node_nr]
                                     sum_values += prev_value[recordkey][node_nr]
 
+                                    if peertype == '':
+                                        print h_sum_statistics, node_nr,
+
                             if nr_nodes:
                                 avg = sum_values / nr_nodes
                             else:
                                 avg = 0
                             print >> h_sum_statistics, avg,
+
                     print >> h_sum_statistics, ''
             h_sum_statistics.close()
 
