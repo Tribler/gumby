@@ -57,7 +57,7 @@ class ExtractStatistics:
                                 try:
                                     converted_json = loads(json)
                                 except:
-                                    converted_json = json
+                                    converted_json = json.strip()
 
                             handler.handle_line(node_nr, line_nr, timestamp, timeoffset, key, converted_json)
                 except:
