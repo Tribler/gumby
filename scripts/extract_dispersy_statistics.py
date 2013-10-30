@@ -547,8 +547,8 @@ class StatisticMessages(AbstractHandler):
                 for node_nr, peertype in self.peer_peertype[timestamp].itervalues():
                     cur_peertype[node_nr] = peertype
 
-                for recordkey in keys:
-                    for peertype in self.peertypes:
+                for peertype in self.peertypes:
+                    for recordkey in recordkeys:
                         nr_nodes = 0.0
                         sum_values = 0.0
                         for node_nr in self.nodes:
