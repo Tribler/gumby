@@ -530,15 +530,25 @@ class StatisticMessages(AbstractHandler):
         if timestamps:
             recordkeys = self.sum_records[timestamps[0]].keys()
 
-            keys = []
-            for peertype in self.peertypes:
-                for recordkey in recordkeys:
-                    keys.append(recordkey + ("-" + peertype if peertype else ''))
+            cur_peertype = defaultdict(str)
+
+            # determine active peertypes
+            used_peertypes = set()
+            for timestamp in range(min(timestamps, *self.peer_peertype.keys()), max(timestamps) + 1):
+                for node_nr, peertype in self.peer_peertype[timestamp].iteritems():
+                    cur_peertype[node_nr] = peertype
+
+                if timestamp in self.sum_records:
+                    for node_nr in self.nodes:
+                        used_peertypes.add(cur_peertype[node_nr])
 
             h_sum_statistics = open(os.path.join(extract_statistics.node_directory, "sum_statistics.txt"), "w+")
-            print >> h_sum_statistics, "time", " ".join(keys)
+            print >> h_sum_statistics, "time",
+            for peertype in used_peertypes:
+                for recordkey in recordkeys:
+                    print >> h_sum_statistics, recordkey + ("-" + peertype if peertype else ''),
+            print >> h_sum_statistics, ''
 
-            cur_peertype = defaultdict(str)
             prev_value = defaultdict(lambda: defaultdict(int))
 
             for timestamp in range(min(timestamps, *self.peer_peertype.keys()), max(timestamps) + 1):
@@ -548,7 +558,7 @@ class StatisticMessages(AbstractHandler):
                 if timestamp in self.sum_records:
                     print >> h_sum_statistics, timestamp,
 
-                    for peertype in self.peertypes:
+                    for peertype in used_peertypes:
                         for recordkey in recordkeys:
                             nr_nodes = 0.0
                             sum_values = 0.0
@@ -559,9 +569,6 @@ class StatisticMessages(AbstractHandler):
                                     if node_nr in self.sum_records[timestamp][recordkey]:
                                         prev_value[recordkey][node_nr] = self.sum_records[timestamp][recordkey][node_nr]
                                     sum_values += prev_value[recordkey][node_nr]
-
-                                    if peertype == '':
-                                        print >> h_sum_statistics, node_nr,
 
                             if nr_nodes:
                                 avg = sum_values / nr_nodes
