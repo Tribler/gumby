@@ -44,18 +44,25 @@ class ExtractStatistics:
                 handler.new_file(node_nr, filename, outputdir)
 
             for line_nr, timestamp, timeoffset, key, json in self.read(filename):
-                converted_json = None
+                try:
+                    converted_json = None
 
-                # we limit the output granularity to int
-                timestamp = int(timestamp)
-                timeoffset = int(timeoffset)
+                    # we limit the output granularity to int
+                    timestamp = int(timestamp)
+                    timeoffset = int(timeoffset)
 
-                for handler in self.handlers:
-                    if handler.filter_line(node_nr, line_nr, timestamp, timeoffset, key):
-                        if not converted_json:
-                            converted_json = loads(json)
+                    for handler in self.handlers:
+                        if handler.filter_line(node_nr, line_nr, timestamp, timeoffset, key):
+                            if not converted_json:
+                                try:
+                                    converted_json = loads(json)
+                                except:
+                                    converted_json = json
 
-                        handler.handle_line(node_nr, line_nr, timestamp, timeoffset, key, converted_json)
+                            handler.handle_line(node_nr, line_nr, timestamp, timeoffset, key, converted_json)
+                except:
+                    print >> sys.stderr, "Error while parsing line", key, json
+                    print_exc()
 
                 self.min_timeoffset = min(self.min_timeoffset, timeoffset)
                 self.max_timeoffset = max(self.max_timeoffset, timeoffset)
@@ -246,7 +253,6 @@ class ExtractStatistics:
 
         return separator.join(time)
 
-
 class AbstractHandler(object):
 
     def parse(self, extract_statistics):
@@ -266,7 +272,6 @@ class AbstractHandler(object):
 
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         pass
-
 
 class BasicExtractor(AbstractHandler):
 
@@ -400,7 +405,6 @@ class BasicExtractor(AbstractHandler):
             extract_statistics.merge_records("bl_stat.txt", 'bl_skip_%d.txt' % (column + 1), 2 + len(self.communities) + column)
             extract_statistics.merge_records("bl_stat.txt", 'bl_new_%d.txt' % (column + 1), 2 + len(self.communities) + len(self.communities) + column)
 
-
 class SuccMessages(AbstractHandler):
 
     def __init__(self, messages_to_plot):
@@ -476,7 +480,6 @@ class SuccMessages(AbstractHandler):
         for msg, count in self.dispersy_msg_distribution.iteritems():
             print >> h_dispersy_msg_distribution, "%s %d %s" % (msg, count[0], count[1])
         h_dispersy_msg_distribution.close()
-
 
 class StatisticMessages(AbstractHandler):
 
@@ -556,7 +559,10 @@ class StatisticMessages(AbstractHandler):
                                     prev_value[recordkey][node_nr] = self.sum_records[timestamp][recordkey][node_nr]
                                 sum_values += prev_value[recordkey][node_nr]
 
-                        avg = sum_values / nr_nodes
+                        if nr_nodes:
+                            avg = sum_values / nr_nodes
+                        else:
+                            avg = 0
                         print >> h_sum_statistics, avg,
                 print >> h_sum_statistics, ''
             h_sum_statistics.close()
