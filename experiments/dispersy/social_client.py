@@ -58,6 +58,8 @@ class SocialClient(DispersyExperimentScriptClient):
 
         self.friends = set()
         self.not_connected_friends = set()
+        self.foafs = set()
+        self.not_connected_foafs = set()
 
         self.peercache = False
 
@@ -73,6 +75,7 @@ class SocialClient(DispersyExperimentScriptClient):
     def registerCallbacks(self):
         self.scenario_runner.register(self.my_key, 'my_key')
         self.scenario_runner.register(self.add_friend, 'add_friend')
+        self.scenario_runner.register(self.add_foaf, 'add_foaf')
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
 
     def peertype(self, peertype):
@@ -106,17 +109,27 @@ class SocialClient(DispersyExperimentScriptClient):
         self._community._mypref_db.addMyPreference(keyhash, {})
 
         peer_id = int(peer_id)
+        ipport = self.get_peer_ip_port(peer_id)
+        if ipport:
+            key = key.replace("_", " ")
+            key = bytes_to_key(key)
+            self._community._friend_db.set_key(peer_id, key)
 
-        key = key.replace("_", " ")
-        key = bytes_to_key(key)
-        self._community._friend_db.set_key(peer_id, key)
+            self.friends.add(ipport)
+            self.not_connected_friends.add(ipport)
 
-        ip, port = self.get_peer_ip_port(peer_id)
+            self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
 
-        self.friends.add((ip, port))
-        self.not_connected_friends.add((ip, port))
+    @call_on_dispersy_thread
+    def add_foaf(self, peer_id):
+        peer_id = int(peer_id)
 
-        self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
+        ipport = self.get_peer_ip_port(peer_id)
+        if ipport:
+            self.foafs.add(ipport)
+            self.not_connected_foafs.add(ipport)
+
+            self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
 
     @call_on_dispersy_thread
     def connect_to_friends(self):
@@ -156,16 +169,27 @@ class SocialClient(DispersyExperimentScriptClient):
                 else:
                     self.not_connected_friends.add(sock_addr)
 
+            for sock_addr in self.foafs:
+                if self._community.is_taste_buddy_sock(sock_addr):
+                    if sock_addr in self.not_connected_foafs:
+                        self.not_connected_foafs.remove(sock_addr)
+                else:
+                    self.not_connected_foafs.add(sock_addr)
+
             if self.friends:
                 connected_friends = len(self.friends) - len(self.not_connected_friends)
                 bootstrapped = connected_friends / float(len(self.friends))
             else:
                 bootstrapped = 0
 
-            connected_foafs = max(0, len(list(self._community.yield_taste_buddies())) - len(self.friends))
+            if self.foafs:
+                connected_foafs = len(self.foafs) - len(self.not_connected_foafs)
+                bootstrapped_foafs = connected_foafs / float(len(self.foafs))
+            else:
+                bootstrapped_foafs = 0
 
-            prev_scenario_statistics = self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped': bootstrapped})
-            prev_scenario_debug = self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_friends), 'connected_foafs': connected_foafs})
+            prev_scenario_statistics = self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped': bootstrapped, 'bootstrapped_foafs': bootstrapped_foafs})
+            prev_scenario_debug = self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_friends)})
             yield 5.0
 
 if __name__ == '__main__':

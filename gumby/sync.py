@@ -244,7 +244,8 @@ class ExperimentClient(LineReceiver):
         msg("startExperiment: Call not implemented")
 
     def get_peer_ip_port(self, peer_id):
-        return self.all_vars[str(peer_id)]['host'], self.all_vars[str(peer_id)]['port']
+        if str(peer_id) in self.all_vars:
+            return self.all_vars[str(peer_id)]['host'], self.all_vars[str(peer_id)]['port']
 
 
     #
