@@ -60,6 +60,7 @@
 
 from time import time
 import json
+import logging
 
 from twisted.internet import epollreactor
 epollreactor.install()
@@ -88,7 +89,7 @@ class ExperimentServiceProto(LineReceiver):
         self.vars = {}
 
     def connectionMade(self):
-        msg("New connection from: ", str(self.transport.getPeer()))
+        msg("New connection from: ", str(self.transport.getPeer()), logLevel=logging.DEBUG)
 
     def lineReceived(self, line):
         try:
@@ -126,7 +127,7 @@ class ExperimentServiceProto(LineReceiver):
                 self.vars[key] = value
                 return 'set'
             elif line.strip() == 'ready':
-                msg("This subscriber is ready now.")
+                msg("This subscriber is ready now.", logLevel=logging.DEBUG)
                 self.ready = True
                 self.factory.setConnectionReady(self)
                 return 'wait'
