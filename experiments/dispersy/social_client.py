@@ -132,7 +132,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def connect_to_friends(self):
-        addresses = self.friends | self.foafs
+        addresses = self.friends  # | self.foafs
         if self.peercache:
             addresses = sample(addresses, int(len(addresses) * 0.36))
 
@@ -140,7 +140,7 @@ class SocialClient(DispersyExperimentScriptClient):
             self._community._peercache.add_peer(0, ipport)
 
         # enable normal discovery of foafs
-        self._community.create_introduction_request = self._manual_create_introduction_request
+        # self._community.create_introduction_request = self._manual_create_introduction_request
         self._community.connect_to_peercache(sys.maxint)
 
     def monitor_friends(self):
