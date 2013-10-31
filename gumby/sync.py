@@ -193,7 +193,7 @@ class ExperimentServiceFactory(Factory):
     def unregisterConnection(self, proto):
         if proto in self.connections:
             self.connections.remove(proto)
-        msg("Connection cleanly unregistered.")
+        msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
 
     def onExperimentStarted(self, _):
         msg("Experiment started, shutting down sync server.")
