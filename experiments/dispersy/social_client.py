@@ -67,6 +67,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.set_community_kwarg('encryption', False)
         self.set_community_kwarg('max_prefs', 100)
         self.set_community_kwarg('max_fprefs', 100)
+        self.set_community_kwarg('use_cardinality', True)
 
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
