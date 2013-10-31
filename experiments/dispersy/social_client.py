@@ -52,9 +52,9 @@ pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..
 class SocialClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
-        from Tribler.community.privatesocial.community import PSocialCommunity
+        from Tribler.community.privatesocial.community import PoliForwardCommunity
         DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
-        self.community_class = PSocialCommunity
+        self.community_class = PoliForwardCommunity
 
         self.friends = set()
         self.not_connected_friends = set()
