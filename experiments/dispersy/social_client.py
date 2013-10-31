@@ -139,9 +139,11 @@ class SocialClient(DispersyExperimentScriptClient):
         for ipport in addresses:
             self._community._peercache.add_peer(0, ipport)
 
-        # enable normal discovery of foafs
-        # self._community.create_introduction_request = self._manual_create_introduction_request
+        # use peercache to connect to friends
         self._community.connect_to_peercache(sys.maxint)
+
+        # enable normal discovery of foafs
+        self._community.create_introduction_request = self._manual_create_introduction_request
 
     def monitor_friends(self):
         prev_scenario_statistics = {}
