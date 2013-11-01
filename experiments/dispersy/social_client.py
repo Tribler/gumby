@@ -133,7 +133,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def connect_to_friends(self):
-        addresses = self.friends  # | self.foafs
+        addresses = self.friends | self.foafs
         if self.peercache:
             addresses = sample(addresses, int(len(addresses) * 0.36))
 
