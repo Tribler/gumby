@@ -179,8 +179,13 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._dispersy.start()
 
+        # low (NID_sect233k1) isn't actually that low, switching to 160bits as this is comparable to rsa 1024
+        # http://www.nsa.gov/business/programs/elliptic_curve.shtml
+        # speed difference when signing/verifying 100 items
+        # NID_sect233k1 signing took 0.171 verify took 0.35 totals 0.521
+        # NID_secp160k1 signing took 0.04 verify took 0.04 totals 0.08
+        self._my_member = self._dispersy.callback.call(self._dispersy.get_new_member, (u"NID_secp160k1",))
         self._master_member = self._dispersy.callback.call(self._dispersy.get_member, (self.master_key,))
-        self._my_member = self._dispersy.callback.call(self._dispersy.get_new_member, (u"low",))
 
         self._dispersy.callback.register(self._do_log)
         msg("Finished starting dispersy")
