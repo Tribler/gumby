@@ -71,6 +71,10 @@ class SocialClient(DispersyExperimentScriptClient):
 
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
+
+        # as i'm cpu bound, lowering the number of bits of the elliptic curve
+        self._my_member = self._dispersy.callback.call(self._dispersy.get_new_member, (u"NID_secp112r1",))
+
         self.community_args = (self._my_member,)
 
     def registerCallbacks(self):
