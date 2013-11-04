@@ -67,6 +67,7 @@ preserve -llist
 echo
 echo "*** If the job gets queued, you can cancel waiting using Ctrl+C"
 echo "*** (check DAS4 status with 'preserve -llist')"
+echo "*** (or cancel the experiment using 'qdel $RESERVATION_ID')"
 echo
 
 
