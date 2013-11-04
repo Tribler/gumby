@@ -82,6 +82,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.add_friend, 'add_friend')
         self.scenario_runner.register(self.add_foaf, 'add_foaf')
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
+        self.scenario_runner.register(self.set_community_class, 'set_community_class')
 
     def peertype(self, peertype):
         DispersyExperimentScriptClient.peertype(self, peertype)
