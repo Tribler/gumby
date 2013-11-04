@@ -54,7 +54,7 @@ echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
 
 JOB_STATUS_FILE=/tmp/das4_job_$USER
 export RMS_DEBUG=1
-(prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh | tee $JOB_STATUS_FILE ) &
+(prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh 2> >(tee $JOB_STATUS_FILE >&2) ) &
 PID=$!
 
 sleep 2
