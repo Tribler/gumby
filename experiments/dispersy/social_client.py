@@ -88,6 +88,19 @@ class SocialClient(DispersyExperimentScriptClient):
         if peertype == "peercache":
             self.peercache = True
 
+    def set_community_class(self, commtype):
+        from Tribler.community.privatesocial.community import NoFSocialCommunity, PSocialCommunity, HSocialCommunity, PoliSocialCommunity
+        if commtype == "nof":
+            self.community_class = NoFSocialCommunity
+        elif commtype == "p":
+            self.community_class = PSocialCommunity
+        elif commtype == "h":
+            self.community_class = HSocialCommunity
+        elif commtype == "poli":
+            self.community_class = PoliSocialCommunity
+        else:
+            raise RuntimeError("undefined class type, %s" % commtype)
+
     @call_on_dispersy_thread
     def online(self):
         DispersyExperimentScriptClient.online(self)
