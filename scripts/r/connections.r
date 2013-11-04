@@ -11,7 +11,7 @@ while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep =
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_step(data = df, alpha = 0.5)
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Connections per peer\n")
 	p <- p + xlim(minX, maxX)
 	p
@@ -28,7 +28,7 @@ while(file.exists(paste("bl_skip_", toString(i), "_reduced.txt", sep = ''))){
     
     p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
     p <- p + geom_step(data = df, alpha=0.5)
-    p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
     p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bloomfilter skips\n")
     p <- p + xlim(minX, maxX)
     p
@@ -45,7 +45,7 @@ while(file.exists(paste("bl_reuse_", toString(i), "_reduced.txt", sep = ''))){
     
     p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
     p <- p + geom_step(data = df, alpha=0.5)
-    p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
     p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bloomfilter reuse\n")
     p <- p + xlim(minX, maxX)
     p
@@ -62,7 +62,7 @@ while(file.exists(paste("bl_time_", toString(i), "_reduced.txt", sep = ''))){
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_step(data = df, alpha=0.5)
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bloomfilter CPU wall time spend\n")
 	p <- p + xlim(minX, maxX)
 	p
