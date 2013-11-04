@@ -60,7 +60,7 @@ PID=$!
 sleep 2
 
 RESERVATION_ID=$(head -n1 $JOB_STATUS_FILE | sed 's/Reservation number \([0-9]*\):.*/\1/g')
-rm $JOB_STATUS_FILE
+head $JOB_STATUS_FILE
 
 echo
 preserve -llist
