@@ -1,5 +1,5 @@
-library("ggplot2")
-library("reshape2")
+library(ggplot2)
+library(reshape)
 
 walk_rtts <- read.table("walk_rtts.txt", header=T, quote="\"")
 p <- ggplot(walk_rtts, aes(factor(ADDRESS), RTT))
