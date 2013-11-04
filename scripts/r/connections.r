@@ -1,4 +1,5 @@
 library(ggplot2)
+library(plyr)
 library(reshape)
 
 minX <- as.integer(commandArgs(TRUE)[1])
