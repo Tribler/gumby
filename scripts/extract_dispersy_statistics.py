@@ -585,9 +585,15 @@ class DropMessages(AbstractHandler):
     def all_files_done(self, extract_statistics):
         h_dispersy_dropped_msg_distribution = open(os.path.join(extract_statistics.node_directory, "dispersy-dropped-msg-distribution.txt"), "w+")
 
-        print >> h_dispersy_dropped_msg_distribution, "# msg_name count"
-        for msg, count in self.dispersy_dropped_msg_distribution.iteritems():
-            print >> h_dispersy_dropped_msg_distribution, "%s %d %s" % (msg, count[0], count[1])
+        print >> h_dispersy_dropped_msg_distribution, "# Shows which node dropped a message the most grouped by reason"
+        print >> h_dispersy_dropped_msg_distribution, "# count nodenr msg_name"
+
+        keys = self.dispersy_dropped_msg_distribution.keys()
+        keys.sort(cmp=lambda a, b: cmp(self.dispersy_dropped_msg_distribution[a][0], self.dispersy_dropped_msg_distribution[b][0]), reverse=True)
+
+        for msg in keys:
+            count = self.dispersy_dropped_msg_distribution[msg]
+            print >> h_dispersy_dropped_msg_distribution, count[0], count[1], "'%s'" % msg
         h_dispersy_dropped_msg_distribution.close()
 
 class BootstrapMessages(AbstractHandler):
