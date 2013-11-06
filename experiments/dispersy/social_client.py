@@ -118,7 +118,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
         key = key.replace("_", " ")
         key = bytes_to_key(key)
-        self._community._friend_db.set_my_key(key, keyhash)
+        self._community._friend_db.add_my_key(key, keyhash)
 
     @call_on_dispersy_thread
     def add_friend(self, peer_id, key):
@@ -134,7 +134,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
             key = key.replace("_", " ")
             key = bytes_to_key(key)
-            self._community._friend_db.set_key(peer_id, key, keyhash)
+            self._community._friend_db.add_friend(str(peer_id), key, keyhash)
 
             self.friends.add(ipport)
             self.not_connected_friends.add(ipport)
