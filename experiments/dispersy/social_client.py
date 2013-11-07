@@ -161,10 +161,10 @@ class SocialClient(DispersyExperimentScriptClient):
             foafsaddresses = sample(foafsaddresses, int(len(foafsaddresses) * 0.36))
 
         for ipport in friendsaddresses:
-            self._community._peercache.add_peer([keyhash for _, keyhash in self._community._friend_db.get_my_keys()], ipport)
+            self._community._peercache.add_peer([keyhash for _, keyhash in self._community._friend_db.get_my_keys()], *ipport)
 
         for ipport in foafsaddresses:
-            self._community._peercache.add_peer([], ipport)
+            self._community._peercache.add_peer([], *ipport)
 
         # use peercache to connect to friends
         self._community.connect_to_peercache(sys.maxint)
