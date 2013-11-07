@@ -65,10 +65,38 @@ scripts_dir = path.join(project_dir, "gumby/scripts")
 r_scripts_dir = path.join(scripts_dir, "r")
 
 sys.path.append(path.join(project_dir, "gumby"))
-from gumby.settings import configToEnv, loadConfig
 
 chdir(project_dir)
 
+env = environ.copy()
+# Enter virtualenv in case there's one
+if "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
+    venv_dir = path.abspath(expand_var(env["VIRTUALENV_DIR"]))
+    print "Enabling virtualenv at", venv_dir
+    extend_var(env, "LD_LIBRARY_PATH", path.join(venv_dir, "inst/lib"))
+    extend_var(env, "LD_LIBRARY_PATH", path.join(venv_dir, "lib"))  # TODO: Check if this one is needed
+    extend_var(env, "PATH", path.join(venv_dir, "inst/bin"))
+
+    # This is a replacement for running venv/bin/activate
+    env["VIRTUAL_ENV"] = venv_dir
+    extend_var(env, "PATH", path.join(venv_dir, "bin"))
+
+    # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$EXTRA_LD_LIBRARY_PATH # TODO: Seems that this is no longer necessary
+
+    # TODO: Only do this if we _can_ run systemtap on this machine.
+    print "Generating stap files:"
+    # Path substitution for the tapsets, needs to be done even in case of USE_LOCAL_SYSTEMTAP
+    # is disabled as we could be using systemtap from within the experiment.
+    tapset_dir = path.join(venv_dir, "tapsets")
+    if not path.exists(tapset_dir):
+        makedirs(tapset_dir)
+    for source_file in glob("gumby/scripts/stp/tapsets/*"):
+        dest_file = path.join(tapset_dir, path.basename(path.splitext(source_file)[0]))
+        print "  %s  ->  %s" % (source_file, dest_file)
+        open(dest_file, "w").write(open(source_file, 'r').read().replace("__VIRTUALENV_PATH__", venv_dir))
+
+# Only after initializing venv, we can import loadConfig
+from gumby.settings import configToEnv, loadConfig
 if len(sys.argv) >= 3:
     conf_path = path.abspath(sys.argv[1])
     if not path.exists(conf_path):
@@ -82,7 +110,6 @@ else:
 
 # TODO: Update environ instead of copying it, we are using some stuff
 # from this script anyways.
-env = environ.copy()
 env.update(configToEnv(config))
 
 env['PROJECT_DIR'] = project_dir
@@ -109,32 +136,6 @@ extend_var(env, "R_LIBS_USER", expand_var("$HOME/R"))
 # Export the R scripts path
 extend_var(env, "R_SCRIPTS_PATH", r_scripts_dir)
 extend_var(environ, "R_SCRIPTS_PATH", r_scripts_dir)
-
-# Enter virtualenv in case there's one
-if "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
-    venv_dir = path.abspath(expand_var(env["VIRTUALENV_DIR"]))
-    print "Enabling virtualenv at", venv_dir
-    extend_var(env, "LD_LIBRARY_PATH", path.join(venv_dir, "inst/lib"))
-    extend_var(env, "LD_LIBRARY_PATH", path.join(venv_dir, "lib"))  # TODO: Check if this one is needed
-    extend_var(env, "PATH", path.join(venv_dir, "inst/bin"))
-
-    # This is a replacement for running venv/bin/activate
-    env["VIRTUAL_ENV"] = venv_dir
-    extend_var(env, "PATH", path.join(venv_dir, "bin"))
-
-    # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$EXTRA_LD_LIBRARY_PATH # TODO: Seems that this is no longer necessary
-
-    # TODO: Only do this if we _can_ run systemtap on this machine.
-    print "Generating stap files:"
-    # Path substitution for the tapsets, needs to be done even in case of USE_LOCAL_SYSTEMTAP
-    # is disabled as we could be using systemtap from within the experiment.
-    tapset_dir = path.join(venv_dir, "tapsets")
-    if not path.exists(tapset_dir):
-        makedirs(tapset_dir)
-    for source_file in glob("gumby/scripts/stp/tapsets/*"):
-        dest_file = path.join(tapset_dir, path.basename(path.splitext(source_file)[0]))
-        print "  %s  ->  %s" % (source_file, dest_file)
-        open(dest_file, "w").write(open(source_file, 'r').read().replace("__VIRTUALENV_PATH__", venv_dir))
 
 # Create the experiment output dir if necessary
 if 'OUTPUT_DIR' in env:
