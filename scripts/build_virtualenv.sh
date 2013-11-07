@@ -364,7 +364,7 @@ unicodecsv # used for report generation scripts from Cor-Paul" > ~/requirements.
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
 sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
 
-CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~/requirements.txt
+CFLAGS="-I$VENV/include" LDFLAGS="-L$VENV/lib" pip install -r ~/requirements.txt
 #$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt
 rm ~/requirements.txt
 
