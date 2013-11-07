@@ -344,8 +344,7 @@ if [ ! -e $VENV/include/gmp.h ]; then
 fi
 
 
-echo "
-Jinja2 # Used for systemtap report generation scripts from Cor-Paul
+echo "Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 PIL
 configobj
 gmpy==1.16
@@ -360,8 +359,7 @@ pycrypto # Twisted needs it
 pysqlite
 pyzmq
 twisted # Used by the config server/clients
-unicodecsv # used for report generation scripts from Cor-Paul
-" > ~/requirements.txt
+unicodecsv # used for report generation scripts from Cor-Paul" > ~/requirements.txt
 
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
 sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
