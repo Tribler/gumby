@@ -64,6 +64,8 @@ class ExperimentRunner(Logger):
         self._workspace_dir = path.abspath(config['workspace_dir'])
         self._env_runner = "scripts/run_in_env.py"
 
+        self._spawnedProcesses = []
+
     def logPrefix(self):
         return "ExperimentRunner"
 
@@ -92,7 +94,7 @@ class ExperimentRunner(Logger):
                     workspace_dir + '/', ":".join((host, self._remote_workspace_dir + '/')
                                                   ))
             msg("Running: %s " % ' '.join(args))
-            reactor.spawnProcess(pp, args[0], args)
+            self._spawnedProcesses.append(reactor.spawnProcess(pp, args[0], args))
 
             copy_list.append(pp.getDeferred().addErrback(onSingleCopyFailure, host))
 
@@ -124,7 +126,7 @@ class ExperimentRunner(Logger):
                     path.join(self._workspace_dir, "output", host) + "/"
                     )
             msg("Running: %s " % ' '.join(args))
-            reactor.spawnProcess(pp, args[0], args)
+            self._spawnedProcesses.append(reactor.spawnProcess(pp, args[0], args))
 
             copy_list.append(pp.getDeferred().addErrback(onSingleCopyFailure, host))
 
@@ -145,7 +147,7 @@ class ExperimentRunner(Logger):
                 msg("Spawning local tracker with:", cmd)
                 pp = OneShotProcessProtocol()
                 args = cmd.split(' ', 1)
-                reactor.spawnProcess(pp, args[0], args, env=None)  # Inherit env from parent
+                self._spawnedProcesses.append(reactor.spawnProcess(pp, args[0], args, env=None))  # Inherit env from parent
                 d = pp.getDeferred()
             else:
                 msg("Spawning remote tracker on head node with:", cmd)
@@ -165,7 +167,7 @@ class ExperimentRunner(Logger):
             msg("Spawning local config server with:", cmd)
             pp = OneShotProcessProtocol()
             args = cmd.split(' ', 1)
-            reactor.spawnProcess(pp, args[0], args, env=None)  # Inherit env from parent
+            self._spawnedProcesses.append(reactor.spawnProcess(pp, args[0], args, env=None))  # Inherit env from parent
             d = pp.getDeferred()
         else:
             msg("Spawning config server on head node with:", cmd)
@@ -220,7 +222,7 @@ class ExperimentRunner(Logger):
         env_runner = path.abspath(path.join(path.dirname(__file__), "..", self._env_runner))
         args = [env_runner, self._cfg_path, command]
         pp = OneShotProcessProtocol()
-        reactor.spawnProcess(pp, env_runner, args, env=self.local_env)  # Inherit env from parent + conf vars
+        self._spawnedProcesses.append(reactor.spawnProcess(pp, env_runner, args, env=self.local_env))  # Inherit env from parent + conf vars
         return pp.getDeferred()
 
     def runCommandOnAllRemotes(self, command):
@@ -288,6 +290,14 @@ class ExperimentRunner(Logger):
             return self.runCommand(self._cfg['post_process_cmd'])
 
     def run(self):
+        def cleanUp():
+            for process in self._spawnedProcesses:
+                try:
+                    process.signalProcess("KILL")
+                except:
+                    pass
+        reactor.addSystemEventTrigger('before', 'shutdown', cleanUp)
+
         def onExperimentSucceeded(_):
             msg("experiment suceeded")
             reactor.stop()
