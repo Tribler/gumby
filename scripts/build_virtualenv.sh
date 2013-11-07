@@ -300,7 +300,6 @@ if [ ! -e $VENV/lib/libwx_gtk2u_gizmos_xrc-*.so ]; then
         --with-libjpeg=sys \
         --with-libpng=sys \
         --with-libtiff=builtin \
-        --with-libtiff=sys \
         --with-sdl \
         --with-zlib=sys \
         --without-gnomeprint \
