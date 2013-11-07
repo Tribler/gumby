@@ -39,7 +39,9 @@
 from getpass import getuser
 from hashlib import md5
 from os import path, environ
+from validate import Validator
 
+from configobj import ConfigObj
 
 conf_spec = '''
 experiment_name = string
@@ -72,9 +74,6 @@ spectraperf_db_path = string(default="")
 
 
 def loadConfig(path):
-    from validate import Validator
-    from configobj import ConfigObj
-
     spec = conf_spec.splitlines()
     config = ConfigObj(path, configspec=spec)
     validator = Validator()

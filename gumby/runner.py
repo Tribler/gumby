@@ -291,11 +291,12 @@ class ExperimentRunner(Logger):
 
     def run(self):
         def cleanUp():
+            msg("Killing running processes")
             for process in self._spawnedProcesses:
                 try:
                     process.signalProcess("KILL")
                 except:
-                    pass
+                    err('could not send signal?')
         reactor.addSystemEventTrigger('before', 'shutdown', cleanUp)
 
         def onExperimentSucceeded(_):

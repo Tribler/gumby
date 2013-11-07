@@ -65,10 +65,50 @@ scripts_dir = path.join(project_dir, "gumby/scripts")
 r_scripts_dir = path.join(scripts_dir, "r")
 
 sys.path.append(path.join(project_dir, "gumby"))
+from gumby.settings import configToEnv, loadConfig
 
 chdir(project_dir)
 
+if len(sys.argv) >= 3:
+    conf_path = path.abspath(sys.argv[1])
+    if not path.exists(conf_path):
+        print "Error: The specified configuration file (%s) doesn't exist." % conf_path
+        exit(2)
+    config = loadConfig(conf_path)
+    experiment_dir = path.abspath(path.dirname(path.abspath(conf_path)))
+else:
+    print "Usage:\n%s EXPERIMENT_CONFIG COMMAND" % sys.argv[0]
+    exit(1)
+
+# TODO: Update environ instead of copying it, we are using some stuff
+# from this script anyways.
 env = environ.copy()
+env.update(configToEnv(config))
+
+env['PROJECT_DIR'] = project_dir
+environ['PROJECT_DIR'] = project_dir
+
+env['EXPERIMENT_DIR'] = experiment_dir
+environ['EXPERIMENT_DIR'] = experiment_dir
+
+# Add project dir to PYTHONPATH
+extend_var(env, "PYTHONPATH", project_dir)
+
+# Add gumby dir to PYTHONPATH
+extend_var(env, "PYTHONPATH", path.join(project_dir, "gumby"))
+
+# Add gumby scripts dir to PATH
+extend_var(env, "PATH", scripts_dir)
+extend_var(environ, "PATH", scripts_dir)
+
+# Add the experiment dir to PATH so we can call custom scripts from there
+extend_var(env, "PATH", experiment_dir)
+
+# Add ~/R to the R search path
+extend_var(env, "R_LIBS_USER", expand_var("$HOME/R"))
+# Export the R scripts path
+extend_var(env, "R_SCRIPTS_PATH", r_scripts_dir)
+extend_var(environ, "R_SCRIPTS_PATH", r_scripts_dir)
 
 # Enter virtualenv in case there's one
 if "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
@@ -95,48 +135,6 @@ if "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
         dest_file = path.join(tapset_dir, path.basename(path.splitext(source_file)[0]))
         print "  %s  ->  %s" % (source_file, dest_file)
         open(dest_file, "w").write(open(source_file, 'r').read().replace("__VIRTUALENV_PATH__", venv_dir))
-
-# Only after initializing venv, we can import loadConfig
-from gumby.settings import configToEnv, loadConfig
-if len(sys.argv) >= 3:
-    conf_path = path.abspath(sys.argv[1])
-    if not path.exists(conf_path):
-        print "Error: The specified configuration file (%s) doesn't exist." % conf_path
-        exit(2)
-    config = loadConfig(conf_path)
-    experiment_dir = path.abspath(path.dirname(path.abspath(conf_path)))
-else:
-    print "Usage:\n%s EXPERIMENT_CONFIG COMMAND" % sys.argv[0]
-    exit(1)
-
-# TODO: Update environ instead of copying it, we are using some stuff
-# from this script anyways.
-env.update(configToEnv(config))
-
-# Add project dir to PYTHONPATH
-extend_var(env, "PYTHONPATH", project_dir)
-
-# Add gumby dir to PYTHONPATH
-extend_var(env, "PYTHONPATH", path.join(project_dir, "gumby"))
-
-env['PROJECT_DIR'] = project_dir
-environ['PROJECT_DIR'] = project_dir
-
-env['EXPERIMENT_DIR'] = experiment_dir
-environ['EXPERIMENT_DIR'] = experiment_dir
-
-# Add the experiment dir to PATH so we can call custom scripts from there
-extend_var(env, "PATH", experiment_dir)
-
-# Add gumby scripts dir to PATH
-extend_var(env, "PATH", scripts_dir)
-extend_var(environ, "PATH", scripts_dir)
-
-# Add ~/R to the R search path
-extend_var(env, "R_LIBS_USER", expand_var("$HOME/R"))
-# Export the R scripts path
-extend_var(env, "R_SCRIPTS_PATH", r_scripts_dir)
-extend_var(environ, "R_SCRIPTS_PATH", r_scripts_dir)
 
 # Create the experiment output dir if necessary
 if 'OUTPUT_DIR' in env:
