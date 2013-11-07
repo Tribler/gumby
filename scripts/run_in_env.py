@@ -69,6 +69,20 @@ sys.path.append(path.join(project_dir, "gumby"))
 chdir(project_dir)
 
 env = environ.copy()
+
+# Add project dir to PYTHONPATH
+extend_var(env, "PYTHONPATH", project_dir)
+
+# Add gumby dir to PYTHONPATH
+extend_var(env, "PYTHONPATH", path.join(project_dir, "gumby"))
+
+# Add gumby scripts dir to PATH
+extend_var(env, "PATH", scripts_dir)
+extend_var(environ, "PATH", scripts_dir)
+
+env['PROJECT_DIR'] = project_dir
+environ['PROJECT_DIR'] = project_dir
+
 # Enter virtualenv in case there's one
 if "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
     venv_dir = path.abspath(expand_var(env["VIRTUALENV_DIR"]))
@@ -112,21 +126,8 @@ else:
 # from this script anyways.
 env.update(configToEnv(config))
 
-env['PROJECT_DIR'] = project_dir
-environ['PROJECT_DIR'] = project_dir
-
 env['EXPERIMENT_DIR'] = experiment_dir
 environ['EXPERIMENT_DIR'] = experiment_dir
-
-# Add project dir to PYTHONPATH
-extend_var(env, "PYTHONPATH", project_dir)
-
-# Add gumby dir to PYTHONPATH
-extend_var(env, "PYTHONPATH", path.join(project_dir, "gumby"))
-
-# Add gumby scripts dir to PATH
-extend_var(env, "PATH", scripts_dir)
-extend_var(environ, "PATH", scripts_dir)
 
 # Add the experiment dir to PATH so we can call custom scripts from there
 extend_var(env, "PATH", experiment_dir)
