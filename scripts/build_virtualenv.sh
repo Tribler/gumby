@@ -365,7 +365,7 @@ unicodecsv # used for report generation scripts from Cor-Paul" > ~/requirements.
 sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
 unset CFLAGS
 unset LDFLAGS
-CFLAGS="-I$VENV/include" LDFLAGS="-L$VENV/lib" pip install -r ~/requirements.txt
+pip install -r ~/requirements.txt
 #$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt
 rm ~/requirements.txt
 
