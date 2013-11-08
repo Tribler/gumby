@@ -154,12 +154,19 @@ class ScenarioRunner():
             if clb not in self._callables:
                 err(clb, "is not registered as an action!")
                 continue
-            # TODO(vladum): Handle errors while calling.
+
+            def call_scenario(clb, args):
+                try:
+                    self._callables[clb](*args)
+                except Exception, exception:
+                    err("exception while calling", clb)
+                    err(exception)
+
             delay = tstmp - time()
             reactor.callLater(
                 delay if delay > 0.0 else 0,
-                self._callables[clb],
-                *args
+                call_scenario,
+                (clb, args)
             )
 
     # TODO(vladum): Move _parse_*() stuff to separate class.
