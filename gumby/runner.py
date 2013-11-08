@@ -295,8 +295,10 @@ class ExperimentRunner(Logger):
             for process in self._spawnedProcesses:
                 try:
                     process.signalProcess("KILL")
-                except:
-                    err('could not send signal?')
+                    msg('killed process')
+                except Exception, exception:
+                    err('could not kill process?')
+                    err(exception)
         reactor.addSystemEventTrigger('before', 'shutdown', cleanUp)
 
         def onExperimentSucceeded(_):
