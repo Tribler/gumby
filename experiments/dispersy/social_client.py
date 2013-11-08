@@ -126,11 +126,10 @@ class SocialClient(DispersyExperimentScriptClient):
     @call_on_dispersy_thread
     def add_friend(self, peer_id, key):
         from Tribler.community.privatesemantic.rsa import bytes_to_key
-
         peer_id = int(peer_id)
-        ipport = self.get_peer_ip_port(peer_id)
 
         # if we don't get the ipport, then this peer isn't deployed to the das
+        ipport = self.get_peer_ip_port(peer_id)
         if ipport:
             keyhash = long(sha1(str(key)).hexdigest(), 16)
             self._community._mypref_db.addMyPreference(keyhash, {})
@@ -148,9 +147,10 @@ class SocialClient(DispersyExperimentScriptClient):
     @call_on_dispersy_thread
     def add_foaf(self, peer_id, his_friends):
         peer_id = int(peer_id)
-        his_friends = [int(friend) for friend in his_friends.split("_")]
-        ipport = self.get_peer_ip_port(peer_id)
+        his_friends = [int(friend) for friend in his_friends[1:-1].split("_")]
 
+        # if we don't get the ipport, then this peer isn't deployed to the das
+        ipport = self.get_peer_ip_port(peer_id)
         if ipport:
             self.foafs.add(ipport)
             self.foafhashes[ipport] = [self.friendhashes[peer_id] for peer_id in his_friends if peer_id in self.friendhashes]
