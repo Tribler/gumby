@@ -166,7 +166,7 @@ class ScenarioRunner():
             reactor.callLater(
                 delay if delay > 0.0 else 0,
                 call_scenario,
-                (clb, args)
+                clb, args
             )
 
     # TODO(vladum): Move _parse_*() stuff to separate class.

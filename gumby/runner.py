@@ -45,6 +45,7 @@ from twisted.internet.defer import Deferred, setDebugging, gatherResults, succee
 
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import reactor
+from twisted.internet.error import ProcessExitedAlready
 
 from .settings import configToEnv, loadConfig
 
@@ -296,6 +297,8 @@ class ExperimentRunner(Logger):
                 try:
                     process.signalProcess("KILL")
                     msg('killed process')
+                except ProcessExitedAlready:
+                    pass
                 except Exception, exception:
                     err('could not kill process?')
                     err(exception)
