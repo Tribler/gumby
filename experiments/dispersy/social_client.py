@@ -63,6 +63,9 @@ class SocialClient(DispersyExperimentScriptClient):
 
         self.peercache = False
 
+        self.friendhashes = {}
+        self.foafhashes = {}
+
         self.set_community_kwarg('integrate_with_tribler', False)
         self.set_community_kwarg('encryption', False)
         self.set_community_kwarg('max_prefs', 100)
@@ -137,17 +140,20 @@ class SocialClient(DispersyExperimentScriptClient):
             self._community._friend_db.add_friend(str(peer_id), key, keyhash)
 
             self.friends.add(ipport)
+            self.friendhashes[peer_id] = keyhash
             self.not_connected_friends.add(ipport)
 
             self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
 
     @call_on_dispersy_thread
-    def add_foaf(self, peer_id):
+    def add_foaf(self, peer_id, his_friends):
         peer_id = int(peer_id)
+        his_friends = [int(friend) for friend in his_friends.split("_")]
         ipport = self.get_peer_ip_port(peer_id)
 
         if ipport:
             self.foafs.add(ipport)
+            self.foafhashes[ipport] = [self.friendhashes[peer_id] for peer_id in his_friends if peer_id in self.friendhashes]
             self.not_connected_foafs.add(ipport)
 
             self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
@@ -160,11 +166,12 @@ class SocialClient(DispersyExperimentScriptClient):
             friendsaddresses = sample(friendsaddresses, int(len(friendsaddresses) * 0.36))
             foafsaddresses = sample(foafsaddresses, int(len(foafsaddresses) * 0.36))
 
+        my_hashes = [keyhash for _, keyhash in self._community._friend_db.get_my_keys()]
         for ipport in friendsaddresses:
-            self._community._peercache.add_peer([keyhash for _, keyhash in self._community._friend_db.get_my_keys()], *ipport)
+            self._community._peercache.add_peer(my_hashes, *ipport)
 
         for ipport in foafsaddresses:
-            self._community._peercache.add_peer([], *ipport)
+            self._community._peercache.add_peer(self.foafhashes[ipport], *ipport)
 
         # use peercache to connect to friends
         self._community.connect_to_peercache(sys.maxint)
