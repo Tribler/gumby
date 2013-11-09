@@ -7,7 +7,7 @@ Experiment runner framework for Dispersy and Tribler
 
 ### run.py ###
 
-Experiment entry point, must receive an experiment config file as argument. E.g. after activating the venv using source ~/venv/activate, call ./gumby/run.py gumby/experiments/XYZ/abc.conf
+Experiment entry point, must receive an experiment config file as argument. E.g. after activating the venv using source ~/venv/bin/activate, call ./gumby/run.py gumby/experiments/XYZ/abc.conf
 
 ### experiment config file ###
 
