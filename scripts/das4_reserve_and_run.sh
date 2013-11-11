@@ -51,6 +51,7 @@ else
 fi
 
 echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
+module load prun
 
 JOB_STATUS_FILE=/tmp/das4_job_$USER
 export RMS_DEBUG=1
