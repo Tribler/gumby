@@ -35,7 +35,7 @@
 #
 #
 
-SCRIPT_VERSION=4
+SCRIPT_VERSION=5
 
 # Code:
 set -e
@@ -300,7 +300,6 @@ if [ ! -e $VENV/lib/libwx_gtk2u_gizmos_xrc-*.so ]; then
         --with-libjpeg=sys \
         --with-libpng=sys \
         --with-libtiff=builtin \
-        --with-libtiff=sys \
         --with-sdl \
         --with-zlib=sys \
         --without-gnomeprint \
@@ -355,7 +354,6 @@ netifaces
 nose
 nosexcover
 ntplib
-numpy # used for report generation scripts from Cor-Paul
 pyasn1 # for twisted
 pycrypto # Twisted needs it
 pysqlite
@@ -367,8 +365,12 @@ unicodecsv # used for report generation scripts from Cor-Paul
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
 sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
 
+# numpy # used for report generation scripts from Cor-Paul, installed all by itself as it fails to build if we pass CFLAGS & co.
+pip install numpy
+
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~/requirements.txt
-#$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt
+
+#$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt\
 rm ~/requirements.txt
 
 deactivate
