@@ -5,8 +5,8 @@ library(stringr)
 minX <- as.integer(commandArgs(TRUE)[1])
 maxX <- as.integer(commandArgs(TRUE)[2])
 
-if(file.exists("sum_statistics.txt")){
-	df <- read.table("sum_statistics.txt", header = TRUE, check.names = FALSE)
+if(file.exists("sum_statistics_reduced.txt")){
+	df <- read.table("sum_statistics_reduced.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
 	df <- subset(df, str_sub(variable, -1) != '_')
 	
