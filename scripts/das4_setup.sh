@@ -39,5 +39,10 @@
 
 build_virtualenv.sh
 
+find -iname *.py[oc] -delete
+
+pycompile.py .
+
+
 #
 # das4_setup.sh ends here
