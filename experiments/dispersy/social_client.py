@@ -109,8 +109,9 @@ class SocialClient(DispersyExperimentScriptClient):
     def online(self):
         DispersyExperimentScriptClient.online(self)
 
-        self._manual_create_introduction_request = self._community.create_introduction_request
-        self._community.create_introduction_request = lambda destination, allow_sync: self._manual_create_introduction_request(destination, False)
+        #disable msimilarity requests
+        self._orig_create_msimilarity_request = self._community.create_msimilarity_request
+        self._community.create_msimilarity_request = lambda destination: False
 
     @call_on_dispersy_thread
     def my_key(self, key):
@@ -177,7 +178,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self._community.connect_to_peercache(sys.maxint)
 
         # enable normal discovery of foafs
-        self._community.create_introduction_request = self._manual_create_introduction_request
+        self._community.create_msimilarity_request = self._orig_create_msimilarity_request
 
     def monitor_friends(self):
         prev_scenario_statistics = {}
