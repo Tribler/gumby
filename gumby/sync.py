@@ -240,6 +240,7 @@ class ExperimentClient(LineReceiver):
         self.sendLine("time:%f" % time())
         for key, val in self.vars.iteritems():
             self.sendLine("set:%s:%s" % (key, val))
+        self.state = "id"
         self.sendLine("ready")
 
     def lineReceived(self, line):
@@ -296,21 +297,17 @@ class ExperimentClientFactory(ReconnectingClientFactory):
         self.protocol = protocol
 
     def buildProtocol(self, address):
+        msg("Attempting to connect to the experiment server.")
         p = self.protocol(self.vars)
         p.factory = self
         return p
 
     def clientConnectionFailed(self, connector, reason):
-        err("Failed to connect to experiment server, error was: %s" % reason.getErrorMessage())
-        reactor.exitCode = 2
-        stopReactor()
+        err("Failed to connect to experiment server (will retry in a while), error was: %s" % reason.getErrorMessage())
 
     def clientConnectionLost(self, connector, reason):
         msg("The connection with the experiment server was lost with reason: %s" % reason.getErrorMessage())
-        if reason.type is not ConnectionDone:
-            reactor.exitCode = 3
-            stopReactor()
-        else:
+        if reason.type is ConnectionDone:
             # If the connection is cleanly closed we can stop trying to reconnect.
             self.stopTrying()
 #
