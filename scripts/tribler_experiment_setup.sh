@@ -43,11 +43,7 @@ if [ -e tribler/Tribler/SwiftEngine/ ]; then
     buildswift.sh || echo "Swift failed to build!"
 fi
 
-find -iname *.py[oc] -delete
-
-pycompile.py .
-
-build_virtualenv.sh
+das4_setup.sh
 
 #
 # tribler_experiment_setup.sh ends here
