@@ -46,12 +46,13 @@ from time import time
 
 from gumby.sync import ExperimentClient, ExperimentClientFactory
 from gumby.scenario import ScenarioRunner
+from gumby.log import PythonLoggingObserver
 
 # TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
 # The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
-from twisted.python.log import msg, startLogging, PythonLoggingObserver
+from twisted.python.log import msg, startLogging
 
 
 def call_on_dispersy_thread(func):

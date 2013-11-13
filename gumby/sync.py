@@ -60,6 +60,7 @@
 
 from time import time
 import json
+import logging
 
 from twisted.internet import epollreactor
 epollreactor.install()
@@ -71,6 +72,8 @@ from twisted.internet.protocol import Factory, ReconnectingClientFactory
 from twisted.internet.task import deferLater
 from twisted.protocols.basic import LineReceiver
 from twisted.python.log import msg, err
+
+EXPERIMENT_SYNC_TIMEOUT = 10
 
 #
 # Server side
@@ -88,7 +91,7 @@ class ExperimentServiceProto(LineReceiver):
         self.vars = {}
 
     def connectionMade(self):
-        msg("New connection from: ", str(self.transport.getPeer()))
+        msg("New connection from: ", str(self.transport.getPeer()), logLevel=logging.DEBUG)
 
     def lineReceived(self, line):
         try:
@@ -113,7 +116,7 @@ class ExperimentServiceProto(LineReceiver):
     def proto_init(self, line):
         if line.startswith("time"):
             self.vars["time_offset"] = float(line.strip().split(':')[1]) - time()
-            msg("Time offset is %s" % (self.vars["time_offset"]))
+            msg("Time offset is %s" % (self.vars["time_offset"]), logLevel=logging.DEBUG)
             return 'set'
         else:
             err("Haven't received the time command as the first line, closing connection")
@@ -122,7 +125,7 @@ class ExperimentServiceProto(LineReceiver):
     def proto_set(self, line):
             if line.startswith('set:'):
                 _, key, value = line.strip().split(':')
-                msg("This subscriber sets %s to %s" % (key, value))
+                msg("This subscriber sets %s to %s" % (key, value), logLevel=logging.DEBUG)
                 self.vars[key] = value
                 return 'set'
             elif line.strip() == 'ready':
@@ -148,18 +151,28 @@ class ExperimentServiceFactory(Factory):
         self.experiment_start_delay = experiment_start_delay
         self.connection_counter = -1
         self.connections = []
+        self._last_subscriber_connection_ts = 0
+        self._timeout_delayed_call = None
 
     def buildProtocol(self, addr):
         self.connection_counter += 1
         return ExperimentServiceProto(self, self.connection_counter + 1)
 
     def setConnectionReady(self, proto):
+        if not self._timeout_delayed_call:
+            self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
         self.connections.append(proto)
         if len(self.connections) >= self.expected_subscribers:
             msg("All subscribers are ready, pushing data!")
+            self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
         else:
-            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers))
+            if self._last_subscriber_connection_ts < time()-5:
+                logLevel=logging.DEBUG
+                self._last_subscriber_connection_ts = time()
+            else:
+                logLevel=logging.INFO
+            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers), logLevel=logLevel)
 
     def pushInfoToSubscribers(self):
         # Generate the json doc
@@ -203,6 +216,9 @@ class ExperimentServiceFactory(Factory):
         reactor.callLater(0, stopReactor)
         return failure
 
+    def onExperimentSetupTimeout(self):
+        err("Waiting for all peers timed out, exiting.")
+        reactor.stop()
 #
 # Client side
 #

@@ -37,6 +37,7 @@
 # Code:
 
 import os
+import logging
 
 from twisted.python.log import err, msg
 from twisted.python.failure import Failure
@@ -152,12 +153,12 @@ class _CommandChannel(SSHChannel):
     def dataReceived(self, bytes_):
         # we could recv more than 1 line
         for line in bytes_[:-1].replace("\r\n", "\n").split("\n"):
-            msg('SSH "%s" STDOUT: %s' % (self.command, line))
+            msg('SSH "%s" STDOUT: %s' % (self.command, line), logLevel=logging.INFO)
 
     def extReceived(self, _, bytes_):
         # we could recv more than 1 line
         for line in bytes_[:-1].replace("\r\n", "\n").split("\n"):
-            msg('SSH "%s" STDERR: %s' % (self.command, line))
+            msg('SSH "%s" STDERR: %s' % (self.command, line), logLevel=logging.WARNING)
 
     def closed(self):
         msg("SSH command channel closed")
@@ -200,7 +201,7 @@ class CommandFactory(ClientFactory):
         self.finished = Deferred()
 
     def clientConnectionLost(self, connector, reason):
-        msg("Client connection lost:", connector, reason, reason.type)
+        msg("Client connection lost:", connector, reason, reason.type, logLevel=logging.DEBUG)
         if not self.finished.called:  # TODO: This could be prettier
             if reason.type is ConnectionDone:
                 self.finished.callback(None)
