@@ -142,7 +142,6 @@ if __name__ == '__main__':
         exp_runner = ExperimentRunner(conf_path)
         exp_runner.run()
         reactor.run()
-        msg("Execution finished, have a nice day.")
 
         # Kill all the subprocesses before exiting
         msg("Killing leftover local sub processes...")

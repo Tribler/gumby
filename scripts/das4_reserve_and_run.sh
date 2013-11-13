@@ -37,6 +37,8 @@
 
 # Code:
 
+set -e
+
 export HEAD_NODE=$(hostname)
 # This will be used from das4_node_run_job.sh to rsync the output data back to the head node
 if [ "$HEAD_NODES" == '[]' ]; then

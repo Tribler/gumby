@@ -38,7 +38,7 @@
 
 # Code:
 
-set -ex
+set -e
 
 echo "$(hostname) here, spawning $DAS4_PROCESSES_PER_NODE instances of command: $DAS4_NODE_COMMAND"
 

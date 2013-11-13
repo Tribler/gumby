@@ -21,6 +21,7 @@ class ResourceMonitor(object):
         self.files = []
         self.output_dir = output_dir
 
+        # TODO: Improve it by using this technique: http://ptspts.blogspot.nl/2012/11/how-to-start-and-kill-unix-process-tree.html
         setpgrp()  # create new process group and become its leader
 
         self.nr_commands = len(commands)
