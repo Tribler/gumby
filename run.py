@@ -45,6 +45,9 @@ from twisted.python import util
 from twisted.internet import reactor
 
 from gumby.runner import ExperimentRunner
+from os import setpgrp, kill, getpgid, getppid, getpid
+from signal import signal, SIGTERM
+from psutil import get_pid_list
 
 
 class ColoredFileLogObserver(FileLogObserver):
@@ -101,6 +104,24 @@ class ColoredFileLogObserver(FileLogObserver):
         util.untilConcludes(self.write, timeStr + " " + msgStr)
         util.untilConcludes(self.flush)  # Hoorj!
 
+
+def _termTrap(self, *argv):
+    if not _terminating:
+        print "Captured TERM signal"
+        _killGroup()
+        exit(-15)
+
+
+def _killGroup():
+    global _terminating
+    _terminating = True
+    mypid = getpid()
+    for pid in get_pid_list():
+        if getpgid(pid) == mypid and pid != mypid:
+            kill(pid, SIGTERM)
+
+_terminating = False
+
 if __name__ == '__main__':
     sys.path.append(dirname(__file__))
     if len(sys.argv) == 2:
@@ -113,10 +134,20 @@ if __name__ == '__main__':
             print "Error: The specified configuration file doesn't exist."
             exit(1)
 
+        # Create a process group so we can clean up after ourselves when
+        setpgrp()  # create new process group and become its leader
+        # Catch SIGTERM to attempt to clean after ourselves
+        signal(SIGTERM, _termTrap)
+
         exp_runner = ExperimentRunner(conf_path)
         exp_runner.run()
         reactor.run()
         msg("Execution finished, have a nice day.")
+
+        # Kill all the subprocesses before exiting
+        msg("Killing leftover local sub processes...")
+        _killGroup()
+        msg("Done.")
     else:
         print "Usage:\n%s EXPERIMENT_CONFIG" % sys.argv[0]
 
