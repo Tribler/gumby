@@ -163,7 +163,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         if self._strict:
             def exception_handler(exception, fatal):
-                msg("An exception occurred.  Quitting because we are running with --strict enabled.")
+                msg("An exception occurred. Quitting because we are running with strict enabled.")
                 print "Exception was:"
 
                 try:
@@ -171,6 +171,11 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 except:
                     from traceback import print_exc
                     print_exc()
+                # Set Dispersy's exit status to error
+                self._dispersy_exit_status = 1
+                # Stop the experiment
+                reactor.callLater(1, self.stop)
+
                 # return fatal=True
                 return True
             self._dispersy.callback.attach_exception_handler(exception_handler)
