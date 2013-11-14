@@ -410,10 +410,10 @@ class SuccMessages(AbstractHandler):
     def __init__(self, messages_to_plot):
         AbstractHandler.__init__(self)
 
+        self.dispersy_msg_distribution = {}
         self.messages_to_plot = [message for message in messages_to_plot.split(',') if message.strip()]
 
     def new_file(self, node_nr, filename, outputdir):
-        self.dispersy_msg_distribution = {}
         self.c_received_records = {}
         self.c_created_records = {}
 
@@ -476,7 +476,7 @@ class SuccMessages(AbstractHandler):
 
     def all_files_done(self, extract_statistics):
         h_dispersy_msg_distribution = open(os.path.join(extract_statistics.node_directory, "dispersy-msg-distribution.txt"), "w+")
-        print >> h_dispersy_msg_distribution, "# msg_name count"
+        print >> h_dispersy_msg_distribution, "# msg_name count peer"
         for msg, count in self.dispersy_msg_distribution.iteritems():
             print >> h_dispersy_msg_distribution, "%s %d %s" % (msg, count[0], count[1])
         h_dispersy_msg_distribution.close()
