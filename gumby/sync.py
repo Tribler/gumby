@@ -106,6 +106,7 @@ class ExperimentServiceProto(LineReceiver):
                 self.transport.loseConnection()
 
     def connectionLost(self, reason):
+        msg("Lost connection with: %s with ID %s" % (str(self.transport.getPeer()), self.id), logLevel=logging.DEBUG)
         self.factory.unregisterConnection(self)
         LineReceiver.connectionLost(self, reason)
 
@@ -167,11 +168,11 @@ class ExperimentServiceFactory(Factory):
             self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
         else:
-            if self._last_subscriber_connection_ts < time()-5:
-                logLevel=logging.DEBUG
+            if self._last_subscriber_connection_ts < time() - 5:
+                logLevel = logging.DEBUG
                 self._last_subscriber_connection_ts = time()
             else:
-                logLevel=logging.INFO
+                logLevel = logging.INFO
             msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers), logLevel=logLevel)
 
     def pushInfoToSubscribers(self):
@@ -269,17 +270,20 @@ class ExperimentClient(LineReceiver):
         maybe_id, id = line.strip().split(':', 1)
         if maybe_id == "id":
             self.my_id = id
+            msg('Got id: "%s" assigned' % id, logLevel=logging.DEBUG)
             return "all_vars"
         else:
             err("Received an unexpected string from the server, closing connection")
             return "done"
 
     def proto_all_vars(self, line):
+        msg("Got experiment variables", logLevel=logging.DEBUG)
         self.all_vars = json.loads(line)
         self.onAllVarsReceived()
         return "go"
 
     def proto_go(self, line):
+        msg("Got GO signal", logLevel=logging.DEBUG)
         if line.strip() == "go":
             self.startExperiment()
             self.transport.loseConnection()
