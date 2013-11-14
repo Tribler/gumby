@@ -109,7 +109,7 @@ class SocialClient(DispersyExperimentScriptClient):
     def online(self):
         DispersyExperimentScriptClient.online(self)
 
-        #disable msimilarity requests
+        # disable msimilarity requests
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
         self._community.create_msimilarity_request = lambda destination: False
 
@@ -120,7 +120,6 @@ class SocialClient(DispersyExperimentScriptClient):
         keyhash = long(sha1(str(key)).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(keyhash, {})
 
-        key = key.replace("_", " ")
         key = bytes_to_key(key)
         self._community._friend_db.add_my_key(key, keyhash)
 
@@ -135,7 +134,6 @@ class SocialClient(DispersyExperimentScriptClient):
             keyhash = long(sha1(str(key)).hexdigest(), 16)
             self._community._mypref_db.addMyPreference(keyhash, {})
 
-            key = key.replace("_", " ")
             key = bytes_to_key(key)
             self._community._friend_db.add_friend(str(peer_id), key, keyhash)
 
@@ -148,7 +146,7 @@ class SocialClient(DispersyExperimentScriptClient):
     @call_on_dispersy_thread
     def add_foaf(self, peer_id, his_friends):
         peer_id = int(peer_id)
-        his_friends = [int(friend) for friend in his_friends[1:-1].split("_")]
+        his_friends = [int(friend) for friend in his_friends[1:-1].split(",")]
 
         # if we don't get the ipport, then this peer isn't deployed to the das
         ipport = self.get_peer_ip_port(peer_id)

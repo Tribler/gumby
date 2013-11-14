@@ -45,14 +45,15 @@
 
 """Parses and runs scenarios."""
 
-import sys
-from time import time
 from itertools import ifilter
+from os import environ
 from random import random
 from re import compile as re_compile
-from twisted.internet import reactor
-from os import environ
+from time import time
+import shlex
+import sys
 
+from twisted.internet import reactor
 from twisted.python.log import msg, err
 
 class ScenarioRunner():
@@ -225,7 +226,7 @@ class ScenarioRunner():
                     timestamp,
                     lineno,
                     dic.get("callable", ""),
-                    tuple(dic.get("args", "").split())
+                    tuple(shlex.split(dic.get("args", "")))
                 )
         else:
             print >> sys.stderr, "Ignoring invalid scenario line", lineno
