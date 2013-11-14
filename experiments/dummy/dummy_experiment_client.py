@@ -53,7 +53,8 @@ class DummyExperimentClient(ExperimentClient):
 
 def main():
     factory = ExperimentClientFactory({"random_key": "random value"}, DummyExperimentClient)
-    reactor.connectTCP(environ['HEAD_IP'], int(environ['SYNC_PORT']), factory)
+    msg("Connecting to: %s:%s" % (environ['SYNC_HOST'], int(environ['SYNC_PORT'])))
+    reactor.connectTCP(environ['SYNC_HOST'], int(environ['SYNC_PORT']), factory)
 
     reactor.exitCode = 0
     reactor.run()
