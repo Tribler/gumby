@@ -55,6 +55,7 @@ class DummyExperimentClient(ExperimentClient):
 
 def main():
     factory = ExperimentClientFactory({"random_key": "random value"}, DummyExperimentClient)
+    msg("Connecting to: %s:%s" % (environ['SYNC_HOST'], int(environ['SYNC_PORT'])))
     reactor.connectTCP(environ['HEAD_NODE'], int(environ['SYNC_PORT']), factory)
 
     reactor.exitCode = 0

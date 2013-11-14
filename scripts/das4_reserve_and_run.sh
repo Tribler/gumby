@@ -40,6 +40,19 @@
 set -e
 
 export HEAD_NODE=$(hostname)
+
+
+if [ -z "$HEAD_IP" ]; then
+    echo "HEAD_IP is not set, using current host"
+    export HEAD_IP=$HEAD_IP
+fi
+
+if [ -z "$SYNC_HOST" ]; then
+    echo "SYNC_HOST not set, using HEAD_IP"
+    #SYNC_HOST=$(echo $SSH_CLIENT | awk '{print $1}' )
+    export SYNC_HOST=$HEAD_IP
+fi
+
 # This will be used from das4_node_run_job.sh to rsync the output data back to the head node
 if [ "$HEAD_NODES" == '[]' ]; then
     # This means we are running the experiment locally

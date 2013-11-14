@@ -73,7 +73,7 @@ from twisted.internet.task import deferLater
 from twisted.protocols.basic import LineReceiver
 from twisted.python.log import msg, err
 
-EXPERIMENT_SYNC_TIMEOUT = 10
+EXPERIMENT_SYNC_TIMEOUT = 60
 
 #
 # Server side
