@@ -273,6 +273,7 @@ class ExperimentClient(LineReceiver):
     def proto_go(self, line):
         if line.strip() == "go":
             self.startExperiment()
+            self.factory.stopTrying()
             self.transport.loseConnection()
 
 
@@ -293,9 +294,7 @@ class ExperimentClientFactory(ReconnectingClientFactory):
 
     def clientConnectionLost(self, connector, reason):
         msg("The connection with the experiment server was lost with reason: %s" % reason.getErrorMessage())
-        if reason.type is ConnectionDone:
-            # If the connection is cleanly closed we can stop trying to reconnect.
-            self.stopTrying()
+
 #
 # Aux stuff
 #
