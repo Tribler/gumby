@@ -35,7 +35,7 @@
 #
 #
 
-SCRIPT_VERSION=5
+SCRIPT_VERSION=6
 
 # Code:
 set -e
@@ -354,6 +354,7 @@ netifaces
 nose
 nosexcover
 ntplib
+psutil
 pyasn1 # for twisted
 pycrypto # Twisted needs it
 pysqlite
