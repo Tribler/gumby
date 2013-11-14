@@ -48,6 +48,7 @@ for FILE in $(find -type f ! -empty -name "*.err"); do
 done
 echo "Done"
 
+# @CONF_OPTION DISPERSY_STATISTICS_EXTRACTION_CMD: Override the default statistics extraction script.
 if [ -z "$DISPERSY_STATISTICS_EXTRACTION_CMD" ]; then
     DISPERSY_STATISTICS_EXTRACTION_CMD=extract_dispersy_statistics.py
 fi
@@ -73,28 +74,33 @@ reduce_dispersy_statistics.py . 300
 mkdir -p $R_LIBS_USER
 R --no-save --quiet < $R_SCRIPTS_PATH/install.r
 
-(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/drop.r          ; PID1=$!) 2>&1 > /dev/null | tee drop.r.log &
-(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/total_records.r ; PID2=$!) 2>&1 > /dev/null | tee total_records.r.log &
-(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/connections.r   ; PID3=$!) 2>&1 > /dev/null | tee connections.r.log &
-(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/send_received.r ; PID4=$!) 2>&1 > /dev/null | tee send_received.r.log &
-(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/cputimes.r      ; PID5=$!) 2>&1 > /dev/null | tee cputimes.r.log &
-(R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPTS_PATH/statistics.r    ; PID6=$!) 2>&1 > /dev/null | tee statistics.r.log &
 
+R_SCRIPTS_TO_RUN="\
+drop.r
+total_records.r
+connections.r
+send_received.r
+cputimes.r
+statistics.r
+"
 
-wait $PID1
-DROP=$?
-wait $PID2
-RECORDS=$?
-wait $PID3
-CONNECTIONS=$?
-wait $PID4
-SEND_RECVD=$?
-wait $PID5
-CPU=$?
-wait $PID6
-STATISTICS=$?
+# @CONF_OPTION EXTRA_R_SCRIPTS_TO_RUN: adds thoes scripts on the post processing step, they can either be on the usual scripts/r dir or on $EXPERIMENT_DIR/r/
+for R_SCRIPT in $R_SCRIPTS_TO_RUN $EXTRA_R_SCRIPTS_TO_RUN; do
+    if [ -e $EXPERIMENT_DIR/r/$R_SCRIPT ]; then
+        R_SCRIPT_PATH=$EXPERIMENT_DIR/r/$R_SCRIPT
+    else
+        if [ -e $R_SCRIPTS_PATH/$R_SCRIPT ]; then
+            R_SCRIPT_PATH=$R_SCRIPTS_PATH/$R_SCRIPT
+        else
+            echo "ERROR: $R_SCRIPT not found!"
+            FAILED=yes
+        fi
+    fi
+    R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPT_PATH  2>&1 > /dev/null | tee ${R_SCRIPT}.log &
+done
 
-echo "exit statuses:" DROP: $DROP RECORDS: $RECORDS CONNECTIONS: $CONNECTIONS SEND_RECVD: $SEND_RECVD CPU: $CPU STATISTICS: $STATISTICS
+wait
 
+exit $FAILED
 #
 # post_process_dispersy_experiment.sh ends here

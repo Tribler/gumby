@@ -1,7 +1,8 @@
 @0:0 set_master_member 3081a7301006072a8648ce3d020106052b81040027038192000404f10c33b03d2a09943d6d6a4b2cf4fe3129e5dce1df446a27d0ce00d48c845a4eff8102ef3becd6bc07c65953c824d227ebc110016d5ba71163bf6fb83fde7cdccf164bb007e27d07da952c47d30cf9c843034dc7a4603af3a84f8997e5d046e6a5f1ad489add6878898079a4663ade502829577c7d1e27302a3d5ea0ae06e83641a093a87465fdd4a3b43e031a9555
 @0:0 start_dispersy
 @0:1 online
-@0:121 annotate start-experiment
+@0:120 reset_dispersy_statistics
+@0:120 annotate start-experiment
 @0:240 publish {151}
 @0:360 publish {523}
 @0:480 publish {263}
@@ -1002,5 +1003,5 @@
 @0:119880 publish {324}
 @0:120000 publish {271}
 @0:120120 publish {992}
-@0:120130 stop_dispersy
-@0:120140 stop
+@0:120520 stop_dispersy
+@0:120530 stop
