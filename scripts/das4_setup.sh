@@ -37,6 +37,9 @@
 
 # Code:
 
+# Let SGE clean after us
+grep -q "^export SGE_KEEP_TMPFILES" ~/.bashrc || echo "export SGE_KEEP_TMPFILES=no" >> ~/.bashrc
+
 build_virtualenv.sh
 
 find -iname *.py[oc] -delete
