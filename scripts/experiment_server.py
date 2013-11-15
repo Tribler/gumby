@@ -69,7 +69,11 @@ from twisted.python.log import startLogging
 
 if __name__ == '__main__':
     startLogging(stdout)
-    expected_subscribers = int(environ['SYNC_SUBSCRIBERS_AMOUNT'])
+    if 'SYNC_SUBSCRIBERS_AMOUNT' in environ:
+        expected_subscribers = int(environ['SYNC_SUBSCRIBERS_AMOUNT'])
+    else:
+        expected_subscribers = int(environ['DAS4_INSTANCES_TO_RUN'])
+
     experiment_start_delay = float(environ['SYNC_EXPERIMENT_START_DELAY'])
     server_port = int(environ['SYNC_PORT'])
 
