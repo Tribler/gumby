@@ -38,16 +38,18 @@
 # Code:
 
 from os import environ
-from sys import stdout, exit
+from sys import stdout, stderr, exit
 
 from gumby.sync import ExperimentClient, ExperimentClientFactory
-
+from gumby.log import setupLogging
 from twisted.internet import reactor
-from twisted.python.log import msg, startLogging
+from twisted.python.log import msg, err, startLogging
 
 class DummyExperimentClient(ExperimentClient):
     def startExperiment(self):
         msg("Starting dummy experiment (IE exiting in a couple seconds)")
+        msg("in-experiment DEFAULT_LEVEL")
+        err("in-experiment ERROR_LEVEL")
         reactor.callLater(2, reactor.stop)
 
 
@@ -57,10 +59,16 @@ def main():
 
     reactor.exitCode = 0
     reactor.run()
+    print >> stderr, "post-main STDERR"
+    print >> stdout, "post-main STDOUT"
     exit(reactor.exitCode)
 
 if __name__ == '__main__':
-    startLogging(stdout)
+    print >> stderr, "pre-startLogging STDERR"
+    print >> stdout, "pre-startLogging STDOUT"
+    setupLogging()
+    print >> stderr, "post-startLogging STDERR"
+    print >> stdout, "post-startLogging STDOUT"
     main()
 
 

@@ -39,20 +39,17 @@
 
 from os import environ, path, chdir, makedirs, symlink
 from sys import stdout, exit
-import logging.config
-import logging
 import json
 from time import time
 
 from gumby.sync import ExperimentClient, ExperimentClientFactory
 from gumby.scenario import ScenarioRunner
-from gumby.log import PythonLoggingObserver
+from gumby.log import PythonLoggingObserver, setupLogging
 
 # TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
 # The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
-from twisted.python.log import msg, startLogging
 
 
 def call_on_dispersy_thread(func):
@@ -332,17 +329,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
 
 def main(client_class):
-    startLogging(stdout)
-    observer = PythonLoggingObserver()
-    observer.start()
-    config_file = path.join(environ['EXPERIMENT_DIR'], "logger.conf")
-    # TODO(emilon): Document this on the user manual
-    if path.exists(config_file):
-        msg("This experiment has a logger.conf, using it.")
-        logging.config.fileConfig(config_file)
-    else:
-        msg("No logger.conf found for this experiment.")
-
+    setupLogging()
     factory = ExperimentClientFactory({}, client_class)
     reactor.connectTCP(environ['HEAD_NODE'], int(environ['SYNC_PORT']), factory)
 
