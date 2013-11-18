@@ -39,18 +39,15 @@
 
 set -e
 
-export HEAD_NODE=$(hostname)
-
-
-if [ -z "$HEAD_IP" ]; then
-    echo "HEAD_IP is not set, using current host"
-    export HEAD_IP=$HEAD_IP
+if [ -z "$HEAD_HOST" ]; then
+    echo "HEAD_HOST is not set, using current host"
+    export HEAD_HOST=$(hostname)
 fi
 
 if [ -z "$SYNC_HOST" ]; then
-    echo "SYNC_HOST not set, using HEAD_IP"
+    echo "SYNC_HOST not set, using HEAD_HOST"
     #SYNC_HOST=$(echo $SSH_CLIENT | awk '{print $1}' )
-    export SYNC_HOST=$HEAD_IP
+    export SYNC_HOST=$HEAD_HOST
 fi
 
 # This will be used from das4_node_run_job.sh to rsync the output data back to the head node

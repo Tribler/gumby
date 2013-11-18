@@ -59,12 +59,12 @@ else
     MODULEPATH=dispersy.tool.tracker
 fi
 
-# TODO: Use HEAD_IP as override for this
-if [ -z "$HEAD_IP" ]; then
-    HEAD_IP=$(hostname)
+# TODO: Document this
+if [ -z "$HEAD_HOST" ]; then
+    HEAD_HOST=$(hostname)
 fi
 
-echo $HEAD_IP $TRACKER_PORT > bootstraptribler.txt
+echo $HEAD_HOST $TRACKER_PORT > bootstraptribler.txt
 
 python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT 2>&1 > "$OUTPUT_DIR/tracker_out.log"
 

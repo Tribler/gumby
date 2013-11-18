@@ -47,7 +47,7 @@ from twisted.python.log import msg, err, startLogging
 
 class DummyExperimentClient(ExperimentClient):
     def startExperiment(self):
-        msg("Starting dummy experiment (IE exiting in a couple seconds)")
+        msg("Starting dummy experiment (exiting in a couple of seconds)")
         msg("in-experiment DEFAULT_LEVEL")
         err("in-experiment ERROR_LEVEL")
         reactor.callLater(2, reactor.stop)
@@ -56,7 +56,7 @@ class DummyExperimentClient(ExperimentClient):
 def main():
     factory = ExperimentClientFactory({"random_key": "random value"}, DummyExperimentClient)
     msg("Connecting to: %s:%s" % (environ['SYNC_HOST'], int(environ['SYNC_PORT'])))
-    reactor.connectTCP(environ['HEAD_NODE'], int(environ['SYNC_PORT']), factory)
+    reactor.connectTCP(environ['SYNC_HOST'], int(environ['SYNC_PORT']), factory)
 
     reactor.exitCode = 0
     reactor.run()
