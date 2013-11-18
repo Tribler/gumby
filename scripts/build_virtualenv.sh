@@ -48,19 +48,20 @@ fi
 
 export LD_LIBRARY_PATH=$VENV/inst/lib:$VENV/lib:$LD_LIBRARY_PATH
 
-echo "If you get any build problems, please, make sure you have all the required deps:
-For SystemTap & co.:
-sudo apt-get build-dep systemtap
-sudo apt-get install libncurses-dev systemtap-sdt-dev:
-
-For WX:
-sudo apt-get build-dep wxwidgets2.8
-sudo apt-get install libpangox-1.0-dev
-"
-
 # Build the systemtap enabled python runtime and systemtap itself
 # if dtrace is available, if not, just build python 2.7
 if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
+
+    echo "If you get any build problems, please, make sure you have all the required deps:
+
+    For SystemTap & co.:
+      sudo apt-get build-dep systemtap
+      sudo apt-get install libncurses-dev systemtap-sdt-dev:
+
+    For WX:
+      sudo apt-get build-dep wxwidgets2.8
+      sudo apt-get install libpangox-1.0-dev
+"
     mkdir -p $VENV/src
     pushd $VENV/src
     if [ -e /usr/bin/dtrace ]; then
