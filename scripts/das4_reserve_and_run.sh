@@ -54,9 +54,9 @@ fi
 if [ "$HEAD_NODES" == '[]' ]; then
     # This means we are running the experiment locally
     mkdir $OUTPUT_DIR/localhost
-    export OUTPUT_DIR_URI="$HEAD_NODE:$OUTPUT_DIR/localhost"
+    export OUTPUT_DIR_URI="$HEAD_HOST:$OUTPUT_DIR/localhost"
 else
-    export OUTPUT_DIR_URI="$HEAD_NODE:$OUTPUT_DIR"
+    export OUTPUT_DIR_URI="$HEAD_HOST:$OUTPUT_DIR"
 fi
 
 echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
