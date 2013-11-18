@@ -35,6 +35,7 @@
 #
 #
 
+# Increase this every time the file gets modified.
 SCRIPT_VERSION=7
 
 # Code:
