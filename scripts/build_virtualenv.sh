@@ -35,7 +35,7 @@
 #
 #
 
-SCRIPT_VERSION=6
+SCRIPT_VERSION=7
 
 # Code:
 set -e
@@ -373,6 +373,10 @@ CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~
 
 #$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt\
 rm ~/requirements.txt
+
+# pycompile everything before deactivating the venv
+find $VENV -iname *.py[oc] -delete
+pycompile.py $VENV
 
 deactivate
 
