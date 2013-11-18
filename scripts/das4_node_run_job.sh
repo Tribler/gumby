@@ -40,7 +40,19 @@
 
 set -e
 
-echo "$(hostname) here, spawning $DAS4_PROCESSES_PER_NODE instances of command: $DAS4_NODE_COMMAND"
+let "PROCESSES_PER_NODE=$DAS4_INSTANCES_TO_RUN/$DAS4_NODE_AMOUNT"
+let "PLUS_ONE_NODES=$DAS4_INSTANCES_TO_RUN%$DAS4_NODE_AMOUNT"
+
+PROCESSES_IN_THIS_NODE=$PROCESSES_PER_NODE
+
+if [ $PLUS_ONE_NODES -gt 0 ]; then
+    # Truncate the list to the first $PLUS_ONE_NODES, if we are in this segment, increase the number of processes by one
+    echo $HOSTS | cut -d" " -f-$PLUS_ONE_NODES | grep -q $(hostname) && let "PROCESSES_IN_THIS_NODE=$PROCESSES_PER_NODE+1"
+fi
+
+export PROCESSES_IN_THIS_NODE
+
+echo "$(hostname) here, spawning $PROCESSES_IN_THIS_NODE instances of command: $DAS4_NODE_COMMAND"
 
 OUTPUT_DIR=/local/$USER/Experiment_${EXPERIMENT_NAME}_output
 rm -fR "$OUTPUT_DIR"
@@ -49,7 +61,7 @@ cd "$OUTPUT_DIR"
 
 CMDFILE=$(mktemp --tmpdir=/local/$USER/ process_guard_XXXXXXXXXXXXX_$USER)
 
-for INSTANCE in $(seq 1 1 $DAS4_PROCESSES_PER_NODE); do
+for INSTANCE in $(seq 1 1 $PROCESSES_IN_THIS_NODE); do
     echo "$DAS4_NODE_COMMAND" >> $CMDFILE
 done
 
