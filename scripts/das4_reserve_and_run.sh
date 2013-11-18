@@ -67,5 +67,13 @@ PID=$!
 sleep 1
 preserve -llist
 wait $PID
+
+# Cancel all our rc jobs in the queue
+cat <<EOF | at now + 2 minutes
+
+for RID in $(preserve -list | awk '{print $2 " " $1 " " $5 }' | grep rc$ | grep ^$USER | cut -f2 -d" "); do pdel $RID ; done
+
+EOF
+
 #
 # das4_reserve_and_run.sh ends here
