@@ -29,7 +29,6 @@ fi
 
 
 
-
 svn co $REPOSITORY_URL $REPOSITORY_DIR
 
 cd $REPOSITORY_DIR

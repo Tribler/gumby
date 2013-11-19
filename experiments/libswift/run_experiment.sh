@@ -26,7 +26,9 @@ fi
 
 if [ ! -d "$OUTPUT_DIR/lxc/$LXC_CONTAINER_NAME" ]; then
 	echo "Initializing LXC container in $OUTPUT_DIR/lxc/$LXC_CONTAINER_NAME..."
-	sudo lxc-create -n debian -t debian -B dir --dir $OUTPUT_DIR/lxc/$LXC_CONTAINER_NAME/rootfs
+	sudo cp $WORKSPACE_DIR/gumby/experiments/libswift/lxc-debian-libswift /usr/share/lxc/templates/lxc-debian-libswift
+	sudo chmod +x /usr/share/lxc/templates/lxc-debian-libswift
+	sudo lxc-create -n debian -t debian-libswift -B dir --dir $OUTPUT_DIR/lxc/$LXC_CONTAINER_NAME/rootfs
 fi
 
 
@@ -103,6 +105,7 @@ mkdir -p $LOGS_DIR/dst
 INIT_LXC_CMD="/home/init.sh"
 SEEDER_LXC_CMD="/home/start_seeder.sh"
 LEECHER_LXC_CMD="/home/start_leecher.sh"
+PROCESS_GUARD_CMD="/home/process_guard.py"
 
 INIT_CMD="$OUTPUT_DIR/lxc/$LXC_CONTAINER_NAME/rootfs/$INIT_LXC_CMD"
 SEEDER_CMD="$OUTPUT_DIR/lxc/$LXC_CONTAINER_NAME/rootfs/$SEEDER_LXC_CMD"
@@ -116,10 +119,13 @@ sudo chmod +x $EXPERIMENT_DIR/*.sh
 
 # setup container (install lxc, libevent, libswift etc)
 sudo lxc-execute -n debian -f $EXPERIMENT_DIR/seeder_config $INIT_LXC_CMD $REPOSITORY_DIR 
+# TODO download gumby on container so we can use process_guard.py
+sudo cp $WORKSPACE_DIR/gumby/scripts/process_guard.py $OUTPUT_DIR/lxc/$LXC_CONTAINER_NAME/rootfs/$PROCESS_GUARD_CMD
+
 
 # start seeder
 #$WORKSPACE_DIR/gumby/scripts/process_guard.py -c "taskset -c 1 sudo lxc-execute -n seeder -f $EXPERIMENT_DIR/seeder_config $SEEDER_LXC_CMD $REPOSITORY_DIR $SRC_LXC_STORE $FILENAME" -t $(($EXPERIMENT_TIME-5)) -m $LOGS_DIR/src -o $LOGS_DIR/src &
-sudo lxc-execute -n seeder -f $EXPERIMENT_DIR/seeder_config $SEEDER_LXC_CMD $REPOSITORY_DIR /$SRC_LXC_STORE $FILENAME > $LOGS_DIR/src/src.log & 
+sudo lxc-execute -n seeder -f $EXPERIMENT_DIR/seeder_config $SEEDER_LXC_CMD $REPOSITORY_DIR /$SRC_LXC_STORE $FILENAME  $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME &
 
 # wait for the hash to be generated
 while [ ! -f $SRC_STORE/$FILENAME.mbinmap ] ;
@@ -133,7 +139,10 @@ echo "Starting destination..."
 # start destination swift
 
 #$WORKSPACE_DIR/gumby/scripts/process_guard.py -c "taskset -c 1 sudo lxc-execute -n leecher -f $EXPERIMENT_DIR/leecher_config $LEECHER_LXC_CMD $REPOSITORY_DIR $DST_LXC_STORE $HASH " -t $(($EXPERIMENT_TIME-5)) -m $LOGS_DIR/dst -o $LOGS_DIR/dst &
-sudo lxc-execute -n leecher -f $EXPERIMENT_DIR/leecher_config $LEECHER_LXC_CMD $REPOSITORY_DIR /$DST_LXC_STORE $HASH $NETEM_DELAY > $LOGS_DIR/dst/dst.log & 
+sudo lxc-execute -n leecher -f $EXPERIMENT_DIR/leecher_config $LEECHER_LXC_CMD $REPOSITORY_DIR /$DST_LXC_STORE $HASH $NETEM_DELAY $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME
+	
+# kill the seeder when the leecher is done, only possible way for now :/
+sudo lxc-stop -n seeder	
 
 SWIFT_DST_PID=$!
 
@@ -161,12 +170,16 @@ sleep 5s
 # separate logs
 
 # remove temps
-<<<<<<< HEAD
 #sudo rm -rf $SRC_STORE
 #sudo rm -rf $DST_STORE
 # rm -rf ./src ./dst # TODO
 
 # ------------- LOG PARSING -------------
+
+# copy logs back from containers
+cp -R $OUTPUT_DIR/lxc/$LXC_CONTAINER_NAME/rootfs/home/logs/$DATE/src $LOGS_DIR/
+cp -R $OUTPUT_DIR/lxc/$LXC_CONTAINER_NAME/rootfs/home/logs/$DATE/dst $LOGS_DIR/
+# sudo chown -R corpaul $LOGS_DIR/
 
 # TODO: tmp preprocess because process_guard.py in gumby now adds a first line to the resource_usage.log files
 tail -n +2 $LOGS_DIR/src/resource_usage.log > $LOGS_DIR/src/resource_usage.log.tmp

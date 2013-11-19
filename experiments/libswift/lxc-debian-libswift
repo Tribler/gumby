@@ -120,7 +120,8 @@ subversion,\
 make,\
 g++,\
 wget,\
-gcc
+gcc,\
+python
 
     cache=$1
     arch=$2
@@ -168,7 +169,7 @@ copy_debian()
 
 install_debian()
 {
-    cache="/var/cache/lxc/debian"
+    cache="/var/cache/lxc/debian-libswift"
     rootfs=$1
     mkdir -p /var/lock/subsys/
     (
