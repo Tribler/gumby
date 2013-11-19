@@ -23,10 +23,7 @@ export LD_LIBRARY_PATH=/usr/local/lib
 ifconfig eth0 up 
 route add default gw 192.168.1.20
 
-# create file to seed
-# TODO: hardcoded now
-
 # seed file
-$PROCESS_GUARD_CMD -c "taskset -c 1 $REPOSITORY_DIR/swift -l 1337 -f $SRC_STORE/$FILENAME -p -H  " -t $(($EXPERIMENT_TIME-5)) -m $LOGS_DIR/src -o $LOGS_DIR/src &
+$PROCESS_GUARD_CMD -c "taskset -c 1 $REPOSITORY_DIR/swift -l 1337 -f $SRC_STORE/$FILENAME -p -H  " -t $EXPERIMENT_TIME -m $LOGS_DIR/src -o $LOGS_DIR/src &
 #$REPOSITORY_DIR/swift -l 1337 -f $SRC_STORE/$FILENAME -p -H &
 # $REPOSITORY_DIR/swift -l 1337 -f $SRC_STORE/$FILENAME -p -H > $SRC_STORE/

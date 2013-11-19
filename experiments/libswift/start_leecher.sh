@@ -27,7 +27,7 @@ route add default gw 192.168.1.20
 tc qdisc add dev eth0 root netem delay $NETEM_DELAY
 
 # leech file
-$PROCESS_GUARD_CMD -c "taskset -c 1 $REPOSITORY_DIR/swift -t 192.168.1.110:1337 -o $DST_STORE/ -h $HASH -p " -t $(($EXPERIMENT_TIME-5)) -m $LOGS_DIR/dst -o $LOGS_DIR/dst &
+$PROCESS_GUARD_CMD -c "taskset -c 1 $REPOSITORY_DIR/swift -t 192.168.1.110:1337 -o $DST_STORE/ -h $HASH -p " -t $EXPERIMENT_TIME -m $LOGS_DIR/dst -o $LOGS_DIR/dst &
 #$REPOSITORY_DIR/swift -t 192.168.1.110:1337 -o $DST_STORE/ -h $HASH -p 
 
 

@@ -6,7 +6,7 @@ lxc.network.link = br0
 lxc.network.hwaddr = 00:FF:AA:00:00:02
 lxc.network.ipv4 = 192.168.1.111/24
 
-lxc.rootfs = /home/corpaul/workspace/output/lxc/debian/rootfs
+lxc.rootfs = ${rootfs}
 lxc.tty = 4
 lxc.pts = 1024
 lxc.utsname = leecher 
