@@ -15,9 +15,7 @@ route add default gw $BRIDGE_IP
 
 export PATH=$PATH:/usr/bin
 
-# done by lxc (added them to debootstrap)
-# apt-get update
-# apt-get install -y lxc subversion make g++ wget
+# build libevent (libswift dependency)
 if [ ! -d "/home/libevent-2.0.21-stable" ]; then
 	cd /home/
 	wget https://github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz --no-check-certificate
@@ -26,12 +24,8 @@ if [ ! -d "/home/libevent-2.0.21-stable" ]; then
 	./configure && make install
 fi 
 
-
-
-
-
+# build libswift
 svn co $REPOSITORY_URL $REPOSITORY_DIR
-
 cd $REPOSITORY_DIR
 make
 
