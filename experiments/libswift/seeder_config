@@ -2,14 +2,14 @@
 # Template script checksum (SHA-1): 33e3fc0cb7e2809453c36e81fe0fe4aa5542c208
 
 lxc.network.type = veth
-lxc.network.link = br0
+lxc.network.link = ${bridge_name}
 lxc.network.hwaddr = 00:FF:AA:00:00:01
-lxc.network.ipv4 = 192.168.1.110/24
+lxc.network.ipv4 = ${seeder_ip}/24
 
 lxc.rootfs = ${rootfs}
 lxc.tty = 4
 lxc.pts = 1024
-lxc.utsname = debian
+lxc.utsname = seeder
 
 # When using LXC with apparmor, uncomment the next line to run unconfined:
 #lxc.aa_profile = unconfined

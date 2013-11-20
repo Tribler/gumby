@@ -1,16 +1,17 @@
 #!/bin/bash -xe
 
-if [ -z "$1" ]; then
-    echo "Usage: init.sh repository_dir"
-    exit
+EXPECTED_ARGS=3
+if [ $# -ne $EXPECTED_ARGS ]
+then
+    echo "Usage: init.sh repository_dir repository_url bridge_ip"
+    exit 65
 fi
-REPOSITORY_DIR=$1
-
-REPOSITORY_URL="http://svn.tribler.org/libswift/branches/riccardo/testing4devel/"
-
+REPOSITORY_DIR="$1"
+REPOSITORY_URL="$2"
+BRIDGE_IP="$3"
 
 ifconfig eth0 up 
-route add default gw 192.168.1.20
+route add default gw $BRIDGE_IP
 
 export PATH=$PATH:/usr/bin
 

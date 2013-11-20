@@ -2,9 +2,9 @@
 # Template script checksum (SHA-1): 33e3fc0cb7e2809453c36e81fe0fe4aa5542c208
 
 lxc.network.type = veth
-lxc.network.link = br0
+lxc.network.link = ${bridge_name}
 lxc.network.hwaddr = 00:FF:AA:00:00:02
-lxc.network.ipv4 = 192.168.1.111/24
+lxc.network.ipv4 = ${leecher_ip}/24
 
 lxc.rootfs = ${rootfs}
 lxc.tty = 4
