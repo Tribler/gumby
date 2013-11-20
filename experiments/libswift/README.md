@@ -81,3 +81,15 @@ Resource usage graph generation stuff. Currently broken, originally created by @
 ### start_leecher.sh & start_seeder.sh ###
 
 Scripts used to start the leecher and seeder (run inside the container).
+
+
+## Creating a union filesystem for the container ##
+
+```
+mkdir /tmp/container
+mkdir /tmp/aufs-root
+sudo mount -t tmpfs none /tmp/container/
+sudo mount -t aufs -o br=/tmp/container:/ none /tmp/aufs-root
+```
+
+(use /tmp/aufs-root as rootfs for the containers)
