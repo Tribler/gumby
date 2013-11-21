@@ -9,7 +9,7 @@
 
 # Commentary:
 #
-# This script runs N copies of the specified command and sends the output
+# This script is called from das4_reserve_and_run.sh and spawns N copies of the specified command, sending the output
 # data back to the head node when finished.
 #
 #
@@ -61,16 +61,17 @@ cd "$OUTPUT_DIR"
 
 CMDFILE=$(mktemp --tmpdir=/local/$USER/ process_guard_XXXXXXXXXXXXX_$USER)
 
+# @CONF_OPTION DAS4_NODE_COMMAND: The command that will be repeatedly launched in the worker nodes of the cluster. (required)
 for INSTANCE in $(seq 1 1 $PROCESSES_IN_THIS_NODE); do
     echo "$DAS4_NODE_COMMAND" >> $CMDFILE
 done
 
+# @CONF_OPTION DAS4_NODE_TIMEOUT: Time in seconds to wait for the sub-processes to run before killing them. (required)
 process_guard.py -f $CMDFILE -t $DAS4_NODE_TIMEOUT -o $OUTPUT_DIR -m $OUTPUT_DIR  -i 5 2>&1 | tee process_guard.log ||:
 
 rm $CMDFILE
 
 # Now, lets send the generated data back to the head node
-
 rsync -a --delete-before --exclude="sqlite/" "$OUTPUT_DIR/" "$OUTPUT_DIR_URI/$(hostname)/" 2>&1
 
 #

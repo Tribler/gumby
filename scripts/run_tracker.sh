@@ -51,7 +51,6 @@
 
 cd $PROJECT_DIR
 
-echo "PWD" $PWD
 if [ -e tribler ]; then
     cd tribler
     MODULEPATH=Tribler.dispersy.tool.tracker
@@ -59,11 +58,11 @@ else
     MODULEPATH=dispersy.tool.tracker
 fi
 
-# TODO: Document this
 if [ -z "$HEAD_HOST" ]; then
     HEAD_HOST=$(hostname)
 fi
 
+# @CONF_OPTION TRACKER_PORT: Port in which the Dispersy tracker should be listening on.
 echo $HEAD_HOST $TRACKER_PORT > bootstraptribler.txt
 
 python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT 2>&1 > "$OUTPUT_DIR/tracker_out.log"
