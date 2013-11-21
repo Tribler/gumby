@@ -14,10 +14,15 @@ CONTAINER_DIR="$LXC_CONTAINERS_DIR/$LXC_CONTAINER_NAME"
 
 if [ ! -d "$CONTAINER_DIR" ]; then
 	echo "Initializing LXC container in $CONTAINER_DIR..."
+	# sudo cp $WORKSPACE_DIR/gumby/experiments/libswift/lxc-debian-libswift /usr/share/lxc/templates/lxc-debian-libswift
+	# sudo chmod +x $EXPERIMENT_DIR/lxc-debian-libswift
+	# sudo /usr/bin/lxc-create -n $LXC_CONTAINER_NAME -t $EXPERIMENT_DIR/lxc-debian-libswift -B dir --dir $CONTAINER_DIR/rootfs
+	# create union filesystem
 	mkdir -p $CONTAINER_DIR
-	sudo cp $WORKSPACE_DIR/gumby/experiments/libswift/lxc-debian-libswift /usr/share/lxc/templates/lxc-debian-libswift
-	sudo chmod +x /usr/share/lxc/templates/lxc-debian-libswift
-	sudo lxc-create -n debian -t debian-libswift -B dir --dir $CONTAINER_DIR/rootfs
+	mkdir -p /tmp/container
+	sudo mount -t tmpfs none /tmp/container/
+	sudo mount -t aufs -o br=/tmp/container:/ none $CONTAINER_DIR
+	sudo echo -e "#!/bin/sh -e\n ifconfig eth0 up \n route add default gw $BRIDGE_IP\n" | sudo tee $CONTAINER_DIR/etc/rc.local
 fi
 
 
@@ -38,6 +43,8 @@ DST_LXC_STORE=home/dst/store
 SRC_STORE=$CONTAINER_DIR/rootfs/$SRC_LXC_STORE
 DST_STORE=$CONTAINER_DIR/rootfs/$DST_LXC_STORE
 
+
+
 sudo mkdir -p $SRC_STORE $DST_STORE
 
 # logging
@@ -54,36 +61,49 @@ FILENAME=file_$FILE_SIZE.tmp
 sudo truncate -s $FILE_SIZE $SRC_STORE/$FILENAME
 
 # copy startup scripts
-INIT_LXC_CMD="/home/init.sh"
-SEEDER_LXC_CMD="/home/start_seeder.sh"
-LEECHER_LXC_CMD="/home/start_leecher.sh"
-PROCESS_GUARD_CMD="/home/process_guard.py"
+INIT_LXC_CMD="init.sh"
+SEEDER_LXC_CMD="/home/$LXC_CONTAINER_NAME/start_seeder.sh"
+LEECHER_LXC_CMD="/home/$LXC_CONTAINER_NAME/start_leecher.sh"
+PROCESS_GUARD_CMD="/home/$LXC_CONTAINER_NAME/process_guard.py"
 
-INIT_CMD="$CONTAINER_DIR/rootfs/$INIT_LXC_CMD"
-SEEDER_CMD="$CONTAINER_DIR/rootfs/$SEEDER_LXC_CMD"
-LEECHER_CMD="$CONTAINER_DIR/rootfs/$LEECHER_LXC_CMD"
+INIT_CMD="$CONTAINER_DIR/$INIT_LXC_CMD"
+SEEDER_CMD="$CONTAINER_DIR/$SEEDER_LXC_CMD"
+LEECHER_CMD="$CONTAINER_DIR/$LEECHER_LXC_CMD"
 
-sudo cp $EXPERIMENT_DIR/init.sh $INIT_CMD
-sudo cp $EXPERIMENT_DIR/start_seeder.sh $SEEDER_CMD
-sudo cp $EXPERIMENT_DIR/start_leecher.sh $LEECHER_CMD
-sudo chmod +x $EXPERIMENT_DIR/*.sh
+#sudo cp $EXPERIMENT_DIR/init.sh $INIT_CMD
+#sudo cp $EXPERIMENT_DIR/start_seeder.sh $SEEDER_CMD
+#sudo cp $EXPERIMENT_DIR/start_leecher.sh $LEECHER_CMD
+#sudo chmod +x $EXPERIMENT_DIR/*.sh
 
 # init lxc config files
-# replace some variables first 
-sed -e 's|\${rootfs}|'`pwd`/$CONTAINER_DIR/rootfs'|g' $EXPERIMENT_DIR/seeder_config > $EXPERIMENT_DIR/seeder_config.conf
-sed -i 's|\${bridge_name}|'$BRIDGE_NAME'|g' $EXPERIMENT_DIR/seeder_config.conf
-sed -i 's|\${seeder_ip}|'$SEEDER_IP'|g' $EXPERIMENT_DIR/seeder_config.conf
+# replace some variables first
+#sed -e 's|\${rootfs}|'`pwd`/$CONTAINER_DIR/rootfs'|g' $EXPERIMENT_DIR/seeder_config > $EXPERIMENT_DIR/seeder_config.conf
+#sed -i 's|\${bridge_name}|'$BRIDGE_NAME'|g' $EXPERIMENT_DIR/seeder_config.conf
+#sed -i 's|\${seeder_ip}|'$SEEDER_IP'|g' $EXPERIMENT_DIR/seeder_config.conf
 
-sed -e 's|\${rootfs}|'`pwd`/$CONTAINER_DIR/rootfs'|g' $EXPERIMENT_DIR/leecher_config > $EXPERIMENT_DIR/leecher_config.conf
-sed -i 's|\${bridge_name}|'$BRIDGE_NAME'|g' $EXPERIMENT_DIR/leecher_config.conf
-sed -i 's|\${leecher_ip}|'$LEECHER_IP'|g' $EXPERIMENT_DIR/leecher_config.conf
+#sed -e 's|\${rootfs}|'`pwd`/$CONTAINER_DIR/rootfs'|g' $EXPERIMENT_DIR/leecher_config > $EXPERIMENT_DIR/leecher_config.conf
+#sed -i 's|\${bridge_name}|'$BRIDGE_NAME'|g' $EXPERIMENT_DIR/leecher_config.conf
+#sed -i 's|\${leecher_ip}|'$LEECHER_IP'|g' $EXPERIMENT_DIR/leecher_config.conf
+
+# fix setup commands for lxc container
+
 
 # setup container (build libevent, libswift etc if necessary)
-sudo lxc-execute -n $LXC_CONTAINER_NAME -f $EXPERIMENT_DIR/seeder_config.conf $INIT_LXC_CMD $REPOSITORY_DIR $REPOSITORY_URL $BRIDGE_IP
+#sudo lxc-execute -n $LXC_CONTAINER_NAME -f $EXPERIMENT_DIR/seeder_config.conf $INIT_LXC_CMD $REPOSITORY_DIR $REPOSITORY_URL $BRIDGE_IP
+sudo lxc-execute -n $LXC_CONTAINER_NAME \
+	-s lxc.network.type=veth \
+	-s lxc.network.link=$BRIDGE_NAME \
+	-s lxc.network.ipv4=$SEEDER_IP/24 \
+	-s lxc.rootfs=$CONTAINER_DIR \
+	-s lxc.pts=1024 \
+	$EXPERIMENT_DIR/$INIT_LXC_CMD $REPOSITORY_DIR $REPOSITORY_URL $BRIDGE_IP
 # TODO download gumby on container so we can use process_guard.py
-sudo cp $WORKSPACE_DIR/gumby/scripts/process_guard.py $CONTAINER_DIR/rootfs/$PROCESS_GUARD_CMD
+sudo cp $WORKSPACE_DIR/gumby/scripts/process_guard.py $CONTAINER_DIR/home/$LXC_CONTAINER_NAME/$PROCESS_GUARD_CMD
 
+
+exit
 # start seeder
+#sudo lxc-execute -n seeder -f $EXPERIMENT_DIR/seeder_config.conf $SEEDER_LXC_CMD $REPOSITORY_DIR /$SRC_LXC_STORE $FILENAME  $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
 sudo lxc-execute -n seeder -f $EXPERIMENT_DIR/seeder_config.conf $SEEDER_LXC_CMD $REPOSITORY_DIR /$SRC_LXC_STORE $FILENAME  $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
 
 # wait for the hash to be generated
@@ -96,9 +116,9 @@ HASH=$(cat $SRC_STORE/$FILENAME.mbinmap | grep hash | cut -d " " -f 3)
 
 # start destination swift
 sudo lxc-execute -n leecher -f $EXPERIMENT_DIR/leecher_config.conf $LEECHER_LXC_CMD $REPOSITORY_DIR /$DST_LXC_STORE $HASH $NETEM_DELAY $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT
-	
+
 # kill the seeder when the leecher is done, only possible way for now :/
-sudo lxc-stop -n seeder	
+sudo lxc-stop -n seeder
 
 echo "---------------------------------------------------------------------------------"
 
@@ -132,23 +152,23 @@ cp -R $CONTAINER_DIR/rootfs/home/logs/$DATE/dst $LOGS_DIR/
 # TODO: parsing very broken at the moment
 # TODO: tmp preprocess because process_guard.py in gumby now adds a first line to the resource_usage.log files
 if $GENERATE_PLOTS; then
-	
+
 
 	tail -n +2 $LOGS_DIR/src/resource_usage.log > $LOGS_DIR/src/resource_usage.log.tmp
 	# remove the (sh) process
 	sed '/(sh)/d' $LOGS_DIR/src/resource_usage.log.tmp > $LOGS_DIR/src/resource_usage.log
 	tail -n +2 $LOGS_DIR/dst/resource_usage.log > $LOGS_DIR/dst/resource_usage.log.tmp
 	sed '/(sh)/d' $LOGS_DIR/dst/resource_usage.log.tmp > $LOGS_DIR/dst/resource_usage.log
-	
+
 	$WORKSPACE_DIR/gumby/experiments/libswift/parse_logs.py $LOGS_DIR/src
 	$WORKSPACE_DIR/gumby/experiments/libswift/parse_logs.py $LOGS_DIR/dst
-	
+
 	# ------------- PLOTTING -------------
 	gnuplot -e "logdir='$LOGS_DIR/src';peername='src';plotsdir='$PLOTS_DIR'" $WORKSPACE_DIR/gumby/experiments/libswift/resource_usage.gnuplot
 	gnuplot -e "logdir='$LOGS_DIR/dst';peername='dst';plotsdir='$PLOTS_DIR'" $WORKSPACE_DIR/gumby/experiments/libswift/resource_usage.gnuplot
-	
+
 	gnuplot -e "logdir='$LOGS_DIR';plotsdir='$PLOTS_DIR'" $WORKSPACE_DIR/gumby/experiments/libswift/speed.gnuplot
-	
+
 	rm -f $PLOTS_DIR_LAST/*
 	cp $PLOTS_DIR/* $PLOTS_DIR_LAST/
 fi
@@ -156,3 +176,6 @@ fi
 rm $EXPERIMENT_DIR/seeder_config.conf
 rm $EXPERIMENT_DIR/leecher_config.conf
 
+# umount the union filesystem
+# umount $CONTAINER_DIR
+# rmdir $CONTAINER_DIR

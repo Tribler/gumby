@@ -2,7 +2,7 @@ Libswift experiment setup details
 =================================
 
 This experiment transfers a file between 1 seeder and 1 leecher using libswift. It is possible to configure a netem
-delay for the leecher.  
+delay for the leecher.
 
 ## Setup ##
 
@@ -41,9 +41,9 @@ sudo iptables -A FORWARD -i br0 -o eth0 -j ACCEPT
 Set /proc/sys/net/ipv4/ip_forward to 1. If you want to use the network on the containers, enter the following commands inside the container:
 
 ```
-route add default gw 192.168.1.20   
+route add default gw 192.168.1.20
 echo nameserver 8.8.8.8 >> /etc/resolv.conf
-``` 
+```
 
 Probably forgot some steps so feel free to add them.
 
@@ -53,7 +53,7 @@ Edit libswift.conf and (from the workspace directory) run:
 
 ```
 gumby/run.py gumby/experiments/libswift/libswift.conf
-``` 
+```
 
 ## Experiment Components ##
 
@@ -86,6 +86,7 @@ Scripts used to start the leecher and seeder (run inside the container).
 ## Creating a union filesystem for the container ##
 
 ```
+sudo apt-get install aufs-tools
 mkdir /tmp/container
 mkdir /tmp/aufs-root
 sudo mount -t tmpfs none /tmp/container/
