@@ -16,13 +16,13 @@ if [ ! -d "$CONTAINER_DIR" ]; then
 	echo "Initializing LXC container in $CONTAINER_DIR..."
 	# sudo cp $WORKSPACE_DIR/gumby/experiments/libswift/lxc-debian-libswift /usr/share/lxc/templates/lxc-debian-libswift
 	# sudo chmod +x $EXPERIMENT_DIR/lxc-debian-libswift
-	# sudo /usr/bin/lxc-create -n $LXC_CONTAINER_NAME -t $EXPERIMENT_DIR/lxc-debian-libswift -B dir --dir $CONTAINER_DIR/rootfs
+	# sudo /usr/bin/lxc-create -n $LXC_CONTAINER_NAME -t $EXPERIMENT_DIR/lxc-debian-libswift -B dir --dir $CONTAINER_DIR
 	# create union filesystem
 	mkdir -p $CONTAINER_DIR
 	mkdir -p /tmp/container
 	sudo mount -t tmpfs none /tmp/container/
 	sudo mount -t aufs -o br=/tmp/container:/ none $CONTAINER_DIR
-	sudo echo -e "#!/bin/sh -e\n ifconfig eth0 up \n route add default gw $BRIDGE_IP\n" | sudo tee $CONTAINER_DIR/etc/rc.local
+	sudo echo -e "#!/bin/sh -e\n ifconfig eth0 up \n route add default gw $BRIDGE_IP\n echo nameserver 8.8.8.8 >> /etc/resolv.conf" | sudo tee $CONTAINER_DIR/etc/rc.local
 fi
 
 

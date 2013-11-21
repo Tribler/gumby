@@ -10,7 +10,9 @@ REPOSITORY_DIR="$1"
 REPOSITORY_URL="$2"
 BRIDGE_IP="$3"
 
-ifconfig eth0 up 
+ifconfig eth0 up
+ifconfig
+echo nameserver 8.8.8.8 >> /etc/resolv.conf
 route add default gw $BRIDGE_IP
 
 export PATH=$PATH:/usr/bin
@@ -22,7 +24,7 @@ if [ ! -d "/home/libevent-2.0.21-stable" ]; then
 	tar -xvf libevent-2.0.21-stable.tar.gz
 	cd /home/libevent-2.0.21-stable
 	./configure && make install
-fi 
+fi
 
 # build libswift
 svn co $REPOSITORY_URL $REPOSITORY_DIR
