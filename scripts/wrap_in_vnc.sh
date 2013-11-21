@@ -41,7 +41,7 @@ export DISPLAY=:$RANDOM
 export HOME=$(mktemp -d)
 mkdir -p $HOME/.vnc # TODO: I think this is no longer needed
 
-chmod -fR og-rwx $HOME
+chmod -fR og-rwx $HOME/.vnc
 
 Xvnc $DISPLAY -localhost -SecurityTypes None &
 
