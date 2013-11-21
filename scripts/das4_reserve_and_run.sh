@@ -9,8 +9,8 @@
 
 # Commentary:
 #
-# A simple script to run an experiment on the DAS4 trough prun.
-#
+# %*% A simple script to run experiments on the DAS4 trough prun.
+# %*% Have in mind that this script uses das4_node_run_job.sh, so you will need to set its config options too.
 #
 
 # Change Log:

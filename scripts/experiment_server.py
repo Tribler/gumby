@@ -9,7 +9,8 @@
 
 # Commentary:
 #
-# Experiment metainfo and time synchronization server.
+# %*% Experiment metainfo and time synchronization server.
+# %*% TODO: Document this a bit more.
 #
 # It receives 3 types of commands:
 # * time:<float>  -> Tells the service the local time for the subprocess for sync reasons.
