@@ -90,7 +90,7 @@ Experiments waiting to be ported to Gumby.
 ### scripts/ ###
 
 Scripts that can be used as components to build experiments.
-If you create a script generic enough to be useful for others, please send a pull request to add it to the collection.
+If you create a script generic enough to be useful to others, please send a pull request to add it to the collection.
 
 #### Scripts and components available to use to build your experiments ####
 
