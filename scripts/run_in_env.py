@@ -8,7 +8,8 @@
 # Created: Fri Aug 23 17:37:32 2013 (+0200)
 
 # Commentary:
-#
+# %*% Shell script to run commands inside the experiment environment. Enabling virtualenv if necessary, loading all the needed variables, etc.
+# %*% Used by gumby, you shouldn't need to use it directly.
 #
 #
 #
@@ -137,7 +138,7 @@ if "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
         print "  %s  ->  %s" % (source_file, dest_file)
         open(dest_file, "w").write(open(source_file, 'r').read().replace("__VIRTUALENV_PATH__", venv_dir))
 
-# @CONF_OPTION OUTPUT_DIR: Dir where to write all the output generated from the experiment (default is experiment_dir/output)
+# @CONF_OPTION OUTPUT_DIR: Dir where to write all the output generated from the experiment (default is workspace_dir/output)
 # Create the experiment output dir if necessary
 if 'OUTPUT_DIR' in env:
     # Convert the output dir to an absolute path to make it easier for

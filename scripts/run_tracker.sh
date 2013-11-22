@@ -8,8 +8,8 @@
 # Created: Fri Jun 14 12:44:06 2013 (+0200)
 
 # Commentary:
-# This script looks for a free UDP port and starts the tracker listening on it.
-# It also writes the port to the experiment config file so other scripts can use it.
+#
+# %*% Starts a dispersy tracker.
 #
 #
 
