@@ -15,7 +15,7 @@ gumby/run.py gumby/experiments/dummy/local_prun.conf
 
 ### Generating a new config file ###
 
-To create a new experiment config, just run this
+To create a new experiment config, just run this:
 
 ```
 gumby/scripts/generate_config_file.py gumby/experiments/my_experiment/new_experiment.conf
@@ -24,7 +24,36 @@ gumby/scripts/generate_config_file.py gumby/experiments/my_experiment/new_experi
  This will parse all of Gumby resources and create a self-documented config skeleton for you. Open the file and read the
  instructions there.
 
-### Setting everything up to ###
+### Setting everything up to run your experiment ###
+
+Gumby expects the following directory tree:
+
+workspace/: The workspace dir contains everything that the experiment will need during its execution (including Gumby),
+it can have whatever name you like.
+
+workspace/gumby/: Here is where you should clone the gumby repo it has to be located in the root of the workspace with
+this specific name.
+
+workspace/tribler/: If your experiments use code from tribler, clone the repository in this location so all the helper
+scripts can find it.
+
+workspace/dispersy/: Idem.
+
+workspace/output/: Experiment output location, this directory will be cleared/created automatically whenever the
+experiment is started, so take care of copying anything you want to keep before restarting an experiment.
+
+A typical set up/execution session up would look similar to this:
+
+```
+ssh das4
+cd /var/scratch/$USER
+mkdir my_workspace
+cd my_workspace
+git clone https://github.com/Tribler/gumby
+git clone https://github.com/Tribler/tribler
+gumby/run.py gumby/experiments/dispersy/allchannel.conf
+ls -R output/
+```
 
 ## Framework components ##
 
