@@ -1,11 +1,11 @@
-gumby
+Gumby
 =====
 
-Experiment runner framework for Dispersy and Tribler
+Experiment runner framework for Dispersy and Tribler.
 
 ## How to use it ##
 
-Simply call gumby/run.py passing your config file's path as argument.
+After setting up the workspace (see below), simply call gumby/run.py passing your config file's path as argument.
 
 Example:
 
@@ -29,9 +29,9 @@ gumby/scripts/generate_config_file.py gumby/experiments/my_experiment/new_experi
 Gumby expects the following directory tree:
 
 workspace/: The workspace dir contains everything that the experiment will need during its execution (including Gumby),
-it can have whatever name you like.
+it can be named as you like.
 
-workspace/gumby/: Here is where you should clone the gumby repo it has to be located in the root of the workspace with
+workspace/gumby/: Here is where you should clone the gumby repo, it has to be located in the root of the workspace with
 this specific name.
 
 workspace/tribler/: If your experiments use code from Tribler, clone the repository in this location so all the helper
@@ -59,7 +59,7 @@ ls -R output/
 
 ### run.py ###
 
-Experiment entry point, must receive an experiment config file as argument.
+Experiment entry point, must receive an experiment config file as only argument.
 
 ### Experiment config file ###
 
@@ -70,7 +70,7 @@ If you want to have several variations of the same experiment, store several con
 
 ## Directory structure ##
 
-(All relative to gumby's repository root )
+(All relative to Gumby's repository root )
 
 ### experiments/ ###
 
@@ -85,7 +85,7 @@ the PATH. (the same goes for PYTHONPATH)
 
 ### legacy_experiments/ ###
 
-Experiments waiting to be ported to gumby.
+Experiments waiting to be ported to Gumby.
 
 ### scripts/ ###
 
