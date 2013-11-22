@@ -61,7 +61,7 @@ ls -R output/
 
 Experiment entry point, must receive an experiment config file as argument.
 
-### experiment config file ###
+### Experiment config file ###
 
 It contains all the settings needed to run an experiment using this framework.
 
@@ -69,6 +69,8 @@ It will usually be stored into experiments/ExperimentName/experiment.conf
 If you want to have several variations of the same experiment, store several config files in the experiment dir.
 
 ## Directory structure ##
+
+(All relative to gumby's repository root )
 
 ### experiments/ ###
 
@@ -78,7 +80,7 @@ If you want several variations of the same experiment, just create a .conf file 
  * experiments/my_crazy_experiment/crazier.conf
  * experiments/my_crazy_experiment/craziest.conf
 
-If your experiment needs to use a specific script, just store it in this directory, it will be automatically added to
+If your experiment needs to use a custom script, just store it in this directory, it will be automatically added to
 the PATH. (the same goes for PYTHONPATH)
 
 ### legacy_experiments/ ###

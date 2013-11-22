@@ -56,6 +56,8 @@ CONFIG_FILE_HEADER = '''\
 #
 # To add functionality to the experiment you will need to set some/all of the following options:
 #
+# Please, add a descriptive header so other people can understand the purpose of this experiment and remove anything not relevant.
+#
 ###
 ### Gumby core configuration options:
 ###
