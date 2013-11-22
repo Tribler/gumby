@@ -3,6 +3,29 @@ gumby
 
 Experiment runner framework for Dispersy and Tribler
 
+## How to use it ##
+
+Simply call gumby/run.py passing your config file's path as argument.
+
+Example:
+
+```
+gumby/run.py gumby/experiments/dummy/local_prun.conf
+```
+
+### Generating a new config file ###
+
+To create a new experiment config, just run this
+
+```
+gumby/scripts/generate_config_file.py gumby/experiments/my_experiment/new_experiment.conf
+```
+
+ This will parse all of Gumby resources and create a self-documented config skeleton for you. Open the file and read the
+ instructions there.
+
+### Setting everything up to ###
+
 ## Framework components ##
 
 ### run.py ###
@@ -16,54 +39,28 @@ It contains all the settings needed to run an experiment using this framework.
 It will usually be stored into experiments/ExperimentName/experiment.conf
 If you want to have several variations of the same experiment, store several config files in the experiment dir.
 
-#### Mandatory config params ####
-
-experiment_name: A string that uniquely identifies the experiment. It will be used to create a workspace on the remote nodes.
-
-#### Optional config params ####
-
-TODO
-
 ## Directory structure ##
 
 ### experiments/ ###
 
-Experiments should go in there, in a folder named after each experiment.
+Experiments go in there, in a folder named after each experiment or experiment.
 If you want several variations of the same experiment, just create a .conf file for each of them. IE:
- * experiments/MyCrazyExperiment/crazy.conf
- * experiments/MyCrazyExperiment/crazier.conf
- * experiments/MyCrazyExperiment/craziest.conf
+ * experiments/my_crazy_experiment/crazy.conf
+ * experiments/my_crazy_experiment/crazier.conf
+ * experiments/my_crazy_experiment/craziest.conf
 
-If your experiment needs to use a specific script, just store it in this directory, it will be automatically added to PATH.
+If your experiment needs to use a specific script, just store it in this directory, it will be automatically added to
+the PATH. (the same goes for PYTHONPATH)
 
 ### legacy_experiments/ ###
 
-Experiments waiting to be ported to gumby
+Experiments waiting to be ported to gumby.
 
 ### scripts/ ###
 
 Scripts that can be used as components to build experiments.
 If you create a script generic enough to be useful for others, please send a pull request to add it to the collection.
 
-#### Scripts available to use to build experiments ####
+#### Scripts and components available to use to build your experiments ####
 
-##### run_in_env.py #####
-
-Shell script to run commands inside the experiment environment. Enabling virtualenv if necessary, loading all the needed variables, etc.
-Automatically used by gumby.
-
-##### run_tracker.sh #####
-
-Looks for an unused UDP port, updates the settings with the port number and starts a dispersy tracker.
-
-##### build_virtualenv.sh #####
-
-Builds a virtualenv with everything necessary to run Tribler/Dispersy. And if dtrace is available in the system, it builds SystemTap and a SystemTap-enabled python 2.7 environment.
-Can be safely executed every time the experiment is run as it will detect if the environment is up to date and exit if there's nothing to do.
-Be aware that due to SystemTap needing root permissions, the first run of the script will fail giving instructions to the user on how to manually run a couple of commands as root.
-
-TODO: Add missing documentation.
-
-### gumby/ ###
-
-Main gumby package. Where it's core and generic python modules are stored.
+Please, check the documentation in the config file template.
