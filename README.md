@@ -34,7 +34,7 @@ it can have whatever name you like.
 workspace/gumby/: Here is where you should clone the gumby repo it has to be located in the root of the workspace with
 this specific name.
 
-workspace/tribler/: If your experiments use code from tribler, clone the repository in this location so all the helper
+workspace/tribler/: If your experiments use code from Tribler, clone the repository in this location so all the helper
 scripts can find it.
 
 workspace/dispersy/: Idem.
