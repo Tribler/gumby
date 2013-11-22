@@ -9,6 +9,10 @@ if [ ! -d "$EXPERIMENT_DIR" ]; then
     exit 1
 fi
 
+# get full path, easier for use in container
+WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR) 
+LOGS_ARCHIVE_DIR=$(readlink -f $LOGS_ARCHIVE_DIR)
+
 # Initialize filesystem for container
 CONTAINER_DIR="$LXC_CONTAINERS_DIR/$LXC_CONTAINER_NAME"
 
@@ -22,7 +26,7 @@ if [ ! -d "$CONTAINER_DIR" ]; then
 	mkdir -p /tmp/container
 	sudo mount -t tmpfs none /tmp/container/
 	sudo mount -t aufs -o br=/tmp/container:/ none $CONTAINER_DIR
-	sudo echo -e "#!/bin/sh -e\n ifconfig eth0 up \n route add default gw $BRIDGE_IP\n echo nameserver 8.8.8.8 >> /etc/resolv.conf" | sudo tee $CONTAINER_DIR/etc/rc.local
+	#sudo echo -e "#!/bin/sh -e\n ifconfig eth0 up \n route add default gw $BRIDGE_IP\n echo nameserver 8.8.8.8 >> /etc/resolv.conf" | sudo tee $CONTAINER_DIR/etc/rc.local
 fi
 
 
@@ -37,15 +41,14 @@ echo "Workspace: $WORKSPACE_DIR"
 echo "Output dir: $OUTPUT_DIR"
 
 # Define and create storage locations
-SRC_LXC_STORE=home/src/store
-DST_LXC_STORE=home/dst/store
+SRC_STORE=$WORKSPACE_DIR/src/store
+DST_STORE=$WORKSPACE_DIR/dst/store
 
-SRC_STORE=$CONTAINER_DIR/rootfs/$SRC_LXC_STORE
-DST_STORE=$CONTAINER_DIR/rootfs/$DST_LXC_STORE
+SRC_LXC_STORE=$WORKSPACE_DIR/$CONTAINER_DIR/$WORKSPACE_DIR/src/store
+DST_LXC_STORE=$WORKSPACE_DIR/$CONTAINER_DIR/$WORKSPACE_DIR/dst/store
 
 
-
-sudo mkdir -p $SRC_STORE $DST_STORE
+mkdir -p $SRC_LXC_STORE $DST_LXC_STORE
 
 # logging
 DATE=$(date +'%F-%H-%M')
@@ -58,17 +61,17 @@ mkdir -p $LOGS_DIR/dst
 
 # create data file
 FILENAME=file_$FILE_SIZE.tmp
-sudo truncate -s $FILE_SIZE $SRC_STORE/$FILENAME
+truncate -s $FILE_SIZE $SRC_LXC_STORE/$FILENAME
 
 # copy startup scripts
 INIT_LXC_CMD="init.sh"
-SEEDER_LXC_CMD="/home/$LXC_CONTAINER_NAME/start_seeder.sh"
-LEECHER_LXC_CMD="/home/$LXC_CONTAINER_NAME/start_leecher.sh"
-PROCESS_GUARD_CMD="/home/$LXC_CONTAINER_NAME/process_guard.py"
+SEEDER_LXC_CMD="start_seeder.sh"
+LEECHER_LXC_CMD="start_leecher.sh"
 
-INIT_CMD="$CONTAINER_DIR/$INIT_LXC_CMD"
-SEEDER_CMD="$CONTAINER_DIR/$SEEDER_LXC_CMD"
-LEECHER_CMD="$CONTAINER_DIR/$LEECHER_LXC_CMD"
+PROCESS_GUARD_CMD="$WORKSPACE_DIR/gumby/scripts/process_guard.py"
+INIT_CMD="$EXPERIMENT_DIR/$INIT_LXC_CMD"
+SEEDER_CMD="$EXPERIMENT_DIR/$SEEDER_LXC_CMD"
+LEECHER_CMD="$EXPERIMENT_DIR/$LEECHER_LXC_CMD"
 
 #sudo cp $EXPERIMENT_DIR/init.sh $INIT_CMD
 #sudo cp $EXPERIMENT_DIR/start_seeder.sh $SEEDER_CMD
@@ -89,33 +92,60 @@ LEECHER_CMD="$CONTAINER_DIR/$LEECHER_LXC_CMD"
 
 
 # setup container (build libevent, libswift etc if necessary)
-#sudo lxc-execute -n $LXC_CONTAINER_NAME -f $EXPERIMENT_DIR/seeder_config.conf $INIT_LXC_CMD $REPOSITORY_DIR $REPOSITORY_URL $BRIDGE_IP
-sudo lxc-execute -n $LXC_CONTAINER_NAME \
+#sudo lxc-execute -n $LXC_CONTAINER_NAME \
+#	-s lxc.network.type=veth \
+#	-s lxc.network.link=$BRIDGE_NAME \
+#	-s lxc.network.ipv4=$SEEDER_IP/24 \
+#	-s lxc.rootfs=$CONTAINER_DIR \
+#	-s lxc.pts=1024 \
+#	$EXPERIMENT_DIR/$INIT_LXC_CMD $REPOSITORY_DIR $REPOSITORY_URL $BRIDGE_IP
+# TODO download gumby on container so we can use process_guard.py
+#sudo cp $WORKSPACE_DIR/gumby/scripts/process_guard.py $CONTAINER_DIR/home/$LXC_CONTAINER_NAME/$PROCESS_GUARD_CMD
+
+# directly build stuff on the host
+#if [ ! -d "$WORKSPACE_DIR/libevent-2.0.21-stable" ]; then
+#	wget https://github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz --no-check-certificate
+#	tar -xvf libevent-2.0.21-stable.tar.gz
+#	cd $WORKSPACE_DIR/libevent-2.0.21-stable
+#	./configure && make install
+#fi
+
+
+svn co $REPOSITORY_URL $REPOSITORY_DIR
+cd $REPOSITORY_DIR
+make
+cd -
+
+# start seeder
+#sudo lxc-execute -n seeder -f $EXPERIMENT_DIR/seeder_config.conf $SEEDER_LXC_CMD $REPOSITORY_DIR /$SRC_LXC_STORE $FILENAME  $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
+sudo /usr/bin/lxc-execute -n seeder \
 	-s lxc.network.type=veth \
+	-s lxc.network.flags=up \
 	-s lxc.network.link=$BRIDGE_NAME \
 	-s lxc.network.ipv4=$SEEDER_IP/24 \
 	-s lxc.rootfs=$CONTAINER_DIR \
 	-s lxc.pts=1024 \
-	$EXPERIMENT_DIR/$INIT_LXC_CMD $REPOSITORY_DIR $REPOSITORY_URL $BRIDGE_IP
-# TODO download gumby on container so we can use process_guard.py
-sudo cp $WORKSPACE_DIR/gumby/scripts/process_guard.py $CONTAINER_DIR/home/$LXC_CONTAINER_NAME/$PROCESS_GUARD_CMD
+	-- $PROCESS_GUARD_CMD -c "$REPOSITORY_DIR/swift -l $SEEDER_PORT -f $SRC_STORE/$FILENAME -p -H  " -t $EXPERIMENT_TIME -o $LOGS_DIR/src &
+	#$SEEDER_CMD $REPOSITORY_DIR /$SRC_STORE $FILENAME $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
 
-
-exit
-# start seeder
-#sudo lxc-execute -n seeder -f $EXPERIMENT_DIR/seeder_config.conf $SEEDER_LXC_CMD $REPOSITORY_DIR /$SRC_LXC_STORE $FILENAME  $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
-sudo lxc-execute -n seeder -f $EXPERIMENT_DIR/seeder_config.conf $SEEDER_LXC_CMD $REPOSITORY_DIR /$SRC_LXC_STORE $FILENAME  $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
-
-# wait for the hash to be generated
-while [ ! -f $SRC_STORE/$FILENAME.mbinmap ] ;
+# wait for the hash to be generated - note that this happens in the container fs
+while [ ! -f $SRC_LXC_STORE/$FILENAME.mbinmap ] ;
 do
       sleep 2
 done
 
-HASH=$(cat $SRC_STORE/$FILENAME.mbinmap | grep hash | cut -d " " -f 3)
+HASH=$(cat $SRC_LXC_STORE/$FILENAME.mbinmap | grep hash | cut -d " " -f 3)
 
 # start destination swift
-sudo lxc-execute -n leecher -f $EXPERIMENT_DIR/leecher_config.conf $LEECHER_LXC_CMD $REPOSITORY_DIR /$DST_LXC_STORE $HASH $NETEM_DELAY $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT
+# sudo lxc-execute -n leecher -f $EXPERIMENT_DIR/leecher_config.conf $LEECHER_LXC_CMD $REPOSITORY_DIR /$DST_LXC_STORE $HASH $NETEM_DELAY $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT
+sudo lxc-execute -n leecher \
+	-s lxc.network.type=veth \
+	-s lxc.network.flags=up \
+	-s lxc.network.link=$BRIDGE_NAME \
+	-s lxc.network.ipv4=$LEECHER_IP/24 \
+	-s lxc.rootfs=$CONTAINER_DIR \
+	-s lxc.pts=1024 \
+	-- $LEECHER_CMD $REPOSITORY_DIR $DST_STORE $HASH $NETEM_DELAY $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $LOGS_DIR
 
 # kill the seeder when the leecher is done, only possible way for now :/
 sudo lxc-stop -n seeder
@@ -123,10 +153,8 @@ sudo lxc-stop -n seeder
 echo "---------------------------------------------------------------------------------"
 
 # show storage contents
-ls -alh $SRC_STORE
-ls -alh $DST_STORE
-
-#sleep 10s
+#ls -alh $SRC_STORE
+#ls -alh $DST_STORE
 
 # --------- EXPERIMENT END ----------
 #kill -9 $SWIFT_SRC_PID $SWIFT_DST_PID || true
@@ -145,8 +173,8 @@ ls -alh $DST_STORE
 # ------------- LOG PARSING -------------
 
 # copy logs back from containers
-cp -R $CONTAINER_DIR/rootfs/home/logs/$DATE/src $LOGS_DIR/
-cp -R $CONTAINER_DIR/rootfs/home/logs/$DATE/dst $LOGS_DIR/
+cp -R $CONTAINER_DIR/$LOGS_DIR/src $LOGS_DIR/
+cp -R $CONTAINER_DIR/$LOGS_DIR/dst $LOGS_DIR/
 
 
 # TODO: parsing very broken at the moment
@@ -172,9 +200,6 @@ if $GENERATE_PLOTS; then
 	rm -f $PLOTS_DIR_LAST/*
 	cp $PLOTS_DIR/* $PLOTS_DIR_LAST/
 fi
-
-rm $EXPERIMENT_DIR/seeder_config.conf
-rm $EXPERIMENT_DIR/leecher_config.conf
 
 # umount the union filesystem
 # umount $CONTAINER_DIR

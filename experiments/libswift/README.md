@@ -8,7 +8,7 @@ delay for the leecher.
 
 ### Dependencies ###
 
-sudo apt-get install lxc bridge-utils
+sudo apt-get install lxc bridge-utils libevent-2-0-5
 
 ### Network bridge ###
 
