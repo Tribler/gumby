@@ -38,10 +38,11 @@
 
 # Code:
 
-set -e
-
 let "PROCESSES_PER_NODE=$DAS4_INSTANCES_TO_RUN/$DAS4_NODE_AMOUNT"
 let "PLUS_ONE_NODES=$DAS4_INSTANCES_TO_RUN%$DAS4_NODE_AMOUNT"
+
+# let will return 1 if the last expression evaluates to 0, so set -e after it
+set -e
 
 PROCESSES_IN_THIS_NODE=$PROCESSES_PER_NODE
 
