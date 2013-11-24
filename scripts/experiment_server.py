@@ -9,7 +9,8 @@
 
 # Commentary:
 #
-# Experiment metainfo and time synchronization server.
+# %*% Experiment metainfo and time synchronization server.
+# %*% TODO: Document this a bit more.
 #
 # It receives 3 types of commands:
 # * time:<float>  -> Tells the service the local time for the subprocess for sync reasons.
@@ -66,6 +67,9 @@ from gumby.sync import ExperimentServiceFactory
 from twisted.internet import reactor
 from twisted.python.log import startLogging
 
+# @CONF_OPTION SYNC_SUBSCRIBERS_AMOUNT: Number of sync clients we should wait for to be registered before starting the experiment. (default is DAS4_INSTANCES_TO_RUN)
+# @CONF_OPTION SYNC_EXPERIMENT_START_DELAY: Amount of seconds to wait after sending the shared data to all sync clients before giving the start signal. (float, default 0)
+# @CONF_OPTION SYNC_PORT: Port where we should listen on. (required)
 
 if __name__ == '__main__':
     startLogging(stdout)
@@ -74,7 +78,7 @@ if __name__ == '__main__':
     else:
         expected_subscribers = int(environ['DAS4_INSTANCES_TO_RUN'])
 
-    experiment_start_delay = float(environ['SYNC_EXPERIMENT_START_DELAY'])
+    experiment_start_delay = float(environ.get('SYNC_EXPERIMENT_START_DELAY', 0))
     server_port = int(environ['SYNC_PORT'])
 
     reactor.listenTCP(server_port, ExperimentServiceFactory(expected_subscribers, experiment_start_delay))

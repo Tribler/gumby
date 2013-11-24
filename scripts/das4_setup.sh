@@ -8,7 +8,7 @@
 # Created: Fri Jun 21 16:10:45 2013 (+0200)
 
 # Commentary:
-#
+# %*% This script takes care of setting everything up to run a Dispersy/Tribler experiment on the DAS4.
 #
 #
 #
