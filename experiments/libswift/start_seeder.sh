@@ -1,30 +1,16 @@
 #!/bin/bash -xe
 
-EXPECTED_ARGS=9
-if [ $# -ne $EXPECTED_ARGS ]
-then
-	echo "Usage: `basename $0` repository_dir src_store filename process_guard_cmd date experiment_time bridge_ip seeder_port logs_dir"
-	exit 65
-fi
+WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR)
+FILENAME=file_$FILE_SIZE.tmp
 
-REPOSITORY_DIR="$1"
-SRC_STORE="$2"
-FILENAME="$3"
-PROCESS_GUARD_CMD="$4"
-DATE="$5"
-EXPERIMENT_TIME="$6"
-BRIDGE_IP="$7"
-SEEDER_PORT="$8"
-LOGS_DIR="$9"
-mkdir -p "$LOGS_DIR/src"
-
-# fix path so libswift can find libevent
-export LD_LIBRARY_PATH=/usr/local/lib
-
-# start eth0 and set gateway
-ifconfig eth0 up 
-route add default gw $BRIDGE_IP
-
-# seed file
-#$PROCESS_GUARD_CMD -c "$REPOSITORY_DIR/swift -l $SEEDER_PORT -f $SRC_STORE/$FILENAME -p -H  " -t $EXPERIMENT_TIME -o $LOGS_DIR/src &
-$REPOSITORY_DIR/swift -l $SEEDER_PORT -f $SRC_STORE/$FILENAME -p -H 
+# start seeder
+#sudo lxc-execute -n seeder -f $EXPERIMENT_DIR/seeder_config.conf $SEEDER_LXC_CMD $REPOSITORY_DIR /$SRC_LXC_STORE $FILENAME  $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
+sudo /usr/bin/lxc-execute -n seeder \
+	-s lxc.network.type=veth \
+	-s lxc.network.flags=up \
+	-s lxc.network.link=$BRIDGE_NAME \
+	-s lxc.network.ipv4=$SEEDER_IP/24 \
+	-s lxc.rootfs=$CONTAINER_DIR \
+	-s lxc.pts=1024 \
+	-- $WORKSPACE_DIR/$PROCESS_GUARD_CMD -c "$REPOSITORY_DIR/swift -l $SEEDER_PORT -f $OUTPUT_DIR/file_$FILE_SIZE.tmp -p -H -D $OUTPUT_DIR/src/seeder  " -t $EXPERIMENT_TIME -o $OUTPUT_DIR/src &
+	#$SEEDER_CMD $REPOSITORY_DIR /$SRC_STORE $FILENAME $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
