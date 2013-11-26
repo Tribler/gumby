@@ -38,11 +38,12 @@
 
 # Code:
 
-from os import path, chdir, environ, makedirs
 from glob import glob
+from os import path, chdir, environ, makedirs, execvpe
 from subprocess import call
-import sys
+from sys import stdout, stderr
 import shlex
+import sys
 
 
 def extend_var(env, var, value, prepend=True):
@@ -153,7 +154,12 @@ if 'OUTPUT_DIR' in env:
 cmd = expand_var(" ".join(sys.argv[2:]))
 print "Running", cmd
 
-exit(call((shlex.split(cmd)), env=env))
+argv = (shlex.split(cmd))
 
+# Flush before calling exec
+stdout.flush()
+stderr.flush()
+
+execvpe(argv[0], argv, env)
 #
 # run_in_env.py ends here
