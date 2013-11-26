@@ -14,5 +14,5 @@ sudo /usr/bin/lxc-execute -n seeder \
 	-s lxc.network.ipv4=$SEEDER_IP/24 \
 	-s lxc.rootfs=$CONTAINER_DIR \
 	-s lxc.pts=1024 \
-	-- su $USER -c "$WORKSPACE_DIR/$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $OUTPUT_DIR/src &"
+	-- su $USER -c "$WORKSPACE_DIR/$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $OUTPUT_DIR/src &" || :
 	#$SEEDER_CMD $REPOSITORY_DIR /$SRC_STORE $FILENAME $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
