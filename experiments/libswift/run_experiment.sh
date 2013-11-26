@@ -42,17 +42,18 @@ sudo /usr/bin/lxc-execute -n leecher_$i \
 		-s lxc.network.ipv4=$LEECHER_IP/24 \
 		-s lxc.rootfs=$CONTAINER_DIR \
 		-s lxc.pts=1024 \
-		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/$REPOSITORY_DIR $OUTPUT_DIR $HASH $NETEM_DELAY $NETEM_PACKET_LOSS $WORKSPACE_DIR/$PROCESS_GUARD_CMD $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) &
+		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/$REPOSITORY_DIR $OUTPUT_DIR $HASH $NETEM_DELAY $NETEM_PACKET_LOSS $WORKSPACE_DIR/$PROCESS_GUARD_CMD $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER &
 done
 
 
 wait
 
+
 # ------------- LOG PARSING -------------
 
 # copy logs back from containers
-cp -R $CONTAINER_DIR/$OUTPUT_DIR/src $OUTPUT_DIR
-cp -R $CONTAINER_DIR/$OUTPUT_DIR/dst $OUTPUT_DIR
+#cp -R $CONTAINER_DIR/$OUTPUT_DIR/src $OUTPUT_DIR
+#cp -R $CONTAINER_DIR/$OUTPUT_DIR/dst $OUTPUT_DIR
 
 # TODO: parsing very broken at the moment
 # TODO: tmp preprocess because process_guard.py in gumby now adds a first line to the resource_usage.log files
@@ -78,6 +79,20 @@ if $GENERATE_PLOTS; then
 	cp $PLOTS_DIR/* $PLOTS_DIR_LAST/
 fi
 
+# remove leeched files
+for (( i = 1 ; i < $NO_OF_LEECHERS+1; i++ ))
+do
+	LEECHER_ID_TMP=$(($LEECHER_ID+$i))
+	rm -f $OUTPUT_DIR/dst/$LEECHER_ID_TMP/$HASH*
+done
+
+sudo /usr/bin/lxc-stop -n seeder
+
 # umount the union filesystem
-#sudo umount $CONTAINER_DIR
-#rmdir $CONTAINER_DIR
+sudo /bin/umount $CONTAINER_DIR -l
+sudo /bin/umount /tmp/container	-l
+rmdir $CONTAINER_DIR
+
+
+
+

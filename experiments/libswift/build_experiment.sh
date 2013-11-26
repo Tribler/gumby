@@ -20,6 +20,7 @@ mkdir -p $CONTAINER_DIR
 mkdir -p /tmp/container
 sudo /bin/mount -t tmpfs none /tmp/container/
 sudo /bin/mount -t aufs -o br=/tmp/container:/ none $CONTAINER_DIR
+sudo /bin/mount --bind /home $CONTAINER_DIR/home
 
 svn co $REPOSITORY_URL $REPOSITORY_DIR
 cd $REPOSITORY_DIR

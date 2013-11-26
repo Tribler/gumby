@@ -1,10 +1,11 @@
 #!/bin/bash -xe
 # Note: runs inside a container
 
-EXPECTED_ARGS=12
+
+EXPECTED_ARGS=13
 if [ $# -ne $EXPECTED_ARGS ]
 then
-	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_ip seeder_port logs_dir leecher_id"
+	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_ip seeder_port logs_dir leecher_id username"
 	exit 65
 fi
 
@@ -21,8 +22,11 @@ SEEDER_IP="${9}"
 SEEDER_PORT="${10}"
 LOGS_DIR="${11}"
 LEECHER_ID="${12}"
+USERNAME="${13}"
 
-mkdir -p "$LOGS_DIR/dst/$LEECHER_ID"
+#su $USERNAME
+
+
 
 # fix path so libswift can find libevent
 # export LD_LIBRARY_PATH=/usr/local/lib
@@ -31,5 +35,11 @@ tc qdisc add dev eth0 root netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
 tc qdisc show
 ifconfig
 
+SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID"
+
 # leech file
-$PROCESS_GUARD_CMD -c "$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID " -t $EXPERIMENT_TIME -o $LOGS_DIR/dst/$LEECHER_ID &
+su $USERNAME -c "mkdir -p $LOGS_DIR/dst/$LEECHER_ID"
+su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/dst/$LEECHER_ID &"
+
+
+

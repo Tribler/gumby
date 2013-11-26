@@ -14,7 +14,7 @@ sudo apt-get install lxc bridge-utils libevent-2-0-5 aufs-tools
 It is useful to add the following commands to the /etc/sudoers file using sudo visudo:
 
 ```
-%USER% ALL=NOPASSWD:/usr/bin/lxc-execute,/bin/mount,/bin/umount
+%USER% ALL=NOPASSWD:/usr/bin/lxc-execute,/bin/mount,/bin/umount,/usr/bin/lxc-stop
 ```
 
 Especially for user jenkins as this prevents sudo from asking for a password during execution of the experiment. 
