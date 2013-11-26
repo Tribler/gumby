@@ -8,7 +8,7 @@ delay for the leecher.
 
 ### Dependencies ###
 
-sudo apt-get install lxc bridge-utils libevent-2-0-5
+sudo apt-get install lxc bridge-utils libevent-2-0-5 aufs-tools
 
 ### Sudoers file ###
 It is useful to add the following commands to the /etc/sudoers file using sudo visudo:

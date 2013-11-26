@@ -24,7 +24,7 @@ FILENAME=file_$FILE_SIZE.tmp
 truncate -s $FILE_SIZE $OUTPUT_DIR/$FILENAME
 
 # always remove the container in case it didn't shut down correctly
-if [ ! -d "$CONTAINER_DIR" ]; then
+if [ -d "$CONTAINER_DIR" ]; then
 	sudo /bin/umount $CONTAINER_DIR
 	rmdir $CONTAINER_DIR
 fi
