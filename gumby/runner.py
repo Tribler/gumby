@@ -37,19 +37,19 @@
 
 # Code:
 
-import sys
 from os import path, chdir, environ
 from shutil import rmtree
-from twisted.python.log import err, msg, Logger
-from twisted.internet.defer import Deferred, setDebugging, gatherResults, succeed
+import logging
+import sys
 
-from twisted.internet.protocol import ProcessProtocol
 from twisted.internet import reactor
+from twisted.internet.defer import Deferred, setDebugging, gatherResults, succeed
+from twisted.internet.protocol import ProcessProtocol
+from twisted.python.log import err, msg, Logger
+
 
 from .settings import configToEnv, loadConfig
-
 from .sshclient import runRemoteCMD
-
 setDebugging(True)
 
 
@@ -163,7 +163,7 @@ class ExperimentRunner(Logger):
         cmd = self._cfg['config_server_cmd']
         if self._cfg.as_bool("tracker_run_local"):
             msg("Spawning local config server with:", cmd)
-            pp = OneShotProcessProtocol()
+            pp = OneShotProcessProtocol("LOCAL_CONFIG_SERVER")
             args = cmd.split(' ', 1)
             reactor.spawnProcess(pp, args[0], args, env=None)  # Inherit env from parent
             d = pp.getDeferred()
@@ -219,7 +219,7 @@ class ExperimentRunner(Logger):
         # use the local _env_runner
         env_runner = path.abspath(path.join(path.dirname(__file__), "..", self._env_runner))
         args = [env_runner, self._cfg_path, command]
-        pp = OneShotProcessProtocol()
+        pp = OneShotProcessProtocol(command)
         reactor.spawnProcess(pp, env_runner, args, env=self.local_env)  # Inherit env from parent + conf vars
         return pp.getDeferred()
 
@@ -280,7 +280,6 @@ class ExperimentRunner(Logger):
         else:
             dl = succeed(None)
         return gatherResults([dr, dl], consumeErrors=True).addErrback(onStartInstancesFailed)
-
 
     def runPostProcess(self):
         if self._cfg['post_process_cmd']:
@@ -359,22 +358,43 @@ class ExperimentRunner(Logger):
 
 class OneShotProcessProtocol(ProcessProtocol):
 
-    def __init__(self, *k, **w):
+    def __init__(self, command, *k, **w):
+        self.command = command
+        self._stdout_bytes = ''
+        self._stderr_bytes = ''
         self._d = Deferred()
 
     def processExited(self, reason):
-        msg("Process exited with reason: %s" % reason)
-        msg("exit code %s" % reason.value.exitCode)
+        # TODO(emilon): Process self._stdout_bytes, _sterr_bytes before exiting, to make sure no output is lost.
+        # msg('CMD "%s" Process exited with reason: %s' % (self.command, reason), logLevel=logging.DEBUG)
+        msg('CMD "%s" exit code %s' % (self.command, reason.value.exitCode))
         if reason.value.exitCode:
             self._d.errback(reason)
         else:
             self._d.callback(None)
 
     def outReceived(self, data):
-        msg("STDOUT: %s" % data.strip())
+        # we could recv more than 1 line and/or a partial line.
+        self._stdout_bytes += data
+        remainder = ""
+        for line in self._stdout_bytes.splitlines(True):
+            if line.endswith('\n'):
+                msg('CMD "%s" OUT: %s' % (self.command, line.rstrip()), logLevel=logging.INFO)
+            else:
+                # It's a partial line (part of the last one), save it to the buffer instead
+                remainder = line
+        self._stdout_bytes = remainder
 
     def errReceived(self, data):
-        msg("STDERR: %s" % data.strip())
+        self._stderr_bytes += data
+        remainder = ""
+        for line in self._stderr_bytes.splitlines(True):
+            if line.endswith('\n'):
+                msg('CMD "%s" ERR: %s' % (self.command, line.rstrip()), logLevel=logging.WARNING)
+            else:
+                # It's a partial line (part of the last one), save it to the buffer instead
+                remainder = line
+        self._stderr_bytes = remainder
 
     def getDeferred(self):
         return self._d
