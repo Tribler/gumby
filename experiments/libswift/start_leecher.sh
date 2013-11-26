@@ -1,4 +1,5 @@
 #!/bin/bash -xe
+# Note: runs inside a container
 
 EXPECTED_ARGS=12
 if [ $# -ne $EXPECTED_ARGS ]
@@ -27,14 +28,8 @@ mkdir -p "$LOGS_DIR/dst/$LEECHER_ID"
 # export LD_LIBRARY_PATH=/usr/local/lib
 
 tc qdisc add dev eth0 root netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
-
-#tc qdisc add dev eth0 root netem 
 tc qdisc show
 ifconfig
+
 # leech file
-#$PROCESS_GUARD_CMD -c "$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $DST_STORE/ -h $HASH -p " -t $EXPERIMENT_TIME -m $LOGS_DIR/dst -o $LOGS_DIR/dst &
 $PROCESS_GUARD_CMD -c "$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID " -t $EXPERIMENT_TIME -o $LOGS_DIR/dst/$LEECHER_ID &
-
-# remove leeched file
-#rm -rf $DST_STORE/*
-

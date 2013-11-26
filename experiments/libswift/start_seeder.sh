@@ -1,10 +1,10 @@
 #!/bin/bash -xe
+# Note: runs on host (so not inside a container), used as tracker_cmd in gumby
 
 WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR)
 FILENAME=file_$FILE_SIZE.tmp
 
 # start seeder
-#sudo lxc-execute -n seeder -f $EXPERIMENT_DIR/seeder_config.conf $SEEDER_LXC_CMD $REPOSITORY_DIR /$SRC_LXC_STORE $FILENAME  $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
 sudo /usr/bin/lxc-execute -n seeder \
 	-s lxc.network.type=veth \
 	-s lxc.network.flags=up \

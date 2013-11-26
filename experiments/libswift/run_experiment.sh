@@ -12,8 +12,6 @@ fi
 # get full path, easier for use in container
 WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR) 
 FILENAME=file_$FILE_SIZE.tmp
-#LOGS_ARCHIVE_DIR=$(readlink -f $LOGS_ARCHIVE_DIR)
-
 
 # Set defaults for config variables ---------------------------------------------------
 # Override these on Jenkins before running the script.
@@ -25,9 +23,6 @@ FILENAME=file_$FILE_SIZE.tmp
 echo "Running swift processes for $EXPERIMENT_TIME seconds"
 echo "Workspace: $WORKSPACE_DIR"
 echo "Output dir: $OUTPUT_DIR"
-
-# copy startup scripts
-#INIT_CMD="$EXPERIMENT_DIR/init.sh"
 
 # wait for the hash to be generated - note that this happens in the container fs
 while [ ! -f $CONTAINER_DIR/$OUTPUT_DIR/$FILENAME.mbinmap ] ;
@@ -48,21 +43,9 @@ sudo /usr/bin/lxc-execute -n leecher_$i \
 		-s lxc.rootfs=$CONTAINER_DIR \
 		-s lxc.pts=1024 \
 		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/$REPOSITORY_DIR $OUTPUT_DIR $HASH $NETEM_DELAY $NETEM_PACKET_LOSS $WORKSPACE_DIR/$PROCESS_GUARD_CMD $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) &
-	#LEECHER_PIDS[$i]=$!
 done
 
 
-
-#echo ${LEECHER_PIDS[@]}
-
-# wait for all leechers to finish
-#for i in ${LEECHER_PIDS[@]}
-#do
-#	echo "Waiting for ${LEECHER_PIDS[$i]} to die"
-#	wait ${LEECHER_PIDS[$i]}
-#done
-	
-# wait for all leechers to finish	
 wait
 
 # ------------- LOG PARSING -------------
