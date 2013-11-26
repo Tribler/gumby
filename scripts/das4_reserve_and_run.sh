@@ -37,6 +37,7 @@
 
 # Code:
 
+EXIT_CODE=-15
 cancel_reservation () {
 # Cancel all our rc jobs in the queue
 cat <<EOF | at now + 2 minutes
@@ -45,7 +46,7 @@ for RID in $(preserve -list | awk '{print $2 " " $1 " " $5 }' | grep dr$ | grep 
 
 EOF
 
-exit -15
+exit $EXIT_CODE
 }
 
 trap cancel_reservation TERM
@@ -91,6 +92,7 @@ sleep 1
 preserve -llist
 wait $PID
 
+EXIT_CODE=$?
 cancel_reservation
 
 #
