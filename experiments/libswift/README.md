@@ -10,6 +10,15 @@ delay for the leecher.
 
 sudo apt-get install lxc bridge-utils libevent-2-0-5
 
+### Sudoers file ###
+It is useful to add the following commands to the /etc/sudoers file using sudo visudo:
+
+```
+USER ALL=NOPASSWD:/usr/bin/lxc-execute,/bin/mount
+```
+
+Especially for USER jenkins as this prevents sudo from asking for a password during execution of the experiment. 
+
 ### Network bridge ###
 
 (Note: this assumes your network device is eth0)
