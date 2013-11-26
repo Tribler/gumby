@@ -51,8 +51,8 @@ wait
 # ------------- LOG PARSING -------------
 
 # copy logs back from containers
-#cp -R $CONTAINER_DIR/$OUTPUT_DIR/src $LOGS_DIR/
-#cp -R $CONTAINER_DIR/$OUTPUT_DIR/dst $LOGS_DIR/
+cp -R $CONTAINER_DIR/$OUTPUT_DIR/src $OUTPUT_DIR
+cp -R $CONTAINER_DIR/$OUTPUT_DIR/dst $OUTPUT_DIR
 
 # TODO: parsing very broken at the moment
 # TODO: tmp preprocess because process_guard.py in gumby now adds a first line to the resource_usage.log files
