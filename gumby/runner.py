@@ -85,7 +85,7 @@ class ExperimentRunner(Logger):
 
         # First, we need to copy the stuff to the das4 clusters we want to use to run the experiment
         for host in self._cfg['head_nodes']:
-            pp = OneShotProcessProtocol()
+            pp = OneShotProcessProtocol("Rsync to remote %s" % host)
             workspace_dir = self._cfg['workspace_dir']
             args = ("/usr/bin/rsync", "-az", "--recursive", "--exclude=.git*",
                     "--exclude=.svn", "--exclude=local", "--exclude=output", "--delete-excluded", "--delete-during",
@@ -117,7 +117,7 @@ class ExperimentRunner(Logger):
         copy_list = []
 
         for host in self._cfg['head_nodes']:
-            pp = OneShotProcessProtocol()
+            pp = OneShotProcessProtocol("Rsync from remote %s" % host)
             args = ("/usr/bin/rsync", "-az", "--recursive", "--exclude=.git*",
                     "--exclude=.svn", "--exclude=local", "--delete-excluded", "--delete-during",
                     ":".join((host, self._remote_workspace_dir + '/output/')),

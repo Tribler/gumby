@@ -159,7 +159,7 @@ class _CommandChannel(SSHChannel):
         remainder = ""
         for line in self._databytes.splitlines(True):
             if line.endswith('\n'):
-                msg('SSH "%s" STDOUT: [[[%s]]]' % (self.command, line.rstrip()), logLevel=logging.INFO)
+                msg('SSH "%s" STDOUT: %s' % (self.command, line.rstrip()), logLevel=logging.INFO)
             else:
                 # It's a partial line (part of the last one), save it to the buffer instead
                 remainder = line
