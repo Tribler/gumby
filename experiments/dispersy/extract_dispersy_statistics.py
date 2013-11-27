@@ -249,6 +249,8 @@ class ExtractStatistics:
                 time.append('%s%s' % (str(value),
                            (suffix, (suffix, suffix + 's')[value > 1])[add_s]))
             if seconds < 1:
+                if len(time) == 0:
+                    time.append('<1s')
                 break
 
         return separator.join(time)
@@ -656,6 +658,16 @@ class DebugMessages(AbstractHandler):
         for debug_stat in self.dispersy_debugstatistics:
             extract_statistics.merge_records("scenario-%s-debugstatistics.txt" % debug_stat, "scenario-%s-debugstatistics.txt" % debug_stat, 2)
 
+def get_parser(argv):
+    e = ExtractStatistics(argv[1])
+    e.add_handler(BasicExtractor())
+    e.add_handler(SuccMessages(argv[2]))
+    e.add_handler(StatisticMessages())
+    e.add_handler(DropMessages())
+    e.add_handler(BootstrapMessages())
+    e.add_handler(DebugMessages())
+    return e
+
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print "Usage: %s <node-directory> <messagestoplot>" % (sys.argv[0])
@@ -663,11 +675,5 @@ if __name__ == "__main__":
 
         sys.exit(1)
 
-    e = ExtractStatistics(sys.argv[1])
-    e.add_handler(BasicExtractor())
-    e.add_handler(SuccMessages(sys.argv[2]))
-    e.add_handler(StatisticMessages())
-    e.add_handler(DropMessages())
-    e.add_handler(BootstrapMessages())
-    e.add_handler(DebugMessages())
+    e = get_parser(sys.argv)
     e.parse()
