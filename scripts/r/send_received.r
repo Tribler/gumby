@@ -12,7 +12,7 @@ if(file.exists("send_diff_reduced.txt")){
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KiBytes/s upload)\n")
 	p <- p + xlim(minX, maxX)
 	p
@@ -27,7 +27,7 @@ if(file.exists("received_diff_reduced.txt")){
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_point(data = df, aes(size=value), alpha=0.5)
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KiBytes/s download)\n")
 	p <- p + xlim(minX, maxX)
 	p
@@ -41,7 +41,7 @@ if(file.exists("send_reduced.txt")){
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(alpha = 5/10)
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KiBytes total upload)\n")
 	p <- p + xlim(minX, maxX)
 	p
@@ -55,7 +55,7 @@ if(file.exists("received_reduced.txt")){
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_line(alpha = 5/10)
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KiBytes total download)\n")
 	p <- p + xlim(minX, maxX)
 	p

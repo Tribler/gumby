@@ -32,7 +32,7 @@ if(file.exists("utimes_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
 	}
 
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Utime\n")
 	if(length(args) > 0){
 		p <- p + xlim(minX, maxX)
@@ -69,7 +69,7 @@ if(file.exists("stimes_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
 	}
 
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Stime\n")
 	if(length(args) > 0){
 		p <- p + xlim(minX, maxX)
@@ -106,7 +106,7 @@ if(file.exists("wchars_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
 	}
 
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "WChar per process (KiBytes/s)\n")
 	if(length(args) > 0){
 		p <- p + xlim(minX, maxX)
@@ -143,7 +143,7 @@ if(file.exists("rchars_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
 	}
 
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "RChar (KiBytes/s)\n")
 	if(length(args) > 0){
 		p <- p + xlim(minX, maxX)
@@ -180,7 +180,7 @@ if(file.exists("writebytes_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
 	}
 
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Write_bytes per process (KiBytes/s)\n")
 	if(length(args) > 0){
 		p <- p + xlim(minX, maxX)
@@ -217,7 +217,7 @@ if(file.exists("readbytes_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
 	}
 
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Read_bytes per process (KiBytes/s)\n")
 	if(length(args) > 0){
 		p <- p + xlim(minX, maxX)
@@ -254,7 +254,7 @@ if(file.exists("vsizes_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
 	}
 
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "VSize (MBytes)\n")
 	if(length(args) > 0){
 		p <- p + xlim(minX, maxX)
