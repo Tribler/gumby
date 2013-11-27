@@ -8,7 +8,21 @@ delay and packet loss for the leechers.
 
 ### Dependencies ###
 
-sudo apt-get install lxc bridge-utils libevent-2-0-5 aufs-tools
+sudo apt-get install lxc bridge-utils libevent-2.0.5 aufs-tools
+
+### LXC ###
+
+Cgroups are a kernel feature that's needed for lxc to run properly. Start by adding the following to your /etc/fstab file:
+
+```
+cgroup  /sys/fs/cgroup  cgroup  defaults  0   0
+```
+
+Mount it:
+
+```
+sudo mount /sys/fs/cgroup
+```
 
 ### Sudoers file ###
 It is useful to add the following commands to the /etc/sudoers file using sudo visudo:
