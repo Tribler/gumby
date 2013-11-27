@@ -9,6 +9,38 @@ if [ ! -d "$EXPERIMENT_DIR" ]; then
     exit 1
 fi
 
+# check if netem config is set correctly
+# heterogeneous delay?
+if [[ $NETEM_DELAY == *,* ]]
+then
+	# split in array
+	DELAY=(`echo $NETEM_DELAY | tr ',' ' '`)
+	HETEROGENEOUS_DELAY=true
+else
+	DELAY=$NETEM_DELAY
+	HETEROGENEOUS_DELAY=false
+fi
+
+if [[ $NETEM_PACKET_LOSS == *,* ]]
+then
+	# split in array
+	PACKET_LOSS=(`echo $NETEM_PACKET_LOSS | tr ',' ' '`)
+	HETEROGENEOUS_PACKET_LOSS=true
+else
+	PACKET_LOSS=$NETEM_PACKET_LOSS
+	HETEROGENEOUS_PACKET_LOSS=false
+fi
+
+if [[ $LEECHER_OFFSET == *,* ]]
+then
+	# split in array
+	OFFSET=(`echo $LEECHER_OFFSET | tr ',' ' '`)
+	HETEROGENEOUS_OFFSET=true
+else
+	OFFSET=$LEECHER_OFFSET
+	HETEROGENEOUS_OFFSET=false
+fi
+
 # get full path, easier for use in container
 WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR) 
 FILENAME=file_$FILE_SIZE.tmp
@@ -32,17 +64,44 @@ done
 
 HASH=$(cat $CONTAINER_DIR/$OUTPUT_DIR/$FILENAME.mbinmap | grep hash | cut -d " " -f 3)
 
-for (( i = 1 ; i < $NO_OF_LEECHERS+1; i++ ))
+for element in "${DELAY[@]}"
 do
+    echo "$element"
+done
+
+for (( i = 0 ; i < $NO_OF_LEECHERS; i++ ))
+do
+	# read delay and packet loss
+	if $HETEROGENEOUS_DELAY; 
+	then
+		LEECHER_DELAY=${DELAY[$i]}
+	else
+		LEECHER_DELAY=$DELAY
+	fi
+	
+	if $HETEROGENEOUS_PACKET_LOSS; 
+	then
+		LEECHER_PACKET_LOSS=${PACKET_LOSS[$i]}
+	else
+		LEECHER_PACKET_LOSS=$PACKET_LOSS
+	fi
+	
+	if $HETEROGENEOUS_OFFSET; 
+	then
+		sleep ${OFFSET[$i]}
+	else
+		sleep $OFFSET
+	fi
+	
 	LEECHER_IP=$NETWORK_IP_RANGE.$(($LEECHER_ID+$i))
-sudo /usr/bin/lxc-execute -n leecher_$i \
+	sudo /usr/bin/lxc-execute -n leecher_$i \
 		-s lxc.network.type=veth \
 		-s lxc.network.flags=up \
 		-s lxc.network.link=$BRIDGE_NAME \
 		-s lxc.network.ipv4=$LEECHER_IP/24 \
 		-s lxc.rootfs=$CONTAINER_DIR \
 		-s lxc.pts=1024 \
-		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/$REPOSITORY_DIR $OUTPUT_DIR $HASH $NETEM_DELAY $NETEM_PACKET_LOSS $WORKSPACE_DIR/$PROCESS_GUARD_CMD $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER &
+		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/$REPOSITORY_DIR $OUTPUT_DIR $HASH $LEECHER_DELAY $LEECHER_PACKET_LOSS $WORKSPACE_DIR/$PROCESS_GUARD_CMD $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER &
 done
 
 

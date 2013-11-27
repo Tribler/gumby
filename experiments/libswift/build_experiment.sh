@@ -8,6 +8,9 @@ mkdir -p $OUTPUT_DIR/dst
 FILENAME=file_$FILE_SIZE.tmp
 truncate -s $FILE_SIZE $OUTPUT_DIR/$FILENAME
 
+# make sure the leecher stopped
+sudo /usr/bin/lxc-stop -n seeder
+
 # always remove the container in case it didn't shut down correctly
 if [ -d "$CONTAINER_DIR" ]; then
 	sudo /bin/umount $CONTAINER_DIR -l

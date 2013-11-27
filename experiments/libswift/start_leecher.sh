@@ -24,8 +24,8 @@ LOGS_DIR="${11}"
 LEECHER_ID="${12}"
 USERNAME="${13}"
 
-#su $USERNAME
-
+# fix formatting for random variation
+NETEM_DELAY=${NETEM_DELAY/'_'/' '}
 
 
 # fix path so libswift can find libevent
@@ -34,6 +34,7 @@ USERNAME="${13}"
 tc qdisc add dev eth0 root netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
 tc qdisc show
 ifconfig
+	
 
 SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID"
 
