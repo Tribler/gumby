@@ -39,19 +39,18 @@
 
 from os import environ, path, chdir, makedirs, symlink
 from sys import stdout, exit
-import logging.config
-import logging
 import json
 from time import time
 
 from gumby.sync import ExperimentClient, ExperimentClientFactory
 from gumby.scenario import ScenarioRunner
+from gumby.log import setupLogging
+from twisted.python.log import msg
 
 # TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
 # The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
-from twisted.python.log import msg, startLogging, PythonLoggingObserver
 
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):
@@ -165,7 +164,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         if self._strict:
             def exception_handler(exception, fatal):
-                msg("An exception occurred.  Quitting because we are running with --strict enabled.")
+                msg("An exception occurred. Quitting because we are running with --strict enabled.")
                 print "Exception was:"
 
                 try:
@@ -173,7 +172,12 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 except:
                     from traceback import print_exc
                     print_exc()
-                # return fatal=True
+
+                # Set Dispersy's exit status to error
+                self._dispersy_exit_status = 1
+                # Stop the experiment
+                reactor.callLater(1, self.stop)
+
                 return True
             self._dispersy.callback.attach_exception_handler(exception_handler)
 
@@ -336,17 +340,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
 
 def main(client_class):
-    startLogging(stdout)
-    observer = PythonLoggingObserver()
-    observer.start()
-    config_file = path.join(environ['EXPERIMENT_DIR'], "logger.conf")
-    # TODO(emilon): Document this on the user manual
-    if path.exists(config_file):
-        msg("This experiment has a logger.conf, using it.")
-        logging.config.fileConfig(config_file)
-    else:
-        msg("No logger.conf found for this experiment.")
-
+    setupLogging()
     factory = ExperimentClientFactory({}, client_class)
     msg("Connecting to: %s:%s" % (environ['SYNC_HOST'], int(environ['SYNC_PORT'])))
     reactor.connectTCP(environ['SYNC_HOST'], int(environ['SYNC_PORT']), factory)
