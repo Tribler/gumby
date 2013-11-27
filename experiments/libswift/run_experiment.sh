@@ -139,7 +139,7 @@ if $GENERATE_PLOTS; then
 fi
 
 # remove leeched files
-for (( i = 1 ; i < $NO_OF_LEECHERS+1; i++ ))
+for (( i = 0 ; i < $NO_OF_LEECHERS; i++ ))
 do
 	LEECHER_ID_TMP=$(($LEECHER_ID+$i))
 	rm -f $OUTPUT_DIR/dst/$LEECHER_ID_TMP/$HASH*
