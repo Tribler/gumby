@@ -287,7 +287,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
                 # we add all candidates which have a last_stumble > now - CANDIDATE_STUMBLE_LIFETIME
                 now = time()
-                for candidate in c.candidates.itervalues():
+                for candidate in c._community.candidates.itervalues():
                     if candidate.last_stumble > now - CANDIDATE_STUMBLE_LIFETIME:
                         stumbled_candidates[c.hex_cid][candidate.last_stumble].add(candidate.get_members()[0].mid)
                 nr_stumbled_candidates = sum(len(members) for members in stumbled_candidates[c.hex_cid].values())
