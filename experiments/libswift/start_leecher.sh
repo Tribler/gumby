@@ -2,7 +2,7 @@
 # Note: runs inside a container
 
 
-EXPECTED_ARGS=13
+EXPECTED_ARGS=14
 if [ $# -ne $EXPECTED_ARGS ]
 then
 	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_ip seeder_port logs_dir leecher_id username"
@@ -23,6 +23,7 @@ SEEDER_PORT="${10}"
 LOGS_DIR="${11}"
 LEECHER_ID="${12}"
 USERNAME="${13}"
+NETEM_RATE="${14}"
 
 # fix formatting for random variation
 NETEM_DELAY=${NETEM_DELAY/'_'/' '}
@@ -30,8 +31,9 @@ NETEM_DELAY=${NETEM_DELAY/'_'/' '}
 
 # fix path so libswift can find libevent
 # export LD_LIBRARY_PATH=/usr/local/lib
+tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
+tc qdisc add dev eth0 parent 1: handle 10: tbf rate $NETEM_RATE limit 30k burst 30k mtu 5000
 
-tc qdisc add dev eth0 root netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
 tc qdisc show
 ifconfig
 	
