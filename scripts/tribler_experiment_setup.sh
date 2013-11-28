@@ -41,6 +41,7 @@
 if [ -e tribler/Tribler/SwiftEngine/ ]; then
     cd tribler
     buildswift.sh || echo "Swift failed to build!"
+    cd ..
 fi
 
 das4_setup.sh

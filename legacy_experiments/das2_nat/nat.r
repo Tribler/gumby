@@ -36,8 +36,7 @@ p <- p + facet_grid(nattype ~ ., scales = "free_y", space = "free_y", labeller=m
 p <- p + geom_point(aes(size=requests, color=successrate))
 p <- p + scale_color_gradient2(low='red',mid="yellow", high="darkgreen", midpoint = 0.5)
 p <- p + labs(x = "Node Receiving", y = "Node Requesting\n")
-p <- p + opts(axis.text.x = theme_text(hjust=0, angle = -45))
-p <- p + opts(panel.margin = unit(0, "in"))
+p <- p + theme(panel.margin = unit(0, "in"), axis.text.x = theme_text(hjust=0, angle = -45))
 p
 
 ggsave(file="nat.svg", width=8, height=6, dpi=100)
