@@ -32,11 +32,13 @@ NETEM_DELAY=${NETEM_DELAY/'_'/' '}
 # fix path so libswift can find libevent
 # export LD_LIBRARY_PATH=/usr/local/lib
 tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
-tc qdisc add dev eth0 parent 1: handle 10: tbf rate $NETEM_RATE limit 30k burst 30k mtu 5000
+tc qdisc add dev eth0 parent 1: handle 10: tbf rate $NETEM_RATE limit 30k burst 30k
 
 tc qdisc show
 ifconfig
 	
+
+#wget http://download.thinkbroadband.com/200MB.zip
 
 SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID"
 
