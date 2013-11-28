@@ -17,6 +17,7 @@ function cleanup {
 	rmdir $CONTAINER_DIR
 }
 trap cleanup EXIT
+trap cleanup TERM
 
 EXPERIMENT_DIR=$( dirname $(readlink -f "$0"))
 if [ ! -d "$EXPERIMENT_DIR" ]; then
