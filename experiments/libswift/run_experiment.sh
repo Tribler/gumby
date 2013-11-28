@@ -1,5 +1,23 @@
 #!/bin/bash -xe
 
+# Set defaults for config variables ---------------------------------------------------
+# Override these on Jenkins before running the script.
+[ -z $EXPERIMENT_TIME ] && EXPERIMENT_TIME=30
+[ -z $FILE_SIZE ] && FILE_SIZE="10MB"
+[ -z $NO_OF_LEECHERS ] && NO_OF_LEECHERS="1"
+# ------------------------------------------------------------------------------
+
+function cleanup {
+  echo "Cleaning up"
+	sudo /usr/bin/lxc-stop -n seeder
+	
+	# umount the union filesystem
+	sudo /bin/umount $CONTAINER_DIR -l
+	sudo /bin/umount /tmp/container	-l
+	rmdir $CONTAINER_DIR
+}
+trap cleanup EXIT
+
 EXPERIMENT_DIR=$( dirname $(readlink -f "$0"))
 if [ ! -d "$EXPERIMENT_DIR" ]; then
     EXPERIMENT_DIR=$( dirname $(readlink -f $(which "$0")))
@@ -15,6 +33,11 @@ if [[ $NETEM_DELAY == *,* ]]
 then
 	# split in array
 	DELAY=(`echo $NETEM_DELAY | tr ',' ' '`)
+	if [[ ${#DELAY[@]} != $NO_OF_LEECHERS ]]
+	then
+		echo "No of delay settings should be equal to 1 or the number of leechers"
+		exit 65
+	fi
 	HETEROGENEOUS_DELAY=true
 else
 	DELAY=$NETEM_DELAY
@@ -25,6 +48,11 @@ if [[ $NETEM_PACKET_LOSS == *,* ]]
 then
 	# split in array
 	PACKET_LOSS=(`echo $NETEM_PACKET_LOSS | tr ',' ' '`)
+	if [[ ${#PACKET_LOSS[@]} != $NO_OF_LEECHERS ]]
+	then
+		echo "No of packet loss settings should be equal to 1 or the number of leechers"
+		exit 65
+	fi
 	HETEROGENEOUS_PACKET_LOSS=true
 else
 	PACKET_LOSS=$NETEM_PACKET_LOSS
@@ -35,6 +63,11 @@ if [[ $NETEM_RATE == *,* ]]
 then
 	# split in array
 	RATE=(`echo $NETEM_RATE | tr ',' ' '`)
+	if [[ ${#RATE[@]} != $NO_OF_LEECHERS ]]
+	then
+		echo "No of rate limit settings should be equal to 1 or the number of leechers"
+		exit 65
+	fi
 	HETEROGENEOUS_RATE=true
 else
 	RATE=$NETEM_RATE
@@ -45,6 +78,11 @@ if [[ $LEECHER_OFFSET == *,* ]]
 then
 	# split in array
 	OFFSET=(`echo $LEECHER_OFFSET | tr ',' ' '`)
+	if [[ ${#OFFSET[@]} != $NO_OF_LEECHERS ]]
+	then
+		echo "No of offset settings should be equal to 1 or the number of leechers"
+		exit 65
+	fi
 	HETEROGENEOUS_OFFSET=true
 else
 	OFFSET=$LEECHER_OFFSET
@@ -55,12 +93,6 @@ fi
 WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR) 
 FILENAME=file_$FILE_SIZE.tmp
 
-# Set defaults for config variables ---------------------------------------------------
-# Override these on Jenkins before running the script.
-[ -z $EXPERIMENT_TIME ] && EXPERIMENT_TIME=30
-[ -z $FILE_SIZE ] && FILE_SIZE="10MB"
-[ -z $NO_OF_LEECHERS ] && NO_OF_LEECHERS="1"
-# ------------------------------------------------------------------------------
 
 echo "Running swift processes for $EXPERIMENT_TIME seconds"
 echo "Workspace: $WORKSPACE_DIR"
@@ -162,12 +194,6 @@ do
 	rm -f $OUTPUT_DIR/dst/$LEECHER_ID_TMP/$HASH*
 done
 
-sudo /usr/bin/lxc-stop -n seeder
-
-# umount the union filesystem
-sudo /bin/umount $CONTAINER_DIR -l
-sudo /bin/umount /tmp/container	-l
-rmdir $CONTAINER_DIR
 
 
 
