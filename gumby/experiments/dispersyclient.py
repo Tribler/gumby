@@ -277,7 +277,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         prev_created_messages = {}
         prev_bootstrap_candidates = {}
 
-        stubmled_candidates = defaultdict(lambda:defaultdict(set))
+        stumbled_candidates = defaultdict(lambda:defaultdict(set))
 
         while True:
             self._dispersy.statistics.update()
@@ -287,10 +287,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
                 # we add all candidates which have a last_stumble > now - CANDIDATE_STUMBLE_LIFETIME
                 now = time()
-                for candidate in c.candidates:
+                for candidate in c.candidates.itervalues():
                     if candidate.last_stumble > now - CANDIDATE_STUMBLE_LIFETIME:
-                        stubmled_candidates[c.hex_cid][candidate.last_stumble].add(candidate.get_members()[0].mid)
-                nr_stumbled_candidates = sum(len(members) for members in stubmled_candidates[c.hex_cid].values())
+                        stumbled_candidates[c.hex_cid][candidate.last_stumble].add(candidate.get_members()[0].mid)
+                nr_stumbled_candidates = sum(len(members) for members in stumbled_candidates[c.hex_cid].values())
 
                 communities_dict.append({'cid': c.hex_cid,
                                          'classification': c.classification,
