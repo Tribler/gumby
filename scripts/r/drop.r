@@ -11,7 +11,7 @@ if(file.exists("dropped_diff_reduced.txt")){
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_point(aes(size=value), alpha = 5/10) + scale_size(range = c(1, 3))
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped (Diff)\n")
 	p <- p + xlim(minX, maxX)
 	p
@@ -25,7 +25,7 @@ if(file.exists("dropped_reduced.txt")){
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	p <- p + geom_step(alpha = 0.5)
-	p <- p + opts(legend.position="none")
+	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped\n")
 	p <- p + xlim(minX, maxX)
 	p

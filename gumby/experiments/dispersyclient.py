@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# dummy_scenario_experiment_client.py ---
+# dispersyclient.py ---
 #
-# Filename: dummy_scenario_experiment_client.py
+# Filename: dispersyclient.py
 # Description:
 # Author: Elric Milon
 # Maintainer:
@@ -52,13 +52,15 @@ from twisted.python.log import msg
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 
-
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):
-        args[0]._dispersy.callback.register(func, args, kargs)
+        if not args[0]._dispersy.callback.is_current_thread:
+            args[0]._dispersy.callback.register(func, args, kargs)
+        else:
+            func(*args, **kargs)
+
     helper.__name__ = func.__name__
     return helper
-
 
 class DispersyExperimentScriptClient(ExperimentClient):
     scenario_file = None
@@ -93,7 +95,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.stop)
         self.scenario_runner.register(self.set_master_member)
         self.scenario_runner.register(self.reset_dispersy_statistics, 'reset_dispersy_statistics')
-        self.scenario_runner.register(self.annotate, 'annotate')
+        self.scenario_runner.register(self.annotate)
+        self.scenario_runner.register(self.peertype)
 
         # TODO(emilon): Move this to the right place
         # TODO(emilon): Do we want to have the .dbs in the output dirs or should they be dumped to /tmp?
@@ -161,7 +164,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         if self._strict:
             def exception_handler(exception, fatal):
-                msg("An exception occurred. Quitting because we are running with strict enabled.")
+                msg("An exception occurred. Quitting because we are running with --strict enabled.")
                 print "Exception was:"
 
                 try:
@@ -169,19 +172,24 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 except:
                     from traceback import print_exc
                     print_exc()
+
                 # Set Dispersy's exit status to error
                 self._dispersy_exit_status = 1
                 # Stop the experiment
                 reactor.callLater(1, self.stop)
 
-                # return fatal=True
                 return True
             self._dispersy.callback.attach_exception_handler(exception_handler)
 
         self._dispersy.start()
 
+        # low (NID_sect233k1) isn't actually that low, switching to 160bits as this is comparable to rsa 1024
+        # http://www.nsa.gov/business/programs/elliptic_curve.shtml
+        # speed difference when signing/verifying 100 items
+        # NID_sect233k1 signing took 0.171 verify took 0.35 totals 0.521
+        # NID_secp160k1 signing took 0.04 verify took 0.04 totals 0.08
+        self._my_member = self._dispersy.callback.call(self._dispersy.get_new_member, (u"NID_secp160k1",))
         self._master_member = self._dispersy.callback.call(self._dispersy.get_member, (self.master_key,))
-        self._my_member = self._dispersy.callback.call(self._dispersy.get_new_member, (u"low",))
 
         self._dispersy.callback.register(self._do_log)
         msg("Finished starting dispersy")
@@ -237,6 +245,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     def annotate(self, message):
         self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, "annotate", message))
+    def peertype(self, peertype):
+        self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, "peertype", peertype))
 
     #
     # Aux. functions
@@ -244,25 +254,25 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def str2bool(self, v):
         return v.lower() in ("yes", "true", "t", "1")
 
+    def print_on_change(self, name, prev_dict, cur_dict):
+        new_values = {}
+        changed_values = {}
+        if cur_dict:
+            for key, value in cur_dict.iteritems():
+                if not isinstance(key, (basestring, int, long)):
+                    key = str(key)
+
+                new_values[key] = value
+                if prev_dict.get(key, None) != value:
+                    changed_values[key] = value
+
+        if changed_values:
+            self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
+            self._stats_file.flush()
+            return new_values
+        return prev_dict
+
     def _do_log(self):
-        def print_on_change(name, prev_dict, cur_dict):
-            new_values = {}
-            changed_values = {}
-            if cur_dict:
-                for key, value in cur_dict.iteritems():
-                    if not isinstance(key, (basestring, int, long)):
-                        key = str(key)
-
-                    new_values[key] = value
-                    if prev_dict.get(key, None) != value:
-                        changed_values[key] = value
-
-            if changed_values:
-                self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
-                self._stats_file.flush()
-                return new_values
-            return prev_dict
-
         prev_statistics = {}
         prev_total_received = {}
         prev_total_dropped = {}
@@ -315,16 +325,16 @@ class DispersyExperimentScriptClient(ExperimentClient):
                                'walk_advice_outgoing_response': self._dispersy.statistics.walk_advice_outgoing_response,
                                'communities': communities_dict}
 
-            prev_statistics = print_on_change("statistics", prev_statistics, statistics_dict)
-            prev_total_dropped = print_on_change("statistics-dropped-messages", prev_total_dropped, self._dispersy.statistics.drop)
-            prev_total_delayed = print_on_change("statistics-delayed-messages", prev_total_delayed, self._dispersy.statistics.delay)
-            prev_total_received = print_on_change("statistics-successful-messages", prev_total_received, self._dispersy.statistics.success)
-            prev_total_outgoing = print_on_change("statistics-outgoing-messages", prev_total_outgoing, self._dispersy.statistics.outgoing)
-            prev_created_messages = print_on_change("statistics-created-messages", prev_created_messages, self._dispersy.statistics.created)
-            prev_total_fail = print_on_change("statistics-walk-fail", prev_total_fail, self._dispersy.statistics.walk_fail)
-            prev_endpoint_recv = print_on_change("statistics-endpoint-recv", prev_endpoint_recv, self._dispersy.statistics.endpoint_recv)
-            prev_endpoint_send = print_on_change("statistics-endpoint-send", prev_endpoint_send, self._dispersy.statistics.endpoint_send)
-            prev_bootstrap_candidates = print_on_change("statistics-bootstrap-candidates", prev_bootstrap_candidates, self._dispersy.statistics.bootstrap_candidates)
+            prev_statistics = self.print_on_change("statistics", prev_statistics, statistics_dict)
+            prev_total_dropped = self.print_on_change("statistics-dropped-messages", prev_total_dropped, self._dispersy.statistics.drop)
+            prev_total_delayed = self.print_on_change("statistics-delayed-messages", prev_total_delayed, self._dispersy.statistics.delay)
+            prev_total_received = self.print_on_change("statistics-successful-messages", prev_total_received, self._dispersy.statistics.success)
+            prev_total_outgoing = self.print_on_change("statistics-outgoing-messages", prev_total_outgoing, self._dispersy.statistics.outgoing)
+            prev_created_messages = self.print_on_change("statistics-created-messages", prev_created_messages, self._dispersy.statistics.created)
+            prev_total_fail = self.print_on_change("statistics-walk-fail", prev_total_fail, self._dispersy.statistics.walk_fail)
+            prev_endpoint_recv = self.print_on_change("statistics-endpoint-recv", prev_endpoint_recv, self._dispersy.statistics.endpoint_recv)
+            prev_endpoint_send = self.print_on_change("statistics-endpoint-send", prev_endpoint_send, self._dispersy.statistics.endpoint_send)
+            prev_bootstrap_candidates = self.print_on_change("statistics-bootstrap-candidates", prev_bootstrap_candidates, self._dispersy.statistics.bootstrap_candidates)
 
             yield 1.0
 
@@ -340,4 +350,4 @@ def main(client_class):
     exit(reactor.exitCode)
 
 #
-# dummy_scenario_experiment_client.py ends here
+# dispersyclient.py ends here
