@@ -39,6 +39,7 @@
 
 from os import environ, path, chdir, makedirs, symlink
 from sys import stdout, exit
+from collections import defaultdict
 import json
 from time import time
 
@@ -245,6 +246,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
         return v.lower() in ("yes", "true", "t", "1")
 
     def _do_log(self):
+        from Tribler.dispersy.candidate import CANDIDATE_STUMBLE_LIFETIME
+
         def print_on_change(name, prev_dict, cur_dict):
             new_values = {}
             changed_values = {}
@@ -274,11 +277,21 @@ class DispersyExperimentScriptClient(ExperimentClient):
         prev_created_messages = {}
         prev_bootstrap_candidates = {}
 
+        stubmled_candidates = defaultdict(lambda:defaultdict(set))
+
         while True:
             self._dispersy.statistics.update()
 
             communities_dict = []
             for c in self._dispersy.statistics.communities:
+
+                # we add all candidates which have a last_stumble > now - CANDIDATE_STUMBLE_LIFETIME
+                now = time()
+                for candidate in c.candidates:
+                    if candidate.last_stumble > now - CANDIDATE_STUMBLE_LIFETIME:
+                        stubmled_candidates[c.hex_cid][candidate.last_stumble].add(candidate.get_members()[0].mid)
+                nr_stumbled_candidates = sum(len(members) for members in stubmled_candidates[c.hex_cid].values())
+
                 communities_dict.append({'cid': c.hex_cid,
                                          'classification': c.classification,
                                          'global_time': c.global_time,
@@ -286,7 +299,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
                                          'sync_bloom_reuse': c.sync_bloom_reuse,
                                          'sync_bloom_send': c.sync_bloom_send,
                                          'sync_bloom_skip': c.sync_bloom_skip,
-                                         'nr_candidates': len(c.candidates) if c.candidates else 0})
+                                         'nr_candidates': len(c.candidates) if c.candidates else 0,
+                                         'nr_stumbled_candidates': nr_stumbled_candidates})
 
             statistics_dict = {'conn_type': self._dispersy.statistics.connection_type,
                                'received_count': self._dispersy.statistics.received_count,
