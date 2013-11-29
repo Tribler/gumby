@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 # tribler_experiment_setup.sh ---
 #
 # Filename: tribler_experiment_setup.sh
@@ -10,7 +10,7 @@
 
 # Commentary:
 #
-#
+# %*% This setup script should be used for any experiment involving Tribler.
 #
 #
 
@@ -38,10 +38,20 @@
 
 # Code:
 
-if [ -e tribler/Tribler/SwiftEngine/ ]; then
-    cd tribler
-    buildswift.sh || echo "Swift failed to build!"
-    cd ..
+
+# @CONF_OPTION BUILD_SWIFT: Set to any value if your experiment needs swift. (default is disabled)
+if [ ! -z "$BUILD_SWIFT" ]; then
+    echo "build_swift set, building Swift."
+    if [ -e tribler/Tribler/SwiftEngine/ ]; then
+        cd tribler
+        buildswift.sh || ( echo "Swift failed to build!" ; exit 1 )
+        cd ..
+    else
+        echo "Couldn't find Swift at tribler/Tribler/SwiftEngine, bailing out."
+        exit 2
+    fi
+else
+    echo "Not building Swift."
 fi
 
 das4_setup.sh
