@@ -21,6 +21,22 @@ while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep =
 }
 
 i = 1
+while(file.exists(paste("sum_incomming_connections_", toString(i), "_reduced.txt", sep = ''))){
+	df <- read.table(paste("sum_incomming_connections_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
+	df <- melt(df, id="time")
+	df <- subset(df, df$time == max(df$time))
+	
+	p <- ggplot(df, aes(x=value)) + theme_bw()
+	p <- p + geom_density()
+	p <- p + theme(legend.position = "none")
+	p <- p + labs(x = "\nSum incomming connections", y = "Probability\n")
+	p
+	
+	ggsave(file=paste("incomming_connections_", toString(i), ".png", sep = ''), width=8, height=6, dpi=100)
+	i = i + 1
+}
+
+i = 1
 while(file.exists(paste("bl_skip_", toString(i), "_reduced.txt", sep = ''))){
     df <- read.table(paste("bl_skip_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
     df <- melt(df, id="time")

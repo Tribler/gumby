@@ -57,6 +57,7 @@ def main(input_directory, nrlines):
     total_communities = 1
     while os.path.exists(os.path.join(input_directory, 'total_connections_%d.txt' % total_communities)):
         reduce(input_directory, nrlines, 'total_connections_%d.txt' % total_communities, 'total_connections_%d_reduced.txt' % total_communities)
+        reduce(input_directory, nrlines, 'sum_incomming_connections_%d.txt' % total_communities, 'sum_incomming_connections_%d_reduced.txt' % total_communities)
 
         reduce(input_directory, nrlines, 'bl_reuse_%d.txt' % total_communities, 'bl_reuse_%d_reduced.txt' % total_communities)
         reduce(input_directory, nrlines, 'bl_skip_%d.txt' % total_communities, 'bl_skip_%d_reduced.txt' % total_communities)
