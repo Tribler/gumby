@@ -37,7 +37,7 @@
 # Code:
 
 from os import environ, path, chdir, makedirs, symlink
-from sys import stdout
+from sys import stdout, stderr
 import logging
 import logging.config
 import sys
@@ -153,16 +153,35 @@ class PythonLoggingObserver(object):
         removeObserver(self.emit)
 
 
+# TODO(emilon): Document this on the user manual
 def setupLogging():
-    observer = PythonLoggingObserver()
-    observer.start()
     config_file = path.join(environ['EXPERIMENT_DIR'], "logger.conf")
-    # TODO(emilon): Document this on the user manual
+    root = logging.getLogger()
+
+    # Wipe out any existing handlers
+    for handler in root.handlers:
+        print "WARNING! handler present before when calling setupLogging, removing handler: %s" % handler.name
+        root.removeHandler(handler)
+
     if path.exists(config_file):
-        msg("This experiment has a logger.conf, using it.")
+        print "Found a logger.conf, using it."
+        stdout.flush()
         logging.config.fileConfig(config_file)
     else:
-        msg("No logger.conf found for this experiment.")
+        print "No logger.conf found."
+        stdout.flush()
 
-#
+        root.setLevel(logging.INFO)
+        stdout_handler = logging.StreamHandler(stdout)
+        stdout_handler.setLevel(logging.INFO)
+        root.addHandler(stdout_handler)
+
+        stderr_handler = logging.StreamHandler(stderr)
+        stderr_handler.setLevel(logging.WARNING)
+        root.addHandler(stderr_handler)
+
+    observer = PythonLoggingObserver('root')
+    observer.start()
+
+
 # log.py ends here
