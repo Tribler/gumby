@@ -41,7 +41,6 @@
 from itertools import groupby
 from extract_dispersy_statistics import *
 
-
 class SearchMessages(AbstractHandler):
 
     def __init__(self):
