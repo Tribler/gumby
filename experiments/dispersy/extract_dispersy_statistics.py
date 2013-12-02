@@ -515,7 +515,7 @@ class StatisticMessages(AbstractHandler):
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         if key == "scenario-statistics":
             for key, value in json.iteritems():
-                print >> self.h_statistics, time, timeoffset, key, value
+                print >> self.h_statistics, timestamp, timeoffset, key, value
 
                 self.sum_records[timeoffset][key][node_nr] = value
 
