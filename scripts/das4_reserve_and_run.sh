@@ -88,8 +88,11 @@ else
     export OUTPUT_DIR_URI="$HEAD_HOST:$OUTPUT_DIR"
 fi
 
-echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
+# We need to go back to home in order to prevent prun complaining about not being able to cwd into the directory
+WORKING_DIR=$PWD
+cd ~
 
+echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
 prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh &
 PID=$!
 
