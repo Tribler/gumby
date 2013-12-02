@@ -77,8 +77,6 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self.not_connected_taste_buddies = set()
         self.file_availability = defaultdict(list)
 
-        self.prev_log_searches = defaultdict(dict)
-
         self.nr_search = 0
 
         self.community_kwargs['integrate_with_tribler'] = False
@@ -253,7 +251,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             yield 5.0
 
     def log_searches(self, key, **kwargs):
-        self.print_on_change(key, self.prev_log_searches[key], kwargs)
+        self.print_on_change(key, {}, kwargs)
 
     def log_search_response(self, keywords, results, candidate):
         for result in results:
