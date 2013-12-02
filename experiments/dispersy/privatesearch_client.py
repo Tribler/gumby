@@ -186,12 +186,9 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         DispersyExperimentScriptClient.start_dispersy(self)
         self.community_args = (self._my_member,)
 
-    def online(self):
-        DispersyExperimentScriptClient.online(self)
-        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
-
     @call_on_dispersy_thread
     def connect_to_taste_buddies(self):
+        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
         if not self.late_joining:
             nr_to_connect = int(10 * self.bootstrap_percentage)
             if self.random_connect:
@@ -205,6 +202,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def perform_searches(self):
+        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
         while True:
             self.nr_search += 1
 
