@@ -13,8 +13,13 @@ sudo /usr/bin/lxc-stop -n seeder
 
 # always remove the container in case it didn't shut down correctly
 if [ -d "$CONTAINER_DIR" ]; then
-	sudo /bin/umount $CONTAINER_DIR -l
-	sudo /bin/umount /tmp/container
+	# umount the union filesystem
+	if mount | grep $CONTAINER_DIR; then
+		sudo /bin/umount $CONTAINER_DIR -l
+	fi
+	if mount | grep /tmp/container; then
+		sudo /bin/umount /tmp/container	-l
+	fi
 	rmdir $CONTAINER_DIR
 fi
 
