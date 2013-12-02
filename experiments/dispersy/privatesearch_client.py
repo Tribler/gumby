@@ -77,10 +77,12 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self.not_connected_taste_buddies = set()
         self.file_availability = defaultdict(list)
 
+        self.prev_log_searches = defaultdict(dict)
+
         self.nr_search = 0
 
         self.community_kwargs['integrate_with_tribler'] = False
-        self.community_kwargs['log_searches'] = True
+        self.community_kwargs['log_searches'] = self.log_searches
 
     def registerCallbacks(self):
         self.scenario_runner.register(self.download, 'download')
@@ -249,6 +251,9 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped':ratio, 'recall':recall, 'nr_search':self.nr_search, 'paths_found':paths_found, 'sources_found':sources_found})
             self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_taste_buddies), 'search_forward':self._community.search_forward, 'search_forward_success':self._community.search_forward_success, 'search_forward_timeout':self._community.search_forward_timeout, 'search_endpoint':self._community.search_endpoint, 'search_cycle_detected':self._community.search_cycle_detected, 'search_no_candidates_remain':self._community.search_no_candidates_remain, 'search_megacachesize':self._community.search_megacachesize, 'create_time_encryption':self._community.create_time_encryption, 'create_time_decryption':self._community.create_time_decryption, 'receive_time_encryption':self._community.receive_time_encryption, 'search_timeout':self._community.search_timeout, 'send_packet_size':self._community.send_packet_size, 'reply_packet_size':self._community.reply_packet_size, 'forward_packet_size':self._community.forward_packet_size})
             yield 5.0
+
+    def log_searches(self, key, **kwargs):
+        self.print_on_change(key, self.prev_log_searches[key], kwargs)
 
     def log_search_response(self, keywords, results, candidate):
         for result in results:
