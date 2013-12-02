@@ -184,7 +184,6 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
-
         self.community_args = (self._my_member,)
 
     @call_on_dispersy_thread
