@@ -57,11 +57,11 @@ set -e
 # @CONF_OPTION DAS4_RESERVE_DURATION: Set the reservation time length in seconds. (default is DAS4_NODE_TIMEOUT+120)
 
 
-if [ -z "$DAS4_NODE_AMOUNT"]; then
+if [ -z "$DAS4_NODE_AMOUNT" ]; then
     echo "ERROR: you need to specify at least DAS4_NODE_AMOUNT when using $0" >&2
     exit 1
 fi
-if [ -z "$DAS4_RESERVE_DURATION"]; then
+if [ -z "$DAS4_RESERVE_DURATION" ]; then
     echo "DAS4_RESERVE_DURATION not set, using DAS4_NODE_TIMEOUT+120"
     let DAS4_RESERVE_DURATION=$DAS4_NODE_TIMEOUT+120
 fi
