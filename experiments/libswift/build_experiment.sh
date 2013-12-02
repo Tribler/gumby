@@ -14,7 +14,7 @@ sudo /usr/bin/lxc-stop -n seeder
 # always remove the container in case it didn't shut down correctly
 if [ -d "$CONTAINER_DIR" ]; then
 	# umount the union filesystem
-	if mount | grep $CONTAINER_DIR; then
+	if mount | grep "$CONTAINER_DIR "; then
 		sudo /bin/umount $CONTAINER_DIR -l
 	fi
 	if mount | grep /tmp/container; then
@@ -27,7 +27,7 @@ echo "Initializing LXC container in $CONTAINER_DIR..."
 # create union filesystem
 mkdir -p $CONTAINER_DIR
 mkdir -p /tmp/container
-sudo /bin/mount -t tmpfs none /tmp/container/
+sudo /bin/mount -t tmpfs none /tmp/container
 sudo /bin/mount -t aufs -o br=/tmp/container:/ none $CONTAINER_DIR
 sudo /bin/mount --bind /home $CONTAINER_DIR/home
 
