@@ -10,10 +10,14 @@
 function cleanup {
   echo "Cleaning up"
 	sudo /usr/bin/lxc-stop -n seeder
-	
+
 	# umount the union filesystem
-	sudo /bin/umount $CONTAINER_DIR -l
-	sudo /bin/umount /tmp/container	-l
+	if mount | grep $CONTAINER_DIR; then
+		sudo /bin/umount $CONTAINER_DIR -l
+	fi
+	if mount | grep /tmp/container; then
+		sudo /bin/umount /tmp/container	-l
+	fi
 	rmdir $CONTAINER_DIR
 }
 trap cleanup EXIT
@@ -91,7 +95,7 @@ else
 fi
 
 # get full path, easier for use in container
-WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR) 
+WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR)
 FILENAME=file_$FILE_SIZE.tmp
 
 
@@ -115,34 +119,34 @@ done
 for (( i = 0 ; i < $NO_OF_LEECHERS; i++ ))
 do
 	# read delay and packet loss
-	if $HETEROGENEOUS_DELAY; 
+	if $HETEROGENEOUS_DELAY;
 	then
 		LEECHER_DELAY=${DELAY[$i]}
 	else
 		LEECHER_DELAY=$DELAY
 	fi
-	
-	if $HETEROGENEOUS_PACKET_LOSS; 
+
+	if $HETEROGENEOUS_PACKET_LOSS;
 	then
 		LEECHER_PACKET_LOSS=${PACKET_LOSS[$i]}
 	else
 		LEECHER_PACKET_LOSS=$PACKET_LOSS
 	fi
-	
-	if $HETEROGENEOUS_RATE; 
+
+	if $HETEROGENEOUS_RATE;
 	then
 		LEECHER_RATE=${RATE[$i]}
 	else
 		LEECHER_RATE=$RATE
 	fi
-	
-	if $HETEROGENEOUS_OFFSET; 
+
+	if $HETEROGENEOUS_OFFSET;
 	then
 		sleep ${OFFSET[$i]}
 	else
 		sleep $OFFSET
 	fi
-	
+
 	LEECHER_IP=$NETWORK_IP_RANGE.$(($LEECHER_ID+$i))
 	sudo /usr/bin/lxc-execute -n leecher_$i \
 		-s lxc.network.type=veth \
