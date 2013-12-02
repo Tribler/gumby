@@ -182,11 +182,6 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
         DispersyExperimentScriptClient.set_community_kwarg(self, key, value)
 
-    def start_dispersy(self):
-        DispersyExperimentScriptClient.start_dispersy(self)
-
-        self.community_args = (self._my_member,)
-
     @call_on_dispersy_thread
     def connect_to_taste_buddies(self):
         self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
