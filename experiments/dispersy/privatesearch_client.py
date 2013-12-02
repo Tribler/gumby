@@ -79,8 +79,8 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
         self.nr_search = 0
 
-        self.set_community_kwarg('integrate_with_tribler', False)
-        self.set_community_kwarg('log_searches', True)
+        self.community_kwargs['integrate_with_tribler'] = False
+        self.community_kwargs['log_searches'] = True
 
     def registerCallbacks(self):
         self.scenario_runner.register(self.download, 'download')

@@ -219,9 +219,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
         if self._community is None:
             msg("online")
 
-            import sys
-            print >> sys.stderr, self.community_kwargs.keys()
-
             if self._is_joined:
                 self._community = self.community_class.load_community(self._dispersy, self._master_member, *self.community_args, **self.community_kwargs)
 
