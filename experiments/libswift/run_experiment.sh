@@ -2,9 +2,9 @@
 
 # Set defaults for config variables ---------------------------------------------------
 # Override these on Jenkins before running the script.
-[ -z $EXPERIMENT_TIME ] && EXPERIMENT_TIME=30
-[ -z $FILE_SIZE ] && FILE_SIZE="10MB"
-[ -z $NO_OF_LEECHERS ] && NO_OF_LEECHERS="1"
+[ -z "$EXPERIMENT_TIME" ] && EXPERIMENT_TIME=30
+[ -z "$FILE_SIZE" ] && FILE_SIZE="10MB"
+[ -z "$NO_OF_LEECHERS" ] && NO_OF_LEECHERS="1"
 # ------------------------------------------------------------------------------
 
 function cleanup {
@@ -22,15 +22,6 @@ function cleanup {
 }
 trap cleanup EXIT
 trap cleanup TERM
-
-EXPERIMENT_DIR=$( dirname $(readlink -f "$0"))
-if [ ! -d "$EXPERIMENT_DIR" ]; then
-    EXPERIMENT_DIR=$( dirname $(readlink -f $(which "$0")))
-fi
-if [ ! -d "$EXPERIMENT_DIR" ]; then
-    echo "Couldn't figure out where the experiment is, bailing out."
-    exit 1
-fi
 
 # check if netem config is set correctly
 # heterogeneous delay?
@@ -105,11 +96,12 @@ echo "Output dir: $OUTPUT_DIR"
 
 # wait for the hash to be generated - note that this happens in the container fs
 while [ ! -f $CONTAINER_DIR/$OUTPUT_DIR/$FILENAME.mbinmap ] ;
+#while [ ! -f $OUTPUT_DIR/$FILENAME.mbinmap ] ;
 do
       sleep 2
 done
 
-HASH=$(cat $CONTAINER_DIR/$OUTPUT_DIR/$FILENAME.mbinmap | grep hash | cut -d " " -f 3)
+HASH=$(grep hash $CONTAINER_DIR/$OUTPUT_DIR/$FILENAME.mbinmap | cut -d " " -f 3)
 
 for element in "${DELAY[@]}"
 do
