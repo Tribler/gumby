@@ -175,7 +175,7 @@ class ScenarioRunner():
         """
         try:
             for lineno, line in enumerate(open(filename, "r")):
-                cmd = self._parse_scenario_line(lineno, line)
+                cmd = self._parse_scenario_line(lineno, line + 1)
                 if cmd is not None:
                     yield cmd
         except EnvironmentError:
