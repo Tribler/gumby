@@ -255,6 +255,13 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def str2bool(self, v):
         return v.lower() in ("yes", "true", "t", "1")
 
+    def str2tuple(self, v):
+        if len(v) > 1 and v[1] == "t":
+            return (int(v[0]), int(v[2:]))
+        if len(v) > 1 and v[1] == ".":
+            return float(v)
+        return int(v)
+
     def print_on_change(self, name, prev_dict, cur_dict):
         new_values = {}
         changed_values = {}

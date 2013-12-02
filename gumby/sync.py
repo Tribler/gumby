@@ -261,6 +261,19 @@ class ExperimentClient(LineReceiver):
     def startExperiment(self):
         msg("startExperiment: Call not implemented")
 
+    def get_peer_ip_port(self, peer_id):
+        if str(peer_id) in self.all_vars:
+            return self.all_vars[str(peer_id)]['host'], self.all_vars[str(peer_id)]['port']
+
+    def get_peer_id(self, ip, port):
+        port = int(port)
+        for peer_id, peer_dict in self.all_vars:
+            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
+                return peer_id
+
+    def get_peers(self):
+        return self.all_vars.keys()
+
     #
     # Protocol state handlers
     #
