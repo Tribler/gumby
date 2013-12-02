@@ -221,7 +221,7 @@ class ScenarioRunner():
                     dic.get("callable", ""),
                     tuple(shlex.split(dic.get("args", "")))
                 )
-        else:
+        elif line:
             print >> sys.stderr, "Ignoring invalid scenario line", lineno
 
         # line not for this peer or a parse error occurred
