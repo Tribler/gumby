@@ -121,19 +121,6 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             self.taste_buddies[ipport] = similarity
             self.not_connected_taste_buddies.add(ipport)
 
-    @call_on_dispersy_thread
-    def connect_to_taste_buddies(self):
-        if not self.late_joining:
-            nr_to_connect = int(10 * self.bootstrap_percentage)
-            if self.random_connect:
-                taste_addresses = [self.get_peer_ip_port(peer_id) for peer_id in sample(self.get_peers(), nr_to_connect)]
-            else:
-                taste_addresses = sample(self.taste_buddies.keys(), nr_to_connect)
-
-            for ipport in taste_addresses:
-                self._community._peercache.add_peer(self.taste_buddies.get(ipport, 0), *ipport)
-            self._community.connect_to_peercache(sys.maxint)
-
     def set_community_class(self, commtype):
         from Tribler.community.privatesearch.community import SearchCommunity, PSearchCommunity, HSearchCommunity, PoliSearchCommunity
         from Tribler.community.privatesearch.oneswarm.community import PoliOneSwarmCommunity
@@ -197,12 +184,27 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
-        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
 
         self.community_args = (self._my_member,)
 
     @call_on_dispersy_thread
+    def connect_to_taste_buddies(self):
+        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
+
+        if not self.late_joining:
+            nr_to_connect = int(10 * self.bootstrap_percentage)
+            if self.random_connect:
+                taste_addresses = [self.get_peer_ip_port(peer_id) for peer_id in sample(self.get_peers(), nr_to_connect)]
+            else:
+                taste_addresses = sample(self.taste_buddies.keys(), nr_to_connect)
+
+            for ipport in taste_addresses:
+                self._community._peercache.add_peer(self.taste_buddies.get(ipport, 0), *ipport)
+            self._community.connect_to_peercache(sys.maxint)
+
+    @call_on_dispersy_thread
     def perform_searches(self):
+        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
         while True:
             self.nr_search += 1
 
