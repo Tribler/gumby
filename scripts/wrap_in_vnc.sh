@@ -8,8 +8,8 @@
 # Created: Thu Jul 11 13:42:37 2013 (+0200)
 
 # Commentary:
-# This script starts a new VNC server and executes the specified command.
-# When the command finishes, it kills the vnc server before exiting.
+# %*% This script starts a new VNC server and executes the command passed as an argument.
+# %*% When the command finishes, it kills the vnc server before exiting.
 #
 #
 
