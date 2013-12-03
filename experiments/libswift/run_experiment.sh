@@ -15,7 +15,7 @@
 function cleanup {
   echo "Cleaning up"
 	sudo /usr/bin/lxc-stop -n seeder
-
+	wait
 	# umount the union filesystem
 	if mount | grep $CONTAINER_DIR; then
 		sudo /bin/umount $CONTAINER_DIR -l
