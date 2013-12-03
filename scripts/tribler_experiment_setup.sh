@@ -43,9 +43,7 @@
 if [ ! -z "$BUILD_SWIFT" ]; then
     echo "build_swift set, building Swift."
     if [ -e tribler/Tribler/SwiftEngine/ ]; then
-        cd tribler
         buildswift.sh || ( echo "Swift failed to build!" ; exit 1 )
-        cd ..
     else
         echo "Couldn't find Swift at tribler/Tribler/SwiftEngine, bailing out."
         exit 2
