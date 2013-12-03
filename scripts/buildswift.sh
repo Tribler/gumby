@@ -8,9 +8,10 @@
 # Created: Thu Nov 21 14:00:45 2013 (+0100)
 
 # Commentary:
-#
-#
-#
+# %*% Build the Swift binary.
+# %*% The script will look in tribler/Tribler/SwiftEngine/ and swift/
+# %*% and build the first one it finds. If found in the first location (as in the usual Tribler checkout)
+# %*% the resulting binary will be moved to the location Tribler expects to find it.
 #
 
 # Change Log:
@@ -37,10 +38,32 @@
 
 # Code:
 
-cd Tribler/SwiftEngine
-scons -j$(grep processor /proc/cpuinfo | wc -l)
-cp swift ../..
-git clean -fd ||:
+
+build () {
+    # @CONF_OPTION DEBUG_SWIFT: Set to any value if you want to enable Swift's debug output. (default is disabled)
+    if [ -z "$DEBUG_SWIFT" ]; then
+        #Disable debug output
+        sed -i "s/DEBUG = True/DEBUG = False/" SConstruct
+    fi
+
+    scons -j$(grep processor /proc/cpuinfo | wc -l)
+
+}
+
+if [ ! -z "$BUILD_SWIFT" ]; then
+    if [ -d tribler/Tribler/SwiftEngine ]; then
+        cd tribler/Tribler/SwiftEngine
+        build
+        mv swift ../..
+    else
+        if [ -d swift ]; then
+            cd swift
+            build
+        fi
+    fi
+    git clean -fd ||:
+fi
+
 
 #
 # buildswift.sh ends here
