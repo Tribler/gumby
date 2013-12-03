@@ -4,7 +4,9 @@
 WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR)
 FILENAME=file_$FILE_SIZE.tmp
 
-SWIFT_CMD="$WORKSPACE_DIR/$REPOSITORY_DIR/swift -l $SEEDER_PORT -f $OUTPUT_DIR/file_$FILE_SIZE.tmp -p -H -D $OUTPUT_DIR/src/seeder" 
+# note: use 0.0.0.0:2000 for listening as using only the port will result in ipv6 communication
+# between the leechers (i.e., they can't connect to each other)
+SWIFT_CMD="$WORKSPACE_DIR/$REPOSITORY_DIR/swift -l 0.0.0.0:$SEEDER_PORT -f $OUTPUT_DIR/file_$FILE_SIZE.tmp -p -H -D $OUTPUT_DIR/src/seeder" 
 
 # start seeder
 sudo /usr/bin/lxc-execute -n seeder \
