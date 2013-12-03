@@ -167,33 +167,6 @@ done
 
 wait
 
-
-# ------------- LOG PARSING -------------
-# TODO replace with R graphing
-# @CONF_OPTION GENERATE_PLOTS: Set to true to generate plots. 
-if $GENERATE_PLOTS; then
-
-
-#	tail -n +2 $LOGS_DIR/src/resource_usage.log > $LOGS_DIR/src/resource_usage.log.tmp
-	# remove the (sh) process
-#	sed '/(sh)/d' $LOGS_DIR/src/resource_usage.log.tmp > $LOGS_DIR/src/resource_usage.log
-#	tail -n +2 $LOGS_DIR/dst/resource_usage.log > $LOGS_DIR/dst/resource_usage.log.tmp
-#	sed '/(sh)/d' $LOGS_DIR/dst/resource_usage.log.tmp > $LOGS_DIR/dst/resource_usage.log
-
-#	$WORKSPACE_DIR/gumby/experiments/libswift/parse_logs.py $LOGS_DIR/src
-#	$WORKSPACE_DIR/gumby/experiments/libswift/parse_logs.py $LOGS_DIR/dst
-
-	# ------------- PLOTTING -------------
-#	gnuplot -e "logdir='$LOGS_DIR/src';peername='src';plotsdir='$PLOTS_DIR'" $WORKSPACE_DIR/gumby/experiments/libswift/resource_usage.gnuplot
-#	gnuplot -e "logdir='$LOGS_DIR/dst';peername='dst';plotsdir='$PLOTS_DIR'" $WORKSPACE_DIR/gumby/experiments/libswift/resource_usage.gnuplot
-
-#	gnuplot -e "logdir='$LOGS_DIR';plotsdir='$PLOTS_DIR'" $WORKSPACE_DIR/gumby/experiments/libswift/speed.gnuplot
-	
-	
-	rm -f $PLOTS_DIR_LAST/*
-	cp $PLOTS_DIR/* $PLOTS_DIR_LAST/
-fi
-
 # remove leeched files
 for (( i = 0 ; i < $NO_OF_LEECHERS; i++ ))
 do
