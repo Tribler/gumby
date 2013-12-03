@@ -223,7 +223,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
                 yield self.search_spacing
 
             if self.nr_search <= self.search_limit:
-                yield 300
+                yield 300.0
             else:
                 break
 
