@@ -21,7 +21,7 @@ if(file.exists("searches.txt")){
     p <- ggplot(df, aes(ttl, value, fill=ttl, colour=ttl)) + theme_bw()
     p <- p + geom_bar(stat="identity")
     p <- p + facet_grid(variable ~ ., scales = "free_y", labeller=mf_labeller)
-    p <- p + opts(legend.position="none")
+    p <- p + theme(legend.position="none")
     p <- p + labs(x = "\nTTL used in initial query", y = "Mean occurrences\n")
     p
     

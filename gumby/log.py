@@ -37,11 +37,67 @@
 # Code:
 
 from os import environ, path, chdir, makedirs, symlink
-from sys import stdout
-import logging.config
+from sys import stdout, stderr
 import logging
+import logging.config
+import sys
 
-from twisted.python.log import textFromEventDict, removeObserver, addObserver, msg, startLogging
+from twisted.python.log import msg, FileLogObserver, textFromEventDict, _safeFormat, removeObserver, addObserver, startLogging
+from twisted.python import util
+
+class ColoredFileLogObserver(FileLogObserver):
+    CANCEL_COLOR = "\x1b[0m"
+    RED_NORMAL = "\x1b[31m"
+    RED_BOLD = "\x1b[31;1m"
+    GREEN_NORMAL = "\x1b[32m"
+    GREEN_BOLD = "\x1b[32;1m"
+    GREY_NORMAL = "\x1b[37m"
+
+    def __init__(self, f=None):
+        if f is None:
+            FileLogObserver.__init__(self, sys.stdout)
+        else:
+            FileLogObserver.__init__(self, f)
+
+    def _colorize(self, text, color=GREY_NORMAL):
+        return color + text + ColoredFileLogObserver.CANCEL_COLOR
+
+    def emit(self, eventDict):
+        text = textFromEventDict(eventDict)
+        if text is None:
+            return
+
+        timeStr = self._colorize(
+            self.formatTime(eventDict['time']),
+            ColoredFileLogObserver.GREY_NORMAL)
+        fmtDict = {
+            'system': eventDict['system'],
+            'text': text.replace("\n", "\n\t")}
+        systemStr = ""
+        systemStr = self._colorize(
+            _safeFormat("[%(system)s]", fmtDict),
+            ColoredFileLogObserver.GREY_NORMAL)
+        textStr = _safeFormat("%(text)s", fmtDict)
+
+        if textStr.startswith("SSH"):
+            t = textStr.find("STDERR:")
+            if t != -1:
+                textStr = self._colorize(
+                    textStr[t + 8:],
+                    ColoredFileLogObserver.RED_BOLD)
+            else:
+                textStr = self._colorize(
+                    textStr[textStr.find("STDOUT:") + 8:],
+                    ColoredFileLogObserver.GREEN_BOLD)
+            # only text for incoming data
+            msgStr = textStr + "\n"
+        else:
+            # add system to the local logs
+            # TODO: Make system more useful, not just "SSHChannel...".
+            msgStr = systemStr + " " + textStr + "\n"
+
+        util.untilConcludes(self.write, timeStr + " " + msgStr)
+        util.untilConcludes(self.flush)  # Hoorj!
 
 
 class PythonLoggingObserver(object):
@@ -97,16 +153,35 @@ class PythonLoggingObserver(object):
         removeObserver(self.emit)
 
 
+# TODO(emilon): Document this on the user manual
 def setupLogging():
-    observer = PythonLoggingObserver()
-    observer.start()
     config_file = path.join(environ['EXPERIMENT_DIR'], "logger.conf")
-    # TODO(emilon): Document this on the user manual
+    root = logging.getLogger()
+
+    # Wipe out any existing handlers
+    for handler in root.handlers:
+        print "WARNING! handler present before when calling setupLogging, removing handler: %s" % handler.name
+        root.removeHandler(handler)
+
     if path.exists(config_file):
-        msg("This experiment has a logger.conf, using it.")
+        print "Found a logger.conf, using it."
+        stdout.flush()
         logging.config.fileConfig(config_file)
     else:
-        msg("No logger.conf found for this experiment.")
+        print "No logger.conf found."
+        stdout.flush()
 
-#
+        root.setLevel(logging.INFO)
+        stdout_handler = logging.StreamHandler(stdout)
+        stdout_handler.setLevel(logging.INFO)
+        root.addHandler(stdout_handler)
+
+        stderr_handler = logging.StreamHandler(stderr)
+        stderr_handler.setLevel(logging.WARNING)
+        root.addHandler(stderr_handler)
+
+    observer = PythonLoggingObserver('root')
+    observer.start()
+
+
 # log.py ends here

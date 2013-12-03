@@ -9,8 +9,8 @@
 
 # Commentary:
 #
-# A simple script to run an experiment on the DAS4 trough prun.
-#
+# %*% A simple script to run experiments on the DAS4 trough prun.
+# %*% Have in mind that this script uses das4_node_run_job.sh, so you will need to set its config options too.
 #
 
 # Change Log:
@@ -37,13 +37,37 @@
 
 # Code:
 
+EXIT_CODE=-15
+cancel_reservation () {
+# Cancel all our rc jobs in the queue
+cat <<EOF | at now + 2 minutes
+
+for RID in $(preserve -list | awk '{print $2 " " $1 " " $5 }' | grep dr$ | grep ^$USER | cut -f2 -d" "); do qdel $RID ; done
+
+EOF
+
+exit $EXIT_CODE
+}
+
+trap cancel_reservation TERM
+
 set -e
 
+# @CONF_OPTION DAS4_NODE_AMOUNT: Set the number of nodes that will get reserved on each cluster to run this experiment. (required)
+# @CONF_OPTION DAS4_RESERVE_DURATION: Set the reservation time lengh in seconds. (required)
+
+if [ -z "$DAS4_NODE_AMOUNT" -o -z "$DAS4_RESERVE_DURATION" ]; then
+    echo "ERROR: you need to specify both DAS4_NODE_AMOUNT and DAS4_RESERVE_DURATION when using $0" >&2
+    exit 1
+fi
+
+# @CONF_OPTION HEAD_HOST: Override the head host where the worker nodes will sync their datasets back (default is the host name where the script is executed from)
 if [ -z "$HEAD_HOST" ]; then
     echo "HEAD_HOST is not set, using current host"
     export HEAD_HOST=$(hostname)
 fi
 
+# @CONF_OPTION SYNC_HOST: Override the experiment synchronization server host to which the sync clients will try to connect to (default is HEAD_HOST)
 if [ -z "$SYNC_HOST" ]; then
     echo "SYNC_HOST not set, using HEAD_HOST"
     #SYNC_HOST=$(echo $SSH_CLIENT | awk '{print $1}' )
@@ -68,12 +92,8 @@ sleep 1
 preserve -llist
 wait $PID
 
-# Cancel all our rc jobs in the queue
-cat <<EOF | at now + 2 minutes
-
-for RID in $(preserve -list | awk '{print $2 " " $1 " " $5 }' | grep rc$ | grep ^$USER | cut -f2 -d" "); do pdel $RID ; done
-
-EOF
+EXIT_CODE=$?
+cancel_reservation
 
 #
 # das4_reserve_and_run.sh ends here

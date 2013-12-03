@@ -73,9 +73,10 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
     filename = 'resource_usage.log'
     for root, dirs, files in os.walk(input_directory):
         if filename in files:
-            print >> sys.stderr, "Parsing resource_usage file %s" % filename
             nodename = root.split('/')[-1]
             all_nodes.append(nodename)
+
+            print >> sys.stderr, "Parsing resource_usage file %s" % (nodename + "/" + filename)
 
             fn_records = os.path.join(root, filename)
             h_records = open(fn_records)

@@ -164,7 +164,7 @@ class ExperimentServiceFactory(Factory):
             self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
         self.connections.append(proto)
         if len(self.connections) >= self.expected_subscribers:
-            msg("All subscribers are ready, pushing data!")
+            msg("All subscribers are ready, pushing data!", logLevel=logging.INFO)
             self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
         else:
@@ -195,7 +195,7 @@ class ExperimentServiceFactory(Factory):
 
     def startExperiment(self):
         # Give the go signal and disconnect
-        msg("Starting the experiment!")
+        msg("Starting the experiment!", logLevel=logging.INFO)
         deferreds = []
         for subscriber in self.connections:
             subscriber.sendLine("go")
@@ -209,7 +209,7 @@ class ExperimentServiceFactory(Factory):
         msg("Connection cleanly unregistered.")
 
     def onExperimentStarted(self, _):
-        msg("Experiment started, shutting down sync server.")
+        msg("Experiment started, shutting down sync server.", logLevel=logging.INFO)
         reactor.callLater(0, stopReactor)
 
     def onExperimentStartError(self, failure):

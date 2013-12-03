@@ -8,7 +8,8 @@
 # Created: Fri Aug 23 17:37:32 2013 (+0200)
 
 # Commentary:
-#
+# %*% Shell script to run commands inside the experiment environment. Enabling virtualenv if necessary, loading all the needed variables, etc.
+# %*% Used by gumby, you shouldn't need to use it directly.
 #
 #
 #
@@ -37,11 +38,12 @@
 
 # Code:
 
-from os import path, chdir, environ, makedirs
 from glob import glob
+from os import path, chdir, environ, makedirs, execvpe
 from subprocess import call
-import sys
+from sys import stdout, stderr
 import shlex
+import sys
 
 
 def extend_var(env, var, value, prepend=True):
@@ -110,6 +112,7 @@ extend_var(env, "R_LIBS_USER", expand_var("$HOME/R"))
 extend_var(env, "R_SCRIPTS_PATH", r_scripts_dir)
 extend_var(environ, "R_SCRIPTS_PATH", r_scripts_dir)
 
+# @CONF_OPTION VIRTUALENV_DIR: Virtual env to activate for the experiment (default is ~/venv)
 # Enter virtualenv in case there's one
 if "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
     venv_dir = path.abspath(expand_var(env["VIRTUALENV_DIR"]))
@@ -136,6 +139,7 @@ if "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
         print "  %s  ->  %s" % (source_file, dest_file)
         open(dest_file, "w").write(open(source_file, 'r').read().replace("__VIRTUALENV_PATH__", venv_dir))
 
+# @CONF_OPTION OUTPUT_DIR: Dir where to write all the output generated from the experiment (default is workspace_dir/output)
 # Create the experiment output dir if necessary
 if 'OUTPUT_DIR' in env:
     # Convert the output dir to an absolute path to make it easier for
@@ -150,7 +154,12 @@ if 'OUTPUT_DIR' in env:
 cmd = expand_var(" ".join(sys.argv[2:]))
 print "Running", cmd
 
-exit(call((shlex.split(cmd)), env=env))
+argv = (shlex.split(cmd))
 
+# Flush before calling exec
+stdout.flush()
+stderr.flush()
+
+execvpe(argv[0], argv, env)
 #
 # run_in_env.py ends here

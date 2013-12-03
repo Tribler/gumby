@@ -149,7 +149,7 @@ class ScenarioRunner():
         """
         self._init_origin_time()
 
-        print "Running scenario from file:", self.filename
+        msg("Running scenario from file:", self.filename)
 
         for (tstmp, lineno, clb, args) in self._parse_scenario(self.filename):
             if clb not in self._callables:

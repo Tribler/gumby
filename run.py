@@ -40,69 +40,14 @@
 import sys
 from os.path import dirname, exists
 
-from twisted.python.log import msg, FileLogObserver, textFromEventDict, _safeFormat
-from twisted.python import util
 from twisted.internet import reactor
 
 from gumby.runner import ExperimentRunner
+from gumby.log import ColoredFileLogObserver, msg
+
 from os import setpgrp, kill, getpgid, getppid, getpid
 from signal import signal, SIGTERM
 from psutil import get_pid_list
-
-
-class ColoredFileLogObserver(FileLogObserver):
-    CANCEL_COLOR = "\x1b[0m"
-    RED_NORMAL = "\x1b[31m"
-    RED_BOLD = "\x1b[31;1m"
-    GREEN_NORMAL = "\x1b[32m"
-    GREEN_BOLD = "\x1b[32;1m"
-    GREY_NORMAL = "\x1b[37m"
-
-    def __init__(self, f=None):
-        if f is None:
-            FileLogObserver.__init__(self, sys.stdout)
-        else:
-            FileLogObserver.__init__(self, f)
-
-    def _colorize(self, text, color=GREY_NORMAL):
-        return color + text + ColoredFileLogObserver.CANCEL_COLOR
-
-    def emit(self, eventDict):
-        text = textFromEventDict(eventDict)
-        if text is None:
-            return
-
-        timeStr = self._colorize(
-            self.formatTime(eventDict['time']),
-            ColoredFileLogObserver.GREY_NORMAL)
-        fmtDict = {
-            'system': eventDict['system'],
-            'text': text.replace("\n", "\n\t")}
-        systemStr = ""
-        systemStr = self._colorize(
-            _safeFormat("[%(system)s]", fmtDict),
-            ColoredFileLogObserver.GREY_NORMAL)
-        textStr = _safeFormat("%(text)s", fmtDict)
-
-        if textStr.startswith("SSH"):
-            t = textStr.find("STDERR:")
-            if t != -1:
-                textStr = self._colorize(
-                    textStr[t + 8:],
-                    ColoredFileLogObserver.RED_BOLD)
-            else:
-                textStr = self._colorize(
-                    textStr[textStr.find("STDOUT:") + 8:],
-                    ColoredFileLogObserver.GREEN_BOLD)
-            # only text for incoming data
-            msgStr = textStr + "\n"
-        else:
-            # add system to the local logs
-            # TODO: Make system more useful, not just "SSHChannel...".
-            msgStr = systemStr + " " + textStr + "\n"
-
-        util.untilConcludes(self.write, timeStr + " " + msgStr)
-        util.untilConcludes(self.flush)  # Hoorj!
 
 
 def _termTrap(self, *argv):

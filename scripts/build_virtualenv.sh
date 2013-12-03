@@ -9,7 +9,11 @@
 
 # Commentary:
 #
-#
+# %*% Builds a virtualenv with everything necessary to run Tribler/Dispersy.  If dtrace is available in the system, it
+# %*% also builds SystemTap and a SystemTap-enabled python 2.7 environment.  Can be safely executed every time the
+# %*% experiment is run as it will detect if the environment is up to date and exit if there's nothing to do.  Be aware
+# %*% that due to SystemTap needing root permissions, the first run of the script will fail giving instructions to the
+# %*% user on how to manually run a couple of commands as root to give the necessary privileges to its binaries.
 #
 #
 
@@ -36,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=7
+SCRIPT_VERSION=8
 
 # Code:
 set -e

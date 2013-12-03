@@ -121,6 +121,8 @@ class _CommandChannel(SSHChannel):
 
     def __init__(self, command, **k):
         SSHChannel.__init__(self, **k)
+        self._databytes = ''
+        self._extbytes = ''
         self.command = command
         self.reason = None
 
@@ -150,15 +152,30 @@ class _CommandChannel(SSHChannel):
             lambda _: self.conn.sendRequest(self, 'exec', NS(self.command))
         )
 
+    # TODO(emilon): Refactor this to a generic function to be used by dataReceived, extReceived and the OneshotProcessProtocol.
     def dataReceived(self, bytes_):
-        # we could recv more than 1 line
-        for line in bytes_[:-1].replace("\r\n", "\n").split("\n"):
-            msg('SSH "%s" STDOUT: %s' % (self.command, line), logLevel=logging.INFO)
+        # we could recv more than 1 line and or a partial line.
+        self._databytes += bytes_.replace('\r\n', '\n')
+        remainder = ""
+        for line in self._databytes.splitlines(True):
+            if line.endswith('\n'):
+                msg('SSH "%s" STDOUT: %s' % (self.command, line.rstrip()), logLevel=logging.INFO)
+            else:
+                # It's a partial line (part of the last one), save it to the buffer instead
+                remainder = line
+        self._databytes = remainder
 
     def extReceived(self, _, bytes_):
-        # we could recv more than 1 line
-        for line in bytes_[:-1].replace("\r\n", "\n").split("\n"):
-            msg('SSH "%s" STDERR: %s' % (self.command, line), logLevel=logging.WARNING)
+        # we could recv more than 1 line and or a partial line.
+        self._extbytes += bytes_.replace('\r\n', '\n')
+        remainder = ""
+        for line in self._extbytes.splitlines(True):
+            if line.endswith('\n'):
+                msg('SSH "%s" STDERR: %s' % (self.command, line.rstrip()), logLevel=logging.WARNING)
+            else:
+                # It's a partial line (part of the last one), save it to the buffer instead
+                remainder = line
+        self._extbytes = remainder
 
     def closed(self):
         msg("SSH command channel closed")
