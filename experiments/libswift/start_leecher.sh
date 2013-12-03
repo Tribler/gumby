@@ -1,5 +1,5 @@
 #!/bin/bash -xe
-# %*% Starts a libswift leecher, connects to a seeder and downloads a file. Note: runs inside a container.
+# %*% Starts a libswift leecher (from run_experiment.sh), connects to a seeder and downloads a file. Note: runs inside a container.
 # %*% start_seeder.sh must be started first.
 
 
