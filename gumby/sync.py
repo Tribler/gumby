@@ -267,7 +267,7 @@ class ExperimentClient(LineReceiver):
 
     def get_peer_id(self, ip, port):
         port = int(port)
-        for peer_id, peer_dict in self.all_vars:
+        for peer_id, peer_dict in self.all_vars.iteritems():
             if peer_dict['host'] == ip and int(peer_dict['port']) == port:
                 return peer_id
 
