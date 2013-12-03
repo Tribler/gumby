@@ -14,9 +14,9 @@ mkdir -p $OUTPUT_DIR/src
 mkdir -p $OUTPUT_DIR/dst
 
 # create data file
-# @CONF_OPTION FILE_SIZE: Size of the file to seed. (e,g,, 10M - for syntax see man truncate)
+# @CONF_OPTION FILE_SIZE: Size of the file to seed. (e,g., 10M - for syntax see man truncate)
 [ -z "$FILE_SIZE" ] && FILE_SIZE="10M"
-FILENAME=file_$FILE_SIZE.tmp
+FILENAME=file_seed.tmp
 truncate -s $FILE_SIZE $OUTPUT_DIR/$FILENAME
 
 # make sure the leecher stopped

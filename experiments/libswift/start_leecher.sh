@@ -1,5 +1,6 @@
 #!/bin/bash -xe
-# Note: runs inside a container
+# %*% Starts a libswift leecher, connects to a seeder and downloads a file. Note: runs inside a container.
+# %*% start_seeder.sh must be started first.
 
 
 EXPECTED_ARGS=14
@@ -40,11 +41,11 @@ ifconfig
 
 #wget http://download.thinkbroadband.com/200MB.zip
 
-SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID_ledbat"
+SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID"
 
 # leech file
 su $USERNAME -c "mkdir -p $LOGS_DIR/dst/$LEECHER_ID"
-su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/dst/$LEECHER_ID &"
+su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/dst/$LEECHER_ID -m $LOGS_DIR/dst/$LEECHER_ID &"
 
 
 
