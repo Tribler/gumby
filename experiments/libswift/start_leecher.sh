@@ -40,7 +40,7 @@ ifconfig
 
 #wget http://download.thinkbroadband.com/200MB.zip
 
-SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID"
+SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID_ledbat"
 
 # leech file
 su $USERNAME -c "mkdir -p $LOGS_DIR/dst/$LEECHER_ID"
