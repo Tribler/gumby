@@ -100,12 +100,14 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
     def download(self, infohash):
         infohash = infohash + " "* (20 - len(infohash))
         self._community._mypref_db.addMyPreference(infohash, {})
+        self._community._torrent_db.addTorrent(infohash, True)
 
     def testset(self, infohash):
         infohash = infohash + " "* (20 - len(infohash))
 
         self.test_set.add(infohash)
         self._community._mypref_db.addTestPreference(infohash)
+        self._community._torrent_db.addTorrent(infohash, False)
 
     def availability(self, infohash, peers):
         infohash = infohash + " "* (20 - len(infohash))
@@ -246,7 +248,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
                 sources_found = sources_found / unique_sources
                 paths_found = paths_found / unique_sources
 
-            self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped':ratio, 'recall':recall, 'nr_search':self.nr_search, 'paths_found':paths_found, 'sources_found':sources_found})
+            self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped':ratio, 'recall':recall, 'nr_search_':self.nr_search, 'paths_found':paths_found, 'sources_found':sources_found})
             self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_taste_buddies), 'search_forward':self._community.search_forward, 'search_forward_success':self._community.search_forward_success, 'search_forward_timeout':self._community.search_forward_timeout, 'search_endpoint':self._community.search_endpoint, 'search_cycle_detected':self._community.search_cycle_detected, 'search_no_candidates_remain':self._community.search_no_candidates_remain, 'search_megacachesize':self._community.search_megacachesize, 'create_time_encryption':self._community.create_time_encryption, 'create_time_decryption':self._community.create_time_decryption, 'receive_time_encryption':self._community.receive_time_encryption, 'search_timeout':self._community.search_timeout, 'send_packet_size':self._community.send_packet_size, 'reply_packet_size':self._community.reply_packet_size, 'forward_packet_size':self._community.forward_packet_size})
             yield 5.0
 
