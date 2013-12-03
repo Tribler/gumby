@@ -70,7 +70,7 @@ class SearchMessages(AbstractHandler):
             for identifier, nodes in self.searches.iteritems():
                 nr_collisions = sum(created for _, created, _, _ in nodes)
                 if nr_collisions > 1:
-                    print >> sys.stder, "skipping", identifier, "got", nr_collisions, "nodes creating it"
+                    print >> sys.stderr, "skipping", identifier, "got", nr_collisions, "nodes creating it"
                     continue
 
                 duration = max(timeoffset for timeoffset, _, _, _ in nodes) - min(timeoffset for timeoffset, _, _, _ in nodes)
