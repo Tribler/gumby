@@ -1,10 +1,21 @@
 #!/bin/bash -xe
+# %*% Prepare all the necessary stuff for the libswift experiment.
+# %*% Does the following:
+# %*% - Create the output directories for seeder (src) and leechers (dst)
+# %*% - Creates a data file to seed
+# %*% - Checks if the previous experiment was cleaned up correctly
+# %*% - Creates and mounts a temporary filesystem for the containers
+# %*% - Checks out and builds libswift
+
+
 
 # logging
 mkdir -p $OUTPUT_DIR/src
 mkdir -p $OUTPUT_DIR/dst
 
 # create data file
+# @CONF_OPTION FILE_SIZE: Size of the file to seed. (e,g,, 10M - for syntax see man truncate)
+[ -z "$FILE_SIZE" ] && FILE_SIZE="10M"
 FILENAME=file_$FILE_SIZE.tmp
 truncate -s $FILE_SIZE $OUTPUT_DIR/$FILENAME
 
@@ -12,6 +23,7 @@ truncate -s $FILE_SIZE $OUTPUT_DIR/$FILENAME
 sudo /usr/bin/lxc-stop -n seeder
 
 # always remove the container in case it didn't shut down correctly
+# @CONF_OPTION CONTAINER_DIR: Directory to use for the lxc container (e.g., /tmp/debian-libswift) note the remark in README.MD concerning the sudoers file
 if [ -d "$CONTAINER_DIR" ]; then
 	# umount the union filesystem
 	if mount | grep "$CONTAINER_DIR "; then
@@ -31,7 +43,7 @@ sudo /bin/mount -t tmpfs none /tmp/container
 sudo /bin/mount -t aufs -o br=/tmp/container:/ none $CONTAINER_DIR
 sudo /bin/mount --bind /home $CONTAINER_DIR/home
 
-svn co $REPOSITORY_URL $REPOSITORY_DIR
-cd $REPOSITORY_DIR
+cd swift
 make
 cd -
+#buildswift.sh

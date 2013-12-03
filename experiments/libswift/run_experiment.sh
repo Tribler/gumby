@@ -1,12 +1,19 @@
 #!/bin/bash -xe
+# %*% Executes libswift experiment. Note that build_experiment.sh should be run before this.
+# %*% Starts 1 seeder in a container and connects $NO_OF_LEECHERS leechers to it to download a file. 
 
 # Set defaults for config variables ---------------------------------------------------
 # Override these on Jenkins before running the script.
+
+# @CONF_OPTION EXPERIMENT_TIME: Process guard timeout in seconds, set to 0 to disable (default: 30) 
 [ -z "$EXPERIMENT_TIME" ] && EXPERIMENT_TIME=30
+# @CONF_OPTION FILE_SIZE: Size of the file to seed. (e,g,, 10M - for syntax see man truncate) 
 [ -z "$FILE_SIZE" ] && FILE_SIZE="10MB"
+# @CONF_OPTION NO_OF_LEECHERS: Number of leechers to start (default 1) 
 [ -z "$NO_OF_LEECHERS" ] && NO_OF_LEECHERS="1"
 # ------------------------------------------------------------------------------
 
+# clean up in case of an early exit
 function cleanup {
   echo "Cleaning up"
 	sudo /usr/bin/lxc-stop -n seeder
@@ -25,6 +32,9 @@ trap cleanup TERM
 
 # check if netem config is set correctly
 # heterogeneous delay?
+# @CONF_OPTION NETEM_DELAY: Netem delay for the leechers. ote: for a homogeneous network of leechers, set 1 value \
+# for a heterogeneous network separate values by , e.g. netem_delay = "0ms,100ms" \ 
+# for variation in delay, separate config option with _, e.g. netem_delay = "0ms_10ms,100ms"
 if [[ $NETEM_DELAY == *,* ]]
 then
 	# split in array
@@ -147,7 +157,7 @@ do
 		-s lxc.network.ipv4=$LEECHER_IP/24 \
 		-s lxc.rootfs=$CONTAINER_DIR \
 		-s lxc.pts=1024 \
-		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/$REPOSITORY_DIR $OUTPUT_DIR $HASH $LEECHER_DELAY $LEECHER_PACKET_LOSS $WORKSPACE_DIR/$PROCESS_GUARD_CMD $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER $LEECHER_RATE &
+		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/swift $OUTPUT_DIR $HASH $LEECHER_DELAY $LEECHER_PACKET_LOSS $WORKSPACE_DIR/$PROCESS_GUARD_CMD $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER $LEECHER_RATE &
 done
 
 
