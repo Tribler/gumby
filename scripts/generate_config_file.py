@@ -150,14 +150,15 @@ if __name__ == '__main__':
                 file_abspath = path.join(dirpath, filename)
                 # Do not scan ourselves
                 if file_abspath != self_abspath:
-                    config_opts = []
+                    config_opts = {}
                     doc_lines = []
                     print '  * Scanning:', file_abspath
                     for line in open(file_abspath, 'r').readlines():
                         if CONF_MARKER in line:
                             name, description = [piece.strip() for piece in line.strip().split(CONF_MARKER, 1)[1].split(':', 1)]
                             print '   - Found:', name
-                            config_opts.append((name.lower(), description))
+                            name = name.lower()
+                            config_opts[name] = config_opts[name]+'\n# '+description if name in config_opts else description
                         if DOC_MARKER in line:
                             doc_line = line.strip().split(DOC_MARKER, 1)[1].strip()
                             doc_lines.append(doc_line)
@@ -171,7 +172,7 @@ if __name__ == '__main__':
                             config_file.write('#\n')
                         if config_opts:
                             config_file.write('# Config options:\n#\n' )
-                            for config_opt in config_opts:
+                            for config_opt in config_opts.iteritems():
                                 config_file.write('# %s\n# %s = \n#\n' % tuple(reversed(config_opt)))
 
 #
