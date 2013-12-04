@@ -65,7 +65,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self.manual_connect = False
         self.random_connect = False
         self.bootstrap_percentage = 1.0
-        self.late_join = 1000
+        self.late_join = 0
         self.do_search = 1000
         self.search_limit = sys.maxint
         self.search_spacing = 15.0
