@@ -45,6 +45,7 @@ from string import letters
 from sys import path as pythonpath
 from time import time
 from collections import defaultdict
+from hashlib import sha1
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main
 
@@ -98,19 +99,20 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.set_search_spacing, 'set_search_spacing')
 
     def download(self, infohash):
-        infohash = infohash + " "* (20 - len(infohash))
+        infohash = long(sha1(str(infohash)).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(infohash, {})
         self._community._torrent_db.addTorrent(infohash, True)
 
     def testset(self, infohash):
-        infohash = infohash + " "* (20 - len(infohash))
+        infohash = long(sha1(str(infohash)).hexdigest(), 16)
 
         self.test_set.add(infohash)
         self._community._mypref_db.addTestPreference(infohash)
         self._community._torrent_db.addTorrent(infohash, False)
 
     def availability(self, infohash, peers):
-        infohash = infohash + " "* (20 - len(infohash))
+        infohash = long(sha1(str(infohash)).hexdigest(), 16)
+
         peers = [peer for peer in map(int, peers.split(',')) if peer != int(self.my_id) and self.get_peer_ip_port(peer)]
         self.file_availability[infohash] = peers
 
