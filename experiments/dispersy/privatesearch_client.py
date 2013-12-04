@@ -232,9 +232,18 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         prev_scenario_debug = {}
 
         while True:
-            if len(self.taste_buddies):
-                connected_taste_buddies = len(self.taste_buddies) - len(self.not_connected_taste_buddies)
-                ratio = connected_taste_buddies / min(10.0, float(len(self.taste_buddies)))
+            for sock_addr in self.taste_buddies.keys():
+                if self._community.is_taste_buddy_sock(sock_addr):
+                    if sock_addr in self.not_connected_taste_buddies:
+                        self.not_connected_taste_buddies.remove(sock_addr)
+                else:
+                    self.not_connected_taste_buddies.add(sock_addr)
+
+            if self.taste_buddies:
+                connected_friends = len(self.taste_buddies) - len(self.not_connected_taste_buddies)
+                bootstrapped = connected_friends / float(len(self.taste_buddies))
+            else:
+                bootstrapped = 0
 
             recall = len(self.test_reply) / float(len(self.test_set))
 
@@ -248,7 +257,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
                 sources_found = sources_found / unique_sources
                 paths_found = paths_found / unique_sources
 
-            self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped':ratio, 'recall':recall, 'nr_search_':self.nr_search, 'paths_found':paths_found, 'sources_found':sources_found})
+            self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped':bootstrapped, 'recall':recall, 'nr_search_':self.nr_search, 'paths_found':paths_found, 'sources_found':sources_found})
             self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_taste_buddies), 'search_forward':self._community.search_forward, 'search_forward_success':self._community.search_forward_success, 'search_forward_timeout':self._community.search_forward_timeout, 'search_endpoint':self._community.search_endpoint, 'search_cycle_detected':self._community.search_cycle_detected, 'search_no_candidates_remain':self._community.search_no_candidates_remain, 'search_megacachesize':self._community.search_megacachesize, 'create_time_encryption':self._community.create_time_encryption, 'create_time_decryption':self._community.create_time_decryption, 'receive_time_encryption':self._community.receive_time_encryption, 'search_timeout':self._community.search_timeout, 'send_packet_size':self._community.send_packet_size, 'reply_packet_size':self._community.reply_packet_size, 'forward_packet_size':self._community.forward_packet_size})
             yield 5.0
 
