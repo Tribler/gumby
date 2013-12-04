@@ -29,21 +29,16 @@ NETEM_RATE="${14}"
 # fix formatting for random variation
 NETEM_DELAY=${NETEM_DELAY/'_'/' '}
 
-
-# fix path so libswift can find libevent
-# export LD_LIBRARY_PATH=/usr/local/lib
+# add netem stuff
 tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
 tc qdisc add dev eth0 parent 1: handle 10: tbf rate $NETEM_RATE limit 30k burst 30k
 
 tc qdisc show
 ifconfig
 	
-
-#wget http://download.thinkbroadband.com/200MB.zip
-
+# leech file
 SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID"
 
-# leech file
 su $USERNAME -c "mkdir -p $LOGS_DIR/dst/$LEECHER_ID"
 su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/dst/$LEECHER_ID -m $LOGS_DIR/dst/$LEECHER_ID &"
 
