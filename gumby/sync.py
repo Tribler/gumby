@@ -66,6 +66,7 @@ from twisted.internet import epollreactor
 epollreactor.install()
 
 from twisted.internet import reactor
+from twisted.internet import task
 from twisted.internet.defer import gatherResults
 from twisted.internet.error import ConnectionDone
 from twisted.internet.protocol import Factory, ReconnectingClientFactory
@@ -154,6 +155,8 @@ class ExperimentServiceFactory(Factory):
         self.connections = []
         self._last_subscriber_connection_ts = 0
         self._timeout_delayed_call = None
+        
+        self._subscriber_looping_call = None
 
     def buildProtocol(self, addr):
         self.connection_counter += 1
@@ -173,7 +176,17 @@ class ExperimentServiceFactory(Factory):
                 self._last_subscriber_connection_ts = time()
             else:
                 logLevel = logging.INFO
+                
+            if not self._subscriber_looping_call:
+                self._subscriber_looping_call = task.LoopingCall(self._print_subscribers_ready)
+                self._subscriber_looping_call.start(5.0)
+                
+    def _print_subscribers_ready(self):
+        if len(self.connections) < self.expected_subscribers:
             msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers), logLevel=logLevel)
+        else:
+            self._subscriber_looping_call.stop()
+            self._subscriber_looping_call = None
 
     def pushInfoToSubscribers(self):
         # Generate the json doc
