@@ -196,10 +196,11 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
         if int(self.my_id) > self.late_join:
             nr_to_connect = int(10 * self.bootstrap_percentage)
+
             if self.random_connect:
                 taste_addresses = [self.get_peer_ip_port(peer_id) for peer_id in sample(self.get_peers(), nr_to_connect)]
             else:
-                taste_addresses = sample(self.taste_buddies.keys(), nr_to_connect)
+                taste_addresses = sample(self.taste_buddies.keys(), min(nr_to_connect, len(self.taste_buddies.keys())))
 
             for ipport in taste_addresses:
                 self._community._peercache.add_peer(self.taste_buddies.get(ipport, 0), *ipport)
