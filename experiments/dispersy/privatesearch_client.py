@@ -217,6 +217,14 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
         self.community_args = (self._my_member,)
+        
+    @call_on_dispersy_thread
+    def online(self):
+        DispersyExperimentScriptClient.online(self)
+
+        # disable msimilarity requests
+        self._orig_create_msimilarity_request = self._community.create_msimilarity_request
+        self._community.create_msimilarity_request = lambda destination: False
 
     @call_on_dispersy_thread
     def connect_to_taste_buddies(self):
@@ -234,6 +242,9 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             for ipport in taste_addresses:
                 self._community._peercache.add_peer(self.taste_buddies.get(ipport, 0), *ipport)
             self._community.connect_to_peercache(sys.maxint)
+            
+        # enable normal discovery of foafs
+        self._community.create_msimilarity_request = self._orig_create_msimilarity_request
 
     @call_on_dispersy_thread
     def perform_searches(self):
