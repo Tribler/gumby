@@ -153,9 +153,7 @@ class ExperimentServiceFactory(Factory):
         self.experiment_start_delay = experiment_start_delay
         self.connection_counter = -1
         self.connections = []
-        self._last_subscriber_connection_ts = 0
         self._timeout_delayed_call = None
-        
         self._subscriber_looping_call = None
 
     def buildProtocol(self, addr):
@@ -171,19 +169,13 @@ class ExperimentServiceFactory(Factory):
             self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
         else:
-            if self._last_subscriber_connection_ts < time() - 5:
-                logLevel = logging.DEBUG
-                self._last_subscriber_connection_ts = time()
-            else:
-                logLevel = logging.INFO
-                
             if not self._subscriber_looping_call:
                 self._subscriber_looping_call = task.LoopingCall(self._print_subscribers_ready)
                 self._subscriber_looping_call.start(5.0)
                 
     def _print_subscribers_ready(self):
         if len(self.connections) < self.expected_subscribers:
-            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers), logLevel=logLevel)
+            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers), logLevel=logging.INFO)
         else:
             self._subscriber_looping_call.stop()
             self._subscriber_looping_call = None
