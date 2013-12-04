@@ -54,6 +54,8 @@ from twisted.python.log import msg
 # TODO(emilon): Fix this crap
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
 
+DEBUG = True
+
 class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
@@ -101,6 +103,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def download(self, infohash):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
+        
         self._community._mypref_db.addMyPreference(infohash, {})
         self._community._torrent_db.addTorrent(infohash, True)
 
@@ -143,12 +146,21 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def set_manual_connect(self, manual_connect):
         self.manual_connect = self.str2bool(manual_connect)
+        
+        if DEBUG:
+            print >> sys.stderr, "PrivateSearchClient: manual_connect is now", self.manual_connect
 
     def set_random_connect(self, random_connect):
         self.random_connect = self.str2bool(random_connect)
+        
+        if DEBUG:
+            print >> sys.stderr, "PrivateSearchClient: random_connect is now", self.random_connect
 
     def set_bootstrap_percentage(self, bootstrap_percentage):
         self.bootstrap_percentage = float(bootstrap_percentage)
+        
+        if DEBUG:
+            print >> sys.stderr, "PrivateSearchClient: bootstrap_percentage is now", self.bootstrap_percentage
 
     def set_late_join(self, latejoin):
         self.late_join = int(latejoin)
@@ -156,15 +168,27 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             self.peertype('latejoining')
         else:
             self.peertype('bootstrapped')
+            
+        if DEBUG:
+            print >> sys.stderr, "PrivateSearchClient: late_join is now", self.late_join
 
     def set_do_search(self, do_search):
         self.do_search = int(do_search)
+        
+        if DEBUG:
+            print >> sys.stderr, "PrivateSearchClient: do_search is now", self.do_search
 
     def set_search_limit(self, search_limit):
         self.search_limit = int(search_limit)
+        
+        if DEBUG:
+            print >> sys.stderr, "PrivateSearchClient: search_limit is now", self.search_limit
 
     def set_search_spacing(self, search_spacing):
         self.search_spacing = float(search_spacing)
+        
+        if DEBUG:
+            print >> sys.stderr, "PrivateSearchClient: search_spacing is now", self.search_spacing
 
     def set_community_kwarg(self, key, value):
         from Tribler.community.privatesearch.oneswarm.community import PoliOneSwarmCommunity
@@ -186,6 +210,9 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             return
 
         DispersyExperimentScriptClient.set_community_kwarg(self, key, value)
+        
+        if DEBUG:
+            print >> sys.stderr, "PrivateSearchClient: community_kwargs are now", self.community_kwargs
 
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
@@ -238,10 +265,10 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         prev_scenario_debug = {}
 
         while True:
-            tsock_addrs = [candidate.sock_addr for candidate in self._community.yield_taste_buddies_candidates()]
-            msock_addrs = self.taste_buddies.keys()
-            print >> sys.stderr, "Comparing", tsock_addrs, msock_addrs
-
+            if DEBUG:
+                tsock_addrs = [candidate.sock_addr for candidate in self._community.yield_taste_buddies_candidates()]
+                msock_addrs = self.taste_buddies.keys()
+                print >> sys.stderr, "Comparing", tsock_addrs, msock_addrs
 
             for sock_addr in self.taste_buddies.keys():
                 if self._community.is_taste_buddy_sock(sock_addr):
@@ -252,7 +279,8 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
             if self.taste_buddies:
                 connected_friends = len(self.taste_buddies) - len(self.not_connected_taste_buddies)
-                bootstrapped = connected_friends / float(len(self.taste_buddies))
+                nr_to_connect = min(int(10 * self.bootstrap_percentage), len(self.taste_buddies))
+                bootstrapped = connected_friends / float(nr_to_connect)
             else:
                 bootstrapped = 0
 
