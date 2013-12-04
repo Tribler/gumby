@@ -234,14 +234,14 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
             if self.random_connect:
                 taste_addresses = [self.get_peer_ip_port(peer_id) for peer_id in sample(self.get_peers(), nr_to_connect)]
+                for ipport in taste_addresses:
+                    self._community._peercache.add_peer(0, *ipport)
             else:
                 taste_addresses = self.taste_buddies.keys()
-                taste_addresses.sort(cmp = lambda a,b: cmp(self.taste_buddies[a], self.taste_buddies[b]), reverse = True)
-                taste_addresses[:nr_to_connect]
-
-            for ipport in taste_addresses:
-                self._community._peercache.add_peer(self.taste_buddies.get(ipport, 0), *ipport)
-            self._community.connect_to_peercache(sys.maxint)
+                for ipport in taste_addresses:
+                    self._community._peercache.add_peer(self.taste_buddies.get(ipport, 0), *ipport)
+                
+            self._community.connect_to_peercache(nr_to_connect)
             
         # enable normal discovery of foafs
         self._community.create_msimilarity_request = self._orig_create_msimilarity_request
@@ -277,7 +277,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
         while True:
             if DEBUG:
-                tsock_addrs = [candidate.sock_addr for candidate in self._community.yield_taste_buddies_candidates()]
+                tsock_addrs = [candidate.sock_addr for candidate in self._community.yield_taste_buddies()]
                 msock_addrs = self.taste_buddies.keys()
                 print >> sys.stderr, "Comparing", tsock_addrs, msock_addrs
 
