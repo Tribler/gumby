@@ -125,20 +125,20 @@ class ExperimentServiceProto(LineReceiver):
             return 'done'
 
     def proto_set(self, line):
-            if line.startswith('set:'):
-                _, key, value = line.strip().split(':')
-                msg("This subscriber sets %s to %s" % (key, value), logLevel=logging.DEBUG)
-                self.vars[key] = value
-                return 'set'
-            elif line.strip() == 'ready':
-                msg("This subscriber is ready now.")
-                self.ready = True
-                self.factory.setConnectionReady(self)
-                return 'wait'
-            else:
-                err('Unexpected command received "%s"' % line)
-                err('closing connection.')
-                return 'done'
+        if line.startswith('set:'):
+            _, key, value = line.strip().split(':')
+            msg("This subscriber sets %s to %s" % (key, value), logLevel=logging.DEBUG)
+            self.vars[key] = value
+            return 'set'
+        elif line.strip() == 'ready':
+            msg("This subscriber is ready now.")
+            self.ready = True
+            self.factory.setConnectionReady(self)
+            return 'wait'
+        else:
+            err('Unexpected command received "%s"' % line)
+            err('closing connection.')
+            return 'done'
 
     def proto_wait(self, line):
         err('Unexpected command received "%s" while in ready state. Closing connection' % line)
@@ -171,7 +171,7 @@ class ExperimentServiceFactory(Factory):
         else:
             if not self._subscriber_looping_call:
                 self._subscriber_looping_call = task.LoopingCall(self._print_subscribers_ready)
-                self._subscriber_looping_call.start(5.0)
+                self._subscriber_looping_call.start(1.0)
                 
     def _print_subscribers_ready(self):
         if len(self.connections) < self.expected_subscribers:
