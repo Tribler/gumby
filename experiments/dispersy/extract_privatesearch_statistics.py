@@ -66,7 +66,7 @@ class SearchMessages(AbstractHandler):
     def all_files_done(self, extract_statistics):
         if self.searches:
             f = open(os.path.join(extract_statistics.node_directory, "searches.txt"), 'w')
-            print >> f, "identifier duration nrmessages nrcycles nruniquenodes"
+            print >> f, "identifier duration nrmessages nrcycles nruniquenodes took"
             for identifier, nodes in self.searches.iteritems():
                 nr_collisions = sum(created for _, created, _, _ in nodes)
                 if nr_collisions > 1:

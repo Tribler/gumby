@@ -200,7 +200,9 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             if self.random_connect:
                 taste_addresses = [self.get_peer_ip_port(peer_id) for peer_id in sample(self.get_peers(), nr_to_connect)]
             else:
-                taste_addresses = sample(self.taste_buddies.keys(), min(nr_to_connect, len(self.taste_buddies.keys())))
+                taste_addresses = self.taste_buddies.keys()
+                taste_addresses.sort(cmp = lambda a,b: cmp(self.taste_buddies[a], self.taste_buddies[b]), reverse = True)
+                taste_addresses[:nr_to_connect]
 
             for ipport in taste_addresses:
                 self._community._peercache.add_peer(self.taste_buddies.get(ipport, 0), *ipport)
