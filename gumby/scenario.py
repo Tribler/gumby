@@ -175,9 +175,10 @@ class ScenarioRunner():
         """
         try:
             for lineno, line in enumerate(open(filename, "r")):
-                cmd = self._parse_scenario_line(lineno + 1, line)
-                if cmd is not None:
-                    yield cmd
+                if not line.startswith('#'):
+                    cmd = self._parse_scenario_line(lineno + 1, line)
+                    if cmd is not None:
+                        yield cmd
         except EnvironmentError:
             print >> sys.stderr, "Scenario file open/read error", filename
 
@@ -221,7 +222,7 @@ class ScenarioRunner():
                     dic.get("callable", ""),
                     tuple(shlex.split(dic.get("args", "")))
                 )
-        elif line:
+        elif line.strip():
             print >> sys.stderr, "Ignoring invalid scenario line", lineno
 
         # line not for this peer or a parse error occurred
