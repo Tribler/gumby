@@ -232,6 +232,11 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         prev_scenario_debug = {}
 
         while True:
+            tsock_addrs = [candidate.sock_addr for candidate in self._community.yield_taste_buddies_candidates()]
+            msock_addrs = self.taste_buddies.keys()
+            print >> sys.stderr, "Comparing", tsock_addrs, msock_addrs
+
+
             for sock_addr in self.taste_buddies.keys():
                 if self._community.is_taste_buddy_sock(sock_addr):
                     if sock_addr in self.not_connected_taste_buddies:
