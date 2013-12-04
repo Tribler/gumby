@@ -193,7 +193,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
     @call_on_dispersy_thread
     def connect_to_taste_buddies(self):
         self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
-        if not self.late_joining:
+        if int(self.my_id) > self.late_join:
             nr_to_connect = int(10 * self.bootstrap_percentage)
             if self.random_connect:
                 taste_addresses = [self.get_peer_ip_port(peer_id) for peer_id in sample(self.get_peers(), nr_to_connect)]
