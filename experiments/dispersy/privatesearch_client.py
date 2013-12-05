@@ -257,27 +257,28 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
     @call_on_dispersy_thread
     def perform_searches(self):
         self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
-        while True:
-            self.nr_search += 1
+        if int(self.my_id) <= self.do_search:
+            while True:
+                self.nr_search += 1
 
-            # clear local test_reply dict + force remove test_set from megacache
-            self.test_reply.clear()
-            for infohash in self.test_set:
-                self._community._torrent_db.deleteTorrent(infohash)
+                # clear local test_reply dict + force remove test_set from megacache
+                self.test_reply.clear()
+                for infohash in self.test_set:
+                    self._community._torrent_db.deleteTorrent(infohash)
 
-            for infohash in self.test_set:
-                candidates, local_results, _ = self._community.create_search([unicode(infohash)], self.log_search_response)
-                candidates = map(str, candidates)
+                for infohash in self.test_set:
+                    candidates, local_results, _ = self._community.create_search([unicode(infohash)], self.log_search_response)
+                    candidates = map(str, candidates)
 
-                if local_results:
-                    self.log_search_response([unicode(infohash)], local_results, None)
+                    if local_results:
+                        self.log_search_response([unicode(infohash)], local_results, None)
 
-                yield self.search_spacing
+                    yield self.search_spacing
 
-            if self.nr_search <= self.search_limit:
-                yield 300.0
-            else:
-                break
+                if self.nr_search <= self.search_limit:
+                    yield 300.0
+                else:
+                    break
 
     def log_statistics(self):
         prev_scenario_statistics = {}
