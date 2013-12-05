@@ -4,7 +4,7 @@
 @0:0 set_manual_connect $MANUAL_CONNECT
 @0:0 set_bootstrap_percentage $BOOTSTRAP_PERCENTAGE
 @0:0 set_latejoin $LATEJOIN
-@0:0 set_dosearch $DOSEARCH
+@0:0 set_do_search $DOSEARCH
 @0:0 set_search_limit $SEARCH_LIMIT
 @0:0 set_search_spacing $SEARCH_SPACING
 

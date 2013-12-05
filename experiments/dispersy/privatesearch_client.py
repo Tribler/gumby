@@ -177,6 +177,10 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def set_do_search(self, do_search):
         self.do_search = int(do_search)
+        if int(self.my_id) <= self.do_search:
+            self.peertype('searching')
+        else:
+            self.peertype('idle')
 
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: do_search is now", self.do_search
