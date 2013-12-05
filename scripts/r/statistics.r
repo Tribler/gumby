@@ -7,10 +7,9 @@ if(file.exists("sum_statistics_reduced.txt")){
 	df <- df[,colSums(df) != 0]
 	df <- melt(df, id="time")
 	df <- subset(df, str_sub(variable, -1) != '_')
-	p <- p + geom_point(data = df2)
+	df2 <- df[!duplicated(df[,2:3]),]
 	
-	
-	p <- ggplot(df2, aes(time, value, group=variable, colour=variable, shape=variable)) + theme_bw()
+	p <- ggplot(df, aes(time, value, group=variable, colour=variable, shape=variable)) + theme_bw()
 	p <- p + geom_step()
 	p <- p + geom_point(data = df2)
 	p <- p + theme(legend.position="bottom", legend.direction="horizontal")
