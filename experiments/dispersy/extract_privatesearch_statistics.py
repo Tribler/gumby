@@ -64,7 +64,7 @@ class SearchMessages(AbstractHandler):
             identifier = json['identifier']
             self.search_responses[identifier] = min(self.search_responses.get(identifier, timeoffset), timeoffset)
         elif 'ttl' in json:
-            self.ttl = json['ttl']
+            self.ttl = self.tuple2str(json['ttl'])
 
     def all_files_done(self, extract_statistics):
         if self.searches:

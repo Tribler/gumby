@@ -39,7 +39,7 @@
 
 from os import environ, path, chdir, makedirs, symlink
 from sys import stdout, exit
-from collections import defaultdict
+from collections import defaultdict, Iterable
 import json
 from time import time
 
@@ -52,7 +52,6 @@ from twisted.python.log import msg
 # The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
-from _abcoll import Iterable
 
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):

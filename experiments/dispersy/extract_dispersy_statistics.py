@@ -3,11 +3,10 @@ import re
 import sys
 import os
 
-from collections import defaultdict
+from collections import defaultdict, Iterable
 from json import loads
 from time import time
 from traceback import print_exc
-
 
 class ExtractStatistics:
 
@@ -274,6 +273,13 @@ class AbstractHandler(object):
 
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         pass
+
+    def tuple2str(self, v):
+        if isinstance(v, Iterable):
+            return "-".join(map(str, v))
+        if isinstance(v, float):
+            return "%f" % v
+        return str(v)
 
 class BasicExtractor(AbstractHandler):
 
