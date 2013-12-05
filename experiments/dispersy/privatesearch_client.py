@@ -102,23 +102,23 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.set_search_spacing, 'set_search_spacing')
 
     def download(self, infohash):
+        infohash_str = infohash + " "* (20 - len(infohash))
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
-        infohash_str = str(infohash)
 
         self._community._mypref_db.addMyPreference(infohash, {})
         self._community._torrent_db.addTorrent(infohash_str, True)
 
     def testset(self, infohash):
+        infohash_str = infohash + " "* (20 - len(infohash))
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
-        infohash_str = str(infohash)
 
         self._community._mypref_db.addTestPreference(infohash)
         self._community._torrent_db.addTorrent(infohash_str, False)
         self.test_set.add(infohash_str)
 
     def availability(self, infohash, peers):
+        infohash_str = infohash + " "* (20 - len(infohash))
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
-        infohash_str = str(infohash)
 
         peers = [peer for peer in map(int, peers.split(',')) if peer != int(self.my_id) and self.get_peer_ip_port(peer)]
         self.file_availability[infohash_str] = peers
