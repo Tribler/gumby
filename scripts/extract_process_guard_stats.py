@@ -164,14 +164,19 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
 
     # some sanity checks
     nr_1utime = defaultdict(int)
+    warn_utime = {}
     for pid_dict in utimes.itervalues():
         for pid, utime in pid_dict.iteritems():
             if utime > 0.9:
                 nr_1utime[pid] += 1
+            else:
+                nr_1utime[pid] = 0
 
-    for pid, times in nr_1utime.iteritems():
-        if times > 50:
-            print >> sys.stderr, "A process with name (%s) was measured to have a utime larger than 0.9 for %d times" % (pid, times)
+            if nr_1utime[pid] > 10:
+                warn_utime[pid] = max(nr_1utime[pid], warn_utime.get(pid, nr_1utime[pid])
+                                      )
+    for pid, times in warn_utime.iteritems():
+        print >> sys.stderr, "A process with name (%s) was measured to have a utime larger than 0.9 for %d times consecutively" % (pid, times)
 
 def main(input_directory, output_directory, start_time=0):
     parse_resource_files(input_directory, output_directory, start_time)
