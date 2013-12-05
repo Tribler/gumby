@@ -308,9 +308,10 @@ class ExperimentRunner(Logger):
         # vars_f.write('export %s="%s"\n' % (key.upper(), val))
 
         # Step 1:
-        # Inject all the config options as env variables to give suprocesses easy acces to them.
+        # Inject all the config options as env variables to give sub-processes easy acces to them.
         self.local_env = environ.copy()
         self.local_env.update(configToEnv(self._cfg))
+        self.local_env['LOCAL_RUN'] = 'True'
 
         # Step 2:
         # Clear output dir before starting.
