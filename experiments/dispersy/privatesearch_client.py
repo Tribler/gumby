@@ -103,22 +103,25 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def download(self, infohash):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
-        
+        infohash_str = str(infohash)
+
         self._community._mypref_db.addMyPreference(infohash, {})
-        self._community._torrent_db.addTorrent(infohash, True)
+        self._community._torrent_db.addTorrent(infohash_str, True)
 
     def testset(self, infohash):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
+        infohash_str = str(infohash)
 
-        self.test_set.add(infohash)
         self._community._mypref_db.addTestPreference(infohash)
-        self._community._torrent_db.addTorrent(infohash, False)
+        self._community._torrent_db.addTorrent(infohash_str, False)
+        self.test_set.add(infohash_str)
 
     def availability(self, infohash, peers):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
+        infohash_str = str(infohash)
 
         peers = [peer for peer in map(int, peers.split(',')) if peer != int(self.my_id) and self.get_peer_ip_port(peer)]
-        self.file_availability[infohash] = peers
+        self.file_availability[infohash_str] = peers
 
     def taste_buddy(self, peer_id, similarity):
         peer_id = int(peer_id)
@@ -146,19 +149,19 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def set_manual_connect(self, manual_connect):
         self.manual_connect = self.str2bool(manual_connect)
-        
+
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: manual_connect is now", self.manual_connect
 
     def set_random_connect(self, random_connect):
         self.random_connect = self.str2bool(random_connect)
-        
+
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: random_connect is now", self.random_connect
 
     def set_bootstrap_percentage(self, bootstrap_percentage):
         self.bootstrap_percentage = float(bootstrap_percentage)
-        
+
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: bootstrap_percentage is now", self.bootstrap_percentage
 
@@ -168,25 +171,25 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             self.peertype('latejoining')
         else:
             self.peertype('bootstrapped')
-            
+
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: late_join is now", self.late_join
 
     def set_do_search(self, do_search):
         self.do_search = int(do_search)
-        
+
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: do_search is now", self.do_search
 
     def set_search_limit(self, search_limit):
         self.search_limit = int(search_limit)
-        
+
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: search_limit is now", self.search_limit
 
     def set_search_spacing(self, search_spacing):
         self.search_spacing = float(search_spacing)
-        
+
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: search_spacing is now", self.search_spacing
 
@@ -201,10 +204,10 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
                 value = self.str2tuple(value)
             elif key in ['max_prefs', 'max_fprefs']:
                 value = int(value)
-            elif key =='prob':
+            elif key == 'prob':
                 value = float(value)
             elif key == 'encryption':
-                value =  self.str2bool(value)
+                value = self.str2bool(value)
             else:
                 return
 
@@ -214,14 +217,14 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             return
 
         DispersyExperimentScriptClient.set_community_kwarg(self, key, value)
-        
+
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: community_kwargs are now", self.community_kwargs
 
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
         self.community_args = (self._my_member,)
-        
+
     @call_on_dispersy_thread
     def online(self):
         DispersyExperimentScriptClient.online(self)
@@ -245,9 +248,9 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
                 taste_addresses = self.taste_buddies.keys()
                 for ipport in taste_addresses:
                     self._community._peercache.add_peer(self.taste_buddies.get(ipport, 0), *ipport)
-                
+
             self._community.connect_to_peercache(nr_to_connect)
-            
+
         # enable normal discovery of foafs
         self._community.create_msimilarity_request = self._orig_create_msimilarity_request
 
