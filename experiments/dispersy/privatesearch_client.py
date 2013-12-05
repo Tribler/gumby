@@ -204,7 +204,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             elif key =='prob':
                 value = float(value)
             elif key == 'encryption':
-                value =  bool(value)
+                value =  self.str2bool(value)
             else:
                 return
 
