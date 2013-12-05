@@ -103,14 +103,14 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def download(self, infohash):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
-        infohash_str = unicode(infohash)
+        infohash_str = str(infohash)
 
         self._community._mypref_db.addMyPreference(infohash, {})
         self._community._torrent_db.addTorrent(infohash_str, True)
 
     def testset(self, infohash):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
-        infohash_str = unicode(infohash)
+        infohash_str = str(infohash)
 
         self._community._mypref_db.addTestPreference(infohash)
         self._community._torrent_db.addTorrent(infohash_str, False)
@@ -118,7 +118,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def availability(self, infohash, peers):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
-        infohash_str = unicode(infohash)
+        infohash_str = str(infohash)
 
         peers = [peer for peer in map(int, peers.split(',')) if peer != int(self.my_id) and self.get_peer_ip_port(peer)]
         self.file_availability[infohash_str] = peers
