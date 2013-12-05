@@ -101,6 +101,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.set_search_limit, 'set_search_limit')
         self.scenario_runner.register(self.set_search_spacing, 'set_search_spacing')
 
+    @call_on_dispersy_thread
     def download(self, infohash):
         infohash_str = infohash + " "* (20 - len(infohash))
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
@@ -108,6 +109,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self._community._mypref_db.addMyPreference(infohash, {})
         self._community._torrent_db.addTorrent(infohash_str, True)
 
+    @call_on_dispersy_thread
     def testset(self, infohash):
         infohash_str = infohash + " "* (20 - len(infohash))
         infohash = long(sha1(str(infohash)).hexdigest(), 16)

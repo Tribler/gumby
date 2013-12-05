@@ -18,6 +18,7 @@
 @0:0 set_community_kwarg cancel_after $CANCEL_AFTER
 @0:0 set_community_kwarg prob $PROB
 
+@0:0 use_memory_database
 @0:0 start_dispersy
 @0:1 online
 @0:2 download 11728 {902,976}
