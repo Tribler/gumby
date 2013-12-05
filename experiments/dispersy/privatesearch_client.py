@@ -199,7 +199,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         elif self.community_class != PoliOneSwarmCommunity:
             if key in ['ttl', 'neighbors', 'fneighbors']:
                 value = self.str2tuple(value)
-            elif key in ['max_prefs', 'max_f_prefs']:
+            elif key in ['max_prefs', 'max_fprefs']:
                 value = int(value)
             elif key =='prob':
                 value = float(value)
