@@ -54,7 +54,7 @@ from twisted.python.log import msg
 # TODO(emilon): Fix this crap
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
 
-DEBUG = True
+DEBUG = False
 
 class PrivateSearchClient(DispersyExperimentScriptClient):
 
