@@ -52,6 +52,7 @@ from twisted.python.log import msg
 # The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
+from _abcoll import Iterable
 
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):
@@ -271,8 +272,11 @@ class DispersyExperimentScriptClient(ExperimentClient):
         changed_values = {}
         if cur_dict:
             for key, value in cur_dict.iteritems():
-                if not isinstance(key, (basestring, int, long)):
+                if not isinstance(key, (basestring, int, long, float)):
                     key = str(key)
+
+                if not isinstance(value, (basestring, int, long, float, Iterable)):
+                    value = str(value)
 
                 new_values[key] = value
                 if prev_dict.get(key, None) != value:
