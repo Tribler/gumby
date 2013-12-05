@@ -4,7 +4,6 @@ library(plyr)
 
 if(file.exists("searches.txt")){
     df <- read.table("searches.txt", header = TRUE, check.names = FALSE)
-    df$ttl <- commandArgs(TRUE)[1]
     
     df <- ddply(df, "ttl", summarise, mduration = mean(duration), mcycles = mean(nrcycles), mmessages = mean(nrmessages), mumessages=mean(nruniquenodes))
     df <- melt(df, id="ttl")

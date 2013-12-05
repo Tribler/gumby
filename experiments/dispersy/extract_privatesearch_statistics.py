@@ -48,9 +48,10 @@ class SearchMessages(AbstractHandler):
 
         self.searches = defaultdict(list)
         self.search_responses = {}
+        self.ttl = "?"
 
     def filter_line(self, node_nr, line_nr, timestamp, timeoffset, key):
-        return key == "search-statistics" or key == "search-response"
+        return key in ["search-statistics", "search-response", 'community-kwargs']
 
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         if key == "search-statistics":
@@ -59,14 +60,16 @@ class SearchMessages(AbstractHandler):
             cycle = json.get('cycle', False)
 
             self.searches[identifier].append((timeoffset, created_by_me, cycle, node_nr))
-        else:
+        elif key == 'search-response':
             identifier = json['identifier']
             self.search_responses[identifier] = min(self.search_responses.get(identifier, timeoffset), timeoffset)
+        elif 'ttl' in json:
+            self.ttl = json['ttl']
 
     def all_files_done(self, extract_statistics):
         if self.searches:
             f = open(os.path.join(extract_statistics.node_directory, "searches.txt"), 'w')
-            print >> f, "identifier duration nrmessages nrcycles nruniquenodes took"
+            print >> f, "ttl identifier duration nrmessages nrcycles nruniquenodes took"
             for identifier, nodes in self.searches.iteritems():
                 nr_collisions = sum(created for _, created, _, _ in nodes)
                 if nr_collisions > 1:
@@ -83,7 +86,7 @@ class SearchMessages(AbstractHandler):
                 else:
                     took = -1
 
-                print >> f, identifier, duration, nr_messages, nr_cycles, nr_unique_nodes, took
+                print >> f, self.ttl, identifier, duration, nr_messages, nr_cycles, nr_unique_nodes, took
 
             f.close()
 
