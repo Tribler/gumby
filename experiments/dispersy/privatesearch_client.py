@@ -199,8 +199,12 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         elif self.community_class != PoliOneSwarmCommunity:
             if key in ['ttl', 'neighbors', 'fneighbors']:
                 value = self.str2tuple(value)
-            elif key == 'prob':
+            elif key in ['max_prefs', 'max_f_prefs']:
+                value = int(value)
+            elif key =='prob':
                 value = float(value)
+            elif key == 'encryption':
+                value =  bool(value)
             else:
                 return
 
@@ -289,10 +293,10 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
                 else:
                     self.not_connected_taste_buddies.add(sock_addr)
 
-            if self.taste_buddies:
-                connected_friends = len(self.taste_buddies) - len(self.not_connected_taste_buddies)
-                nr_to_connect = min(int(10 * self.bootstrap_percentage), len(self.taste_buddies))
-                bootstrapped = connected_friends / float(nr_to_connect)
+            connected_friends = len(self.taste_buddies) - len(self.not_connected_taste_buddies)
+            max_connected = min(int(10 * self.bootstrap_percentage), len(self.taste_buddies))
+            if max_connected:
+                bootstrapped = connected_friends / float(max_connected)
             else:
                 bootstrapped = 0
 
