@@ -15,5 +15,6 @@ if(file.exists("sum_statistics_reduced.txt")){
 	p <- p + theme(legend.position="bottom", legend.direction="horizontal")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Sum of statistic\n")
 	p
-
+	
+	ggsave(file="statistics.png", width=8, height=6, dpi=100)
 }
