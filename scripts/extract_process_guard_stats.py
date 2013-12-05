@@ -79,6 +79,9 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
             print >> sys.stderr, "Parsing resource_usage file %s" % (nodename + "/" + filename)
 
             fn_records = os.path.join(root, filename)
+            if os.stat(fn_records).st_size == 0:
+                print >> sys.stderr, "Empty file, skipping"
+                continue
             h_records = open(fn_records)
 
             line = h_records.readline()
