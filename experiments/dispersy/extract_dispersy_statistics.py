@@ -545,7 +545,11 @@ class StatisticMessages(AbstractHandler):
             print >> h_sum_statistics, "time",
             for peertype in self.used_peertypes:
                 for recordkey in recordkeys:
-                    print >> h_sum_statistics, recordkey + ("-" + peertype if peertype else ''),
+                    if recordkey[-1] == "_":
+                        print >> h_sum_statistics, recordkey[:-1] + ("-" + peertype if peertype else '') + "_",
+                    else:
+                        print >> h_sum_statistics, recordkey + ("-" + peertype if peertype else ''),
+
             print >> h_sum_statistics, ''
 
             prev_value = defaultdict(lambda: defaultdict(int))

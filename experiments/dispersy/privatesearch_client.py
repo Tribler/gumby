@@ -260,8 +260,8 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def perform_searches(self):
-        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
         if int(self.my_id) <= self.do_search:
+            self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
             while True:
                 self.nr_search += 1
 

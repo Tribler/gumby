@@ -7,11 +7,13 @@ maxX <- as.integer(commandArgs(TRUE)[2])
 
 if(file.exists("sum_statistics_reduced.txt")){
 	df <- read.table("sum_statistics_reduced.txt", header = TRUE, check.names = FALSE)
+	df <- df[,colSums(df) != 0]
 	df <- melt(df, id="time")
 	df <- subset(df, str_sub(variable, -1) != '_')
 	
-	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
-	p <- p + geom_step(data = df)
+	p <- ggplot(df, aes(time, value, group=variable, colour=variable, shape=variable)) + theme_bw()
+	p <- p + geom_step()
+	p <- p + geom_point()
 	p <- p + theme(legend.position="bottom", legend.direction="horizontal")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Sum of statistic\n")
 	p <- p + xlim(minX, maxX)
