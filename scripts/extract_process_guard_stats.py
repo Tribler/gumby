@@ -2,6 +2,7 @@
 import sys
 import os
 from sys import argv, exit
+from collections import defaultdict
 
 import json
 
@@ -89,7 +90,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
                 parts = line.split()
 
                 time = float(parts[0]) - start_timestamp
-                pid = nodename + "_" + parts[1]
+                pid = nodename + "_" + parts[2][1:-1] + "_" + parts[1]
 
                 if pid not in all_pids:
                     all_pids.add(pid)
@@ -161,6 +162,16 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
         write_records(all_nodes, readbytes, output_directory, "readbytes_node.txt")
         write_records(all_nodes, vsizes, output_directory, "vsizes_node.txt")
 
+    # some sanity checks
+    nr_1utime = defaultdict(int)
+    for pid_dict in utimes.itervalues():
+        for pid, utime in pid_dict.iteritems():
+            if utime > 0.9:
+                nr_1utime[pid] += 1
+
+    for pid, times in nr_1utime.iteritems():
+        if times > 50:
+            print >> sys.stderr, "A process with name (%s) was measured to have a utime larger than 0.9 for %d times" % (pid, times)
 
 def main(input_directory, output_directory, start_time=0):
     parse_resource_files(input_directory, output_directory, start_time)
