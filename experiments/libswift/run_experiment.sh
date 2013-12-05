@@ -66,7 +66,7 @@ else
 	HETEROGENEOUS_PACKET_LOSS=false
 fi
 
-# @CONF_OPTION NETEM_RATE: # Rate limit for leechers (e.g., 100mbit). Note: for a homogeneous network of leechers, 
+# @CONF_OPTION NETEM_RATE: # Rate download limit for leechers (e.g., 100mbit). Note: for a homogeneous network of leechers, 
 # @CONF_OPTION NETEM_RATE: set 1 value, for a heterogeneous network separate values by ,
 # @CONF_OPTION NETEM_RATE: e.g. leecher_offset="1mbit,100mbit" (note that the number of elements should then match the number of leechers)
 if [[ $NETEM_RATE == *,* ]]
@@ -82,6 +82,24 @@ then
 else
 	RATE=$NETEM_RATE
 	HETEROGENEOUS_RATE=false
+fi
+
+# @CONF_OPTION NETEM_RATE_UL: # Rate upload limit for leechers (e.g., 100mbit). Note: for a homogeneous network of leechers, 
+# @CONF_OPTION NETEM_RATE_UL: set 1 value, for a heterogeneous network separate values by ,
+# @CONF_OPTION NETEM_RATE_UL: e.g. leecher_offset="1mbit,100mbit" (note that the number of elements should then match the number of leechers)
+if [[ $NETEM_RATE_UL == *,* ]]
+then
+	# split in array
+	RATE_UL=(`echo $NETEM_RATE_UL | tr ',' ' '`)
+	if [[ ${#RATE_UL[@]} != $NO_OF_LEECHERS ]]
+	then
+		echo "No of upload rate limit settings should be equal to 1 or the number of leechers"
+		exit 65
+	fi
+	HETEROGENEOUS_RATE_UL=true
+else
+	RATE_UL=$NETEM_RATE_UL
+	HETEROGENEOUS_RATE_UL=false
 fi
 
 # @CONF_OPTION LEECHER_OFFSET: Time in seconds between startup of leechers. Note: for a homogeneous network of leechers, 
@@ -118,7 +136,7 @@ do
 done
 
 HASH=$(grep hash $OUTPUT_DIR/$FILENAME.mbinmap | cut -d " " -f 3)
-
+#HASH=3
 for (( i = 0 ; i < $NO_OF_LEECHERS; i++ ))
 do
 	# read delay and packet loss
@@ -142,6 +160,13 @@ do
 	else
 		LEECHER_RATE=$RATE
 	fi
+	
+	if $HETEROGENEOUS_RATE_UL;
+	then
+		LEECHER_UL_RATE=${RATE_UL[$i]}
+	else
+		LEECHER_UL_RATE=$RATE_UL
+	fi
 
 	if $HETEROGENEOUS_OFFSET;
 	then
@@ -161,7 +186,7 @@ do
 		-s lxc.network.ipv4=$LEECHER_IP/24 \
 		-s lxc.rootfs=$CONTAINER_DIR \
 		-s lxc.pts=1024 \
-		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/swift $OUTPUT_DIR $HASH $LEECHER_DELAY $LEECHER_PACKET_LOSS $WORKSPACE_DIR/gumby/scripts/process_guard.py $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER $LEECHER_RATE &
+		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/swift $OUTPUT_DIR $HASH $LEECHER_DELAY $LEECHER_PACKET_LOSS $WORKSPACE_DIR/gumby/scripts/process_guard.py $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER $LEECHER_RATE $LEECHER_UL_RATE &
 done
 
 
