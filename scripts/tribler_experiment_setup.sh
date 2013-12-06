@@ -52,7 +52,10 @@ else
     echo "Not building Swift."
 fi
 
-das4_setup.sh
+if [ -z "$LOCAL_RUN" -o $(echo $USE_LOCAL_VENV | tr '[:upper:]' '[:lower:]') == 'true' ]; then
+    build_virtualenv.sh
+fi
+
 
 #
 # tribler_experiment_setup.sh ends here
