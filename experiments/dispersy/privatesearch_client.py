@@ -337,7 +337,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         for result in results:
             if result[0] in self.test_set:
                 ip, port = result[1].split()
-                peer = self.get_peer_id(ip, int(port[:-1]))
+                peer = self.get_peer_id(ip, port)
                 self.test_reply[result[0]].append(peer)
 
         recall = len(self.test_reply) / float(len(self.test_set))
