@@ -37,38 +37,27 @@ IFS='_' read -ra RATE_UL <<< "$NETEM_RATE_UL"
 RATE_UL=${RATE_UL[0]}
 BURST_UL=${RATE_UL[1]}
 
-# add netem stuff
-#tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
-#tc qdisc add dev eth0 parent 1: handle 10: tbf rate $NETEM_RATE limit 30k burst 30k
 
-
-# egress traffic
-
-#tc qdisc add dev eth0 root handle 1: cbq avpkt 1000 bandwidth 1000mbit 
-#tc class add dev eth0 parent 1: classid 1:1 cbq rate 10mbit allot 1500 prio 5 bounded isolated 
-
-
-#tc qdisc add dev eth0 handle ffff: ingress
-#tc filter add dev eth0 parent ffff: protocol ip prio 50 u32 match ip src 0.0.0.0/0 police rate 100mbit burst 10k drop flowid :1
-
-#tc qdisc add dev eth0 root handle 1: tbf rate 2mbit limit 10k burst 10k
-#tc qdisc add dev eth0 parent 1: handle 10: netem delay 0ms loss 0%
-
+# ----------------- works
+# ingress traffic
 tc qdisc add dev eth0 handle ffff: ingress
 tc filter add dev eth0 parent ffff: protocol ip prio 50 \
    u32 match ip src 0.0.0.0/0 police rate $RATE_DL \
    burst $BURST_DL drop flowid :1
 
-tc qdisc add dev eth0 root tbf \
-   rate $RATE_UL limit 100k burst $BURST_UL
+# egress traffic
+tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
 
+# add netem stuff
+tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit 100k burst $BURST_UL
+   
+# !--------------------
 
-
-# ingress traffic
 
 tc qdisc show
 
-#iperf -s
+# leave here for testing TODO make configurable
+# iperf -c 192.168.1.110 -r
 
 	
 # leech file
