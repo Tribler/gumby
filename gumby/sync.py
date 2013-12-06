@@ -270,8 +270,6 @@ class ExperimentClient(LineReceiver):
         if str(peer_id) in self.all_vars:
             return self.all_vars[str(peer_id)]['host'], self.all_vars[str(peer_id)]['port']
 
-        err("Could not get_peer_ip_port for", peer_id)
-
     def get_peer_id(self, ip, port):
         port = int(port)
         for peer_id, peer_dict in self.all_vars.iteritems():
