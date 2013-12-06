@@ -172,7 +172,7 @@ class ExperimentServiceFactory(Factory):
             if not self._subscriber_looping_call:
                 self._subscriber_looping_call = task.LoopingCall(self._print_subscribers_ready)
                 self._subscriber_looping_call.start(1.0)
-                
+
     def _print_subscribers_ready(self):
         if len(self.connections) < self.expected_subscribers:
             msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers), logLevel=logging.INFO)
@@ -275,6 +275,10 @@ class ExperimentClient(LineReceiver):
         for peer_id, peer_dict in self.all_vars.iteritems():
             if peer_dict['host'] == ip and int(peer_dict['port']) == port:
                 return peer_id
+
+        import sys
+        print >> sys.stderr, "Could not get_peer_id", ip, port
+        print >> sys.stderr, self.all_vars.values()
 
     def get_peers(self):
         return self.all_vars.keys()
