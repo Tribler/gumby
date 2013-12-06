@@ -131,7 +131,7 @@ echo "Output dir: $OUTPUT_DIR"
 
 if $IPERF_TEST;
 then
-	$HASH=3
+	HASH=3
 else
 	# wait for the hash to be generated - note that this happens in the container fs
 	while [ ! -f $OUTPUT_DIR/$FILENAME.mbinmap ] ;
