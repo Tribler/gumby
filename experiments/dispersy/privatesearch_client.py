@@ -121,7 +121,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
     def availability(self, infohash, peers):
         infohash_str = infohash + " "* (20 - len(infohash))
 
-        peers = [peer for peer in map(int, peers.split(',')) if peer != int(self.my_id) and self.get_peer_ip_port(peer)]
+        peers = [peer for peer in peers.split(',') if peer != str(self.my_id) and self.get_peer_ip_port(peer)]
         self.file_availability[infohash_str] = peers
 
     def taste_buddy(self, peer_id, similarity):
@@ -265,7 +265,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
 
             # add small initial delay, to load balance requests
-            yield int(self.my_id) % self.search_spacing
+            yield float(int(self.my_id) % self.search_spacing)
 
             while True:
                 self.nr_search += 1
