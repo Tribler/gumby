@@ -120,7 +120,6 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
     def availability(self, infohash, peers):
         infohash_str = infohash + " "* (20 - len(infohash))
-        infohash = long(sha1(str(infohash)).hexdigest(), 16)
 
         peers = [peer for peer in map(int, peers.split(',')) if peer != int(self.my_id) and self.get_peer_ip_port(peer)]
         self.file_availability[infohash_str] = peers
@@ -264,6 +263,10 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
     def perform_searches(self):
         if int(self.my_id) <= self.do_search:
             self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
+
+            # add small initial delay, to load balance requests
+            yield int(self.my_id) % self.search_spacing
+
             while True:
                 self.nr_search += 1
 
@@ -315,6 +318,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             paths_found = sum(len(paths) for paths in self.test_reply.itervalues())
             sources_found = 0
             for infohash, peers in self.test_reply.iteritems():
+                print >> sys.stderr, "Received", infohash, "from", peers
                 sources_found += sum(peer in self.file_availability[infohash] for peer in set(peers))
 
             unique_sources = float(sum([len(self.file_availability[infohash]) for infohash in self.test_reply.iterkeys()]))
