@@ -37,7 +37,7 @@
 
 # Code:
 
-from os import environ, path, chdir, makedirs, symlink
+from os import environ, path, chdir, makedirs, symlink, getpid
 from sys import stdout, exit
 from collections import defaultdict, Iterable
 import json
@@ -230,6 +230,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 self._is_joined = True
 
                 self.print_on_change('community-kwargs', {}, self.community_kwargs)
+                self.print_on_change('community-env', {}, {'pid':getpid()})
         else:
             msg("online (we are already online)")
 
