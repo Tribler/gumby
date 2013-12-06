@@ -129,14 +129,19 @@ echo "Running swift processes for $EXPERIMENT_TIME seconds"
 echo "Workspace: $WORKSPACE_DIR"
 echo "Output dir: $OUTPUT_DIR"
 
-# wait for the hash to be generated - note that this happens in the container fs
-while [ ! -f $OUTPUT_DIR/$FILENAME.mbinmap ] ;
-do
-      sleep 2
-done
+if $IPERF_TEST;
+then
+	$HASH=3
+else
+	# wait for the hash to be generated - note that this happens in the container fs
+	while [ ! -f $OUTPUT_DIR/$FILENAME.mbinmap ] ;
+	do
+	      sleep 2
+	done
+	
+	HASH=$(grep hash $OUTPUT_DIR/$FILENAME.mbinmap | cut -d " " -f 3)
+fi
 
-HASH=$(grep hash $OUTPUT_DIR/$FILENAME.mbinmap | cut -d " " -f 3)
-#HASH=3
 for (( i = 0 ; i < $NO_OF_LEECHERS; i++ ))
 do
 	# read delay and packet loss
@@ -186,7 +191,7 @@ do
 		-s lxc.network.ipv4=$LEECHER_IP/24 \
 		-s lxc.rootfs=$CONTAINER_DIR \
 		-s lxc.pts=1024 \
-		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/swift $OUTPUT_DIR $HASH $LEECHER_DELAY $LEECHER_PACKET_LOSS $WORKSPACE_DIR/gumby/scripts/process_guard.py $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER $LEECHER_RATE $LEECHER_UL_RATE &
+		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/swift $OUTPUT_DIR $HASH $LEECHER_DELAY $LEECHER_PACKET_LOSS $WORKSPACE_DIR/gumby/scripts/process_guard.py $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER $LEECHER_RATE $LEECHER_UL_RATE $IPERF_TEST &
 done
 
 

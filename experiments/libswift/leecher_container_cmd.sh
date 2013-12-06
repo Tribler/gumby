@@ -3,10 +3,10 @@
 # %*% start_seeder.sh must be started first.
 
 
-EXPECTED_ARGS=15
+EXPECTED_ARGS=16
 if [ $# -ne $EXPECTED_ARGS ]
 then
-	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_ip seeder_port logs_dir leecher_id username rate_dl rate_ul"
+	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_ip seeder_port logs_dir leecher_id username rate_dl rate_ul iperf_test"
 	exit 65
 fi
 
@@ -26,6 +26,7 @@ LEECHER_ID="${12}"
 USERNAME="${13}"
 NETEM_RATE_DL="${14}"
 NETEM_RATE_UL="${15}"
+IPERF_TEST="${16}"
 
 # fix formatting for random variation
 NETEM_DELAY=${NETEM_DELAY/'_'/' '}
@@ -53,17 +54,17 @@ tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit 100k burst $BURST_UL
    
 # !--------------------
 
-
 tc qdisc show
 
 # leave here for testing TODO make configurable
-# iperf -c 192.168.1.110 -r
-
-	
-# leech file
-SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID"
-su $USERNAME -c "mkdir -p $LOGS_DIR/dst/$LEECHER_ID"
-su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/dst/$LEECHER_ID -m $LOGS_DIR/dst/$LEECHER_ID &"
-
+if $IPERF_TEST;
+then
+	iperf -c 192.168.1.110 -r
+else
+	# leech file
+	SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID"
+	su $USERNAME -c "mkdir -p $LOGS_DIR/dst/$LEECHER_ID"
+	su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/dst/$LEECHER_ID -m $LOGS_DIR/dst/$LEECHER_ID &"
+fi
 
 

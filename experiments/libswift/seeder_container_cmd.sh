@@ -3,10 +3,10 @@
 # %*% start_seeder.sh must be started first.
 
 
-EXPECTED_ARGS=13
+EXPECTED_ARGS=14
 if [ $# -ne $EXPECTED_ARGS ]
 then
-	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_port logs_dir username netem_rate netem_rate_ul"
+	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_port logs_dir username netem_rate netem_rate_ul iperf_test"
 	exit 65
 fi
 
@@ -24,6 +24,7 @@ LOGS_DIR="${10}"
 USERNAME="${11}"
 NETEM_RATE_DL="${12}"
 NETEM_RATE_UL="${13}"
+IPERF_TEST="${14}"
 
 # fix formatting for random variation
 NETEM_DELAY=${NETEM_DELAY/'_'/' '}
@@ -49,18 +50,18 @@ tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit 100k burst $BURST_UL
    
 # !--------------------
 
+tc qdisc show
+
 # useful for testing the network settings so let's leave this here TODO make configurable
 # To measure loss => Server side : iperf -s -u -i 1 Client side : iperf -c 192.168.1.2 -u -b 10m
 # To check bandwidth => Server Side : iperf -s Client Side : iperf -c 192.168.1.2 -r
 # To measure the delay / latency, we just use ping
-# iperf -s &
-
-tc qdisc show
-	
-# leech file
-SWIFT_CMD="$REPOSITORY_DIR/swift -l 0.0.0.0:$SEEDER_PORT -f $LOGS_DIR/$FILENAME -p -H -D $LOGS_DIR/src/seeder -L $LOGS_DIR/src/seeder_ledbat" 
-
-
-su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/src -m $LOGS_DIR/src &" #|| :
-
+if $IPERF_TEST;
+then
+	iperf -s &	
+else
+	# leech file
+	SWIFT_CMD="$REPOSITORY_DIR/swift -l 0.0.0.0:$SEEDER_PORT -f $LOGS_DIR/$FILENAME -p -H -D $LOGS_DIR/src/seeder -L $LOGS_DIR/src/seeder_ledbat" 
+	su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/src -m $LOGS_DIR/src &" #|| :
+fi
 
