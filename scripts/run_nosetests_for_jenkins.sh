@@ -61,7 +61,7 @@ pylint --output-format=parseable --reports=y  Tribler > $OUTPUT_DIR/pylint.out |
 
 mkdir -p $OUTPUT_DIR/slocdata
 
-sloccount --datadir $OUTPUD_DIR/slocdata --duplicates --wide --details tribler/Tribler | fgrep -v .svn | fgrep -v .git | fgrep -v /dispersy/ | fgrep -v debian | fgrep -v test_.Tribler > $OUTPUT_DIR/sloccount.out || :
+sloccount --datadir $OUTPUT_DIR/slocdata --duplicates --wide --details tribler/Tribler | fgrep -v .svn | fgrep -v .git | fgrep -v /dispersy/ | fgrep -v debian | fgrep -v test_.Tribler > $OUTPUT_DIR/sloccount.out || :
 
 
 #
