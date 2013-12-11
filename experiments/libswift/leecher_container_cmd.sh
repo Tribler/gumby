@@ -41,10 +41,10 @@ BURST_UL=${RATE_UL[1]}
 
 # ----------------- works
 # ingress traffic
-#tc qdisc add dev eth0 handle ffff: ingress
-#tc filter add dev eth0 parent ffff: protocol ip prio 50 \
-#   u32 match ip src 0.0.0.0/0 police rate $RATE_DL \
-#   burst $BURST_DL drop flowid :1
+tc qdisc add dev eth0 handle ffff: ingress
+tc filter add dev eth0 parent ffff: protocol ip prio 50 \
+   u32 match ip src 0.0.0.0/0 police rate $RATE_DL \
+   burst $BURST_DL drop flowid :1
 
 # egress traffic
 tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
@@ -59,7 +59,7 @@ tc qdisc show
 # leave here for testing TODO make configurable
 if $IPERF_TEST;
 then
-	iperf -c 192.168.1.110 -r -i 1 -w 64k
+	iperf -c 192.168.1.110 -r -i 1 -u -w 64k
 else
 	# leech file
 	SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID"
