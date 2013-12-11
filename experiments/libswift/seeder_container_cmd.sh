@@ -63,7 +63,7 @@ tc qdisc show
 # @CONF_OPTION IPERF_TEST: Set to true to use iperf test, otherwise swift seeder is started.
 if $IPERF_TEST;
 then
-	iperf -s -i 1 -w 64k -M 2000 &	
+	iperf -s -i 1 -w 64k -M 2000 -u &	
 else
 	# leech file
 	SWIFT_CMD="$REPOSITORY_DIR/swift -l 0.0.0.0:$SEEDER_PORT -f $LOGS_DIR/$FILENAME -p -H -D $LOGS_DIR/src/seeder -L $LOGS_DIR/src/seeder_ledbat" 
