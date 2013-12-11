@@ -49,7 +49,7 @@ extract_process_guard_stats.py . .
 reduce_dispersy_statistics.py . 300
 
 #Create the graphs
-R --no-save --quiet < $R_SCRIPTS_PATH/cputimes.r
+R --no-save --quiet < $R_SCRIPTS_PATH/cputimes.r 2>&1 > /dev/null
 
 
 #
