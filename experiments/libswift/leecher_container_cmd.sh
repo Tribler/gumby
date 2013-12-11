@@ -59,7 +59,7 @@ tc qdisc show
 # leave here for testing TODO make configurable
 if $IPERF_TEST;
 then
-	iperf -c 192.168.1.110 -r -w 64k -M 2000 -u -b 1G
+	iperf -c 192.168.1.110 -r -w 64k -M 2000 -u -b 200M
 else
 	# leech file
 	SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID"
