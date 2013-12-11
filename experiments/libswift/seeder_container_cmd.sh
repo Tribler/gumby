@@ -40,10 +40,10 @@ BURST_UL=${RATE_UL[1]}
 
 # ----------------- works
 # ingress traffic
-#tc qdisc add dev eth0 handle ffff: ingress
-#tc filter add dev eth0 parent ffff: protocol ip prio 50 \
-#   u32 match ip src 0.0.0.0/0 police rate $RATE_DL \
-#   burst $BURST_DL drop flowid :1
+tc qdisc add dev eth0 handle ffff: ingress
+tc filter add dev eth0 parent ffff: protocol ip prio 50 \
+   u32 match ip src 0.0.0.0/0 police rate $RATE_DL \
+   burst $BURST_DL drop flowid :1
 
 # egress traffic
 tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
@@ -63,7 +63,7 @@ tc qdisc show
 # @CONF_OPTION IPERF_TEST: Set to true to use iperf test, otherwise swift seeder is started.
 if $IPERF_TEST;
 then
-	iperf -s -i 1 -w 64k &	
+	iperf -s -i 1 -u -w 64k &	
 else
 	# leech file
 	SWIFT_CMD="$REPOSITORY_DIR/swift -l 0.0.0.0:$SEEDER_PORT -f $LOGS_DIR/$FILENAME -p -H -D $LOGS_DIR/src/seeder -L $LOGS_DIR/src/seeder_ledbat" 
