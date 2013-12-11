@@ -41,16 +41,16 @@ BURST_UL=${RATE_UL[1]}
 
 # ----------------- works
 # ingress traffic
-tc qdisc add dev eth0 handle ffff: ingress
-tc filter add dev eth0 parent ffff: protocol ip prio 50 \
-   u32 match ip src 0.0.0.0/0 police rate $RATE_DL \
-   burst $BURST_DL drop flowid :1
+#tc qdisc add dev eth0 handle ffff: ingress
+#tc filter add dev eth0 parent ffff: protocol ip prio 50 \
+#   u32 match ip src 0.0.0.0/0 police rate $RATE_DL \
+#   burst $BURST_DL drop flowid :1
 
 # egress traffic
-tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
+#tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
 
 # add netem stuff
-tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit 100k burst $BURST_UL
+#tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit 100k burst $BURST_UL
    
 # !--------------------
 
