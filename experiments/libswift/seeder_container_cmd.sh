@@ -27,10 +27,13 @@ NETEM_RATE_UL="${13}"
 IPERF_TEST="${14}"
 
 # fix formatting for random variation
+# @CONF_OPTION SEEDER_DELAY: Netem delay for the seeder. 
 NETEM_DELAY=${NETEM_DELAY/'_'/' '}
+# @CONF_OPTION SEEDER_RATE: Download rate limit for the seeder. Configure the rate as rate_burst, so e.g. seeder_rate="1mbit_100k" 
 IFS='_' read -ra RATE_DL <<< "$NETEM_RATE_DL"
 RATE_DL=${RATE_DL[0]}
 BURST_DL=${RATE_DL[1]}
+# @CONF_OPTION SEEDER_RATE_UL: Upload rate limit for the seeder. Configure the rate as rate_burst, so e.g. seeder_rate_ul="1mbit_100k"
 IFS='_' read -ra RATE_UL <<< "$NETEM_RATE_UL"
 RATE_UL=${RATE_UL[0]}
 BURST_UL=${RATE_UL[1]}
@@ -56,6 +59,8 @@ tc qdisc show
 # To measure loss => Server side : iperf -s -u -i 1 Client side : iperf -c 192.168.1.2 -u -b 10m
 # To check bandwidth => Server Side : iperf -s Client Side : iperf -c 192.168.1.2 -r
 # To measure the delay / latency, we just use ping
+
+# @CONF_OPTION IPERF_TEST: Set to true to use iperf test, otherwise swift seeder is started.
 if $IPERF_TEST;
 then
 	iperf -s &	
