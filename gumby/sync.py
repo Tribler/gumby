@@ -66,6 +66,7 @@ from twisted.internet import epollreactor
 epollreactor.install()
 
 from twisted.internet import reactor
+from twisted.internet import task
 from twisted.internet.defer import gatherResults
 from twisted.internet.error import ConnectionDone
 from twisted.internet.protocol import Factory, ReconnectingClientFactory
@@ -124,20 +125,20 @@ class ExperimentServiceProto(LineReceiver):
             return 'done'
 
     def proto_set(self, line):
-            if line.startswith('set:'):
-                _, key, value = line.strip().split(':')
-                msg("This subscriber sets %s to %s" % (key, value), logLevel=logging.DEBUG)
-                self.vars[key] = value
-                return 'set'
-            elif line.strip() == 'ready':
-                msg("This subscriber is ready now.")
-                self.ready = True
-                self.factory.setConnectionReady(self)
-                return 'wait'
-            else:
-                err('Unexpected command received "%s"' % line)
-                err('closing connection.')
-                return 'done'
+        if line.startswith('set:'):
+            _, key, value = line.strip().split(':')
+            msg("This subscriber sets %s to %s" % (key, value), logLevel=logging.DEBUG)
+            self.vars[key] = value
+            return 'set'
+        elif line.strip() == 'ready':
+            msg("This subscriber is ready now.")
+            self.ready = True
+            self.factory.setConnectionReady(self)
+            return 'wait'
+        else:
+            err('Unexpected command received "%s"' % line)
+            err('closing connection.')
+            return 'done'
 
     def proto_wait(self, line):
         err('Unexpected command received "%s" while in ready state. Closing connection' % line)
@@ -152,8 +153,8 @@ class ExperimentServiceFactory(Factory):
         self.experiment_start_delay = experiment_start_delay
         self.connection_counter = -1
         self.connections = []
-        self._last_subscriber_connection_ts = 0
         self._timeout_delayed_call = None
+        self._subscriber_looping_call = None
 
     def buildProtocol(self, addr):
         self.connection_counter += 1
@@ -168,12 +169,16 @@ class ExperimentServiceFactory(Factory):
             self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
         else:
-            if self._last_subscriber_connection_ts < time() - 5:
-                logLevel = logging.DEBUG
-                self._last_subscriber_connection_ts = time()
-            else:
-                logLevel = logging.INFO
-            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers), logLevel=logLevel)
+            if not self._subscriber_looping_call:
+                self._subscriber_looping_call = task.LoopingCall(self._print_subscribers_ready)
+                self._subscriber_looping_call.start(1.0)
+
+    def _print_subscribers_ready(self):
+        if len(self.connections) < self.expected_subscribers:
+            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers), logLevel=logging.INFO)
+        else:
+            self._subscriber_looping_call.stop()
+            self._subscriber_looping_call = None
 
     def pushInfoToSubscribers(self):
         # Generate the json doc
@@ -260,6 +265,21 @@ class ExperimentClient(LineReceiver):
 
     def startExperiment(self):
         msg("startExperiment: Call not implemented")
+
+    def get_peer_ip_port(self, peer_id):
+        if str(peer_id) in self.all_vars:
+            return self.all_vars[str(peer_id)]['host'], self.all_vars[str(peer_id)]['port']
+
+    def get_peer_id(self, ip, port):
+        port = int(port)
+        for peer_id, peer_dict in self.all_vars.iteritems():
+            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
+                return peer_id
+
+        err("Could not get_peer_id for", ip, port)
+
+    def get_peers(self):
+        return self.all_vars.keys()
 
     #
     # Protocol state handlers

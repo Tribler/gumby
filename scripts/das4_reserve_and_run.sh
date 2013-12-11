@@ -54,11 +54,16 @@ trap cancel_reservation TERM
 set -e
 
 # @CONF_OPTION DAS4_NODE_AMOUNT: Set the number of nodes that will get reserved on each cluster to run this experiment. (required)
-# @CONF_OPTION DAS4_RESERVE_DURATION: Set the reservation time lengh in seconds. (required)
+# @CONF_OPTION DAS4_RESERVE_DURATION: Set the reservation time length in seconds. (default is DAS4_NODE_TIMEOUT+120)
 
-if [ -z "$DAS4_NODE_AMOUNT" -o -z "$DAS4_RESERVE_DURATION" ]; then
-    echo "ERROR: you need to specify both DAS4_NODE_AMOUNT and DAS4_RESERVE_DURATION when using $0" >&2
+
+if [ -z "$DAS4_NODE_AMOUNT" ]; then
+    echo "ERROR: you need to specify at least DAS4_NODE_AMOUNT when using $0" >&2
     exit 1
+fi
+if [ -z "$DAS4_RESERVE_DURATION" ]; then
+    echo "DAS4_RESERVE_DURATION not set, using DAS4_NODE_TIMEOUT+120"
+    let DAS4_RESERVE_DURATION=$DAS4_NODE_TIMEOUT+120
 fi
 
 # @CONF_OPTION HEAD_HOST: Override the head host where the worker nodes will sync their datasets back (default is the host name where the script is executed from)
@@ -83,8 +88,11 @@ else
     export OUTPUT_DIR_URI="$HEAD_HOST:$OUTPUT_DIR"
 fi
 
-echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
+# We need to go back to home in order to prevent prun complaining about not being able to cwd into the directory
+WORKING_DIR=$PWD
+cd ~
 
+echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
 prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh &
 PID=$!
 

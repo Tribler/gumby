@@ -2,6 +2,7 @@
 import sys
 import os
 from sys import argv, exit
+from collections import defaultdict
 
 import json
 
@@ -92,7 +93,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
                 parts = line.split()
 
                 time = float(parts[0]) - start_timestamp
-                pid = nodename + "_" + parts[1]
+                pid = nodename + "_" + parts[2][1:-1] + "_" + parts[1]
 
                 if pid not in all_pids:
                     all_pids.add(pid)
@@ -138,6 +139,21 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
                 prev_writebytes[pid] = write_bytes
                 prev_times[pid] = time
 
+    # some sanity checks
+    nr_1utime = defaultdict(int)
+    warn_utime = {}
+    for pid_dict in utimes.itervalues():
+        for pid, utime in pid_dict.iteritems():
+            if isinstance(utime, float) and utime > 0.9:
+                nr_1utime[pid] += 1
+
+            if nr_1utime[pid] > 5:
+                warn_utime[pid] = max(nr_1utime[pid], warn_utime.get(pid, nr_1utime[pid]))
+
+    for pid, times in warn_utime.iteritems():
+        print >> sys.stderr, "A process with name (%s) was measured to have a utime larger than 0.9 for %d times" % (pid, times)
+
+    # writing records
     all_pids = list(all_pids)
     write_records(all_pids, utimes, output_directory, "utimes.txt")
     write_records(all_pids, stimes, output_directory, "stimes.txt")
@@ -163,7 +179,6 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
         write_records(all_nodes, writebytes, output_directory, "writebytes_node.txt")
         write_records(all_nodes, readbytes, output_directory, "readbytes_node.txt")
         write_records(all_nodes, vsizes, output_directory, "vsizes_node.txt")
-
 
 def main(input_directory, output_directory, start_time=0):
     parse_resource_files(input_directory, output_directory, start_time)

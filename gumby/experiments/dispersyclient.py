@@ -37,9 +37,9 @@
 
 # Code:
 
-from os import environ, path, chdir, makedirs, symlink
+from os import environ, path, chdir, makedirs, symlink, getpid
 from sys import stdout, exit
-from collections import defaultdict
+from collections import defaultdict, Iterable
 import json
 from time import time
 
@@ -77,6 +77,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.community_args = []
         self.community_kwargs = {}
         self._stats_file = None
+        self._reset_statistics = True
 
     def startExperiment(self):
         msg("Starting dummy scenario experiment")
@@ -227,6 +228,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 self._community = self.community_class.join_community(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
                 self._community.auto_load = False
                 self._is_joined = True
+
+                self.print_on_change('community-kwargs', {}, self.community_kwargs)
+                self.print_on_change('community-env', {}, {'pid':getpid()})
         else:
             msg("online (we are already online)")
 
@@ -242,6 +246,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     @call_on_dispersy_thread
     def reset_dispersy_statistics(self):
+        self._reset_statistics = True
         self._dispersy._statistics.reset()
 
     def annotate(self, message):
@@ -255,13 +260,23 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def str2bool(self, v):
         return v.lower() in ("yes", "true", "t", "1")
 
+    def str2tuple(self, v):
+        if len(v) > 1 and v[1] == "t":
+            return (int(v[0]), int(v[2:]))
+        if len(v) > 1 and v[1] == ".":
+            return float(v)
+        return int(v)
+
     def print_on_change(self, name, prev_dict, cur_dict):
         new_values = {}
         changed_values = {}
         if cur_dict:
             for key, value in cur_dict.iteritems():
-                if not isinstance(key, (basestring, int, long)):
+                if not isinstance(key, (basestring, int, long, float)):
                     key = str(key)
+
+                if not isinstance(value, (basestring, int, long, float, Iterable)):
+                    value = str(value)
 
                 new_values[key] = value
                 if prev_dict.get(key, None) != value:
@@ -275,21 +290,22 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     def _do_log(self):
         from Tribler.dispersy.candidate import CANDIDATE_STUMBLE_LIFETIME
-
-        prev_statistics = {}
-        prev_total_received = {}
-        prev_total_dropped = {}
-        prev_total_delayed = {}
-        prev_total_outgoing = {}
-        prev_total_fail = {}
-        prev_endpoint_recv = {}
-        prev_endpoint_send = {}
-        prev_created_messages = {}
-        prev_bootstrap_candidates = {}
-
         stumbled_candidates = defaultdict(lambda:defaultdict(set))
 
         while True:
+            if self._reset_statistics:
+                prev_statistics = {}
+                prev_total_received = {}
+                prev_total_dropped = {}
+                prev_total_delayed = {}
+                prev_total_outgoing = {}
+                prev_total_fail = {}
+                prev_endpoint_recv = {}
+                prev_endpoint_send = {}
+                prev_created_messages = {}
+                prev_bootstrap_candidates = {}
+                self._reset_statistics = False
+
             self._dispersy.statistics.update()
 
             communities_dict = []

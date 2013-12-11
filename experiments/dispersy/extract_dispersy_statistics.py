@@ -3,11 +3,10 @@ import re
 import sys
 import os
 
-from collections import defaultdict
+from collections import defaultdict, Iterable
 from json import loads
 from time import time
 from traceback import print_exc
-
 
 class ExtractStatistics:
 
@@ -275,6 +274,13 @@ class AbstractHandler(object):
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         pass
 
+    def tuple2str(self, v):
+        if isinstance(v, Iterable):
+            return "-".join(map(str, v))
+        if isinstance(v, float):
+            return "%f" % v
+        return str(v)
+
 class BasicExtractor(AbstractHandler):
 
     def __init__(self):
@@ -515,7 +521,7 @@ class StatisticMessages(AbstractHandler):
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         if key == "scenario-statistics":
             for key, value in json.iteritems():
-                print >> self.h_statistics, time, timeoffset, key, value
+                print >> self.h_statistics, timestamp, timeoffset, key, value
 
                 self.sum_records[timeoffset][key][node_nr] = value
 
@@ -539,7 +545,11 @@ class StatisticMessages(AbstractHandler):
             print >> h_sum_statistics, "time",
             for peertype in self.used_peertypes:
                 for recordkey in recordkeys:
-                    print >> h_sum_statistics, recordkey + ("-" + peertype if peertype else ''),
+                    if recordkey[-1] == "_":
+                        print >> h_sum_statistics, recordkey[:-1] + ("-" + peertype if peertype else '') + "_",
+                    else:
+                        print >> h_sum_statistics, recordkey + ("-" + peertype if peertype else ''),
+
             print >> h_sum_statistics, ''
 
             prev_value = defaultdict(lambda: defaultdict(int))
