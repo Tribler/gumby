@@ -43,9 +43,7 @@
 if [ ! -z "$BUILD_SWIFT" ]; then
     echo "build_swift set, building Swift."
     if [ -e tribler/Tribler/SwiftEngine/ ]; then
-        cd tribler
         buildswift.sh || ( echo "Swift failed to build!" ; exit 1 )
-        cd ..
     else
         echo "Couldn't find Swift at tribler/Tribler/SwiftEngine, bailing out."
         exit 2
@@ -54,7 +52,10 @@ else
     echo "Not building Swift."
 fi
 
-das4_setup.sh
+if [ -z "$LOCAL_RUN" -o $(echo $USE_LOCAL_VENV | tr '[:upper:]' '[:lower:]') == 'true' ]; then
+    build_virtualenv.sh
+fi
+
 
 #
 # tribler_experiment_setup.sh ends here
