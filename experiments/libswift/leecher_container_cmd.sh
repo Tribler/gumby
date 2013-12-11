@@ -47,10 +47,10 @@ BURST_UL=${RATE_UL[1]}
 #   burst $BURST_DL drop flowid :1
 
 # egress traffic
-#tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
+tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
 
 # add netem stuff
-#tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit 100k burst $BURST_UL
+tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit 100k burst $BURST_UL
    
 # !--------------------
 
