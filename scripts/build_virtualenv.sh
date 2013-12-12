@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=8
+SCRIPT_VERSION=9
 
 # Code:
 set -e
@@ -111,9 +111,12 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
         popd
 
         # Build systemtap
+        # remove old versions of systemtap
+        rm -fR systemtap-2.2*       	 
+            
         if [ ! -d systemtap-*/ ]; then
-            if [ ! -e systemtap-*.gz ]; then
-                wget http://sourceware.org/systemtap/ftp/releases/systemtap-2.2.1.tar.gz
+        	if [ ! -e systemtap-*.gz ]; then
+                wget http://sourceware.org/systemtap/ftp/releases/systemtap-2.4.tar.gz
             fi
             tar xavf systemtap-*.gz
         fi

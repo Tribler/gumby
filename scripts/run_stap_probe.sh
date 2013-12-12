@@ -22,5 +22,5 @@ if [ ! -d "$SCRIPTDIR" ]; then
     exit 1
 fi
 
-echo $LD_LIBRARY_PATH
+ldd /home/jenkins/venv/inst/bin/python
 $STAPPATH/stap "$SCRIPTDIR"/stp/log_io_writes.stp -I $VIRTUALENV_DIR/tapsets/ -DMAXMAPENTRIES=16000 -DSTP_NO_OVERLOAD -DMAXSTRINGLEN=4096 -DTRYLOCKDELAY=300 -DMAXSKIPPED=10000 -DMAXACTION=1000 -o $2 -c "env 'LD_LIBRARY_PATH=$LD_LIBRARY_PATH' $TEST_COMMAND"

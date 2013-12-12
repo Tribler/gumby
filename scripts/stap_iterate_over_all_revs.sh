@@ -80,9 +80,11 @@ ITERATION_RESULTS_FILE=$OUTPUT_DIR/rev_iter_results.log
 
 pushd $REPOSITORY_DIR
 git clean -fd
-if [ ! -z "$REPOSITORY_BRANCH" ]; then
-    git checkout $REPOSITORY_BRANCH
-fi
+
+# why is this here?
+#if [ ! -z "$REPOSITORY_BRANCH" ]; then
+#    git checkout $REPOSITORY_BRANCH
+#fi
 
 COUNT=0
 
