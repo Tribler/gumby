@@ -54,14 +54,15 @@ export CONFFILE=$(readlink -f $CONFFILE)
 
 rm -f /tmp/results.log
 
-if [ -z "$REPOSITORY_DIR" ]; then
-    echo "ERROR: REPOSITORY_DIR variable not set, bailing out."
-    exit 2
-fi
+# do this in jenkins instead
+#if [ -z "$REPOSITORY_DIR" ]; then
+#    echo "ERROR: REPOSITORY_DIR variable not set, bailing out."
+#    exit 2
+#fi
 
-if [ ! -d "$REPOSITORY_DIR" -a ! -z "$REPOSITORY_URL" ]; then
-    git clone "$REPOSITORY_URL" "$REPOSITORY_DIR"
-fi
+#if [ ! -d "$REPOSITORY_DIR" -a ! -z "$REPOSITORY_URL" ]; then
+#    git clone "$REPOSITORY_URL" "$REPOSITORY_DIR"
+#fi
 
 # Do only one iteration by default
 if [ -z "$STAP_RUN_ITERATIONS" ]; then
@@ -72,10 +73,10 @@ if [ -z "$TESTNAME" ]; then
 fi
 
 # TODO: I think this is not needed anymore
-export PYTHONPATH=.
-mkdir -p $OUTPUT_DIR_NAME
-export OUTPUTDIR=$(readlink -f $OUTPUT_DIR_NAME)
-ITERATION_RESULTS_FILE=$OUTPUTDIR/rev_iter_results.log
+#export PYTHONPATH=.
+#mkdir -p $OUTPUT_DIR_NAME
+#export OUTPUTDIR=$(readlink -f $OUTPUT_DIR_NAME)
+ITERATION_RESULTS_FILE=$OUTPUT_DIR/rev_iter_results.log
 
 pushd $REPOSITORY_DIR
 git clean -fd
