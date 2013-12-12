@@ -120,6 +120,26 @@ else
 	HETEROGENEOUS_OFFSET=false
 fi
 
+# @CONF_OPTION LEECHER_TIME: Time a leecher will remain running, 
+# @CONF_OPTION LEECHER_TIME: set 1 value, for a heterogeneous network separate values by ,
+# @CONF_OPTION LEECHER_TIME: e.g. leecher_time="100s,200s" (note that the number of elements should then match the number of leechers)
+if [[ $LEECHER_TIME == *,* ]]
+then
+	# split in array
+	TIME=(`echo $LEECHER_TIME | tr ',' ' '`)
+	if [[ ${#TIME[@]} != $NO_OF_LEECHERS ]]
+	then
+		echo "No of offset settings should be equal to 1 or the number of leechers"
+		exit 65
+	fi
+	HETEROGENEOUS_TIME=true
+else
+	TIME=$LEECHER_TIME
+	HETEROGENEOUS_TIME=false
+fi
+
+
+
 # get full path, easier for use in container
 WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR)
 FILENAME=file_seed.tmp
@@ -180,6 +200,13 @@ do
 		sleep $OFFSET
 	fi
 
+	if $HETEROGENEOUS_TIME;
+	then
+		LEECHER_TIME=${TIME[$i]}
+	else
+		LEECHER_TIME=$TIME
+	fi
+
 	# @CONF_OPTION NETWORK_IP_RANGE: First part of IP of local network to use for leecher IPs (e.g., 192.168.1)
 	# @CONF_OPTION LEECHER_ID: Last part of IP of first leecher. Will be incremented for additional leechers (e.g., 111)	
 	
@@ -191,7 +218,7 @@ do
 		-s lxc.network.ipv4=$LEECHER_IP/24 \
 		-s lxc.rootfs=$CONTAINER_DIR \
 		-s lxc.pts=1024 \
-		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/swift $OUTPUT_DIR $HASH $LEECHER_DELAY $LEECHER_PACKET_LOSS $WORKSPACE_DIR/gumby/scripts/process_guard.py $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER $LEECHER_RATE $LEECHER_UL_RATE $IPERF_TEST &
+		-- $WORKSPACE_DIR/$LEECHER_CMD $WORKSPACE_DIR/swift $OUTPUT_DIR $HASH $LEECHER_DELAY $LEECHER_PACKET_LOSS $WORKSPACE_DIR/gumby/scripts/process_guard.py $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_IP $SEEDER_PORT $OUTPUT_DIR $(($LEECHER_ID+$i)) $USER $LEECHER_RATE $LEECHER_UL_RATE $IPERF_TEST $TIME &
 done
 
 
