@@ -47,38 +47,22 @@
 
 from itertools import ifilter
 from os import environ
-from random import random
 from re import compile as re_compile
 from time import time
 import shlex
 import sys
 
 from twisted.internet import reactor
-from twisted.python.log import msg
+from twisted.python.log import msg, err
 
-class ScenarioRunner():
-
+class ScenarioParser():
     """
-    Reads, parses and schedules events from scenario file.
-
-    Use expstartstamp to synchronize all peers (usually you can get this from
-    the gumby config server before starting the experiment). Each peer should
-    set an unique peernumber.
-
-    Users should register callables using register() before calling run(). All
-    scenario events (lines) using unregistered callable names will be silently
-    ignored. The callables will be executed on the main Twisted thread.
-
     Scenario line format:
         TIMESPEC CALLABLE [ARGS] [PEERSPEC]
 
         TIMESPEC = [@+][H:]M:S[-[H:]M:S]
 
-            Use @ to schedule events based on experiment startstamp (use this to
-            synchronize all peers) - recommended. Use + to schedule
-            events based on peer's startime. Using just [H:]M:S will schedule
-            event hours:minutes:seconds after @ or +, while [H:]M:S-[H:]M:S will
-            schedule at a random time in that interval.
+            Use @ to schedule events based on the synchronized experiment starting timestamp.
 
         CALLABLE = string
 
@@ -93,6 +77,8 @@ class ScenarioRunner():
 
             Examples: "{1,2}" - apply event only for peer 1 and 2, "{3-6}" - apply
             event for peers 3 to 6 (including 3 and 6).
+            Moreover, if the PEERSPEC starts with an !, the event will apply
+            for all peers except those specified.
 
         Notes:
              - Have in mind that in case of having several lines with the same
@@ -100,70 +86,18 @@ class ScenarioRunner():
     """
     _re_line = re_compile(
         r"^"
-        r"(?P<origin>[@+])"
+        r"@?"
         r"\s*"
         r"(?:(?P<beginH>\d+):)?(?P<beginM>\d+):(?P<beginS>\d+)"
-        r"(?:\s*-\s*"
-        r"(?:(?P<endH>\d+):)?(?P<endM>\d+):(?P<endS>\d+)"
-        r")?"
         r"\s+"
         r"(?P<callable>\w+)(?P<args>\s+(.+?))??"
         r"(?:\s*"
-        r"{(?P<peers>\s*!?\d+(?:-\d+)?(?:\s*,\s*!?\d+(?:-\d+)?)*\s*)}"
+        r"{(?P<peers>\s*!?\d+(?:-\d+)?(?:\s*,\s*\d+(?:-\d+)?)*\s*)}"
         r")?\s*(?:\n)?$"
     )
     _re_substitution = re_compile("(\$\w+)")
 
-    # TODO(emilon): Remove all the delta stuff, it's not used at all.
     # TODO(emilon): We should make the minutes and its colon optional, so we can just use secs.
-
-    def __init__(self, filename, peernumber, expstartstamp=None):
-        self.filename = filename
-
-        self._callables = {}
-        self._expstartstamp = expstartstamp
-        self._peernumber = peernumber
-        self._origin = None  # will be set just before run()-ing
-
-    def register(self, clb, name=None):
-        """
-        Registers callable to be used from a scenario file. An optional
-        different name can be assigned.
-        """
-        if name is None:
-            name = clb.__name__
-        self._callables[name] = clb
-
-    def _init_origin_time(self):
-        # initialize origin start times
-        # _parse_scenario_line() will choose one of them for each lines
-        now = time()
-        self._origin = {
-            "@": float(self._expstartstamp) if self._expstartstamp is not None else now,
-            "+": now
-        }
-
-    def run(self):
-        """
-        Schedules calls for each scenario line.
-        """
-        self._init_origin_time()
-
-        msg("Running scenario from file:", self.filename)
-
-        for (tstmp, lineno, clb, args) in self._parse_scenario(self.filename):
-            if clb not in self._callables:
-                msg(clb, "is not registered as an action!")
-                continue
-            # TODO(vladum): Handle errors while calling.
-            delay = tstmp - time()
-            reactor.callLater(
-                delay if delay > 0.0 else 0,
-                self._callables[clb],
-                *args
-            )
-
-    # TODO(vladum): Move _parse_*() stuff to separate class.
 
     def _parse_scenario(self, filename):
         """
@@ -190,12 +124,7 @@ class ScenarioRunner():
 
         The command tuple is described in _parse_scenario().
         """
-        # Look for $VARIABLES to replace with config options from the env.
-        for substitution in self._re_substitution.findall(line):
-            if substitution[1:] in environ:
-                line = line.replace(substitution, environ[substitution[1:]])
-
-        match = self._re_line.match(line)
+        match = self._re_line.match(self._preprocess_line(line))
         if match:
             # remove all entries that are None (to get default per key)
             dic = dict(ifilter(
@@ -204,23 +133,17 @@ class ScenarioRunner():
             ))
 
             # only return lines that belong to this peer
-            if self._parse_for_this_peer(dic.get("peers", "")):
+            peerspec = self._parse_peerspec(dic.get("peers", ""))
+            if self._parse_for_this_peer(peerspec):
                 begin = int(dic.get("beginH", 0)) * 3600.0 + \
                     int(dic.get("beginM", 0)) * 60.0 + \
                     int(dic.get("beginS", 0))
-                end = int(dic.get("endH", 0)) * 3600.0 + \
-                    int(dic.get("endM", 0)) * 60.0 + \
-                    int(dic.get("endS", 0))
-                assert end == 0.0 or begin <= end, \
-                    "if given, end time must be at or after the start time"
-                timestamp = self._origin[dic.get("origin", "@")] + \
-                    begin + \
-                    (random() * (end - begin) if end else 0.0)
                 return (
-                    timestamp,
+                    begin,
                     lineno,
                     dic.get("callable", ""),
-                    tuple(shlex.split(dic.get("args", "")))
+                    tuple(shlex.split(dic.get("args", ""))),
+                    peerspec
                 )
         elif line.strip():
             print >> sys.stderr, "Ignoring invalid scenario line", lineno
@@ -228,7 +151,7 @@ class ScenarioRunner():
         # line not for this peer or a parse error occurred
         return None
 
-    def _parse_for_this_peer(self, peerspec):
+    def _parse_peerspec(self, peerspec):
         """
         Checks if current peernumber matches a peer specification.
 
@@ -240,22 +163,90 @@ class ScenarioRunner():
         # get individual peers, if any, for a peer spec
         yes_peers = set()
         no_peers = set()
+
+        if peerspec.startswith("!"):
+            peers = no_peers
+        else:
+            peers = yes_peers
+
         for peer in peerspec.split(","):
             peer = peer.strip()
             if peer:
-                # if the peer number (or peer number pair) is preceded by '!' it
-                # negates the result
-                if peer.startswith("!"):
-                    peer = peer[1:]
-                    peers = no_peers
-                else:
-                    peers = yes_peers
                 # parse the peer number (or peer number pair)
                 if "-" in peer:
                     low, high = peer.split("-")
                     peers.update(xrange(int(low), int(high) + 1))
                 else:
                     peers.add(int(peer))
+
+        return yes_peers, no_peers
+
+    def _parse_for_this_peer(self):
+        raise NotImplementedError('override this method please')
+
+    def _preprocess_line(self, line):
+        # Look for $VARIABLES to replace with config options from the env.
+        for substitution in self._re_substitution.findall(line):
+            if substitution[1:] in environ:
+                line = line.replace(substitution, environ[substitution[1:]])
+
+        return line
+
+class ScenarioRunner(ScenarioParser):
+
+    """
+    Reads, parses and schedules events from scenario file.
+
+    Use expstartstamp to synchronize all peers (usually you can get this from
+    the gumby config server before starting the experiment). Each peer should
+    set an unique peernumber.
+
+    Users should register callables using register() before calling run(). All
+    scenario events (lines) using unregistered callable names will be silently
+    ignored. The callables will be executed on the main Twisted thread.
+    """
+
+    def __init__(self, filename, peernumber, expstartstamp=None):
+        self.filename = filename
+
+        self._callables = {}
+        self._expstartstamp = expstartstamp
+        self._peernumber = peernumber
+        self._origin = None  # will be set just before run()-ing
+
+    def register(self, clb, name=None):
+        """
+        Registers callable to be used from a scenario file. An optional
+        different name can be assigned.
+        """
+        if name is None:
+            name = clb.__name__
+        self._callables[name] = clb
+
+    def run(self):
+        """
+        Schedules calls for each scenario line.
+        """
+        msg("Running scenario from file:", self.filename)
+
+        if self._expstartstamp == None:
+            self._expstartstamp = time()
+
+        for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(self.filename):
+            if clb not in self._callables:
+                err(clb, "is not registered as an action!")
+                continue
+
+            tstmp = tstmp + self._expstartstamp
+            delay = tstmp - time()
+            reactor.callLater(
+                delay if delay > 0.0 else 0,
+                self._callables[clb],
+                *args
+            )
+
+    def _parse_for_this_peer(self, peerspec):
+        yes_peers, no_peers = peerspec
         return (
             not (yes_peers or no_peers) or
             (yes_peers and self._peernumber in yes_peers) or
