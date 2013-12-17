@@ -47,7 +47,6 @@
 
 from itertools import ifilter
 from os import environ
-from random import random, expovariate
 from re import compile as re_compile
 from time import time
 import shlex
@@ -63,11 +62,7 @@ class ScenarioParser():
 
         TIMESPEC = [@+][H:]M:S[-[H:]M:S]
 
-            Use @ to schedule events based on experiment startstamp (use this to
-            synchronize all peers) - recommended. Use + to schedule
-            events based on peer's startime. Using just [H:]M:S will schedule
-            event hours:minutes:seconds after @ or +, while [H:]M:S-[H:]M:S will
-            schedule at a random time in that interval.
+            Use @ to schedule events based on experiment startstamp.
 
         CALLABLE = string
 
@@ -82,6 +77,7 @@ class ScenarioParser():
 
             Examples: "{1,2}" - apply event only for peer 1 and 2, "{3-6}" - apply
             event for peers 3 to 6 (including 3 and 6).
+            Moreover, using {!1,2} will apply an event for all peers except peer 1 and 2.
 
         Notes:
              - Have in mind that in case of having several lines with the same
