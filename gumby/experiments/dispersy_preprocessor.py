@@ -23,9 +23,12 @@ class ScenarioPreProcessor(ScenarioRunner):
         print >> sys.stderr, "Preprocessing file...",
         for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
             if clb in self._callables:
-                yes_peers = peerspec[0]
+                yes_peers, no_peers = peerspec
                 if not yes_peers:
-                    yes_peers = range(1, max_peer + 1)
+                    yes_peers = set(range(1, max_peer + 1))
+                for peer in no_peers:
+                    yes_peers.discard(peer)
+
                 for peer in yes_peers:
                     for line in self._callables[clb](tstmp, max_tstmp, *args):
                         print >> outputfile, line, '{%s}' % peer

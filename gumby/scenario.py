@@ -183,6 +183,10 @@ class ScenarioParser():
                 else:
                     peers.add(int(peer))
 
+        # sanity check, raise exception if one peer is in both sets
+        if yes_peers & no_peers:
+            raise RuntimeError("at least one peer exists in both yes_peers and no_peers, %s" % str(list(yes_peers & no_peers)))
+
         return yes_peers, no_peers
 
     def _parse_for_this_peer(self):
@@ -232,7 +236,7 @@ class ScenarioRunner(ScenarioParser):
         Schedules calls for each scenario line.
         """
         msg("Running scenario from file:", self.filename)
-        
+
         if self._expstartstamp == None:
             self._expstartstamp = time()
 
