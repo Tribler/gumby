@@ -62,7 +62,7 @@ class ScenarioParser():
 
         TIMESPEC = [@+][H:]M:S[-[H:]M:S]
 
-            Use @ to schedule events based on experiment startstamp.
+            Use @ to schedule events based on the synchronized experiment starting timestamp.
 
         CALLABLE = string
 
