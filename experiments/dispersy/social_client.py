@@ -137,9 +137,9 @@ class SocialClient(DispersyExperimentScriptClient):
 
         # if we don't get the ipport, then this peer isn't deployed to the das
         ipport = self.get_peer_ip_port_by_id(peer_id)
-        if ipport:
-            key = self.get_public_key_by_id(peer_id)
+        key = self.get_public_key_by_id(peer_id)
 
+        if ipport and key:
             keyhash = long(sha1(key).hexdigest(), 16)
             self._community._mypref_db.addMyPreference(keyhash, {})
 
@@ -151,6 +151,9 @@ class SocialClient(DispersyExperimentScriptClient):
             self.not_connected_friends.add(ipport)
 
             self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
+
+        elif ipport:
+            print >> sys.stderr, "Got ip/port, but not key?", peer_id
 
     @call_on_dispersy_thread
     def add_foaf(self, peer_id, his_friends):
