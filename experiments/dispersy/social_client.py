@@ -72,16 +72,17 @@ class SocialClient(DispersyExperimentScriptClient):
         self.set_community_kwarg('max_fprefs', 100)
         self.set_community_kwarg('use_cardinality', False)
 
+    @property
+    def my_member_key_curve(self):
+        # as i'm cpu bound, lowering the number of bits of the elliptic curve
+        return u"NID_secp112r1"
+
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
-
-        # as i'm cpu bound, lowering the number of bits of the elliptic curve
-        self._my_member = self._dispersy.callback.call(self._dispersy.get_new_member, (u"NID_secp112r1",))
 
         self.community_args = (self._my_member,)
 
     def registerCallbacks(self):
-        self.scenario_runner.register(self.my_key, 'my_key')
         self.scenario_runner.register(self.add_friend, 'add_friend')
         self.scenario_runner.register(self.add_foaf, 'add_foaf')
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
@@ -109,32 +110,40 @@ class SocialClient(DispersyExperimentScriptClient):
     def online(self):
         DispersyExperimentScriptClient.online(self)
 
+        # insert my own key into the friend database
+        self.insert_my_key()
+
         # disable msimilarity requests
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
         self._community.create_msimilarity_request = lambda destination: False
 
     @call_on_dispersy_thread
-    def my_key(self, key):
-        from Tribler.community.privatesemantic.rsa import bytes_to_key
+    def insert_my_key(self):
+        from Tribler.dispersy.crypto import ec_from_public_bin
 
-        keyhash = long(sha1(str(key)).hexdigest(), 16)
+        key = self.my_member_key
+
+        keyhash = long(sha1(key).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(keyhash, {})
 
-        key = bytes_to_key(key)
+        key = ec_from_public_bin(key)
         self._community._friend_db.add_my_key(key, keyhash)
 
     @call_on_dispersy_thread
-    def add_friend(self, peer_id, key):
-        from Tribler.community.privatesemantic.rsa import bytes_to_key
+    def add_friend(self, peer_id):
+        from Tribler.dispersy.crypto import ec_from_public_bin
+
         peer_id = int(peer_id)
 
         # if we don't get the ipport, then this peer isn't deployed to the das
-        ipport = self.get_peer_ip_port(peer_id)
+        ipport = self.get_peer_ip_port_by_id(peer_id)
         if ipport:
-            keyhash = long(sha1(str(key)).hexdigest(), 16)
+            key = self.get_public_key_by_id(peer_id)
+
+            keyhash = long(sha1(key).hexdigest(), 16)
             self._community._mypref_db.addMyPreference(keyhash, {})
 
-            key = bytes_to_key(key)
+            key = ec_from_public_bin(key)
             self._community._friend_db.add_friend(str(peer_id), key, keyhash)
 
             self.friends.add(ipport)
@@ -149,7 +158,7 @@ class SocialClient(DispersyExperimentScriptClient):
         his_friends = [int(friend) for friend in his_friends[1:-1].split(",")]
 
         # if we don't get the ipport, then this peer isn't deployed to the das
-        ipport = self.get_peer_ip_port(peer_id)
+        ipport = self.get_peer_ip_port_by_id(peer_id)
         if ipport:
             self.foafs.add(ipport)
             self.foafhashes[ipport] = [self.friendhashes[peer_id] for peer_id in his_friends if peer_id in self.friendhashes]

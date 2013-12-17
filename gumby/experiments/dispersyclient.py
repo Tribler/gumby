@@ -46,6 +46,9 @@ from time import time
 from gumby.sync import ExperimentClient, ExperimentClientFactory
 from gumby.scenario import ScenarioRunner
 from gumby.log import setupLogging
+
+from dispersy.crypto import ec_generate_key, ec_to_public_bin, ec_to_private_bin
+
 from twisted.python.log import msg
 
 # TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
@@ -78,6 +81,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.community_kwargs = {}
         self._stats_file = None
         self._reset_statistics = True
+
+        self.generateMyMember()
+        self.vars['public_key'] = self.my_member_key
+        self.vars['private_key'] = self.my_member_private_key
 
     def startExperiment(self):
         msg("Starting dummy scenario experiment")
@@ -119,6 +126,20 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     def registerCallbacks(self):
         pass
+
+    @property
+    def my_member_key_curve(self):
+        # low (NID_sect233k1) isn't actually that low, switching to 160bits as this is comparable to rsa 1024
+        # http://www.nsa.gov/business/programs/elliptic_curve.shtml
+        # speed difference when signing/verifying 100 items
+        # NID_sect233k1 signing took 0.171 verify took 0.35 totals 0.521
+        # NID_secp160k1 signing took 0.04 verify took 0.04 totals 0.08
+        return u"NID_secp160k1"
+
+    def generateMyMember(self):
+        ec = ec_generate_key(self.my_member_key_curve)
+        self.my_member_key = ec_to_public_bin(ec)
+        self.my_member_private_key = ec_to_private_bin(ec)
 
     #
     # Actions
@@ -185,13 +206,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._dispersy.start()
 
-        # low (NID_sect233k1) isn't actually that low, switching to 160bits as this is comparable to rsa 1024
-        # http://www.nsa.gov/business/programs/elliptic_curve.shtml
-        # speed difference when signing/verifying 100 items
-        # NID_sect233k1 signing took 0.171 verify took 0.35 totals 0.521
-        # NID_secp160k1 signing took 0.04 verify took 0.04 totals 0.08
-        self._my_member = self._dispersy.callback.call(self._dispersy.get_new_member, (u"NID_secp160k1",))
-        self._master_member = self._dispersy.callback.call(self._dispersy.get_member, (self.master_key,))
+        self._master_member = self._dispersy.callback.call(self._dispersy.get_member, (self.master_key, self.master_private_key))
+        self._my_member = self._dispersy.callback.call(self._dispersy.get_member, (self.my_key, self.my_private_key))
 
         self._dispersy.callback.register(self._do_log)
         msg("Finished starting dispersy")
@@ -211,8 +227,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 msg("Dispersy exit status was:", self._dispersy_exit_status)
                 reactor.callLater(0, reactor.stop)
 
-    def set_master_member(self, pub_key):
+    def set_master_member(self, pub_key, priv_key=''):
         self.master_key = pub_key.decode("HEX")
+        self.master_private_key = priv_key.decode("HEX")
 
     @call_on_dispersy_thread
     def online(self):
