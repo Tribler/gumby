@@ -142,6 +142,8 @@ if not running_local_and_virtualenv_disabled and "VIRTUALENV_DIR" in env and pat
 else:
     print "NOT activating virtualenv."
     print running_local_and_virtualenv_disabled
+    print env.get("USE_LOCAL_VENV", "False").lower()
+    print env.get("LOCAL_RUN", "False").lower()
     print "VIRTUALENV_DIR" in env
     print expand_var(env["VIRTUALENV_DIR"])
     print path.exists(expand_var(env["VIRTUALENV_DIR"]))
