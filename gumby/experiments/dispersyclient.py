@@ -82,8 +82,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._reset_statistics = True
 
         self.generateMyMember()
-        self.vars['public_key'] = base64.encodestring(self.my_member_key)
-        self.vars['private_key'] = base64.encodestring(self.my_member_private_key)
+        self.vars['private_keypair'] = base64.encodestring(self.my_member_private_key)
 
     def startExperiment(self):
         msg("Starting dummy scenario experiment")
@@ -278,35 +277,20 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     def onAllVarsReceived(self):
         for peer_dict in self.all_vars.iteritems():
-            if 'public_key' in peer_dict:
-                peer_dict['public_key'] = base64.decodestring(peer_dict['public_key'])
-            if 'private_key' in peer_dict:
-                peer_dict['private_key'] = base64.decodestring(peer_dict['private_key'])
+            if 'private_keypair' in peer_dict:
+                peer_dict['private_keypair'] = base64.decodestring(peer_dict['private_keypair'])
 
-
-    def get_public_key_by_id(self, peer_id):
+    def get_private_keypair_by_id(self, peer_id):
         if str(peer_id) in self.all_vars:
-            return self.all_vars[str(peer_id)]['public_key']
+            return self.all_vars[str(peer_id)]['private_keypair']
 
-    def get_private_key_by_id(self, peer_id):
-        if str(peer_id) in self.all_vars:
-            return self.all_vars[str(peer_id)]['private_key']
-
-    def get_public_key(self, ip, port):
+    def get_private_keypair(self, ip, port):
         port = int(port)
         for peer_dict in self.all_vars.itervalues():
             if peer_dict['host'] == ip and int(peer_dict['port']) == port:
-                return peer_dict['public_key']
+                return peer_dict['private_keypair']
 
-        err("Could not get_public_key for", ip, port)
-
-    def get_private_key(self, ip, port):
-        port = int(port)
-        for peer_dict in self.all_vars.itervalues():
-            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
-                return peer_dict['private_key']
-
-        err("Could not get_private_key for", ip, port)
+        err("Could not get_private_keypair for", ip, port)
 
     def str2bool(self, v):
         return v.lower() in ("yes", "true", "t", "1")
