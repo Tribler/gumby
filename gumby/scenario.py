@@ -77,7 +77,8 @@ class ScenarioParser():
 
             Examples: "{1,2}" - apply event only for peer 1 and 2, "{3-6}" - apply
             event for peers 3 to 6 (including 3 and 6).
-            Moreover, using {!1,2} will apply an event for all peers except peer 1 and 2.
+            Moreover, if the PEERSPEC starts with an !, the event will apply
+            for all peers except those specified.
 
         Notes:
              - Have in mind that in case of having several lines with the same
@@ -91,7 +92,7 @@ class ScenarioParser():
         r"\s+"
         r"(?P<callable>\w+)(?P<args>\s+(.+?))??"
         r"(?:\s*"
-        r"{(?P<peers>\s*!?\d+(?:-\d+)?(?:\s*,\s*!?\d+(?:-\d+)?)*\s*)}"
+        r"{(?P<peers>\s*!?\d+(?:-\d+)?(?:\s*,\s*\d+(?:-\d+)?)*\s*)}"
         r")?\s*(?:\n)?$"
     )
     _re_substitution = re_compile("(\$\w+)")
@@ -161,26 +162,21 @@ class ScenarioParser():
         # get individual peers, if any, for a peer spec
         yes_peers = set()
         no_peers = set()
+
+        if peerspec.startswith("!"):
+            peers = no_peers
+        else:
+            peers = yes_peers
+
         for peer in peerspec.split(","):
             peer = peer.strip()
             if peer:
-                # if the peer number (or peer number pair) is preceded by '!' it
-                # negates the result
-                if peer.startswith("!"):
-                    peer = peer[1:]
-                    peers = no_peers
-                else:
-                    peers = yes_peers
                 # parse the peer number (or peer number pair)
                 if "-" in peer:
                     low, high = peer.split("-")
                     peers.update(xrange(int(low), int(high) + 1))
                 else:
                     peers.add(int(peer))
-
-        # sanity check, raise exception if one peer is in both sets
-        if yes_peers & no_peers:
-            raise RuntimeError("at least one peer exists in both yes_peers and no_peers, %s" % str(list(yes_peers & no_peers)))
 
         return yes_peers, no_peers
 
