@@ -114,7 +114,7 @@ extend_var(environ, "R_SCRIPTS_PATH", r_scripts_dir)
 
 # @CONF_OPTION VIRTUALENV_DIR: Virtual env to activate for the experiment (default is ~/venv)
 # Enter virtualenv in case there's one
-running_local_and_virtualenv_disabled = not (env.get("USE_LOCAL_VENV", "False").lower() == env.get("LOCAL_RUN", "False").lower() == "True")
+running_local_and_virtualenv_disabled = not (env.get("USE_LOCAL_VENV", "False").lower() == env.get("LOCAL_RUN", "False").lower() == "true")
 if not running_local_and_virtualenv_disabled and "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
     venv_dir = path.abspath(expand_var(env["VIRTUALENV_DIR"]))
     print "Activating virtualenv at", venv_dir
@@ -141,12 +141,6 @@ if not running_local_and_virtualenv_disabled and "VIRTUALENV_DIR" in env and pat
         open(dest_file, "w").write(open(source_file, 'r').read().replace("__VIRTUALENV_PATH__", venv_dir))
 else:
     print "NOT activating virtualenv."
-    print running_local_and_virtualenv_disabled
-    print env.get("USE_LOCAL_VENV", "False").lower()
-    print env.get("LOCAL_RUN", "False").lower()
-    print "VIRTUALENV_DIR" in env
-    print expand_var(env["VIRTUALENV_DIR"])
-    print path.exists(expand_var(env["VIRTUALENV_DIR"]))
 
 # @CONF_OPTION OUTPUT_DIR: Dir where to write all the output generated from the experiment (default is workspace_dir/output)
 # Create the experiment output dir if necessary
