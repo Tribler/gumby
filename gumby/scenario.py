@@ -89,10 +89,9 @@ class ScenarioParser():
     """
     _re_line = re_compile(
         r"^"
-        r"(?@)"
+        r"@?"
         r"\s*"
         r"(?:(?P<beginH>\d+):)?(?P<beginM>\d+):(?P<beginS>\d+)"
-        r")?"
         r"\s+"
         r"(?P<callable>\w+)(?P<args>\s+(.+?))??"
         r"(?:\s*"
@@ -146,8 +145,8 @@ class ScenarioParser():
                     begin,
                     lineno,
                     dic.get("callable", ""),
-                    tuple(shlex.split(dic.get("args", "")),
-                    peerspec)
+                    tuple(shlex.split(dic.get("args", ""))),
+                    peerspec
                 )
         elif line.strip():
             print >> sys.stderr, "Ignoring invalid scenario line", lineno
@@ -254,49 +253,6 @@ class ScenarioRunner(ScenarioParser):
             (yes_peers and self._peernumber in yes_peers) or
             (no_peers and not self._peernumber in no_peers)
         )
-
-class ScenarioPreProcessor(ScenarioRunner):
-
-    def __init__(self, filename):
-        self._cur_line = None
-
-        self._callables = {}
-        self._callables['churn'] = self.churn
-
-        max_tstmp = 0
-        for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(self.filename):
-            max_tstmp = max(tstmp, max_tstmp)
-
-        for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
-            if clb in self._callables:
-                for peer in peerspec[0]:
-                    for line in clb(tstmp, max_tstmp, *args):
-                        print line, '{%s}' % peer
-            else:
-                print self._cur_line
-
-    def _parse_for_this_peer(self, peerspec):
-        return True
-
-    def _preprocess_line(self, line):
-        self._cur_line = line
-
-    def churn(self, tstmp, max_tstmp, args):
-        type = args[0]
-        args = args[1:]
-
-        def get_delay(type):
-            if type == 'expon':
-                desired_mean = float(args[0]) - 5
-                return 5.0 + expovariate(1.0 / desired_mean)
-            else:
-                raise NotImplementedError('only expon churn is implemented, got %s' % type)
-
-        while tstmp < max_tstmp:
-            yield "@0:%d online" % tstmp
-            tstmp += get_delay(type)
-            yield "@0:%d offline" % tstmp
-            tstmp += get_delay(type)
 
 #
 # scenario.py ends here
