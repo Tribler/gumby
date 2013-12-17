@@ -57,7 +57,7 @@ from twisted.python.log import msg, err
 
 class ScenarioParser():
     """
-        Scenario line format:
+    Scenario line format:
         TIMESPEC CALLABLE [ARGS] [PEERSPEC]
 
         TIMESPEC = [@+][H:]M:S[-[H:]M:S]
