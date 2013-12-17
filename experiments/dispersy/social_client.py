@@ -46,9 +46,6 @@ from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, cal
 
 from twisted.python.log import msg
 
-from os import environ
-print >> sys.stderr, environ
-
 # TODO(emilon): Fix this crap
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
 

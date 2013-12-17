@@ -208,7 +208,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._dispersy.start()
 
         self._master_member = self._dispersy.callback.call(self._dispersy.get_member, (self.master_key, self.master_private_key))
-        self._my_member = self._dispersy.callback.call(self._dispersy.get_member, (self.my_key, self.my_private_key))
+        self._my_member = self._dispersy.callback.call(self._dispersy.get_member, (self.my_member_key, self.my_member_private_key))
 
         self._dispersy.callback.register(self._do_log)
         msg("Finished starting dispersy")
