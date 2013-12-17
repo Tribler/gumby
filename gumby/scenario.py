@@ -231,6 +231,9 @@ class ScenarioRunner(ScenarioParser):
         Schedules calls for each scenario line.
         """
         msg("Running scenario from file:", self.filename)
+        
+        if self._expstartstamp == None:
+            self._expstartstamp = time()
 
         for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(self.filename):
             if clb not in self._callables:
