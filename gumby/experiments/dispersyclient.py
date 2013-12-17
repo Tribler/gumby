@@ -47,12 +47,13 @@ from gumby.sync import ExperimentClient, ExperimentClientFactory
 from gumby.scenario import ScenarioRunner
 from gumby.log import setupLogging
 
-from twisted.python.log import msg
+from twisted.python.log import msg, err
 
 # TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
 # The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
+import base64
 
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):
@@ -81,8 +82,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._reset_statistics = True
 
         self.generateMyMember()
-        self.vars['public_key'] = self.my_member_key
-        self.vars['private_key'] = self.my_member_private_key
+        self.vars['public_key'] = base64.encodestring(self.my_member_key)
+        self.vars['private_key'] = base64.encodestring(self.my_member_private_key)
 
     def startExperiment(self):
         msg("Starting dummy scenario experiment")
@@ -274,6 +275,39 @@ class DispersyExperimentScriptClient(ExperimentClient):
     #
     # Aux. functions
     #
+
+    def onAllVarsReceived(self):
+        for peer_dict in self.all_vars.iteritems():
+            if 'public_key' in peer_dict:
+                peer_dict['public_key'] = base64.decodestring(peer_dict['public_key'])
+            if 'private_key' in peer_dict:
+                peer_dict['private_key'] = base64.decodestring(peer_dict['private_key'])
+
+
+    def get_public_key_by_id(self, peer_id):
+        if str(peer_id) in self.all_vars:
+            return self.all_vars[str(peer_id)]['public_key']
+
+    def get_private_key_by_id(self, peer_id):
+        if str(peer_id) in self.all_vars:
+            return self.all_vars[str(peer_id)]['private_key']
+
+    def get_public_key(self, ip, port):
+        port = int(port)
+        for peer_dict in self.all_vars.itervalues():
+            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
+                return peer_dict['public_key']
+
+        err("Could not get_public_key for", ip, port)
+
+    def get_private_key(self, ip, port):
+        port = int(port)
+        for peer_dict in self.all_vars.itervalues():
+            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
+                return peer_dict['private_key']
+
+        err("Could not get_private_key for", ip, port)
+
     def str2bool(self, v):
         return v.lower() in ("yes", "true", "t", "1")
 

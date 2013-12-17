@@ -274,33 +274,9 @@ class ExperimentClient(LineReceiver):
 
         err("Could not get_peer_id for", ip, port)
 
-    def get_public_key(self, ip, port):
-        port = int(port)
-        for peer_dict in self.all_vars.itervalues():
-            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
-                return peer_dict['public_key']
-
-        err("Could not get_public_key for", ip, port)
-
-    def get_private_key(self, ip, port):
-        port = int(port)
-        for peer_dict in self.all_vars.itervalues():
-            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
-                return peer_dict['private_key']
-
-        err("Could not get_private_key for", ip, port)
-
     def get_peer_ip_port_by_id(self, peer_id):
         if str(peer_id) in self.all_vars:
             return self.all_vars[str(peer_id)]['host'], self.all_vars[str(peer_id)]['port']
-
-    def get_public_key_by_id(self, peer_id):
-        if str(peer_id) in self.all_vars:
-            return self.all_vars[str(peer_id)]['public_key']
-
-    def get_private_key_by_id(self, peer_id):
-        if str(peer_id) in self.all_vars:
-            return self.all_vars[str(peer_id)]['private_key']
 
     def get_peers(self):
         return self.all_vars.keys()
