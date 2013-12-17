@@ -126,7 +126,7 @@ class ExperimentServiceProto(LineReceiver):
 
     def proto_set(self, line):
         if line.startswith('set:'):
-            _, key, value = line.strip().split(':')
+            _, key, value = line.strip().split(':', 2)
             msg("This subscriber sets %s to %s" % (key, value), logLevel=logging.DEBUG)
             self.vars[key] = value
             return 'set'
