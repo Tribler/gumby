@@ -81,6 +81,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._stats_file = None
         self._reset_statistics = True
 
+        self._crypto = self.initializeCrypto()
         self.generateMyMember()
         self.vars['private_keypair'] = base64.encodestring(self.my_member_private_key)
 
@@ -125,6 +126,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def registerCallbacks(self):
         pass
 
+    def initializeCrypto(self):
+        from Tribler.dispersy.crypto import ECCrypto
+        return ECCrypto()
+
     @property
     def my_member_key_curve(self):
         # low (NID_sect233k1) isn't actually that low, switching to 160bits as this is comparable to rsa 1024
@@ -135,9 +140,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
         return u"NID_secp160k1"
 
     def generateMyMember(self):
-        ec = self._dispersy.crypto.generate_key(self.my_member_key_curve)
-        self.my_member_key = self._dispersy.crypto.key_to_bin(ec.pub())
-        self.my_member_private_key = self._dispersy.crypto.key_to_bin(ec)
+        ec = self._crypto.generate_key(self.my_member_key_curve)
+        self.my_member_key = self._crypto.key_to_bin(ec.pub())
+        self.my_member_private_key = self._crypto.key_to_bin(ec)
 
     #
     # Actions
@@ -180,7 +185,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         from Tribler.dispersy.dispersy import Dispersy
         from Tribler.dispersy.endpoint import StandaloneEndpoint
 
-        self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file)
+        self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
         self._dispersy.statistics.enable_debug_statistics(True)
 
         if self._strict:
