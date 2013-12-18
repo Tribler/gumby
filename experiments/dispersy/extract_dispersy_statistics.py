@@ -334,17 +334,18 @@ class BasicExtractor(AbstractHandler):
     def end_file(self, node_nr, timestamp, timeoffset):
         print >> self.h_drop, timestamp, timeoffset, self.c_dropped_record
 
-        print >> self.h_total_connections, timestamp, timeoffset,
-        for community in self.communities:
-            print >> self.h_total_connections, self.c_communities[community][0],
-        for community in self.communities:
-                print >> self.h_total_connections, self.c_communities[community][1],
-        print >> self.h_total_connections, ''
+        if self.c_communities.values():
+            print >> self.h_total_connections, timestamp, timeoffset,
+            for community in self.communities:
+                print >> self.h_total_connections, self.c_communities[community][0],
+            for community in self.communities:
+                    print >> self.h_total_connections, self.c_communities[community][1],
+            print >> self.h_total_connections, ''
 
-        max_incomming_connections = max(nr_candidates for nr_candidates, _ in self.c_communities.values())
-        self.nr_connections.append((max_incomming_connections, node_nr))
-        self.nr_connections.sort(reverse=True)
-        self.nr_connections = self.nr_connections[:10]
+            max_incomming_connections = max(nr_candidates for nr_candidates, _ in self.c_communities.values())
+            self.nr_connections.append((max_incomming_connections, node_nr))
+            self.nr_connections.sort(reverse=True)
+            self.nr_connections = self.nr_connections[:10]
 
         self.h_stat.close()
         self.h_drop.close()
