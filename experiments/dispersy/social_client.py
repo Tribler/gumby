@@ -72,10 +72,10 @@ class SocialClient(DispersyExperimentScriptClient):
         self.set_community_kwarg('max_fprefs', 100)
         self.set_community_kwarg('use_cardinality', False)
 
-    def initializeCrypto(self):
-        # as i'm cpu bound, turning off creating and verifying signatures
-        from Tribler.dispersy.crypto import NoCrypto
-        return NoCrypto()
+#     def initializeCrypto(self):
+#         # as i'm cpu bound, turning off creating and verifying signatures
+#         from Tribler.dispersy.crypto import NoCrypto
+#         return NoCrypto()
 
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
