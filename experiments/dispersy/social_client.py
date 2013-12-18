@@ -72,10 +72,10 @@ class SocialClient(DispersyExperimentScriptClient):
         self.set_community_kwarg('max_fprefs', 100)
         self.set_community_kwarg('use_cardinality', False)
 
-    @property
-    def my_member_key_curve(self):
-        # as i'm cpu bound, lowering the number of bits of the elliptic curve
-        return u"NID_secp112r1"
+    def initializeCrypto(self):
+        # as i'm cpu bound, turning off creating and verifying signatures
+        from Tribler.dispersy.crypto import NoCrypto
+        return NoCrypto()
 
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
