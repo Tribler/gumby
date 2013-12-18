@@ -127,8 +127,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         pass
 
     def initializeCrypto(self):
-        from Tribler.dispersy.crypto import ECCrypto
-        return ECCrypto()
+        from Tribler.dispersy.crypto import ECCrypto, NoCrypto
+        if environ.get('TRACKER_CRYPTO', 'ECCrypto'):
+            return ECCrypto()
+        return NoCrypto()
 
     @property
     def my_member_key_curve(self):
