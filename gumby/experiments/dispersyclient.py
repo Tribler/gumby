@@ -135,11 +135,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
         return u"NID_secp160k1"
 
     def generateMyMember(self):
-        from Tribler.dispersy.crypto import ec_generate_key, ec_to_public_bin, ec_to_private_bin
-
-        ec = ec_generate_key(self.my_member_key_curve)
-        self.my_member_key = ec_to_public_bin(ec)
-        self.my_member_private_key = ec_to_private_bin(ec)
+        ec = self._dispersy.crypto.generate_key(self.my_member_key_curve)
+        self.my_member_key = self._dispersy.crypto.key_to_bin(ec.pub())
+        self.my_member_private_key = self._dispersy.crypto.key_to_bin(ec)
 
     #
     # Actions
@@ -278,7 +276,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def onAllVarsReceived(self):
         for peer_dict in self.all_vars.iteritems():
             if 'private_keypair' in peer_dict:
-                peer_dict['private_keypair'] = base64.decodestring(peer_dict['private_keypair'])
+                peer_dict['private_keypair'] = self._dispersy.crypto.key_from_private_bin(base64.decodestring(peer_dict['private_keypair']))
 
     def get_private_keypair_by_id(self, peer_id):
         if str(peer_id) in self.all_vars:
