@@ -51,7 +51,7 @@ def reduce(base_directory, nrlines, inputfile, outputfile):
         ofp.close()
 
 def main(input_directory, nrlines):
-    for filename in ['send', 'send_diff', 'received', 'received_diff', 'dropped', 'dropped_diff', 'bl_skip', 'bl_skip_diff', 'bl_reuse', 'bl_reuse_skip', 'utimes', 'stimes', 'wchars', 'rchars', 'writebytes', 'readbytes', 'vsizes', 'utimes_node', 'stimes_node', 'wchars_node', 'rchars_node', 'writebytes_node', 'readbytes_node', 'vsizes_node', 'sum_total_records', 'sum_statistics']:
+    for filename in ['send', 'send_diff', 'received', 'received_diff', 'dropped', 'dropped_diff', 'bl_skip', 'bl_skip_diff', 'bl_reuse', 'bl_reuse_skip', 'utimes', 'stimes', 'wchars', 'rchars', 'writebytes', 'readbytes', 'vsizes', 'rsizes', 'utimes_node', 'stimes_node', 'wchars_node', 'rchars_node', 'writebytes_node', 'readbytes_node', 'vsizes_node', 'rsizes_node', 'sum_total_records', 'sum_statistics']:
         reduce(input_directory, nrlines, '%s.txt' % filename, '%s_reduced.txt' % filename)
 
     total_communities = 1

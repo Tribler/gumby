@@ -58,6 +58,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
     stimes = {}
     utimes = {}
     vsizes = {}
+    rsizes = {}
     rchars = {}
     wchars = {}
     readbytes = {}
@@ -110,7 +111,10 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
                 vsizes.setdefault(time, {})[pid] = vsize / 1048576.0
                 vsizes[time].setdefault(nodename, []).append(vsizes[time][pid])
 
-                # rss = long(parts[24])
+                rss = long(parts[24])
+                rsizes.setdefault(time, {})[pid] = rss / 1048576.0
+                rsizes[time].setdefault(nodename, []).append(rsizes[time][pid])
+
                 # delay_io_ticks = long(parts[41])
                 write_bytes = long(parts[-2])
                 read_bytes = long(parts[-3])
@@ -162,6 +166,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
     write_records(all_pids, writebytes, output_directory, "writebytes.txt")
     write_records(all_pids, readbytes, output_directory, "readbytes.txt")
     write_records(all_pids, vsizes, output_directory, "vsizes.txt")
+    write_records(all_pids, rsizes, output_directory, "rsizes.txt")
 
     if len(all_nodes) > 1:
         # calculate sum for all nodes
@@ -179,6 +184,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
         write_records(all_nodes, writebytes, output_directory, "writebytes_node.txt")
         write_records(all_nodes, readbytes, output_directory, "readbytes_node.txt")
         write_records(all_nodes, vsizes, output_directory, "vsizes_node.txt")
+        write_records(all_nodes, rsizes, output_directory, "rsizes_node.txt")
 
 def main(input_directory, output_directory, start_time=0):
     parse_resource_files(input_directory, output_directory, start_time)

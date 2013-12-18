@@ -227,13 +227,13 @@ if(file.exists("readbytes_reduced.txt")){
 	ggsave(file="readbytes.png", width=12, height=6, dpi=100)
 }
 
-if(file.exists("vsizes_reduced.txt")){
-	df <- read.table("vsizes_reduced.txt", header = TRUE, check.names = FALSE)
+if(file.exists("rsizes_reduced.txt")){
+	df <- read.table("rsizes_reduced.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
 	df$type <- 'Process'
 
-	if(file.exists("vsizes_node_reduced.txt")){
-		df2 <- read.table("vsizes_node_reduced.txt", header = TRUE, check.names = FALSE)
+	if(file.exists("rsizes_node_reduced.txt")){
+		df2 <- read.table("rsizes_node_reduced.txt", header = TRUE, check.names = FALSE)
 		df2 <- melt(df2, id="time")
 		df2$type <- 'Node'
 
@@ -250,16 +250,16 @@ if(file.exists("vsizes_reduced.txt")){
 
 	p <- p + geom_step(aes(time, value, group=variable, colour=variable))
 
-	if(file.exists("vsizes_node_reduced.txt")){
+	if(file.exists("rsizes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
 	}
 
 	p <- p + theme(legend.position = "none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "VSize (MBytes)\n")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "RSize (MBytes)\n")
 	if(length(args) > 0){
 		p <- p + xlim(minX, maxX)
 	}
 	p
 
-	ggsave(file="vsizes.png", width=12, height=6, dpi=100)
+	ggsave(file="rsizes.png", width=12, height=6, dpi=100)
 }
