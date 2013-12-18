@@ -119,20 +119,14 @@ class SocialClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def insert_my_key(self):
-        from Tribler.dispersy.crypto import ec_from_private_bin
-
-        key = self.my_member_private_key
-
-        keyhash = long(sha1(key).hexdigest(), 16)
+        keyhash = long(sha1(self.my_member_key).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(keyhash, {})
 
-        key = ec_from_private_bin(key)
+        key = self._crypto.key_from_public_pem(self.my_member_key)
         self._community._friend_db.add_my_key(key, keyhash)
 
     @call_on_dispersy_thread
     def add_friend(self, peer_id):
-        from Tribler.dispersy.crypto import ec_from_private_bin
-
         peer_id = int(peer_id)
 
         # if we don't get the ipport, then this peer isn't deployed to the das
@@ -140,10 +134,9 @@ class SocialClient(DispersyExperimentScriptClient):
         key = self.get_private_keypair_by_id(peer_id)
 
         if ipport and key:
-            keyhash = long(sha1(key).hexdigest(), 16)
+            key = key.pub()
+            keyhash = long(sha1(self._crypto.key_to_bin(key)).hexdigest(), 16)
             self._community._mypref_db.addMyPreference(keyhash, {})
-
-            key = ec_from_private_bin(key)
             self._community._friend_db.add_friend(str(peer_id), key, keyhash)
 
             self.friends.add(ipport)
