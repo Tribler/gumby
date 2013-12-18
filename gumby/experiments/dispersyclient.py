@@ -225,10 +225,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def stop(self, retry=3):
         retry = int(retry)
         if self._dispersy_exit_status is None and retry:
-                reactor.callLater(1, self.stop, retry - 1)
+            reactor.callLater(1, self.stop, retry - 1)
         else:
-                msg("Dispersy exit status was:", self._dispersy_exit_status)
-                reactor.callLater(0, reactor.stop)
+            msg("Dispersy exit status was:", self._dispersy_exit_status)
+            reactor.callLater(0, reactor.stop)
 
     def set_master_member(self, pub_key, priv_key=''):
         self.master_key = pub_key.decode("HEX")
@@ -278,20 +278,22 @@ class DispersyExperimentScriptClient(ExperimentClient):
     # Aux. functions
     #
 
-    def onAllVarsReceived(self):
-        for peer_dict in self.all_vars.iteritems():
-            if 'private_keypair' in peer_dict:
-                peer_dict['private_keypair'] = self._crypto.key_from_private_bin(base64.decodestring(peer_dict['private_keypair']))
 
     def get_private_keypair_by_id(self, peer_id):
         if str(peer_id) in self.all_vars:
-            return self.all_vars[str(peer_id)]['private_keypair']
+            key = self.all_vars[str(peer_id)]['private_keypair']
+            if isinstance(key, basestring):
+                key = self.all_vars[str(peer_id)]['private_keypair'] = self._crypto.key_from_private_bin(base64.decodestring(key))
+            return key
 
     def get_private_keypair(self, ip, port):
         port = int(port)
         for peer_dict in self.all_vars.itervalues():
             if peer_dict['host'] == ip and int(peer_dict['port']) == port:
-                return peer_dict['private_keypair']
+                key = peer_dict['private_keypair']
+                if isinstance(key, basestring):
+                    key = peer_dict['private_keypair'] = self._crypto.key_from_private_bin(base64.decodestring(key))
+                return key
 
         err("Could not get_private_keypair for", ip, port)
 
