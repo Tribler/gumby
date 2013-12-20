@@ -127,15 +127,11 @@ class DispersyExperimentScriptClient(ExperimentClient):
         pass
 
     def initializeCrypto(self):
-        try:
-            from Tribler.dispersy.crypto import ECCrypto, NoCrypto
-            if environ.get('TRACKER_CRYPTO', 'ECCrypto'):
-                return ECCrypto()
-            msg('Turning off Crypto')
-            return NoCrypto()
-
-        except ImportError:
-            return None
+        from Tribler.dispersy.crypto import ECCrypto, NoCrypto
+        if environ.get('TRACKER_CRYPTO', 'ECCrypto'):
+            return ECCrypto()
+        msg('Turning off Crypto')
+        return NoCrypto()
 
     @property
     def my_member_key_curve(self):
@@ -147,19 +143,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
         return u"NID_secp160k1"
 
     def generateMyMember(self):
-        if self._crypto:
-            ec = self._crypto.generate_key(self.my_member_key_curve)
-            self.my_member_key = self._crypto.key_to_bin(ec.pub())
-            self.my_member_private_key = self._crypto.key_to_bin(ec)
-
-        else:
-            # backwards compatibility
-            from Tribler.dispersy.crypto import ec_generate_key, ec_to_public_bin, ec_to_private_bin
-
-            ec = ec_generate_key(self.my_member_key_curve)
-            self.my_member_key = ec_to_public_bin(ec)
-            self.my_member_private_key = ec_to_private_bin(ec)
-
+        ec = self._crypto.generate_key(self.my_member_key_curve)
+        self.my_member_key = self._crypto.key_to_bin(ec.pub())
+        self.my_member_private_key = self._crypto.key_to_bin(ec)
     #
     # Actions
     #
@@ -201,10 +187,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         from Tribler.dispersy.dispersy import Dispersy
         from Tribler.dispersy.endpoint import StandaloneEndpoint
 
-        if self._crypto:
-            self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
-        else:
-            self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file)
+        self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
         self._dispersy.statistics.enable_debug_statistics(True)
 
         if self._strict:
@@ -302,11 +285,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         if str(peer_id) in self.all_vars:
             key = self.all_vars[str(peer_id)]['private_keypair']
             if isinstance(key, basestring):
-                if self._crypto:
-                    key = self.all_vars[str(peer_id)]['private_keypair'] = self._crypto.key_from_private_bin(base64.decodestring(key))
-                else:
-                    from Tribler.dispersy.crypto import ec_from_private_bin
-                    key = peer_dict['private_keypair'] = ec_from_private_bin(base64.decodestring(key))
+                key = self.all_vars[str(peer_id)]['private_keypair'] = self._crypto.key_from_private_bin(base64.decodestring(key))
             return key
 
     def get_private_keypair(self, ip, port):
@@ -315,11 +294,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
             if peer_dict['host'] == ip and int(peer_dict['port']) == port:
                 key = peer_dict['private_keypair']
                 if isinstance(key, basestring):
-                    if self._crypto:
-                        key = peer_dict['private_keypair'] = self._crypto.key_from_private_bin(base64.decodestring(key))
-                    else:
-                        from Tribler.dispersy.crypto import ec_from_private_bin
-                        key = peer_dict['private_keypair'] = ec_from_private_bin(base64.decodestring(key))
+                    key = peer_dict['private_keypair'] = self._crypto.key_from_private_bin(base64.decodestring(key))
                 return key
 
         err("Could not get_private_keypair for", ip, port)
