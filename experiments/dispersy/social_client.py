@@ -37,7 +37,7 @@
 
 # Code:
 import sys
-from os import path
+from os import path, environ
 from random import sample
 from sys import path as pythonpath
 from hashlib import sha1
@@ -72,11 +72,6 @@ class SocialClient(DispersyExperimentScriptClient):
         self.set_community_kwarg('max_fprefs', 100)
         self.set_community_kwarg('use_cardinality', False)
 
-#     def initializeCrypto(self):
-#         # as i'm cpu bound, turning off creating and verifying signatures
-#         from Tribler.dispersy.crypto import NoCrypto
-#         return NoCrypto()
-
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
 
@@ -92,6 +87,14 @@ class SocialClient(DispersyExperimentScriptClient):
         DispersyExperimentScriptClient.peertype(self, peertype)
         if peertype == "peercache":
             self.peercache = True
+
+    def initializeCrypto(self):
+        from Tribler.community.privatesocial.elgamalcrypto.py import ElgamalCrypto, NoElgamalCrypto
+        if environ.get('TRACKER_CRYPTO', 'ECCrypto'):
+            return ElgamalCrypto()
+
+        msg('Turning off Crypto')
+        return NoElgamalCrypto()
 
     def set_community_class(self, commtype):
         from Tribler.community.privatesocial.community import NoFSocialCommunity, PSocialCommunity, HSocialCommunity, PoliSocialCommunity
