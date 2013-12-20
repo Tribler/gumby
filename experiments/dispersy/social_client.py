@@ -90,7 +90,7 @@ class SocialClient(DispersyExperimentScriptClient):
             self.peercache = True
 
     def initializeCrypto(self):
-        from Tribler.community.privatesocial.elgamalcrypto.py import ElgamalCrypto, NoElgamalCrypto
+        from Tribler.community.privatesemantic.elgamalcrypto import ElgamalCrypto, NoElgamalCrypto
         if environ.get('TRACKER_CRYPTO', 'ECCrypto'):
             return ElgamalCrypto()
 
