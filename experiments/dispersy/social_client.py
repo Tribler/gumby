@@ -82,6 +82,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.add_foaf, 'add_foaf')
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
         self.scenario_runner.register(self.set_community_class, 'set_community_class')
+        self.scenario_runner.register(self.send_post, 'send_post')
 
     def peertype(self, peertype):
         DispersyExperimentScriptClient.peertype(self, peertype)
@@ -164,6 +165,13 @@ class SocialClient(DispersyExperimentScriptClient):
             self.not_connected_foafs.add(ipport)
 
             self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
+
+    @call_on_dispersy_thread
+    def send_post(self, peer_id):
+        peer_id = int(peer_id)
+
+        msg = "Hello peer %d" % peer_id
+        self._community.create_text(msg, [str(peer_id), ])
 
     @call_on_dispersy_thread
     def connect_to_friends(self):
