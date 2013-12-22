@@ -2,7 +2,7 @@
 @0:0 set_community_class $COMMUNITY_TYPE
 @0:0 use_memory_database
 @0:0 start_dispersy
-@0:0 churn expon 300
+@0:1 churn expon 300
 @0:2 add_friend 1848 {1849}
 @0:2 add_friend 1849 {1848}
 @0:2 add_friend 1844 {874}
