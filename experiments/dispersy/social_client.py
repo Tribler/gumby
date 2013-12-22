@@ -91,7 +91,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
     def initializeCrypto(self):
         from Tribler.community.privatesemantic.elgamalcrypto import ElgamalCrypto, NoElgamalCrypto
-        if environ.get('TRACKER_CRYPTO', 'ECCrypto'):
+        if environ.get('TRACKER_CRYPTO', 'ECCrypto') == 'ECCrypto':
             return ElgamalCrypto()
 
         msg('Turning off Crypto')
