@@ -120,6 +120,15 @@ class SocialClient(DispersyExperimentScriptClient):
         # disable msimilarity requests
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
         self._community.create_msimilarity_request = lambda destination: False
+        
+        if self._is_joined:
+            self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
+    
+    @call_on_dispersy_thread    
+    def offline(self):
+        DispersyExperimentScriptClient.online(self)
+        
+        self._dispersy.callback.unregister(u"monitor_friends")
 
     @call_on_dispersy_thread
     def insert_my_key(self):
