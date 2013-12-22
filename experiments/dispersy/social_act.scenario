@@ -3,7 +3,6 @@
 @0:0 use_memory_database
 @0:0 start_dispersy
 @0:0 churn expon 300
-@0:1 online
 @0:2 add_friend 1848 {1849}
 @0:2 add_friend 1849 {1848}
 @0:2 add_friend 1844 {874}
