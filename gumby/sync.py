@@ -131,7 +131,7 @@ class ExperimentServiceProto(LineReceiver):
             self.vars[key] = value
             return 'set'
         elif line.strip() == 'ready':
-            msg("This subscriber is ready now.")
+            msg("This subscriber is ready now.", logLevel=logging.DEBUG)
             self.ready = True
             self.factory.setConnectionReady(self)
             return 'wait'
@@ -165,7 +165,7 @@ class ExperimentServiceFactory(Factory):
             self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
         self.connections.append(proto)
         if len(self.connections) >= self.expected_subscribers:
-            msg("All subscribers are ready, pushing data!", logLevel=logging.INFO)
+            msg("All subscribers are ready, pushing data!")
             self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
         else:
@@ -175,7 +175,7 @@ class ExperimentServiceFactory(Factory):
 
     def _print_subscribers_ready(self):
         if len(self.connections) < self.expected_subscribers:
-            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers), logLevel=logging.INFO)
+            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers))
         else:
             self._subscriber_looping_call.stop()
             self._subscriber_looping_call = None
@@ -189,7 +189,7 @@ class ExperimentServiceFactory(Factory):
             subscriber_vars['host'] = subscriber.transport.getPeer().host
             vars[subscriber.id] = subscriber_vars
         json_vars = json.dumps(vars)
-        msg("Pushing a %d bytes long json doc." % len(json_vars))
+        msg("Pushing a %d bytes long json doc." % len(json_vars), logLevel=logging.DEBUG)
 
         # Send the ID and json doc to the subscribers
         for subscriber in self.connections:
@@ -200,7 +200,7 @@ class ExperimentServiceFactory(Factory):
 
     def startExperiment(self):
         # Give the go signal and disconnect
-        msg("Starting the experiment!", logLevel=logging.INFO)
+        msg("Starting the experiment!")
         deferreds = []
         for subscriber in self.connections:
             subscriber.sendLine("go")
@@ -211,10 +211,10 @@ class ExperimentServiceFactory(Factory):
     def unregisterConnection(self, proto):
         if proto in self.connections:
             self.connections.remove(proto)
-        msg("Connection cleanly unregistered.")
+        msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
 
     def onExperimentStarted(self, _):
-        msg("Experiment started, shutting down sync server.", logLevel=logging.INFO)
+        msg("Experiment started, shutting down sync server.")
         reactor.callLater(0, stopReactor)
 
     def onExperimentStartError(self, failure):
@@ -241,7 +241,7 @@ class ExperimentClient(LineReceiver):
         self.all_vars = {}
 
     def connectionMade(self):
-        msg("Connected to the experiment server")
+        msg("Connected to the experiment server", logLevel=logging.DEBUG)
         self.sendLine("time:%f" % time())
         for key, val in self.vars.iteritems():
             self.sendLine("set:%s:%s" % (key, val))
@@ -261,10 +261,10 @@ class ExperimentClient(LineReceiver):
                 self.transport.loseConnection()
 
     def onAllVarsReceived(self):
-        msg("onAllVarsReceived: Call not implemented")
+        msg("onAllVarsReceived: Call not implemented", logLevel=logging.DEBUG)
 
     def startExperiment(self):
-        msg("startExperiment: Call not implemented")
+        msg("startExperiment: Call not implemented", logLevel=logging.DEBUG)
 
     def get_peer_id(self, ip, port):
         port = int(port)
@@ -318,7 +318,7 @@ class ExperimentClientFactory(ReconnectingClientFactory):
         self.protocol = protocol
 
     def buildProtocol(self, address):
-        msg("Attempting to connect to the experiment server.")
+        msg("Attempting to connect to the experiment server.", logLevel=logging.DEBUG)
         p = self.protocol(self.vars)
         p.factory = self
         return p
