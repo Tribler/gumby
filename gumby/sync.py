@@ -336,7 +336,7 @@ class ExperimentClientFactory(ReconnectingClientFactory):
 
 def stopReactor():
     if reactor.running:
-        msg("Stopping reactor")
+        msg("Stopping reactor", logLevel=logging.DEBUG)
         reactor.stop()
 
 #
