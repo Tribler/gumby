@@ -37,7 +37,7 @@
 
 # Code:
 
-from experiments.dispersy.social_client import SocialClient
+from gumby.experiments.dispersy.social_client import SocialClient
 from gumby.experiments.dispersyclient import main
 
 if __name__ == '__main__':
