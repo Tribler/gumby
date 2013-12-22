@@ -258,6 +258,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     @call_on_dispersy_thread
     def offline(self):
+        msg("Trying to go offline")
         if self._community is None:
             msg("offline (we are already offline)")
         else:

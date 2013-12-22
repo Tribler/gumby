@@ -126,7 +126,7 @@ class SocialClient(DispersyExperimentScriptClient):
     
     @call_on_dispersy_thread    
     def offline(self):
-        DispersyExperimentScriptClient.online(self)
+        DispersyExperimentScriptClient.offline(self)
         
         self._dispersy.callback.unregister(u"monitor_friends")
 
