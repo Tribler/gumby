@@ -98,9 +98,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._crypto = self.initializeCrypto()
         self.generateMyMember()
         self.vars['private_keypair'] = base64.encodestring(self.my_member_private_key)
+        self.parseScenario()
 
-    def startExperiment(self):
-        msg("Starting dispersy scenario experiment")
+    def parseScenario(self):
         scenario_file_path = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
 
         self.scenario_runner = ScenarioRunner(scenario_file_path, int(self.my_id))
@@ -120,6 +120,15 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.annotate)
         self.scenario_runner.register(self.peertype)
 
+        self.registerCallbacks()
+        
+        t1 = time()
+        self.scenario_runner.parse_file()
+        msg('Took %.2f to parse scenario file'%time() - t1)
+
+    def startExperiment(self):
+        msg("Starting dispersy scenario experiment")
+        
         # TODO(emilon): Move this to the right place
         # TODO(emilon): Do we want to have the .dbs in the output dirs or should they be dumped to /tmp?
         my_dir = path.join(environ['OUTPUT_DIR'], self.my_id)
@@ -132,12 +141,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
             symlink(path.join(environ['PROJECT_DIR'], 'tribler', 'bootstraptribler.txt'), 'bootstraptribler.txt')
         except OSError:
             pass
-
-        self.registerCallbacks()
-
-        t1 = time()
+        
         self.scenario_runner.run()
-        msg('Took %.2f to parse scenario file'%time() - t1)
 
     def registerCallbacks(self):
         pass

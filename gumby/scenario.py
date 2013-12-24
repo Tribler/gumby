@@ -124,6 +124,8 @@ class ScenarioRunner():
         self._expstartstamp = expstartstamp
         self._peernumber = peernumber
         self._origin = None  # will be set just before run()-ing
+        
+        self._my_actions = []
 
     def register(self, clb, name=None):
         """
@@ -143,6 +145,14 @@ class ScenarioRunner():
             "+": now
         }
 
+    def parse_file(self):
+        for (tstmp, _, clb, args) in self._parse_scenario(self.filename):
+            if clb not in self._callables:
+                msg(clb, "is not registered as an action!")
+                continue
+            
+            self._my_actions.append((tstmp, clb, args))
+
     def run(self):
         """
         Schedules calls for each scenario line.
@@ -151,10 +161,7 @@ class ScenarioRunner():
 
         msg("Running scenario from file:", self.filename)
 
-        for (tstmp, lineno, clb, args) in self._parse_scenario(self.filename):
-            if clb not in self._callables:
-                msg(clb, "is not registered as an action!")
-                continue
+        for tstmp, clb, args in self._my_actions:
             # TODO(vladum): Handle errors while calling.
             delay = tstmp - time()
             reactor.callLater(
