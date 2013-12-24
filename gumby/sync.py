@@ -259,6 +259,9 @@ class ExperimentClient(LineReceiver):
             self.state = statehandler(line)
             if self.state == 'done':
                 self.transport.loseConnection()
+    
+    def onIdReceived(self):
+        msg("onIdReceived: Call not implemented", logLevel=logging.DEBUG)
 
     def onAllVarsReceived(self):
         msg("onAllVarsReceived: Call not implemented", logLevel=logging.DEBUG)
@@ -292,6 +295,7 @@ class ExperimentClient(LineReceiver):
         if maybe_id == "id":
             self.my_id = id
             msg('Got id: "%s" assigned' % id, logLevel=logging.DEBUG)
+            self.onIdReceived()
             return "all_vars"
         else:
             err("Received an unexpected string from the server, closing connection")
