@@ -292,6 +292,11 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def buffer_call(self, func, *args, **kargs):
         if not self.is_online():
             self._online_buffer.append((func, args, kargs))
+        else:
+            if not self._dispersy.callback.is_current_thread:
+                self._dispersy.callback.register(func, args, kargs)
+            else:
+                func(*args, **kargs)
     
     def empty_buffer(self):
         #perform all tasks which were scheduled while we were offline    
