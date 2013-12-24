@@ -42,7 +42,8 @@ from random import sample
 from sys import path as pythonpath
 from hashlib import sha1
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main
+from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main,\
+    buffer_online
 
 from twisted.python.log import msg
 
@@ -130,7 +131,7 @@ class SocialClient(DispersyExperimentScriptClient):
         
         self._dispersy.callback.unregister(u"monitor_friends")
 
-    @call_on_dispersy_thread
+    @buffer_online
     def insert_my_key(self):
         keyhash = long(sha1(self.my_member_key).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(keyhash, {})
@@ -138,7 +139,7 @@ class SocialClient(DispersyExperimentScriptClient):
         key = self._crypto.key_from_public_bin(self.my_member_key)
         self._community._friend_db.add_my_key(key, keyhash)
 
-    @call_on_dispersy_thread
+    @buffer_online
     def add_friend(self, peer_id):
         peer_id = int(peer_id)
 
@@ -161,7 +162,7 @@ class SocialClient(DispersyExperimentScriptClient):
         elif ipport:
             print >> sys.stderr, "Got ip/port, but not key?", peer_id
 
-    @call_on_dispersy_thread
+    @buffer_online
     def add_foaf(self, peer_id, his_friends):
         peer_id = int(peer_id)
         his_friends = [int(friend) for friend in his_friends[1:-1].split(",")]
@@ -175,14 +176,14 @@ class SocialClient(DispersyExperimentScriptClient):
 
             self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
 
-    @call_on_dispersy_thread
+    @buffer_online
     def send_post(self, peer_id):
         peer_id = int(peer_id)
 
         msg = "Hello peer %d" % peer_id
         self._community.create_text(msg, [str(peer_id), ])
 
-    @call_on_dispersy_thread
+    @buffer_online
     def connect_to_friends(self):
         friendsaddresses = self.friends
         foafsaddresses = self.foafs

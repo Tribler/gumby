@@ -65,6 +65,13 @@ def call_on_dispersy_thread(func):
     helper.__name__ = func.__name__
     return helper
 
+def buffer_online(func):
+    def helper(*args, **kargs):
+        args[0].buffer_call(func, *args, **kargs)
+        
+    helper.__name__ = func.__name__
+    return helper
+
 class DispersyExperimentScriptClient(ExperimentClient):
     scenario_file = None
 
@@ -80,6 +87,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.community_kwargs = {}
         self._stats_file = None
         self._reset_statistics = True
+        self._online_buffer = []
 
         self._crypto = self.initializeCrypto()
         self.generateMyMember()
@@ -257,6 +265,12 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
                 self.print_on_change('community-kwargs', {}, self.community_kwargs)
                 self.print_on_change('community-env', {}, {'pid':getpid()})
+            
+            #perform all tasks which were scheduled while we were offline    
+            for func, args, kargs in self._online_buffer:
+                func(*args, **kargs)
+            self._online_buffer = []
+            
         else:
             msg("online (we are already online)")
 
@@ -273,7 +287,14 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 community.unload_community()
 
             self._community = None
-            self._dispersy.on_incoming_packets = lambda *params: None 
+            self._dispersy.on_incoming_packets = lambda *params: None
+            
+    def is_online(self):
+        return self._community != None 
+
+    def buffer_call(self, func, *args, **kargs):
+        if not self.is_online():
+            self._online_buffer.append((func, args, kargs))
 
     @call_on_dispersy_thread
     def reset_dispersy_statistics(self):
