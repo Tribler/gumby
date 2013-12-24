@@ -90,6 +90,8 @@ class ExperimentServiceProto(LineReceiver):
         self.factory = factory
         self.state = 'init'
         self.vars = {}
+        
+        self.sendLine("id:%s" % self.id)
 
     def connectionMade(self):
         msg("New connection from: ", str(self.transport.getPeer()), logLevel=logging.DEBUG)
@@ -128,10 +130,6 @@ class ExperimentServiceProto(LineReceiver):
         if line.startswith('set:'):
             _, key, value = line.strip().split(':', 2)
             msg("This subscriber sets %s to %s" % (key, value), logLevel=logging.DEBUG)
-            
-            if len(self.vars) == 0:
-                self.sendLine("id:%s" % self.id)
-            
             self.vars[key] = value
             return 'set'
         
