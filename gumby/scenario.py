@@ -146,6 +146,8 @@ class ScenarioRunner():
         }
 
     def parse_file(self):
+        self._init_origin_time()
+        
         for (tstmp, _, clb, args) in self._parse_scenario(self.filename):
             if clb not in self._callables:
                 msg(clb, "is not registered as an action!")
@@ -157,8 +159,6 @@ class ScenarioRunner():
         """
         Schedules calls for each scenario line.
         """
-        self._init_origin_time()
-
         msg("Running scenario from file:", self.filename)
 
         for tstmp, clb, args in self._my_actions:
