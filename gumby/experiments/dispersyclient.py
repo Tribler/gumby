@@ -189,6 +189,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
         self._dispersy.statistics.enable_debug_statistics(True)
+        
+        self.original_on_incoming_packets = self._dispersy.on_incoming_packets
 
         if self._strict:
             def exception_handler(exception, fatal):
@@ -242,6 +244,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
         if self._community is None:
             msg("online")
 
+            self._dispersy.on_incoming_packets = self.original_on_incoming_packets
+
             if self._is_joined:
                 self._community = self.community_class.load_community(self._dispersy, self._master_member, *self.community_args, **self.community_kwargs)
 
@@ -259,13 +263,17 @@ class DispersyExperimentScriptClient(ExperimentClient):
     @call_on_dispersy_thread
     def offline(self):
         msg("Trying to go offline")
-        if self._community is None:
+            
+        if self._community is None and self._is_joined:
             msg("offline (we are already offline)")
+            
         else:
             msg("offline")
             for community in self._dispersy.get_communities():
                 community.unload_community()
+
             self._community = None
+            self._dispersy.on_incoming_packets = lambda *params: None 
 
     @call_on_dispersy_thread
     def reset_dispersy_statistics(self):
