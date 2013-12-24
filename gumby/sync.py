@@ -128,13 +128,19 @@ class ExperimentServiceProto(LineReceiver):
         if line.startswith('set:'):
             _, key, value = line.strip().split(':', 2)
             msg("This subscriber sets %s to %s" % (key, value), logLevel=logging.DEBUG)
+            
+            if len(self.vars) == 0:
+                self.sendLine("id:%s" % self.id)
+            
             self.vars[key] = value
             return 'set'
+        
         elif line.strip() == 'ready':
             msg("This subscriber is ready now.", logLevel=logging.DEBUG)
             self.ready = True
             self.factory.setConnectionReady(self)
             return 'wait'
+        
         else:
             err('Unexpected command received "%s"' % line)
             err('closing connection.')
@@ -164,6 +170,7 @@ class ExperimentServiceFactory(Factory):
         if not self._timeout_delayed_call:
             self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
         self.connections.append(proto)
+
         if len(self.connections) >= self.expected_subscribers:
             msg("All subscribers are ready, pushing data!")
             self._timeout_delayed_call.cancel()
@@ -191,9 +198,8 @@ class ExperimentServiceFactory(Factory):
         json_vars = json.dumps(vars)
         msg("Pushing a %d bytes long json doc." % len(json_vars), logLevel=logging.DEBUG)
 
-        # Send the ID and json doc to the subscribers
+        # Send the json doc to the subscribers
         for subscriber in self.connections:
-            subscriber.sendLine("id:%s" % subscriber.id)
             subscriber.sendLine(json_vars)
         msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
         reactor.callLater(self.experiment_start_delay, self.startExperiment)
@@ -246,7 +252,6 @@ class ExperimentClient(LineReceiver):
         for key, val in self.vars.iteritems():
             self.sendLine("set:%s:%s" % (key, val))
         self.state = "id"
-        self.sendLine("ready")
 
     def lineReceived(self, line):
         try:
@@ -296,6 +301,7 @@ class ExperimentClient(LineReceiver):
             self.my_id = id
             msg('Got id: "%s" assigned' % id, logLevel=logging.DEBUG)
             self.onIdReceived()
+            self.sendLine("ready")
             return "all_vars"
         else:
             err("Received an unexpected string from the server, closing connection")
