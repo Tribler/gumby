@@ -67,7 +67,13 @@ def call_on_dispersy_thread(func):
 
 def buffer_online(func):
     def helper(*args, **kargs):
-        args[0].buffer_call(func, *args, **kargs)
+        if not args[0].is_online():
+            args[0].buffer_call(func, *args, **kargs)
+        else:
+            if not args[0]._dispersy.callback.is_current_thread:
+                args[0]._dispersy.callback.register(func, args, kargs)
+            else:
+                func(*args, **kargs)
         
     helper.__name__ = func.__name__
     return helper
@@ -290,13 +296,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         return self._community != None 
 
     def buffer_call(self, func, *args, **kargs):
-        if not self.is_online():
-            self._online_buffer.append((func, args, kargs))
-        else:
-            if not self._dispersy.callback.is_current_thread:
-                self._dispersy.callback.register(func, args, kargs)
-            else:
-                func(*args, **kargs)
+        self._online_buffer.append((func, args, kargs))
     
     def empty_buffer(self):
         #perform all tasks which were scheduled while we were offline    
