@@ -98,7 +98,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._crypto = self.initializeCrypto()
         self.generateMyMember()
         self.vars['private_keypair'] = base64.encodestring(self.my_member_private_key)
-        self.parseScenario()
 
     def onIdReceived(self):
         scenario_file_path = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
