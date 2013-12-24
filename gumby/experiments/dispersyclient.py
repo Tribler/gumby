@@ -123,7 +123,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         
         t1 = time()
         self.scenario_runner.parse_file()
-        msg('Took %.2f to parse scenario file'%time() - t1)
+        msg('Took %.2f to parse scenario file'%(time() - t1))
 
     def startExperiment(self):
         msg("Starting dispersy scenario experiment")
