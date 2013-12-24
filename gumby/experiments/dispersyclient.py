@@ -100,7 +100,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.vars['private_keypair'] = base64.encodestring(self.my_member_private_key)
 
     def startExperiment(self):
-        msg("Starting dummy scenario experiment")
+        msg("Starting dispersy scenario experiment")
         scenario_file_path = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
 
         self.scenario_runner = ScenarioRunner(scenario_file_path, int(self.my_id))
@@ -135,7 +135,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self.registerCallbacks()
 
+        t1 = time()
         self.scenario_runner.run()
+        msg('Took %.2f to parse scenario file'%time() - t1)
 
     def registerCallbacks(self):
         pass
@@ -231,6 +233,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._my_member = self._dispersy.callback.call(self._dispersy.get_member, (self.my_member_key, self.my_member_private_key))
 
         self._dispersy.callback.register(self._do_log)
+        
+        self.print_on_change('community-kwargs', {}, self.community_kwargs)
+        self.print_on_change('community-env', {}, {'pid':getpid()})
+        
         msg("Finished starting dispersy")
 
     def stop_dispersy(self):
@@ -262,18 +268,14 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
             if self._is_joined:
                 self._community = self.community_class.load_community(self._dispersy, self._master_member, *self.community_args, **self.community_kwargs)
-
             else:
                 msg("join community %s as %s", self._master_member.mid.encode("HEX"), self._my_member.mid.encode("HEX"))
                 self._community = self.community_class.join_community(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
                 self._community.auto_load = False
                 self._is_joined = True
-
-                self.print_on_change('community-kwargs', {}, self.community_kwargs)
-                self.print_on_change('community-env', {}, {'pid':getpid()})
             
+            assert self.is_online()
             self._dispersy.callback.register(self.empty_buffer)
-            
         else:
             msg("online (we are already online)")
 
@@ -299,6 +301,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._online_buffer.append((func, args, kargs))
     
     def empty_buffer(self):
+        assert self.is_online()
+        
         #perform all tasks which were scheduled while we were offline    
         for func, args, kargs in self._online_buffer:
             func(*args, **kargs)
