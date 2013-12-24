@@ -90,11 +90,11 @@ class ExperimentServiceProto(LineReceiver):
         self.factory = factory
         self.state = 'init'
         self.vars = {}
-        
-        self.sendLine("id:%s" % self.id)
 
     def connectionMade(self):
         msg("New connection from: ", str(self.transport.getPeer()), logLevel=logging.DEBUG)
+        
+        self.sendLine("id:%s" % self.id)
 
     def lineReceived(self, line):
         try:
