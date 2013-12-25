@@ -63,6 +63,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.not_connected_foafs = set()
 
         self.peercache = False
+        self.reconnect_to_friends = False
 
         self.friendhashes = {}
         self.foafhashes = {}
@@ -124,6 +125,9 @@ class SocialClient(DispersyExperimentScriptClient):
         
         if self._is_joined:
             self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
+            
+        if self.reconnect_to_friends:
+            self.connect_to_friends()
     
     @call_on_dispersy_thread    
     def offline(self):
@@ -203,6 +207,8 @@ class SocialClient(DispersyExperimentScriptClient):
 
         # enable normal discovery of foafs
         self._community.create_msimilarity_request = self._orig_create_msimilarity_request
+        
+        self.reconnect_to_friends = True
 
     def monitor_friends(self):
         prev_scenario_statistics = {}
