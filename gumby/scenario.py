@@ -146,8 +146,6 @@ class ScenarioRunner():
         }
 
     def parse_file(self):
-        self._init_origin_time()
-        
         for (tstmp, _, clb, args) in self._parse_scenario(self.filename):
             if clb not in self._callables:
                 msg(clb, "is not registered as an action!")
@@ -160,10 +158,11 @@ class ScenarioRunner():
         Schedules calls for each scenario line.
         """
         msg("Running scenario from file:", self.filename)
+        
+        self._init_origin_time()
 
         for tstmp, clb, args in self._my_actions:
-            # TODO(vladum): Handle errors while calling.
-            delay = tstmp - time()
+            delay = (self._origin["@"] + tstmp) - time()
             reactor.callLater(
                 delay if delay > 0.0 else 0,
                 self._callables[clb],
@@ -220,8 +219,7 @@ class ScenarioRunner():
                     int(dic.get("endS", 0))
                 assert end == 0.0 or begin <= end, \
                     "if given, end time must be at or after the start time"
-                timestamp = self._origin[dic.get("origin", "@")] + \
-                    begin + \
+                timestamp = begin + \
                     (random() * (end - begin) if end else 0.0)
                 return (
                     timestamp,
