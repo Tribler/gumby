@@ -65,15 +65,13 @@ def call_on_dispersy_thread(func):
     helper.__name__ = func.__name__
     return helper
 
+@call_on_dispersy_thread
 def buffer_online(func):
     def helper(*args, **kargs):
         if not args[0].is_online():
             args[0].buffer_call(func, *args, **kargs)
         else:
-            if not args[0]._dispersy.callback.is_current_thread:
-                args[0]._dispersy.callback.register(func, args, kargs)
-            else:
-                func(*args, **kargs)
+            func(*args, **kargs)
         
     helper.__name__ = func.__name__
     return helper
