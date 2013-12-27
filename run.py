@@ -62,8 +62,12 @@ def _killGroup():
     _terminating = True
     mypid = getpid()
     for pid in get_pid_list():
-        if getpgid(pid) == mypid and pid != mypid:
-            kill(pid, SIGTERM)
+        try:
+            if getpgid(pid) == mypid and pid != mypid:
+                kill(pid, SIGTERM)
+        except OSError:
+            # The process could already be dead by the time we do the getpgid()
+            pass
 
 _terminating = False
 
