@@ -137,10 +137,10 @@ class SocialClient(DispersyExperimentScriptClient):
 
     @buffer_online
     def insert_my_key(self):
-        keyhash = long(sha1(self.my_member_key).hexdigest(), 16)
+        key = self._crypto.key_from_private_bin(self.my_member_private_key)
+        
+        keyhash = long(sha1(self._crypto.key_to_bin(key.pub())).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(keyhash, {})
-
-        key = self._crypto.key_from_public_bin(self.my_member_key)
         self._community._friend_db.add_my_key(key, keyhash)
 
     @buffer_online
