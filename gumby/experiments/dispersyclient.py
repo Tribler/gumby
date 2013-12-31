@@ -57,10 +57,14 @@ import base64
 
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):
-        if not args[0]._dispersy.callback.is_current_thread:
-            args[0]._dispersy.callback.register(func, args, kargs)
-        else:
-            func(*args, **kargs)
+        try:
+            if not args[0]._dispersy.callback.is_current_thread:
+                args[0]._dispersy.callback.register(func, args, kargs)
+            else:
+                func(*args, **kargs)
+        except:
+            err("Exception while calling '%s' with %s, %s"%(func.__name__, ",".join(map(str, args)), str(kargs)))
+            raise
 
     helper.__name__ = func.__name__
     return helper
@@ -68,10 +72,14 @@ def call_on_dispersy_thread(func):
 def buffer_online(func):
     @call_on_dispersy_thread
     def helper(*args, **kargs):
-        if not args[0].is_online():
-            args[0].buffer_call(func, *args, **kargs)
-        else:
-            func(*args, **kargs)
+        try:
+            if not args[0].is_online():
+                args[0].buffer_call(func, *args, **kargs)
+            else:
+                func(*args, **kargs)
+        except:
+            err("Exception while calling '%s' with %s, %s"%(func.__name__, ",".join(map(str, args)), str(kargs)))
+            raise
         
     helper.__name__ = func.__name__
     return helper
