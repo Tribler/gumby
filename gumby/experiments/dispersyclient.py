@@ -68,14 +68,10 @@ def call_on_dispersy_thread(func):
 def buffer_online(func):
     @call_on_dispersy_thread
     def helper(*args, **kargs):
-        try:
-            if not args[0].is_online():
-                args[0].buffer_call(func, *args, **kargs)
-            else:
-                func(*args, **kargs)
-        except Exception, e:
-            err("Exception %s while calling '%s' with %s, %s"%(str(e), func.__name__, ",".join(map(str, args)), str(kargs)))
-            raise e
+        if not args[0].is_online():
+            args[0].buffer_call(func, *args, **kargs)
+        else:
+            func(*args, **kargs)
         
     helper.__name__ = func.__name__
     return helper
@@ -299,6 +295,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
             self._community = None
             self._dispersy.on_incoming_packets = lambda *params: None
+            
+        if self._database_file == u':memory:':
+            msg("Be careful with memory databases and nodes going offline, you could be losing database because we're closing databases.") 
             
     def is_online(self):
         return self._community != None 
