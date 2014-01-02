@@ -54,6 +54,7 @@ from twisted.python.log import msg, err
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 import base64
+from traceback import print_exc
 
 def register_or_call(callback, func, args=(), kargs={}):
     if not callback.is_current_thread:
@@ -315,7 +316,11 @@ class DispersyExperimentScriptClient(ExperimentClient):
         
         #perform all tasks which were scheduled while we were offline    
         for func, args, kargs in self._online_buffer:
-            func(*args, **kargs)
+            msg('calling %s with %s %s'%(func.__name__, ",".join(map(str, args)), str(kargs)))
+            try:
+                func(*args, **kargs)
+            except:
+                print_exc()
         self._online_buffer = []
 
     @call_on_dispersy_thread
