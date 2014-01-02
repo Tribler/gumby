@@ -196,7 +196,7 @@ class ExperimentServiceFactory(Factory):
             subscriber.sendLine("id:%s" % subscriber.id)
             subscriber.sendLine(json_vars)
         msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
-        reactor.callLater(self.experiment_start_delay, self.startExperiment)
+        reactor.callLater(0, self.startExperiment)
 
     def startExperiment(self):
         # Give the go signal and disconnect
