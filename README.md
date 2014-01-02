@@ -5,7 +5,7 @@ Experiment runner framework for Dispersy and Tribler.
 
 ## How to use it ##
 
-After setting up the workspace (see below), simply call gumby/run.py passing your config file's path as argument.
+After setting up the workspace (see below), simply call gumby/run.py passing your experiment's config file path as argument.
 
 Example:
 
@@ -23,6 +23,29 @@ gumby/scripts/generate_config_file.py gumby/experiments/my_experiment/new_experi
 
  This will parse all of Gumby resources and create a self-documented config skeleton for you. Open the file and read the
  instructions there.
+
+### Experiment execution sequence ###
+
+ * Clear output dir
+ * Sync workspace dir with remote nodes
+ * Run local and remote setup scripts concurrently (see `local_setup_cmd` and `remote_setup_cmd` config options in your
+   config file)
+   * If any of them fail, the experiment will be aborted.
+ * Start the tracker in the backgroud (optional, see `tracker_cmd`).
+   * Spawn the tracker and keep it running during the whole experiment run time.
+   * If the tracker dies during the experiment execution, the experiment will be aborted.
+   * When the experiment finishes, the tracker will be killed automatically.
+ * Start the experiment server in the background (optional, see `experiment_server_cmd`).
+   * If the experiment server exits (default behavior after giving the go signal to all the instances) the experiment
+     will _not_ be aborted.
+ * Start both local and remote process instances in parallel (see `local_instance_cmd` and `remote_instance_cmd`).
+ * Wait for all the instances to die.
+ * Collect all the data from the remote output dirs.
+ * Run the post-process script locally to generate graphs and whatnot (optional, see `post_process_cmd`)
+
+Remember that the output dir will be wiped out at every experiment execution.  If you want to keep the output of several
+runs and you aren't using Jenkins or similar, you could run your experiments with something like
+`GUMBY_OUTPUT_DIR=$PWD/output_$(date "+%y-%m-%d_%H:%M:%S") ./gumby/run.py gumby/experiments/.......`
 
 ### Setting everything up to run your experiment ###
 
