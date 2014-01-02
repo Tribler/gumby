@@ -21,7 +21,7 @@
 #
 # When the all of the instances we are waiting for are all ready, all the information will
 # be sent back to them in the form of a JSON document. After this, a "go" command will
-# be sent to indicate that they should start running the experiment.
+# be sent to indicate that they should start running the experiment with the absolute time at which the experiment should start.
 #
 # Example of an expected exchange:
 # [connection is opened by the client]
@@ -30,7 +30,7 @@
 # -> ready
 # <- id:0
 # <- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1": {"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"}, "2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
-# <- go
+# <- go:1388665322.478153
 # [Connection is closed by the server]
 #
 
@@ -202,8 +202,10 @@ class ExperimentServiceFactory(Factory):
         # Give the go signal and disconnect
         msg("Starting the experiment!", logLevel=logging.INFO)
         deferreds = []
+        start_time = time() + self.experiment_start_delay
         for subscriber in self.connections:
-            subscriber.sendLine("go")
+            # Sync the experiment start time among instances
+            subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']) )
             deferreds.append(deferLater(reactor, 0, subscriber.transport.loseConnection))
         d = gatherResults(deferreds)
         d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
@@ -239,6 +241,7 @@ class ExperimentClient(LineReceiver):
         self.my_id = None
         self.vars = vars
         self.all_vars = {}
+        self.time_offset = None
 
     def connectionMade(self):
         msg("Connected to the experiment server")
@@ -300,13 +303,16 @@ class ExperimentClient(LineReceiver):
     def proto_all_vars(self, line):
         msg("Got experiment variables", logLevel=logging.DEBUG)
         self.all_vars = json.loads(line)
+        self.time_offset = self.all_vars[self.my_id]["time_offset"]
         self.onAllVarsReceived()
         return "go"
 
     def proto_go(self, line):
         msg("Got GO signal", logLevel=logging.DEBUG)
-        if line.strip() == "go":
-            self.startExperiment()
+        if line.strip().startswith("go:"):
+            start_delay = max(0, float(line.strip().split(":")[1]) - time())
+            msg("Starting the experiment in %f secs." % start_delay, logLevel=logging.DEBUG)
+            reactor.callLater(start_delay, self.startExperiment)
             self.factory.stopTrying()
             self.transport.loseConnection()
 
