@@ -75,6 +75,7 @@ def buffer_online(func):
             if not args[0].is_online():
                 args[0].buffer_call(func, args, kargs)
             else:
+                msg('calling %s with %s %s'%(func.__name__, ",".join(map(str, args)), str(kargs)))
                 func(*args, **kargs)
                 
         register_or_call(args[0]._dispersy.callback, buffer_call)

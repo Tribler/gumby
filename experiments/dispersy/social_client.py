@@ -150,7 +150,9 @@ class SocialClient(DispersyExperimentScriptClient):
         # if we don't get the ipport, then this peer isn't deployed to the das
         ipport = self.get_peer_ip_port_by_id(peer_id)
         key = self.get_private_keypair_by_id(peer_id)
-
+        
+        print >> sys.stderr, "attempting to add",peer_id,"as a friend", ipport, key
+        
         if ipport and key:
             key = key.pub()
             keyhash = long(sha1(self._crypto.key_to_bin(key)).hexdigest(), 16)
