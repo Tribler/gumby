@@ -114,7 +114,7 @@ extend_var(environ, "R_SCRIPTS_PATH", r_scripts_dir)
 
 # @CONF_OPTION VIRTUALENV_DIR: Virtual env to activate for the experiment (default is ~/venv)
 # Enter virtualenv in case there's one
-running_local_and_virtualenv_disabled = not (env.get("USE_LOCAL_VENV", "False").lower() == env.get("LOCAL_RUN", "False").lower() == "True")
+running_local_and_virtualenv_disabled = not (env.get("USE_LOCAL_VENV", "False").lower() == env.get("LOCAL_RUN", "False").lower() == "true")
 if not running_local_and_virtualenv_disabled and "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
     venv_dir = path.abspath(expand_var(env["VIRTUALENV_DIR"]))
     print "Activating virtualenv at", venv_dir
