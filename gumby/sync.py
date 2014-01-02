@@ -104,7 +104,6 @@ class ExperimentServiceProto(LineReceiver):
             if self.state == 'done':
                 self.transport.loseConnection()
 
-
     def sendAndWaitForReady(self):
         self.ready_d = Deferred()
         self.sendLine("id:%s" % self.id)
@@ -272,12 +271,13 @@ class ExperimentServiceFactory(Factory):
             # Sync the experiment start time among instances
             subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
 
-        d = task.deferLater(reactor, 5, lambda : msg("Done, disconnecting all clients."))
+        d = task.deferLater(reactor, 5, lambda: msg("Done, disconnecting all clients."))
         d.addCallback(lambda _: self.disconnectAll())
         d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
     def disconnectAll(self):
         reactor.runUntilCurrent()
+
         def _disconnectAll():
             for subscriber in self.connections_ready:
                 yield subscriber.transport.loseConnection()
@@ -308,7 +308,7 @@ class ExperimentServiceFactory(Factory):
         reactor.exitCode = 1
         reactor.callLater(0, stopReactor)
 
-    def  lineLengthExceeded(self, line):
+    def lineLengthExceeded(self, line):
         err("Line length exceeded, %d bytes remain." % len(line))
 #
 # Client side
@@ -413,8 +413,8 @@ class ExperimentClient(LineReceiver):
 
 
 class ExperimentClientFactory(ReconnectingClientFactory):
+    maxDelay = 10
 
-    maxDelay = 5
     def __init__(self, vars, protocol=ExperimentClient):
         self.vars = vars
         self.protocol = protocol
