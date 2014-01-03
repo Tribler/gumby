@@ -310,14 +310,14 @@ class ExperimentClient(LineReceiver):
             return "done"
 
     def proto_all_vars(self, line):
-        msg("Got experiment variables", logLevel=logging.DEBUG)
+        msg("Got experiment variables")
         self.all_vars = json.loads(line)
         self.time_offset = self.all_vars[self.my_id]["time_offset"]
         self.onAllVarsReceived()
         return "go"
 
     def proto_go(self, line):
-        msg("Got GO signal", logLevel=logging.DEBUG)
+        msg("Got GO signal")
         if line.strip().startswith("go:"):
             start_delay = max(0, float(line.strip().split(":")[1]) - time())
             msg("Starting the experiment in %f secs." % start_delay)
