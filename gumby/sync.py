@@ -342,6 +342,7 @@ class ExperimentClient(LineReceiver):
 
 class ExperimentClientFactory(ReconnectingClientFactory):
 
+    maxDelay = 10
     def __init__(self, vars, protocol=ExperimentClient):
         self.vars = vars
         self.protocol = protocol
