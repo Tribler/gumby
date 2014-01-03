@@ -195,7 +195,7 @@ class ExperimentServiceFactory(Factory):
             subscriber_vars['host'] = subscriber.transport.getPeer().host
             vars[subscriber.id] = subscriber_vars
         json_vars = json.dumps(vars)
-        msg("Pushing a %d bytes long json doc." % len(json_vars), logLevel=logging.DEBUG)
+        msg("Pushing a %d bytes long json doc." % len(json_vars))
 
         # Send the json doc to the subscribers
         for subscriber in self.connections:
@@ -211,7 +211,7 @@ class ExperimentServiceFactory(Factory):
         for subscriber in self.connections:
             # Sync the experiment start time among instances
             subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
-            deferreds.append(deferLater(reactor, 0, subscriber.transport.loseConnection))
+            deferreds.append(deferLater(reactor, 1, subscriber.transport.loseConnection))
         d = gatherResults(deferreds)
         d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
@@ -232,6 +232,9 @@ class ExperimentServiceFactory(Factory):
     def onExperimentSetupTimeout(self):
         err("Waiting for all peers timed out, exiting.")
         reactor.stop()
+
+    def  lineLengthExceeded(self, line):
+        err("Line length exceeded, %d bytes remain." % len(line))
 #
 # Client side
 #
@@ -256,6 +259,8 @@ class ExperimentClient(LineReceiver):
         self.state = "id"
 
     def lineReceived(self, line):
+        err("received '%s'" % line)
+
         try:
             pto = 'proto_' + self.state
             statehandler = getattr(self, pto)
