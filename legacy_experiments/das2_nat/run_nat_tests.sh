@@ -10,7 +10,7 @@ if [ -z "$WORKSPACE" ]; then
 fi
 
 #Install R dependencies
-R --no-save --quiet < $WORKSPACE/experiments/scripts/r/install.r
+R --no-save --quiet < $WORKSPACE/gumby/scripts/r/install.r
 
 if [ -z "$1" ]; then
     HOSTLIST=$(dirname $(readlink -f $0))/hostlist.txt
@@ -46,5 +46,3 @@ mkdir -p output
 for HOST in $(grep -v ^# $HOSTLIST); do
     rsync --delete -a jenkins@$HOST:das4_walker/walktest.log output/$HOST.walktest.log
 done
-
-
