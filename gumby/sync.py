@@ -30,8 +30,8 @@
 # -> set:asdf:ooooo
 # -> ready
 # <- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1": {"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"}, "2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
+# -> vars_received
 # <- go:1388665322.478153
-# -> started
 # [Connection is closed by the server]
 #
 
@@ -139,14 +139,14 @@ class ExperimentServiceProto(LineReceiver):
             msg("This subscriber is ready now.", logLevel=logging.DEBUG)
             self.ready = True
             self.factory.setConnectionReady(self)
-            return 'started'
+            return 'vars_received'
 
         else:
             err('Unexpected command received "%s"' % line)
             err('closing connection.')
             return 'done'
 
-    def proto_started(self, line):
+    def proto_vars_received(self, line):
         self.factory.unregisterConnection(self)
         return "wait"
 
@@ -163,7 +163,7 @@ class ExperimentServiceFactory(Factory):
         self.experiment_start_delay = experiment_start_delay
         self.connection_counter = -1
         self.connections = []
-        self.deferreds = []
+        self.vars_received = []
         self._timeout_delayed_call = None
         self._subscriber_looping_call = None
 
@@ -201,37 +201,35 @@ class ExperimentServiceFactory(Factory):
             vars[subscriber.id] = subscriber_vars
 
         json_vars = json.dumps(vars)
-        json_part_size = 10 * 1024
-        json_parts = [json_vars[i:i + json_part_size] for i in range(0, len(json_vars), json_part_size)]
-        msg("Pushing a %d bytes long json doc. split into %d parts" % (len(json_vars), len(json_parts)))
+        msg("Pushing a %d bytes long json doc." % len(json_vars))
 
         # Send the json doc to the subscribers
         for subscriber in self.connections:
-            # for json_part in json_parts:
-            #    subscriber.sendLine(json_part)
             subscriber.sendLine(json_vars)
 
-        msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
-        reactor.callLater(0, self.startExperiment)
+    def setConnectionReceived(self, proto):
+        self.vars_received.append(proto)
+
+        if len(self.vars_received) >= self.expected_subscribers:
+            msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
+            reactor.callLater(0, self.startExperiment)
 
     def startExperiment(self):
         # Give the go signal and disconnect
         msg("Starting the experiment!")
+        deferreds = []
         start_time = time() + self.experiment_start_delay
         for subscriber in self.connections:
             # Sync the experiment start time among instances
             subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
+            deferreds.append(deferLater(reactor, 1, subscriber.transport.loseConnection))
+        d = gatherResults(deferreds)
+        d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
     def unregisterConnection(self, proto):
         if proto in self.connections:
             self.connections.remove(proto)
-            self.deferreds.append(deferLater(reactor, 1, proto.transport.loseConnection))
-
-            if len(self.connections) == 0:
-                d = gatherResults(self.deferreds)
-                d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
-
-            msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
+        msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
 
     def onExperimentStarted(self, _):
         msg("Experiment started, shutting down sync server.")
@@ -332,22 +330,20 @@ class ExperimentClient(LineReceiver):
 
     def proto_all_vars(self, line):
         msg("Got experiment variables")
-        self.all_vars += line
-        return "all_vars"
 
-    def proto_go(self, line):
-        msg("Got GO signal")
-
-        self.all_vars = json.loads(self.all_vars)
+        self.all_vars = json.loads(line)
         self.time_offset = self.all_vars[self.my_id]["time_offset"]
         self.onAllVarsReceived()
 
+        self.sendLine("vars_received")
+        return "go"
+
+    def proto_go(self, line):
+        msg("Got GO signal")
         if line.strip().startswith("go:"):
             start_delay = max(0, float(line.strip().split(":")[1]) - time())
             msg("Starting the experiment in %f secs." % start_delay)
             reactor.callLater(start_delay, self.startExperiment)
-
-            self.sendLine("started")
             self.factory.stopTrying()
             self.transport.loseConnection()
 
