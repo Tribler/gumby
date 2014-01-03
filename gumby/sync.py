@@ -31,6 +31,7 @@
 # -> ready
 # <- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1": {"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"}, "2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
 # <- go:1388665322.478153
+# -> started
 # [Connection is closed by the server]
 #
 
@@ -206,8 +207,9 @@ class ExperimentServiceFactory(Factory):
 
         # Send the json doc to the subscribers
         for subscriber in self.connections:
-            for json_part in json_parts:
-                subscriber.sendLine(json_part)
+            # for json_part in json_parts:
+            #    subscriber.sendLine(json_part)
+            subscriber.sendLine(json_vars)
 
         msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
         reactor.callLater(0, self.startExperiment)
@@ -225,11 +227,11 @@ class ExperimentServiceFactory(Factory):
             self.connections.remove(proto)
             self.deferreds.append(deferLater(reactor, 1, proto.transport.loseConnection))
 
-        msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
+            if len(self.connections) == 0:
+                d = gatherResults(self.deferreds)
+                d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
-        if len(self.connections) == 0:
-            d = gatherResults(self.deferreds)
-            d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
+            msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
 
     def onExperimentStarted(self, _):
         msg("Experiment started, shutting down sync server.")
