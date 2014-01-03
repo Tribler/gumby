@@ -90,7 +90,7 @@ class ScenarioParser():
         r"\s*"
         r"(?:(?P<beginH>\d+):)?(?P<beginM>\d+):(?P<beginS>\d+)"
         r"\s+"
-        r"(?P<callable>\w+)(?P<args>\s+(.+?))??"
+        r"(?P<callable>\w+)(?P<args>\s+(.+))?"
     )
     _re_substitution = re_compile("(\$\w+)")
 
@@ -123,12 +123,13 @@ class ScenarioParser():
         if line.endswith('}'):
             start = line.rfind('{')+1
             peerspec = line[start:-1]
-            line = line[:start]
+            line = line[:start-1]
         else:
             peerspec = ''
             
         peerspec = self._parse_peerspec(peerspec)
         if self._parse_for_this_peer(peerspec):
+            #print line
             match = self._re_line.match(self._preprocess_line(line))
             if match:
                 # remove all entries that are None (to get default per key)
@@ -150,7 +151,7 @@ class ScenarioParser():
                 )
                 
             else:
-                print >> sys.stderr, "Ignoring invalid scenario line", lineno
+                print >> sys.stderr, "Ignoring invalid scenario line", lineno, line
 
         # line not for this peer or a parse error occurred
         return None
@@ -232,9 +233,9 @@ class ScenarioRunner(ScenarioParser):
 
     def parse_file(self):
         for (tstmp, _, clb, args, _) in self._parse_scenario(self.filename):
-            if clb not in self._callables:
-                msg(clb, "is not registered as an action!")
-                continue
+#            if clb not in self._callables:
+#                msg(clb, "is not registered as an action!")
+#                continue
 
             self._my_actions.append((tstmp, clb, args))
 
@@ -289,3 +290,5 @@ if __name__ == '__main__':
     sr.parse_file()
     
     print >> sys.stderr, "Took %.2f to parse %s"%(time() - t1, sys.argv[1])
+    for tstmp, clb, args in sr._my_actions: 
+        print >> sys.stderr, tstmp, clb, args
