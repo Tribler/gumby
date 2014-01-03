@@ -42,7 +42,8 @@ from random import sample
 from sys import path as pythonpath
 from hashlib import sha1
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main
+from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main,\
+    buffer_online
 
 from twisted.python.log import msg
 
@@ -62,6 +63,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.not_connected_foafs = set()
 
         self.peercache = False
+        self.reconnect_to_friends = False
 
         self.friendhashes = {}
         self.foafhashes = {}
@@ -91,7 +93,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
     def initializeCrypto(self):
         from Tribler.community.privatesemantic.elgamalcrypto import ElgamalCrypto, NoElgamalCrypto
-        if environ.get('TRACKER_CRYPTO', 'ECCrypto'):
+        if environ.get('TRACKER_CRYPTO', 'ECCrypto') == 'ECCrypto':
             return ElgamalCrypto()
 
         msg('Turning off Crypto')
@@ -120,23 +122,37 @@ class SocialClient(DispersyExperimentScriptClient):
         # disable msimilarity requests
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
         self._community.create_msimilarity_request = lambda destination: False
+        
+        if self._is_joined:
+            self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
+            
+        if self.reconnect_to_friends:
+            self.connect_to_friends()
+    
+    @call_on_dispersy_thread    
+    def offline(self):
+        DispersyExperimentScriptClient.offline(self)
+        
+        self._dispersy.callback.unregister(u"monitor_friends")
 
-    @call_on_dispersy_thread
+    @buffer_online
     def insert_my_key(self):
-        keyhash = long(sha1(self.my_member_key).hexdigest(), 16)
+        key = self._crypto.key_from_private_bin(self.my_member_private_key)
+        
+        keyhash = long(sha1(self._crypto.key_to_bin(key.pub())).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(keyhash, {})
-
-        key = self._crypto.key_from_public_bin(self.my_member_key)
         self._community._friend_db.add_my_key(key, keyhash)
 
-    @call_on_dispersy_thread
+    @buffer_online
     def add_friend(self, peer_id):
         peer_id = int(peer_id)
 
         # if we don't get the ipport, then this peer isn't deployed to the das
         ipport = self.get_peer_ip_port_by_id(peer_id)
         key = self.get_private_keypair_by_id(peer_id)
-
+        
+        print >> sys.stderr, "attempting to add",peer_id,"as a friend", ipport, key
+        
         if ipport and key:
             key = key.pub()
             keyhash = long(sha1(self._crypto.key_to_bin(key)).hexdigest(), 16)
@@ -152,7 +168,7 @@ class SocialClient(DispersyExperimentScriptClient):
         elif ipport:
             print >> sys.stderr, "Got ip/port, but not key?", peer_id
 
-    @call_on_dispersy_thread
+    @buffer_online
     def add_foaf(self, peer_id, his_friends):
         peer_id = int(peer_id)
         his_friends = [int(friend) for friend in his_friends[1:-1].split(",")]
@@ -166,14 +182,14 @@ class SocialClient(DispersyExperimentScriptClient):
 
             self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
 
-    @call_on_dispersy_thread
+    @buffer_online
     def send_post(self, peer_id):
         peer_id = int(peer_id)
 
         msg = "Hello peer %d" % peer_id
         self._community.create_text(msg, [str(peer_id), ])
 
-    @call_on_dispersy_thread
+    @buffer_online
     def connect_to_friends(self):
         friendsaddresses = self.friends
         foafsaddresses = self.foafs
@@ -193,6 +209,8 @@ class SocialClient(DispersyExperimentScriptClient):
 
         # enable normal discovery of foafs
         self._community.create_msimilarity_request = self._orig_create_msimilarity_request
+        
+        self.reconnect_to_friends = True
 
     def monitor_friends(self):
         prev_scenario_statistics = {}

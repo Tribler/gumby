@@ -97,13 +97,11 @@ class ScenarioParser():
     )
     _re_substitution = re_compile("(\$\w+)")
 
-    # TODO(emilon): We should make the minutes and its colon optional, so we can just use secs.
-
     def _parse_scenario(self, filename):
         """
         Returns a list of commands that will be executed.
 
-        A command is a (TIMESTAMP, LINENO, CALLABLE, ARGS) tuple. CALLABLE is
+        A command is a (TIMESTAMP, LINENO, CALLABLE, ARGS, PEERSPEC) tuple. CALLABLE is
         the name of a function, method, etc. registered with this scenario using
         the register() method.
         """
@@ -214,6 +212,8 @@ class ScenarioRunner(ScenarioParser):
         self._peernumber = peernumber
         self._origin = None  # will be set just before run()-ing
 
+        self._is_parsed = False
+
     def register(self, clb, name=None):
         """
         Registers callable to be used from a scenario file. An optional
@@ -223,20 +223,29 @@ class ScenarioRunner(ScenarioParser):
             name = clb.__name__
         self._callables[name] = clb
 
+    def parse_file(self):
+        for (tstmp, _, clb, args, _) in self._parse_scenario(self.filename):
+            if clb not in self._callables:
+                msg(clb, "is not registered as an action!")
+                continue
+
+            self._my_actions.append((tstmp, clb, args))
+
+        self._is_parsed = True
+
     def run(self):
         """
         Schedules calls for each scenario line.
         """
         msg("Running scenario from file:", self.filename)
 
+        if not self._is_parsed:
+            self.parse_file()
+
         if self._expstartstamp == None:
             self._expstartstamp = time()
 
-        for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(self.filename):
-            if clb not in self._callables:
-                err(clb, "is not registered as an action!")
-                continue
-
+        for tstmp, clb, args in self._my_actions:
             tstmp = tstmp + self._expstartstamp
             delay = tstmp - time()
             reactor.callLater(

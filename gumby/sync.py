@@ -71,6 +71,7 @@ from twisted.internet.defer import gatherResults
 from twisted.internet.error import ConnectionDone
 from twisted.internet.protocol import Factory, ReconnectingClientFactory
 from twisted.internet.task import deferLater
+from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
 from twisted.python.log import msg, err
 
@@ -93,6 +94,8 @@ class ExperimentServiceProto(LineReceiver):
 
     def connectionMade(self):
         msg("New connection from: ", str(self.transport.getPeer()), logLevel=logging.DEBUG)
+
+        self.sendLine("id:%s" % self.id)
 
     def lineReceived(self, line):
         try:
@@ -130,11 +133,13 @@ class ExperimentServiceProto(LineReceiver):
             msg("This subscriber sets %s to %s" % (key, value), logLevel=logging.DEBUG)
             self.vars[key] = value
             return 'set'
+
         elif line.strip() == 'ready':
-            msg("This subscriber is ready now.")
+            msg("This subscriber is ready now.", logLevel=logging.DEBUG)
             self.ready = True
             self.factory.setConnectionReady(self)
             return 'wait'
+
         else:
             err('Unexpected command received "%s"' % line)
             err('closing connection.')
@@ -164,8 +169,9 @@ class ExperimentServiceFactory(Factory):
         if not self._timeout_delayed_call:
             self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
         self.connections.append(proto)
+
         if len(self.connections) >= self.expected_subscribers:
-            msg("All subscribers are ready, pushing data!", logLevel=logging.INFO)
+            msg("All subscribers are ready, pushing data!")
             self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
         else:
@@ -175,7 +181,7 @@ class ExperimentServiceFactory(Factory):
 
     def _print_subscribers_ready(self):
         if len(self.connections) < self.expected_subscribers:
-            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers), logLevel=logging.INFO)
+            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers))
         else:
             self._subscriber_looping_call.stop()
             self._subscriber_looping_call = None
@@ -189,23 +195,22 @@ class ExperimentServiceFactory(Factory):
             subscriber_vars['host'] = subscriber.transport.getPeer().host
             vars[subscriber.id] = subscriber_vars
         json_vars = json.dumps(vars)
-        msg("Pushing a %d bytes long json doc." % len(json_vars))
+        msg("Pushing a %d bytes long json doc." % len(json_vars), logLevel=logging.DEBUG)
 
-        # Send the ID and json doc to the subscribers
+        # Send the json doc to the subscribers
         for subscriber in self.connections:
-            subscriber.sendLine("id:%s" % subscriber.id)
             subscriber.sendLine(json_vars)
         msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
         reactor.callLater(0, self.startExperiment)
 
     def startExperiment(self):
         # Give the go signal and disconnect
-        msg("Starting the experiment!", logLevel=logging.INFO)
+        msg("Starting the experiment!")
         deferreds = []
         start_time = time() + self.experiment_start_delay
         for subscriber in self.connections:
             # Sync the experiment start time among instances
-            subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']) )
+            subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
             deferreds.append(deferLater(reactor, 0, subscriber.transport.loseConnection))
         d = gatherResults(deferreds)
         d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
@@ -213,10 +218,10 @@ class ExperimentServiceFactory(Factory):
     def unregisterConnection(self, proto):
         if proto in self.connections:
             self.connections.remove(proto)
-        msg("Connection cleanly unregistered.")
+        msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
 
     def onExperimentStarted(self, _):
-        msg("Experiment started, shutting down sync server.", logLevel=logging.INFO)
+        msg("Experiment started, shutting down sync server.")
         reactor.callLater(0, stopReactor)
 
     def onExperimentStartError(self, failure):
@@ -244,12 +249,11 @@ class ExperimentClient(LineReceiver):
         self.time_offset = None
 
     def connectionMade(self):
-        msg("Connected to the experiment server")
+        msg("Connected to the experiment server", logLevel=logging.DEBUG)
         self.sendLine("time:%f" % time())
         for key, val in self.vars.iteritems():
             self.sendLine("set:%s:%s" % (key, val))
         self.state = "id"
-        self.sendLine("ready")
 
     def lineReceived(self, line):
         try:
@@ -263,11 +267,14 @@ class ExperimentClient(LineReceiver):
             if self.state == 'done':
                 self.transport.loseConnection()
 
+    def onIdReceived(self):
+        msg("onIdReceived: Call not implemented", logLevel=logging.DEBUG)
+
     def onAllVarsReceived(self):
-        msg("onAllVarsReceived: Call not implemented")
+        msg("onAllVarsReceived: Call not implemented", logLevel=logging.DEBUG)
 
     def startExperiment(self):
-        msg("startExperiment: Call not implemented")
+        msg("startExperiment: Call not implemented", logLevel=logging.DEBUG)
 
     def get_peer_id(self, ip, port):
         port = int(port)
@@ -295,6 +302,8 @@ class ExperimentClient(LineReceiver):
         if maybe_id == "id":
             self.my_id = id
             msg('Got id: "%s" assigned' % id, logLevel=logging.DEBUG)
+            d = deferToThread(self.onIdReceived)
+            d.addCallback(lambda: self.sendLine("ready"))
             return "all_vars"
         else:
             err("Received an unexpected string from the server, closing connection")
@@ -311,7 +320,7 @@ class ExperimentClient(LineReceiver):
         msg("Got GO signal", logLevel=logging.DEBUG)
         if line.strip().startswith("go:"):
             start_delay = max(0, float(line.strip().split(":")[1]) - time())
-            msg("Starting the experiment in %f secs." % start_delay, logLevel=logging.DEBUG)
+            msg("Starting the experiment in %f secs." % start_delay)
             reactor.callLater(start_delay, self.startExperiment)
             self.factory.stopTrying()
             self.transport.loseConnection()
@@ -324,7 +333,7 @@ class ExperimentClientFactory(ReconnectingClientFactory):
         self.protocol = protocol
 
     def buildProtocol(self, address):
-        msg("Attempting to connect to the experiment server.")
+        msg("Attempting to connect to the experiment server.", logLevel=logging.DEBUG)
         p = self.protocol(self.vars)
         p.factory = self
         return p
@@ -342,7 +351,7 @@ class ExperimentClientFactory(ReconnectingClientFactory):
 
 def stopReactor():
     if reactor.running:
-        msg("Stopping reactor")
+        msg("Stopping reactor", logLevel=logging.DEBUG)
         reactor.stop()
 
 #

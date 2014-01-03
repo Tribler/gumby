@@ -54,14 +54,32 @@ from twisted.python.log import msg, err
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 import base64
+from traceback import print_exc
+
+def register_or_call(callback, func, args=(), kargs={}):
+    if not callback.is_current_thread:
+        callback.register(func, args, kargs)
+    else:
+        func(*args, **kargs)
 
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):
-        if not args[0]._dispersy.callback.is_current_thread:
-            args[0]._dispersy.callback.register(func, args, kargs)
-        else:
-            func(*args, **kargs)
+        register_or_call(args[0]._dispersy.callback, func, args, kargs)
 
+    helper.__name__ = func.__name__
+    return helper
+
+def buffer_online(func):
+    def helper(*args, **kargs):
+        def buffer_call():
+            if not args[0].is_online():
+                args[0].buffer_call(func, args, kargs)
+            else:
+                msg('calling %s with %s %s'%(func.__name__, ",".join(map(str, args)), str(kargs)))
+                func(*args, **kargs)
+                
+        register_or_call(args[0]._dispersy.callback, buffer_call)
+                
     helper.__name__ = func.__name__
     return helper
 
@@ -80,13 +98,13 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.community_kwargs = {}
         self._stats_file = None
         self._reset_statistics = True
+        self._online_buffer = []
 
         self._crypto = self.initializeCrypto()
         self.generateMyMember()
         self.vars['private_keypair'] = base64.encodestring(self.my_member_private_key)
 
-    def startExperiment(self):
-        msg("Starting dummy scenario experiment")
+    def onIdReceived(self):
         scenario_file_path = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
 
         self.scenario_runner = ScenarioRunner(scenario_file_path, int(self.my_id))
@@ -106,6 +124,15 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.annotate)
         self.scenario_runner.register(self.peertype)
 
+        self.registerCallbacks()
+        
+        t1 = time()
+        self.scenario_runner.parse_file()
+        msg('Took %.2f to parse scenario file'%(time() - t1))
+
+    def startExperiment(self):
+        msg("Starting dispersy scenario experiment")
+        
         # TODO(emilon): Move this to the right place
         # TODO(emilon): Do we want to have the .dbs in the output dirs or should they be dumped to /tmp?
         my_dir = path.join(environ['OUTPUT_DIR'], self.my_id)
@@ -118,9 +145,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
             symlink(path.join(environ['PROJECT_DIR'], 'tribler', 'bootstraptribler.txt'), 'bootstraptribler.txt')
         except OSError:
             pass
-
-        self.registerCallbacks()
-
+        
         self.scenario_runner.run()
 
     def registerCallbacks(self):
@@ -189,6 +214,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
         self._dispersy.statistics.enable_debug_statistics(True)
+        
+        self.original_on_incoming_packets = self._dispersy.on_incoming_packets
 
         if self._strict:
             def exception_handler(exception, fatal):
@@ -215,6 +242,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._my_member = self._dispersy.callback.call(self._dispersy.get_member, (self.my_member_key, self.my_member_private_key))
 
         self._dispersy.callback.register(self._do_log)
+        
+        self.print_on_change('community-kwargs', {}, self.community_kwargs)
+        self.print_on_change('community-env', {}, {'pid':getpid()})
+        
         msg("Finished starting dispersy")
 
     def stop_dispersy(self):
@@ -242,29 +273,56 @@ class DispersyExperimentScriptClient(ExperimentClient):
         if self._community is None:
             msg("online")
 
+            self._dispersy.on_incoming_packets = self.original_on_incoming_packets
+
             if self._is_joined:
                 self._community = self.community_class.load_community(self._dispersy, self._master_member, *self.community_args, **self.community_kwargs)
-
             else:
                 msg("join community %s as %s", self._master_member.mid.encode("HEX"), self._my_member.mid.encode("HEX"))
                 self._community = self.community_class.join_community(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
                 self._community.auto_load = False
                 self._is_joined = True
-
-                self.print_on_change('community-kwargs', {}, self.community_kwargs)
-                self.print_on_change('community-env', {}, {'pid':getpid()})
+            
+            assert self.is_online()
+            self._dispersy.callback.register(self.empty_buffer)
         else:
             msg("online (we are already online)")
 
     @call_on_dispersy_thread
     def offline(self):
-        if self._community is None:
+        msg("Trying to go offline")
+            
+        if self._community is None and self._is_joined:
             msg("offline (we are already offline)")
+            
         else:
             msg("offline")
             for community in self._dispersy.get_communities():
                 community.unload_community()
+
             self._community = None
+            self._dispersy.on_incoming_packets = lambda *params: None
+            
+        if self._database_file == u':memory:':
+            msg("Be careful with memory databases and nodes going offline, you could be losing database because we're closing databases.") 
+            
+    def is_online(self):
+        return self._community != None 
+
+    def buffer_call(self, func, args, kargs):
+        self._online_buffer.append((func, args, kargs))
+    
+    def empty_buffer(self):
+        assert self.is_online()
+        
+        #perform all tasks which were scheduled while we were offline    
+        for func, args, kargs in self._online_buffer:
+            msg('calling %s with %s %s'%(func.__name__, ",".join(map(str, args)), str(kargs)))
+            try:
+                func(*args, **kargs)
+            except:
+                print_exc()
+        self._online_buffer = []
 
     @call_on_dispersy_thread
     def reset_dispersy_statistics(self):
