@@ -186,11 +186,12 @@ class SocialClient(DispersyExperimentScriptClient):
             self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
 
     @buffer_online
-    def send_post(self, peer_id):
+    def send_post(self, peer_id, nr_messages=1):
         peer_id = int(peer_id)
 
-        msg = "Hello peer %d" % peer_id
-        self._community.create_text(msg, [str(peer_id), ])
+        for _ in range(nr_messages):
+            msg = "Hello peer %d" % peer_id
+            self._community.create_text(msg, [str(peer_id), ])
 
     @buffer_online
     def connect_to_friends(self):
