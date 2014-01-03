@@ -323,6 +323,7 @@ class ExperimentClient(LineReceiver):
     def proto_all_vars(self, line):
         msg("Got experiment variables")
         self.all_vars += line
+        return "all_vars"
 
     def proto_go(self, line):
         msg("Got GO signal")
