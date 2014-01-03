@@ -184,7 +184,6 @@ class ExperimentServiceFactory(Factory):
             msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers))
         else:
             self._subscriber_looping_call.stop()
-            self._subscriber_looping_call = None
 
     def pushInfoToSubscribers(self):
         # Generate the json doc
@@ -194,12 +193,16 @@ class ExperimentServiceFactory(Factory):
             subscriber_vars['port'] = subscriber.id + 12000
             subscriber_vars['host'] = subscriber.transport.getPeer().host
             vars[subscriber.id] = subscriber_vars
+
         json_vars = json.dumps(vars)
-        msg("Pushing a %d bytes long json doc." % len(json_vars))
+        json_part_size = 10 * 1024
+        json_parts = [json_vars[i:i + json_part_size] for i in range(0, len(json_vars), json_part_size)]
+        msg("Pushing a %d bytes long json doc. split into %d parts" % (len(json_vars), len(json_parts)))
 
         # Send the json doc to the subscribers
         for subscriber in self.connections:
-            subscriber.sendLine(json_vars)
+            for json_part in json_parts:
+                subscriber.sendLine(json_part)
         msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
         reactor.callLater(0, self.startExperiment)
 
@@ -248,7 +251,7 @@ class ExperimentClient(LineReceiver):
         self.state = "id"
         self.my_id = None
         self.vars = vars
-        self.all_vars = {}
+        self.all_vars = ''
         self.time_offset = None
 
     def connectionMade(self):
@@ -259,7 +262,10 @@ class ExperimentClient(LineReceiver):
         self.state = "id"
 
     def lineReceived(self, line):
-        err("received '%s'" % line)
+        msg("received '%s'" % line[:20])
+
+        if line.strip().startswith("go:"):
+            self.state = "go"
 
         try:
             pto = 'proto_' + self.state
@@ -316,13 +322,15 @@ class ExperimentClient(LineReceiver):
 
     def proto_all_vars(self, line):
         msg("Got experiment variables")
-        self.all_vars = json.loads(line)
-        self.time_offset = self.all_vars[self.my_id]["time_offset"]
-        self.onAllVarsReceived()
-        return "go"
+        self.all_vars += line
 
     def proto_go(self, line):
         msg("Got GO signal")
+
+        self.all_vars = json.loads(self.all_vars)
+        self.time_offset = self.all_vars[self.my_id]["time_offset"]
+        self.onAllVarsReceived()
+
         if line.strip().startswith("go:"):
             start_delay = max(0, float(line.strip().split(":")[1]) - time())
             msg("Starting the experiment in %f secs." % start_delay)
