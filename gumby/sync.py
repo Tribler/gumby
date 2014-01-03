@@ -147,7 +147,7 @@ class ExperimentServiceProto(LineReceiver):
             return 'done'
 
     def proto_vars_received(self, line):
-        self.factory.unregisterConnection(self)
+        self.factory.setConnectionReceived(self)
         return "wait"
 
     def proto_wait(self, line):
@@ -166,6 +166,7 @@ class ExperimentServiceFactory(Factory):
         self.vars_received = []
         self._timeout_delayed_call = None
         self._subscriber_looping_call = None
+        self._subscriber_received_looping_call = None
 
     def buildProtocol(self, addr):
         self.connection_counter += 1
@@ -213,6 +214,16 @@ class ExperimentServiceFactory(Factory):
         if len(self.vars_received) >= self.expected_subscribers:
             msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
             reactor.callLater(0, self.startExperiment)
+        else:
+            if not self._subscriber_received_looping_call:
+                self._subscriber_received_looping_call = task.LoopingCall(self._print_subscribers_received)
+                self._subscriber_received_looping_call.start(1.0)
+
+    def _print_subscribers_received(self):
+        if len(self.vars_received) < self.expected_subscribers:
+            msg("%d of %d expected subscribers received the data." % (len(self.vars_received), self.expected_subscribers))
+        else:
+            self._subscriber_received_looping_call.stop()
 
     def startExperiment(self):
         # Give the go signal and disconnect
