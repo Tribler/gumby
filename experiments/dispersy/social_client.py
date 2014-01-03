@@ -42,7 +42,7 @@ from random import sample
 from sys import path as pythonpath
 from hashlib import sha1
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main,\
+from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main, \
     buffer_online
 
 from twisted.python.log import msg
@@ -114,6 +114,9 @@ class SocialClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def online(self):
+        if self.peercache:
+            yield 30.0
+
         DispersyExperimentScriptClient.online(self)
 
         # insert my own key into the friend database
@@ -122,23 +125,23 @@ class SocialClient(DispersyExperimentScriptClient):
         # disable msimilarity requests
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
         self._community.create_msimilarity_request = lambda destination: False
-        
+
         if self._is_joined:
             self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
-            
+
         if self.reconnect_to_friends:
             self.connect_to_friends()
-    
-    @call_on_dispersy_thread    
+
+    @call_on_dispersy_thread
     def offline(self):
         DispersyExperimentScriptClient.offline(self)
-        
+
         self._dispersy.callback.unregister(u"monitor_friends")
 
     @buffer_online
     def insert_my_key(self):
         key = self._crypto.key_from_private_bin(self.my_member_private_key)
-        
+
         keyhash = long(sha1(self._crypto.key_to_bin(key.pub())).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(keyhash, {})
         self._community._friend_db.add_my_key(key, keyhash)
@@ -150,9 +153,9 @@ class SocialClient(DispersyExperimentScriptClient):
         # if we don't get the ipport, then this peer isn't deployed to the das
         ipport = self.get_peer_ip_port_by_id(peer_id)
         key = self.get_private_keypair_by_id(peer_id)
-        
-        print >> sys.stderr, "attempting to add",peer_id,"as a friend", ipport, key
-        
+
+        print >> sys.stderr, "attempting to add", peer_id, "as a friend", ipport, key
+
         if ipport and key:
             key = key.pub()
             keyhash = long(sha1(self._crypto.key_to_bin(key)).hexdigest(), 16)
@@ -209,7 +212,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
         # enable normal discovery of foafs
         self._community.create_msimilarity_request = self._orig_create_msimilarity_request
-        
+
         self.reconnect_to_friends = True
 
     def monitor_friends(self):

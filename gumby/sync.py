@@ -25,10 +25,10 @@
 #
 # Example of an expected exchange:
 # [connection is opened by the client]
+# <- id:0
 # -> time:1378479678.11
 # -> set:asdf:ooooo
 # -> ready
-# <- id:0
 # <- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1": {"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"}, "2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
 # <- go:1388665322.478153
 # [Connection is closed by the server]
@@ -303,7 +303,7 @@ class ExperimentClient(LineReceiver):
             self.my_id = id
             msg('Got id: "%s" assigned' % id, logLevel=logging.DEBUG)
             d = deferToThread(self.onIdReceived)
-            d.addCallback(lambda: self.sendLine("ready"))
+            d.addCallback(lambda _: self.sendLine("ready"))
             return "all_vars"
         else:
             err("Received an unexpected string from the server, closing connection")
