@@ -211,6 +211,7 @@ class ScenarioRunner(ScenarioParser):
         self._expstartstamp = expstartstamp
         self._peernumber = peernumber
         self._origin = None  # will be set just before run()-ing
+        self._my_actions = []
 
         self._is_parsed = False
 
