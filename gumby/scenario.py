@@ -91,9 +91,6 @@ class ScenarioParser():
         r"(?:(?P<beginH>\d+):)?(?P<beginM>\d+):(?P<beginS>\d+)"
         r"\s+"
         r"(?P<callable>\w+)(?P<args>\s+(.+?))??"
-        r"(?:\s*"
-        r"{(?P<peers>\s*!?\d+(?:-\d+)?(?:\s*,\s*\d+(?:-\d+)?)*\s*)}"
-        r")?\s*(?:\n)?$"
     )
     _re_substitution = re_compile("(\$\w+)")
 
@@ -107,6 +104,7 @@ class ScenarioParser():
         """
         try:
             for lineno, line in enumerate(open(filename, "r")):
+                line = line.strip()
                 if not line.startswith('#'):
                     cmd = self._parse_scenario_line(lineno + 1, line)
                     if cmd is not None:
@@ -122,20 +120,27 @@ class ScenarioParser():
 
         The command tuple is described in _parse_scenario().
         """
-        match = self._re_line.match(self._preprocess_line(line))
-        if match:
-            # remove all entries that are None (to get default per key)
-            dic = dict(ifilter(
-                lambda key_value: key_value[1] is not None,
-                match.groupdict().iteritems()
-            ))
+        if line.endswith('}'):
+            start = line.rfind('{')+1
+            peerspec = line[start:-1]
+            line = line[:start]
+        else:
+            peerspec = ''
+            
+        peerspec = self._parse_peerspec(peerspec)
+        if self._parse_for_this_peer(peerspec):
+            match = self._re_line.match(self._preprocess_line(line))
+            if match:
+                # remove all entries that are None (to get default per key)
+                dic = dict(ifilter(
+                    lambda key_value: key_value[1] is not None,
+                    match.groupdict().iteritems()
+                ))
 
-            # only return lines that belong to this peer
-            peerspec = self._parse_peerspec(dic.get("peers", ""))
-            if self._parse_for_this_peer(peerspec):
                 begin = int(dic.get("beginH", 0)) * 3600.0 + \
                     int(dic.get("beginM", 0)) * 60.0 + \
                     int(dic.get("beginS", 0))
+                    
                 return (
                     begin,
                     lineno,
@@ -143,8 +148,9 @@ class ScenarioParser():
                     tuple(shlex.split(dic.get("args", ""))),
                     peerspec
                 )
-        elif line.strip():
-            print >> sys.stderr, "Ignoring invalid scenario line", lineno
+                
+            else:
+                print >> sys.stderr, "Ignoring invalid scenario line", lineno
 
         # line not for this peer or a parse error occurred
         return None
@@ -265,3 +271,21 @@ class ScenarioRunner(ScenarioParser):
 
 #
 # scenario.py ends here
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print >> sys.stderr, "Usage: %s <inputfile> [<peer-id>]" % (sys.argv[0])
+        print >> sys.stderr, "Got:", sys.argv
+
+        exit(1)
+    
+    if len(sys.argv) == 3:
+        peer_id = int(sys.argv[2])
+    else:
+        peer_id = 1
+    
+    t1 = time()
+    sr = ScenarioRunner(sys.argv[1], peer_id)
+    sr.parse_file()
+    
+    print >> sys.stderr, "Took %.2f to parse %s"%(time() - t1, sys.argv[1])
