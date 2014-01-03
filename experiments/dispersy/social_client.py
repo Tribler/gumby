@@ -189,7 +189,7 @@ class SocialClient(DispersyExperimentScriptClient):
     def send_post(self, peer_id, nr_messages=1):
         peer_id = int(peer_id)
 
-        for _ in range(nr_messages):
+        for _ in range(int(nr_messages)):
             msg = "Hello peer %d" % peer_id
             self._community.create_text(msg, [str(peer_id), ])
 
