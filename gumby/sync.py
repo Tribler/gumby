@@ -138,12 +138,16 @@ class ExperimentServiceProto(LineReceiver):
             msg("This subscriber is ready now.", logLevel=logging.DEBUG)
             self.ready = True
             self.factory.setConnectionReady(self)
-            return 'wait'
+            return 'started'
 
         else:
             err('Unexpected command received "%s"' % line)
             err('closing connection.')
             return 'done'
+
+    def proto_started(self, line):
+        self.factory.unregisterConnection(self)
+        return "wait"
 
     def proto_wait(self, line):
         err('Unexpected command received "%s" while in ready state. Closing connection' % line)
@@ -158,6 +162,7 @@ class ExperimentServiceFactory(Factory):
         self.experiment_start_delay = experiment_start_delay
         self.connection_counter = -1
         self.connections = []
+        self.deferreds = []
         self._timeout_delayed_call = None
         self._subscriber_looping_call = None
 
@@ -203,25 +208,28 @@ class ExperimentServiceFactory(Factory):
         for subscriber in self.connections:
             for json_part in json_parts:
                 subscriber.sendLine(json_part)
+
         msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
         reactor.callLater(0, self.startExperiment)
 
     def startExperiment(self):
         # Give the go signal and disconnect
         msg("Starting the experiment!")
-        deferreds = []
         start_time = time() + self.experiment_start_delay
         for subscriber in self.connections:
             # Sync the experiment start time among instances
             subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
-            deferreds.append(deferLater(reactor, 1, subscriber.transport.loseConnection))
-        d = gatherResults(deferreds)
-        d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
     def unregisterConnection(self, proto):
         if proto in self.connections:
             self.connections.remove(proto)
+            self.deferreds.append(deferLater(reactor, 1, proto.transport.loseConnection))
+
         msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
+
+        if len(self.connections) == 0:
+            d = gatherResults(self.deferreds)
+            d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
     def onExperimentStarted(self, _):
         msg("Experiment started, shutting down sync server.")
@@ -336,13 +344,15 @@ class ExperimentClient(LineReceiver):
             start_delay = max(0, float(line.strip().split(":")[1]) - time())
             msg("Starting the experiment in %f secs." % start_delay)
             reactor.callLater(start_delay, self.startExperiment)
+
+            self.sendLine("started")
             self.factory.stopTrying()
             self.transport.loseConnection()
 
 
 class ExperimentClientFactory(ReconnectingClientFactory):
 
-    maxDelay = 10
+    maxDelay = 5
     def __init__(self, vars, protocol=ExperimentClient):
         self.vars = vars
         self.protocol = protocol
