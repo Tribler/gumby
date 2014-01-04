@@ -126,9 +126,6 @@ class SocialClient(DispersyExperimentScriptClient):
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
         self._community.create_msimilarity_request = lambda destination: False
 
-        if self._is_joined:
-            self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
-
         if self.reconnect_to_friends:
             print >> sys.stderr, "Reconnecting to peers"
             self._community.connect_to_peercache(sys.maxint)
@@ -136,8 +133,6 @@ class SocialClient(DispersyExperimentScriptClient):
     @call_on_dispersy_thread
     def offline(self):
         DispersyExperimentScriptClient.offline(self)
-
-        self._dispersy.callback.unregister(u"monitor_friends")
 
     @buffer_online
     def insert_my_key(self):
@@ -223,14 +218,14 @@ class SocialClient(DispersyExperimentScriptClient):
 
         while True:
             for sock_addr in self.friends:
-                if self._community.is_taste_buddy_sock(sock_addr):
+                if self._community.is_taste_buddy_sock(sock_addr) if self._community else False:
                     if sock_addr in self.not_connected_friends:
                         self.not_connected_friends.remove(sock_addr)
                 else:
                     self.not_connected_friends.add(sock_addr)
 
             for sock_addr in self.foafs:
-                if self._community.is_taste_buddy_sock(sock_addr):
+                if self._community.is_taste_buddy_sock(sock_addr) if self._community else False:
                     if sock_addr in self.not_connected_foafs:
                         self.not_connected_foafs.remove(sock_addr)
                 else:
@@ -249,7 +244,8 @@ class SocialClient(DispersyExperimentScriptClient):
                 bootstrapped_foafs = 0
 
             prev_scenario_statistics = self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped': bootstrapped, 'bootstrapped_foafs': bootstrapped_foafs})
-            prev_scenario_debug = self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_friends), 'create_time_encryption':self._community.create_time_encryption, 'create_time_decryption':self._community.create_time_decryption, 'receive_time_encryption':self._community.receive_time_encryption})
+            if self._community:
+                prev_scenario_debug = self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_friends), 'create_time_encryption':self._community.create_time_encryption, 'create_time_decryption':self._community.create_time_decryption, 'receive_time_encryption':self._community.receive_time_encryption})
             yield 5.0
 
 if __name__ == '__main__':
