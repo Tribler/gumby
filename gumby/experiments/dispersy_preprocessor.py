@@ -60,6 +60,7 @@ class ScenarioPreProcessor(ScenarioRunner):
         while tstmp < max_tstmp:
             yield "@0:%d %s" % (tstmp, "online" if go_online else "offline")
             tstmp += get_delay()
+            go_online = not go_online
 
 def main(inputfile, outputfile):
     inputfile = os.path.abspath(inputfile)
