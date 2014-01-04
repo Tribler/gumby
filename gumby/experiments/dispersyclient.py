@@ -461,6 +461,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
                                'walk_advice_incoming_response_new': self._dispersy.statistics.walk_advice_incoming_response_new,
                                'walk_advice_incoming_request': self._dispersy.statistics.walk_advice_incoming_request,
                                'walk_advice_outgoing_response': self._dispersy.statistics.walk_advice_outgoing_response,
+                               'is_online': self.is_online(),
                                'communities': communities_dict}
 
             prev_statistics = self.print_on_change("statistics", prev_statistics, statistics_dict)
