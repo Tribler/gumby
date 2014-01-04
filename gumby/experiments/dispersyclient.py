@@ -409,7 +409,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
             communities_dict = []
             for c in self._dispersy.statistics.communities:
-
                 # we add all candidates which have a last_stumble > now - CANDIDATE_STUMBLE_LIFETIME
                 now = time()
                 for candidate in c._community.candidates.itervalues():
@@ -427,6 +426,15 @@ class DispersyExperimentScriptClient(ExperimentClient):
                                          'sync_bloom_skip': c.sync_bloom_skip,
                                          'nr_candidates': len(c.candidates) if c.candidates else 0,
                                          'nr_stumbled_candidates': nr_stumbled_candidates})
+            
+            #check for missing communities, reset candidates to 0
+            cur_cids = [cur_c['cid'] for cur_c in communities_dict]
+            for c in prev_statistics.get('communities', []):
+                if c['cid'] not in cur_cids:
+                    _c = c.copy()
+                    _c['nr_candidates']= 0
+                    _c['nr_stumbled_candidates'] = 0
+                    communities_dict.append(_c)
 
             statistics_dict = {'conn_type': self._dispersy.statistics.connection_type,
                                'received_count': self._dispersy.statistics.received_count,
