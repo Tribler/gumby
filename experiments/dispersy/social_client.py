@@ -64,6 +64,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
         self.peercache = False
         self.reconnect_to_friends = False
+        self._mypref_db = None
 
         self.friendhashes = {}
         self.foafhashes = {}
@@ -80,6 +81,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.community_args = (self._my_member,)
 
     def registerCallbacks(self):
+        self.scenario_runner.register(self.insert_my_key, 'insert_my_key')
         self.scenario_runner.register(self.add_friend, 'add_friend')
         self.scenario_runner.register(self.add_foaf, 'add_foaf')
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
@@ -117,21 +119,27 @@ class SocialClient(DispersyExperimentScriptClient):
         if self.peercache:
             yield 30.0
 
+        should_reconnect = self.reconnect_to_friends
         DispersyExperimentScriptClient.online(self)
+        
+        if self._mypref_db:
+            self._community._mypref_db = self._mypref_db
 
-        # insert my own key into the friend database
-        self.insert_my_key()
-
-        # disable msimilarity requests
-        self._orig_create_msimilarity_request = self._community.create_msimilarity_request
-        self._community.create_msimilarity_request = lambda destination: False
-
-        if self.reconnect_to_friends:
-            print >> sys.stderr, "Reconnecting to peers"
+        if should_reconnect:
             self._community.connect_to_peercache(sys.maxint)
+        
+        #if not reconnect_to_friends, connect_to_friend still havn't been called, hence
+        #we disable simi requests
+        if not self.reconnect_to_friends:
+            # disable msimilarity requests
+            self._orig_create_msimilarity_request = self._community.create_msimilarity_request
+            self._community.create_msimilarity_request = lambda destination: False
 
     @call_on_dispersy_thread
     def offline(self):
+        if self._community:
+            self._mypref_db = self._community._mypref_db
+        
         DispersyExperimentScriptClient.offline(self)
 
     @buffer_online
