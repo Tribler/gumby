@@ -130,7 +130,8 @@ class SocialClient(DispersyExperimentScriptClient):
             self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
 
         if self.reconnect_to_friends:
-            self.connect_to_friends()
+            print >> sys.stderr, "Reconnecting to peers"
+            self._community.connect_to_peercache(sys.maxint)
 
     @call_on_dispersy_thread
     def offline(self):
