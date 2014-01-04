@@ -181,8 +181,6 @@ class ExtractStatistics:
                 if len(parts) > columnindex:
                     timestamp = float(parts[1])
                     record = float(parts[columnindex])
-                    if record == 0:
-                        continue
                     sum_records.setdefault(timestamp, {})[node_nr] = record
             h_records.close()
 
@@ -370,10 +368,8 @@ class BasicExtractor(AbstractHandler):
 
         if 'communities' in value:
             for community in value['communities']:
-                if community.get('nr_candidates'):
-                    self.c_communities[community['cid']][0] = community.get('nr_candidates')
-                if community.get('nr_stumbled_candidates'):
-                    self.c_communities[community['cid']][1] = community.get('nr_stumbled_candidates')
+                self.c_communities[community['cid']][0] = community.get('nr_candidates', self.c_communities[community['cid']][0])
+                self.c_communities[community['cid']][1] = community.get('nr_stumbled_candidates', self.c_communities[community['cid']][1])
 
                 self.c_blstats[community['cid']][0] = community.get('sync_bloom_reuse', self.c_blstats[community['cid']][0])
                 self.c_blstats[community['cid']][1] = community.get('sync_bloom_skip', self.c_blstats[community['cid']][1])
