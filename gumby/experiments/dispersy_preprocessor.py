@@ -43,12 +43,15 @@ class ScenarioPreProcessor(ScenarioRunner):
         self._cur_line = line.strip()
         return line
 
-    def churn(self, tstmp, max_tstmp, churn_type, desired_mean=300):
+    def churn(self, tstmp, max_tstmp, churn_type, desired_mean=300, min_online = 5.0):
         desired_mean = float(desired_mean)
+        min_online = float(min_online)
 
         def get_delay():
             if churn_type == 'expon':
-                return 5.0 + expovariate(1.0 / (desired_mean - 5))
+                return min_online + expovariate(1.0 / (desired_mean - min_online))
+            elif churn_type == 'fixed':
+                return desired_mean
             else:
                 raise NotImplementedError('only expon churn is implemented, got %s' % churn_type)
 

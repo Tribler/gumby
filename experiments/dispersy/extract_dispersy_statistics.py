@@ -168,7 +168,7 @@ class ExtractStatistics:
     def merge_records(self, inputfilename, outputfilename, columnindex, diffoutputfilename=None):
         all_nodes = []
 
-        sum_records = {}
+        sum_records = defaultdict(dict)
         for node_nr, _, inputdir in self.yield_files(inputfilename):
             all_nodes.append(node_nr)
 
@@ -181,7 +181,9 @@ class ExtractStatistics:
                 if len(parts) > columnindex:
                     timestamp = float(parts[1])
                     record = float(parts[columnindex])
-                    sum_records.setdefault(timestamp, {})[node_nr] = record
+                    if record == 0 and len(sum_records) == 0:
+                        continue
+                    sum_records[timestamp][node_nr] = record
             h_records.close()
 
         diffoutputfile = os.path.join(self.node_directory, diffoutputfilename) if diffoutputfilename else None
