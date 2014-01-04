@@ -10,8 +10,9 @@ class ScenarioPreProcessor(ScenarioRunner):
 
         self._callables = {}
         self._callables['churn'] = self.churn
-
-        print >> sys.stderr, "Looking for max_timestamp, max_peer...",
+        
+        print >> sys.stderr, "Looking for max_timestamp, max_peer... in %s"%filename,
+        
         max_tstmp = max_peer = 0
         for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
             max_tstmp = max(tstmp, max_tstmp)
@@ -62,12 +63,15 @@ class ScenarioPreProcessor(ScenarioRunner):
             tstmp += get_delay()
 
 def main(inputfile, outputfile):
+    inputfile = os.path.abspath(inputfile)
     if os.path.exists(inputfile):
         f = open(outputfile, 'w')
 
         ScenarioPreProcessor(inputfile, f)
 
         f.close()
+    else:
+        print >> sys.stderr, inputfile, "not found"
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
