@@ -120,17 +120,18 @@ class ScenarioParser():
 
         The command tuple is described in _parse_scenario().
         """
+        line = self._preprocess_line(line)
         if line.endswith('}'):
             start = line.rfind('{')+1
             peerspec = line[start:-1]
             line = line[:start-1]
         else:
             peerspec = ''
-            
+        
         peerspec = self._parse_peerspec(peerspec)
         if self._parse_for_this_peer(peerspec):
             #print line
-            match = self._re_line.match(self._preprocess_line(line))
+            match = self._re_line.match(line)
             if match:
                 # remove all entries that are None (to get default per key)
                 dic = dict(ifilter(
