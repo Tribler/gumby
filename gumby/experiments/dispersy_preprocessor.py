@@ -1,6 +1,6 @@
 import os
 import sys
-from random import expovariate
+from random import expovariate, random
 from gumby.scenario import ScenarioRunner
 
 class ScenarioPreProcessor(ScenarioRunner):
@@ -55,11 +55,10 @@ class ScenarioPreProcessor(ScenarioRunner):
                 return desired_mean
             else:
                 raise NotImplementedError('only expon churn is implemented, got %s' % churn_type)
-
+        
+        go_online = random() < 0.5
         while tstmp < max_tstmp:
-            yield "@0:%d online" % tstmp
-            tstmp += get_delay()
-            yield "@0:%d offline" % tstmp
+            yield "@0:%d %s" % (tstmp, "online" if go_online else "offline")
             tstmp += get_delay()
 
 def main(inputfile, outputfile):
