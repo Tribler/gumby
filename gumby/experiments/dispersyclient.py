@@ -283,7 +283,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 self._is_joined = True
 
             assert self.is_online()
-            self._dispersy.callback.register(self.empty_buffer)
+            self.empty_buffer()
         else:
             msg("online (we are already online)")
 
