@@ -10,9 +10,9 @@ class ScenarioPreProcessor(ScenarioRunner):
 
         self._callables = {}
         self._callables['churn'] = self.churn
-        
-        print >> sys.stderr, "Looking for max_timestamp, max_peer... in %s"%filename,
-        
+
+        print >> sys.stderr, "Looking for max_timestamp, max_peer... in %s" % filename,
+
         max_tstmp = max_peer = 0
         for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
             max_tstmp = max(tstmp, max_tstmp)
@@ -44,7 +44,7 @@ class ScenarioPreProcessor(ScenarioRunner):
         self._cur_line = line.strip()
         return line
 
-    def churn(self, tstmp, max_tstmp, churn_type, desired_mean=300, min_online = 5.0):
+    def churn(self, tstmp, max_tstmp, churn_type, desired_mean=300, min_online=5.0):
         desired_mean = float(desired_mean)
         min_online = float(min_online)
 
@@ -55,7 +55,7 @@ class ScenarioPreProcessor(ScenarioRunner):
                 return desired_mean
             else:
                 raise NotImplementedError('only expon churn is implemented, got %s' % churn_type)
-        
+
         go_online = random() < 0.5
         while tstmp < max_tstmp:
             yield "@0:%d %s" % (tstmp, "online" if go_online else "offline")
