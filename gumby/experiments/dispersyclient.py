@@ -267,7 +267,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.master_private_key = priv_key.decode("HEX")
 
     @call_on_dispersy_thread
-    def online(self):
+    def online(self, dont_empty=False):
         msg("Trying to go online")
         if self._community is None:
             msg("online")
@@ -283,7 +283,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 self._is_joined = True
 
             assert self.is_online()
-            self.empty_buffer()
+            if not dont_empty:
+                self.empty_buffer()
         else:
             msg("online (we are already online)")
 
@@ -426,13 +427,13 @@ class DispersyExperimentScriptClient(ExperimentClient):
                                          'sync_bloom_skip': c.sync_bloom_skip,
                                          'nr_candidates': len(c.candidates) if c.candidates else 0,
                                          'nr_stumbled_candidates': nr_stumbled_candidates})
-            
-            #check for missing communities, reset candidates to 0
+
+            # check for missing communities, reset candidates to 0
             cur_cids = [cur_c['cid'] for cur_c in communities_dict]
             for c in prev_statistics.get('communities', []):
                 if c['cid'] not in cur_cids:
                     _c = c.copy()
-                    _c['nr_candidates']= 0
+                    _c['nr_candidates'] = 0
                     _c['nr_stumbled_candidates'] = 0
                     communities_dict.append(_c)
 

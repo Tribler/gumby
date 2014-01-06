@@ -119,21 +119,20 @@ class SocialClient(DispersyExperimentScriptClient):
         if self.peercache:
             yield 30.0
 
-        should_reconnect = self.reconnect_to_friends
-        DispersyExperimentScriptClient.online(self)
+        DispersyExperimentScriptClient.online(self, dont_empty=True)
+        self._orig_create_msimilarity_request = self._community.create_msimilarity_request
 
         if self._mypref_db:
             self._community._mypref_db = self._mypref_db
 
-        if should_reconnect:
+        if self.reconnect_to_friends:
             self._community.connect_to_peercache(sys.maxint)
-
-        # if not reconnect_to_friends, connect_to_friend still havn't been called, hence
-        # we disable simi requests
-        if not self.reconnect_to_friends:
-            # disable msimilarity requests
-            self._orig_create_msimilarity_request = self._community.create_msimilarity_request
+        else:
+            # if not reconnect_to_friends, connect_to_friend hasn't been called, hence
+            # we disable simi requests
             self._community.create_msimilarity_request = lambda destination: False
+
+        self.empty_buffer()
 
     @call_on_dispersy_thread
     def offline(self):
