@@ -37,8 +37,11 @@
 
 # Code:
 
-# Let SGE clean after us
-grep -q "^export SGE_KEEP_TMPFILES" ~/.bashrc || echo "export SGE_KEEP_TMPFILES=no" >> ~/.bashrc
+# Check that we are actually running on one of the DAS4 head nodes
+if [ ! -z $(hostname |grep ^fs[0-9]$) ]; then
+    # Let SGE clean after us
+    grep -q "^export SGE_KEEP_TMPFILES" ~/.bashrc || echo "export SGE_KEEP_TMPFILES=no" >> ~/.bashrc
+fi
 
 build_virtualenv.sh
 
