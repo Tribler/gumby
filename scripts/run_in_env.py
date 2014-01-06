@@ -84,53 +84,44 @@ else:
     print "Usage:\n%s EXPERIMENT_CONFIG COMMAND" % sys.argv[0]
     exit(1)
 
-# TODO: Update environ instead of copying it, we are using some stuff
-# from this script anyways.
-env = environ.copy()
-env.update(configToEnv(config))
+environ.update(configToEnv(config))
 
-env['PROJECT_DIR'] = project_dir
 environ['PROJECT_DIR'] = project_dir
 
-env['EXPERIMENT_DIR'] = experiment_dir
 environ['EXPERIMENT_DIR'] = experiment_dir
 
 # Add project dir to PYTHONPATH
-extend_var(env, "PYTHONPATH", project_dir)
+extend_var(environ, "PYTHONPATH", project_dir)
 
 # Add gumby dir to PYTHONPATH
-extend_var(env, "PYTHONPATH", path.join(project_dir, "gumby"))
+extend_var(environ, "PYTHONPATH", path.join(project_dir, "gumby"))
 
 # Add gumby scripts dir to PATH
-extend_var(env, "PATH", scripts_dir)
 extend_var(environ, "PATH", scripts_dir)
 
 # Add the experiment dir to PATH so we can call custom scripts from there
-extend_var(env, "PATH", experiment_dir)
+extend_var(environ, "PATH", experiment_dir)
 
 # Add ~/R to the R search path
-extend_var(env, "R_LIBS_USER", expand_var("$HOME/R"))
+extend_var(environ, "R_LIBS_USER", expand_var("$HOME/R"))
 # Export the R scripts path
-extend_var(env, "R_SCRIPTS_PATH", r_scripts_dir)
 extend_var(environ, "R_SCRIPTS_PATH", r_scripts_dir)
 
 # @CONF_OPTION VIRTUALENV_DIR: Virtual env to activate for the experiment (default is ~/venv)
 # Enter virtualenv in case there's one
-running_local_and_virtualenv_disabled = not (env.get("USE_LOCAL_VENV", "False").lower() == env.get("LOCAL_RUN", "False").lower() == "true")
-if not running_local_and_virtualenv_disabled and "VIRTUALENV_DIR" in env and path.exists(expand_var(env["VIRTUALENV_DIR"])):
-    venv_dir = path.abspath(expand_var(env["VIRTUALENV_DIR"]))
+running_local_and_virtualenv_disabled = not (environ.get("USE_LOCAL_VENV", "False").lower() == environ.get("LOCAL_RUN", "False").lower() == "true")
+if not running_local_and_virtualenv_disabled and "VIRTUALENV_DIR" in environ and path.exists(expand_var(environ["VIRTUALENV_DIR"])):
+    venv_dir = path.abspath(expand_var(environ["VIRTUALENV_DIR"]))
     print "Activating virtualenv at", venv_dir
-    extend_var(env, "LD_LIBRARY_PATH", path.join(venv_dir, "inst/lib"))
-    extend_var(env, "LD_LIBRARY_PATH", path.join(venv_dir, "lib"))  # TODO: Check if this one is needed
-    extend_var(env, "PATH", path.join(venv_dir, "inst/bin"))
+    extend_var(environ, "LD_LIBRARY_PATH", path.join(venv_dir, "inst/lib"))
+    extend_var(environ, "LD_LIBRARY_PATH", path.join(venv_dir, "lib"))  # TODO: Check if this one is needed
+    extend_var(environ, "PATH", path.join(venv_dir, "inst/bin"))
 
     # This is a replacement for running venv/bin/activate
-    env["VIRTUAL_ENV"] = venv_dir
-    extend_var(env, "PATH", path.join(venv_dir, "bin"))
+    environ["VIRTUAL_ENV"] = venv_dir
+    extend_var(environ, "PATH", path.join(venv_dir, "bin"))
 
-    # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$EXTRA_LD_LIBRARY_PATH # TODO: Seems that this is no longer necessary
-
-    # TODO: Only do this if we _can_ run systemtap on this machine.
+    # TODO: Move this to a systemtap_setup script.
     print "Generating stap files:"
     # Path substitution for the tapsets, needs to be done even in case of USE_LOCAL_SYSTEMTAP
     # is disabled as we could be using systemtap from within the experiment.
@@ -146,11 +137,10 @@ else:
 
 # @CONF_OPTION OUTPUT_DIR: Dir where to write all the output generated from the experiment (default is workspace_dir/output)
 # Create the experiment output dir if necessary
-if 'OUTPUT_DIR' in env:
+if 'OUTPUT_DIR' in environ:
     # Convert the output dir to an absolute path to make it easier for
     # the rest of scripts to write into it.
-    output_dir = path.abspath(env['OUTPUT_DIR'])
-    env['OUTPUT_DIR'] = output_dir
+    output_dir = path.abspath(environ['OUTPUT_DIR'])
     environ['OUTPUT_DIR'] = output_dir
     if not path.exists(output_dir):
         makedirs(output_dir)
@@ -165,6 +155,6 @@ argv = (shlex.split(cmd))
 stdout.flush()
 stderr.flush()
 
-execvpe(argv[0], argv, env)
+execvpe(argv[0], argv, environ)
 #
 # run_in_env.py ends here
