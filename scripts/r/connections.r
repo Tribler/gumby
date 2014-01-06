@@ -9,7 +9,7 @@ if(file.exists("annotations.txt")){
 	show_mean <- length(colnames(df2)) != 3
 	df2 <- melt(df2)
 	df2 <- ddply(df2, .(annotation), summarise, meanx = mean(value), minx = min(value), maxx = max(value))
-	df2$linesize <- (df2$maxx - df2$minx) / 2
+	df2$linesize <- max((df2$maxx - df2$minx) / 2, 1)
 }
 
 i = 1
