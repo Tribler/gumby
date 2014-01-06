@@ -668,6 +668,32 @@ class DebugMessages(AbstractHandler):
         for debug_stat in self.dispersy_debugstatistics:
             extract_statistics.merge_records("scenario-%s-debugstatistics.txt" % debug_stat, "scenario-%s-debugstatistics.txt" % debug_stat, 2)
 
+class AnnotateMessages(AbstractHandler):
+
+    def __init__(self):
+        AbstractHandler.__init__(self)
+
+        self.annotate_dict = defaultdict(dict)
+        self.nodes = []
+
+    def new_file(self, node_nr, filename, outputdir):
+        self.nodes.append(node_nr)
+
+    def filter_line(self, node_nr, line_nr, timestamp, timeoffset, key):
+        return key == "annotate"
+
+    def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
+        self.annotate_dict[json][node_nr] = timeoffset
+
+    def all_files_done(self, extract_statistics):
+        h_annotations = open(os.path.join(extract_statistics.node_directory, "annotations.txt"), "w+")
+        print >> h_annotations, "annotation", " ".join(map(str, self.nodes))
+        for annotation, node_dict in self.annotate_dict.iteritems():
+            print >> h_annotations, '"%s"' % annotation,
+            for node in self.nodes:
+                print >> h_annotations, node_dict.get(node, '?'),
+            print >> h_annotations, ''
+
 def get_parser(argv):
     e = ExtractStatistics(argv[1])
     e.add_handler(BasicExtractor())
@@ -676,6 +702,7 @@ def get_parser(argv):
     e.add_handler(DropMessages())
     e.add_handler(BootstrapMessages())
     e.add_handler(DebugMessages())
+    e.add_handler(AnnotateMessages())
     return e
 
 if __name__ == "__main__":
