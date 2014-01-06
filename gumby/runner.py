@@ -300,13 +300,6 @@ class ExperimentRunner(Logger):
 
         chdir(self._workspace_dir)
 
-        # Step 1: (Not anymore, directly exported to the subproces' environ)
-        # Write the experiment config variables to a file sourceable by a shell script
-        # with open(path.join(self._workspace_dir,"experiment_vars.sh"), 'w') as vars_f:
-        # vars_f.write("# Auto generated file, do not modify\n")
-        # for key, val in self._cfg.iteritems():
-        # vars_f.write('export %s="%s"\n' % (key.upper(), val))
-
         # Step 1:
         # Inject all the config options as env variables to give sub-processes easy acces to them.
         self.local_env = environ.copy()

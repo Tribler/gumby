@@ -31,7 +31,7 @@ gumby/scripts/generate_config_file.py gumby/experiments/my_experiment/new_experi
  * Run local and remote setup scripts concurrently (see `local_setup_cmd` and `remote_setup_cmd` config options in your
    config file)
    * If any of them fail, the experiment will be aborted.
- * Start the tracker in the backgroud (optional, see `tracker_cmd`).
+ * Start the tracker in the background (optional, see `tracker_cmd`).
    * Spawn the tracker and keep it running during the whole experiment run time.
    * If the tracker dies during the experiment execution, the experiment will be aborted.
    * When the experiment finishes, the tracker will be killed automatically.
