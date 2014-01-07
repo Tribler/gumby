@@ -6,7 +6,7 @@ maxX <- as.integer(commandArgs(TRUE)[2])
 
 print(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
-load_annotations()
+df2 <- load_annotations()
 
 i = 1
 while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep = ''))){
@@ -15,7 +15,7 @@ while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep =
 	
 	p <- ggplot(df) + theme_bw()
 	
-	add_annotations()
+	p <- add_annotations(p, df2)
 	
 	p <- p + geom_step(data = df, alpha = 0.8, aes(time, value, group=variable, colour=variable))
 	p <- p + theme(legend.position = "none")
@@ -35,7 +35,7 @@ while(file.exists(paste("sum_incomming_connections_", toString(i), "_reduced.txt
 	
 	p <- ggplot(df, aes(x=value)) + theme_bw()
 	
-	add_annotations()
+	p <- add_annotations(p, df2)
 	
 	p <- p + geom_density()
 	p <- p + geom_histogram(aes(y=..density.., alpha=0.8))
@@ -55,7 +55,7 @@ while(file.exists(paste("bl_skip_", toString(i), "_reduced.txt", sep = ''))){
     
     p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	
-	add_annotations()
+	p <- add_annotations(p, df2)
 	
     p <- p + geom_step(data = df, alpha=0.8)
 	p <- p + theme(legend.position = "none")
@@ -75,7 +75,7 @@ while(file.exists(paste("bl_reuse_", toString(i), "_reduced.txt", sep = ''))){
     
     p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	
-	add_annotations()
+	p <- add_annotations(p, df2)
 	
     p <- p + geom_step(data = df, alpha=0.8)
 	p <- p + theme(legend.position = "none")
@@ -95,7 +95,7 @@ while(file.exists(paste("bl_time_", toString(i), "_reduced.txt", sep = ''))){
 	
 	p <- ggplot(df, aes(time, value, group=variable, colour=variable)) + theme_bw()
 	
-	add_annotations()
+	p <- add_annotations(p, df2)
 	
 	p <- p + geom_step(data = df, alpha=0.8)
 	p <- p + theme(legend.position = "none")
