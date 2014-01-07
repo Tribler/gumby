@@ -42,6 +42,7 @@ from sys import stdout, exit
 from collections import defaultdict, Iterable
 import json
 from time import time
+from random import random
 
 from gumby.sync import ExperimentClient, ExperimentClientFactory
 from gumby.scenario import ScenarioRunner
@@ -483,8 +484,9 @@ def main(client_class):
     setupLogging()
     factory = ExperimentClientFactory({}, client_class)
     msg("Connecting to: %s:%s" % (environ['SYNC_HOST'], int(environ['SYNC_PORT'])))
-    reactor.connectTCP(environ['SYNC_HOST'], int(environ['SYNC_PORT']), factory)
-
+    # Wait for a random amount of time before connecting to try to not overload the server when we have a lot of connections
+    reactor.callLater(random()*10,
+                      lambda _: reactor.connectTCP(environ['SYNC_HOST'], int(environ['SYNC_PORT']), factory))
     reactor.exitCode = 0
     reactor.run()
     exit(reactor.exitCode)
