@@ -31,7 +31,6 @@ while(file.exists(paste("sum_incomming_connections_", toString(i), "_reduced.txt
 	df <- melt(df, id="time")
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
 	p <- p + geom_density(aes(x=value))
 	p <- p + geom_histogram(aes(x=value, y=..density.., alpha=0.8))
 	p <- p + theme(legend.position = "none")
