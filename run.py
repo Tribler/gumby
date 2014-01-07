@@ -39,6 +39,7 @@
 
 import sys
 from os.path import dirname, exists
+from time import sleep, time
 
 from twisted.internet import reactor
 
@@ -46,7 +47,7 @@ from gumby.runner import ExperimentRunner
 from gumby.log import ColoredFileLogObserver, msg
 
 from os import setpgrp, kill, getpgid, getppid, getpid
-from signal import signal, SIGTERM
+from signal import signal, SIGTERM, SIGKILL
 from psutil import get_pid_list
 
 
@@ -57,17 +58,20 @@ def _termTrap(self, *argv):
         exit(-15)
 
 
-def _killGroup():
+def _killGroup(signal = SIGTERM):
     global _terminating
     _terminating = True
     mypid = getpid()
+    pids_found = 0
     for pid in get_pid_list():
         try:
             if getpgid(pid) == mypid and pid != mypid:
-                kill(pid, SIGTERM)
+                kill(pid, signal)
+                pids_found += 1
         except OSError:
             # The process could already be dead by the time we do the getpgid()
             pass
+    return pids_found
 
 _terminating = False
 
@@ -94,7 +98,18 @@ if __name__ == '__main__':
 
         # Kill all the subprocesses before exiting
         msg("Killing leftover local sub processes...")
-        _killGroup()
+        pids_found = _killGroup()
+        wait_start_time = time()
+        while pids_found and (time() - wait_start_time) < 30:
+            pids_found = _killGroup()
+            if pids_found:
+                msg("Waiting for %d subprocess(es) to die..." % pids_found)
+            sleep(5)
+
+        if (time() - wait_start_time) >= 30:
+            msg("Time out waiting, sending SIGKILL to remaining processes.")
+            _killGroup(SIGKILL)
+
         msg("Done.")
     else:
         print "Usage:\n%s EXPERIMENT_CONFIG" % sys.argv[0]
