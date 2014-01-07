@@ -200,8 +200,11 @@ class ExperimentServiceFactory(Factory):
         msg("Pushing a %d bytes long json doc." % len(json_vars))
 
         # Send the json doc to the subscribers
+        task.cooperate(self._sendLineToAllGenerator(json_vars))
+
+    def _sendLineToAllGenerator(self, line):
         for subscriber in self.connections:
-            subscriber.sendLine(json_vars)
+            yield subscriber.sendLine(line)
 
     def setConnectionReceived(self, proto):
         self.vars_received.append(proto)
@@ -220,18 +223,28 @@ class ExperimentServiceFactory(Factory):
     def startExperiment(self):
         # Give the go signal and disconnect
         msg("Starting the experiment!")
-        deferreds = []
-        start_time = time() + self.experiment_start_delay
-        for subscriber in self.connections:
-            # Sync the experiment start time among instances
 
         if self._subscriber_received_looping_call.running :
             self._subscriber_received_looping_call.stop()
 
-            subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
-            deferreds.append(deferLater(reactor, 1, subscriber.transport.loseConnection))
-        d = gatherResults(deferreds)
+        deferreds = []
+        start_time = time() + self.experiment_start_delay
+        def goAll():
+            for subscriber in self.connections:
+                # Sync the experiment start time among instances
+                yield subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
+
+        d = task.cooperate(goAll()).whenDone()
+        d.addCallback(lambda _: msg("Done, disconnecting all clients."))
+        d.addCallback(lambda _: self.disconnectAll())
         d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
+
+    def disconnectAll(self):
+        reactor.runUntilCurrent()
+        def _disconnectAll():
+            for subscriber in self.connections:
+                yield subscriber.transport.loseConnection()
+        task.cooperate(_disconnectAll())
 
     def unregisterConnection(self, proto):
         if proto in self.connections:
