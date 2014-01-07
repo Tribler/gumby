@@ -5,6 +5,9 @@ args <- commandArgs(TRUE)
 minX <- as.integer(args[1])
 maxX <- as.integer(args[2])
 
+source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
+df2 <- load_annotations()
+
 if(file.exists("utimes_reduced.txt")){
 	df <- read.table("utimes_reduced.txt", header = TRUE, check.names = FALSE)
 	df <- melt(df, id="time")
@@ -19,14 +22,8 @@ if(file.exists("utimes_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-
-	if(file.exists("annotations.txt")){
-		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE)
-		p <- p + geom_vline(alpha = 0.3, data=df2, aes(xintercept = time))
-		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
-	}
-
-	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
+	p <- add_annotations(p, df2)
+	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("utimes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -56,14 +53,8 @@ if(file.exists("stimes_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-
-	if(file.exists("annotations.txt")){
-		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE)
-		p <- p + geom_vline(alpha = 0.3, data=df2, aes(xintercept = time))
-		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
-	}
-
-	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
+	p <- add_annotations(p, df2)
+	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("stimes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -93,14 +84,8 @@ if(file.exists("wchars_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-
-	if(file.exists("annotations.txt")){
-		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE)
-		p <- p + geom_vline(alpha = 0.3, data=df2, aes(xintercept = time))
-		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
-	}
-
-	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
+	p <- add_annotations(p, df2)
+	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("wchars_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -130,14 +115,8 @@ if(file.exists("rchars_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-
-	if(file.exists("annotations.txt")){
-		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE)
-		p <- p + geom_vline(alpha = 0.3, data=df2, aes(xintercept = time))
-		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
-	}
-
-	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
+	p <- add_annotations(p, df2)
+	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("rchars_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -167,14 +146,8 @@ if(file.exists("writebytes_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-
-	if(file.exists("annotations.txt")){
-		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE)
-		p <- p + geom_vline(alpha = 0.3, data=df2, aes(xintercept = time))
-		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
-	}
-
-	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
+	p <- add_annotations(p, df2)
+	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("writebytes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -204,14 +177,8 @@ if(file.exists("readbytes_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-
-	if(file.exists("annotations.txt")){
-		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE)
-		p <- p + geom_vline(alpha = 0.3, data=df2, aes(xintercept = time))
-		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
-	}
-
-	p <- p + geom_line(aes(time, value, group=variable, colour=variable))
+	p <- add_annotations(p, df2)
+	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("readbytes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
@@ -241,14 +208,8 @@ if(file.exists("rsizes_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-
-	if(file.exists("annotations.txt")){
-		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE)
-		p <- p + geom_vline(alpha = 0.3, data=df2, aes(xintercept = time))
-		p <- p + geom_text(alpha = 0.3, data=df2, angle = 90, aes(x=time, y=max(df$value), label=remark, hjust=1, vjust=start, size=3))
-	}
-
-	p <- p + geom_step(aes(time, value, group=variable, colour=variable))
+	p <- add_annotations(p, df2)
+	p <- p + geom_step(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("rsizes_node_reduced.txt")){
 		p <- p + facet_grid(type ~ ., scales = "free_y")
