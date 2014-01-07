@@ -139,8 +139,12 @@ class ExperimentServiceProto(LineReceiver):
             return 'done'
 
     def proto_vars_received(self, line):
-        self.factory.setConnectionReceived(self)
-        return "wait"
+        if line.strip() == 'vars_received':
+            self.factory.setConnectionReceived(self)
+            return "wait"
+        err('Unexpected command received "%s"' % line)
+        err('closing connection.')
+        return 'done'
 
     def proto_wait(self, line):
         err('Unexpected command received "%s" while in ready state. Closing connection' % line)
