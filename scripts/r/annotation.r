@@ -14,7 +14,7 @@ load_annotations <- function(){
 add_annotations <- function(p, df2){
 	if(file.exists("annotations.txt")){
 		p <- p + stat_vline(alpha = 0.2, data=df2, xintercept = df2$linepos, size = df2$linesize, mapping = aes(colour=annotation))
-		if (df2$show_mean) {
+		if (df2$show_mean[1]) {
 			p <- p + stat_vline(alpha = 0.6, data=df2, xintercept = df2$meanx, size = 1, mapping = aes(colour=annotation))
 		}
 		p <- p + geom_text(alpha = 0.4, data=df2, angle = 90, aes(x=maxx, y=max(df$value), label=annotation, hjust=1, size=6))
