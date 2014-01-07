@@ -196,6 +196,7 @@ class ExperimentServiceFactory(Factory):
             vars[subscriber.id] = subscriber_vars
 
         json_vars = json.dumps(vars)
+        del vars
         msg("Pushing a %d bytes long json doc." % len(json_vars))
 
         # Send the json doc to the subscribers
@@ -235,6 +236,11 @@ class ExperimentServiceFactory(Factory):
     def unregisterConnection(self, proto):
         if proto in self.connections:
             self.connections.remove(proto)
+        if proto in self.vars_received:
+            self.vars_received.remove(proto)
+        if proto.id in self.vars_received:
+            self.vars_received.remove(proto.id)
+
         msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
 
     def onExperimentStarted(self, _):
