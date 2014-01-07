@@ -87,7 +87,6 @@ class ExperimentServiceProto(LineReceiver):
 
     def connectionMade(self):
         msg("New connection from: ", str(self.transport.getPeer()), logLevel=logging.DEBUG)
-
         self.sendLine("id:%s" % self.id)
 
     def lineReceived(self, line):
@@ -175,6 +174,8 @@ class ExperimentServiceFactory(Factory):
 
         if len(self.connections) >= self.expected_subscribers:
             msg("All subscribers are ready, pushing data!")
+            if self._subscriber_looping_call.running:
+                self._subscriber_looping_call.stop()
             self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
         else:
@@ -183,10 +184,7 @@ class ExperimentServiceFactory(Factory):
                 self._subscriber_looping_call.start(1.0)
 
     def _print_subscribers_ready(self):
-        if len(self.connections) < self.expected_subscribers:
-            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers))
-        else:
-            self._subscriber_looping_call.stop()
+        msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers))
 
     def pushInfoToSubscribers(self):
         # Generate the json doc
@@ -216,10 +214,7 @@ class ExperimentServiceFactory(Factory):
                 self._subscriber_received_looping_call.start(1.0)
 
     def _print_subscribers_received(self):
-        if len(self.vars_received) < self.expected_subscribers:
-            msg("%d of %d expected subscribers received the data." % (len(self.vars_received), self.expected_subscribers))
-        else:
-            self._subscriber_received_looping_call.stop()
+        msg("%d of %d expected subscribers received the data." % (len(self.vars_received), self.expected_subscribers))
 
     def startExperiment(self):
         # Give the go signal and disconnect
@@ -228,6 +223,10 @@ class ExperimentServiceFactory(Factory):
         start_time = time() + self.experiment_start_delay
         for subscriber in self.connections:
             # Sync the experiment start time among instances
+
+        if self._subscriber_received_looping_call.running :
+            self._subscriber_received_looping_call.stop()
+
             subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
             deferreds.append(deferLater(reactor, 1, subscriber.transport.loseConnection))
         d = gatherResults(deferreds)
