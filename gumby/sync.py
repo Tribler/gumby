@@ -58,20 +58,12 @@
 #
 
 # Code:
-
-from time import time
 import json
 import logging
+from time import time
 
-from twisted.internet import epollreactor
-epollreactor.install()
-
-from twisted.internet import reactor
-from twisted.internet import task
-from twisted.internet.defer import gatherResults
-from twisted.internet.error import ConnectionDone
+from twisted.internet import reactor, task
 from twisted.internet.protocol import Factory, ReconnectingClientFactory
-from twisted.internet.task import deferLater
 from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
 from twisted.python.log import msg, err
