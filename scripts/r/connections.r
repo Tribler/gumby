@@ -4,7 +4,8 @@ library(reshape)
 minX <- as.integer(commandArgs(TRUE)[1])
 maxX <- as.integer(commandArgs(TRUE)[2])
 
-source('annotation.r')
+print(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
+source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 load_annotations()
 
 i = 1
