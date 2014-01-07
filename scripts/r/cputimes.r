@@ -6,7 +6,7 @@ minX <- as.integer(args[1])
 maxX <- as.integer(args[2])
 
 source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
-df2 <- load_annotations()
+df3 <- load_annotations()
 
 if(file.exists("utimes_reduced.txt")){
 	df <- read.table("utimes_reduced.txt", header = TRUE, check.names = FALSE)
@@ -22,7 +22,7 @@ if(file.exists("utimes_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df3)
 	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("utimes_node_reduced.txt")){
@@ -53,7 +53,7 @@ if(file.exists("stimes_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df3)
 	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("stimes_node_reduced.txt")){
@@ -84,7 +84,7 @@ if(file.exists("wchars_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df3)
 	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("wchars_node_reduced.txt")){
@@ -115,7 +115,7 @@ if(file.exists("rchars_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df3)
 	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("rchars_node_reduced.txt")){
@@ -146,7 +146,7 @@ if(file.exists("writebytes_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df3)
 	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("writebytes_node_reduced.txt")){
@@ -177,7 +177,7 @@ if(file.exists("readbytes_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df3)
 	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("readbytes_node_reduced.txt")){
@@ -208,7 +208,7 @@ if(file.exists("rsizes_reduced.txt")){
 	}
 
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df3)
 	p <- p + geom_step(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 
 	if(file.exists("rsizes_node_reduced.txt")){
