@@ -170,7 +170,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
 
     if len(all_nodes) > 1:
         # calculate sum for all nodes
-        for dictionary in [utimes, stimes, wchars, rchars, vsizes, writebytes, readbytes]:
+        for dictionary in [utimes, stimes, wchars, rchars, vsizes, rsizes, writebytes, readbytes]:
             for time, values in dictionary.iteritems():
                 for node in all_nodes:
                     if node in values:
