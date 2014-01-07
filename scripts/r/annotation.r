@@ -13,11 +13,13 @@ load_annotations <- function(){
 
 add_annotations <- function(p, df2){
 	if(file.exists("annotations.txt")){
-		p <- p + stat_vline(alpha = 0.2, data=df2, xintercept = df2$linepos, size = df2$linesize, mapping = aes(colour=annotation))
-		if (df2$show_mean[1]) {
-			p <- p + stat_vline(alpha = 0.6, data=df2, xintercept = df2$meanx, size = 1, mapping = aes(colour=annotation))
+		for (i in 1:nrow(df2)){
+			p <- p + stat_vline(alpha = 0.2, data=df2, xintercept = df2$linepos[i], size = df2$linesize[i], colour = toString(i+1))
+			if (df2$show_mean[i]) {
+				p <- p + stat_vline(alpha = 0.6, data=df2, xintercept = df2$meanx[i], size = 1, colour = toString(i+1))
+			}
 		}
-		p <- p + geom_text(alpha = 0.4, data=df2, angle = 90, aes(x=maxx, y=max(df$value), label=annotation, hjust=1, size=6))
+		p <- p + geom_text(alpha = 0.4, data=df2, angle = 90, aes(x=maxx+3, y=max(df$value), label=annotation, hjust=1, size=6))
 		return(p)
 	}
 }
