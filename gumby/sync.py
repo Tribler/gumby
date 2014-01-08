@@ -87,10 +87,7 @@ class ExperimentServiceProto(LineReceiver):
 
     def connectionMade(self):
         msg("New connection from: ", str(self.transport.getPeer()), logLevel=logging.DEBUG)
-<<<<<<< HEAD
         self.factory.setConnectionMade(self)
-=======
->>>>>>> branch 'member_gumby_thingy' of ssh://git@github.com/Tribler/gumby.git
         self.sendLine("id:%s" % self.id)
 
     def lineReceived(self, line):
