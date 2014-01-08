@@ -203,7 +203,7 @@ class ExperimentServiceFactory(Factory):
                 self._subscriber_looping_call.start(1.0)
 
     def _print_subscribers_ready(self):
-        msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers))
+        msg("%d of %d expected subscribers ready." % (len(self.connections_ready), self.expected_subscribers))
 
     def pushInfoToSubscribers(self):
         # Generate the json doc
@@ -249,7 +249,7 @@ class ExperimentServiceFactory(Factory):
         deferreds = []
         start_time = time() + self.experiment_start_delay
         def goAll():
-            for subscriber in self.connections:
+            for subscriber in self.connections_ready:
                 # Sync the experiment start time among instances
                 yield subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
 
@@ -261,13 +261,13 @@ class ExperimentServiceFactory(Factory):
     def disconnectAll(self):
         reactor.runUntilCurrent()
         def _disconnectAll():
-            for subscriber in self.connections:
+            for subscriber in self.connections_ready:
                 yield subscriber.transport.loseConnection()
         task.cooperate(_disconnectAll())
 
     def unregisterConnection(self, proto):
-        if proto in self.connections:
-            self.connections.remove(proto)
+        if proto in self.connections_ready:
+            self.connections_ready.remove(proto)
         if proto in self.vars_received:
             self.vars_received.remove(proto)
         if proto.id in self.vars_received:
