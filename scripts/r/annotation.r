@@ -19,7 +19,7 @@ add_annotations <- function(p, df2){
 				p <- p + stat_vline(alpha = 0.6, data=df2, xintercept = df2$meanx[i], size = 1, colour = toString(i+1))
 			}
 		}
-		p <- p + geom_text(alpha = 0.4, data=df2, angle = 90, aes(x=maxx+3, y=max(df$value), label=annotation, hjust=1, size=6))
+		p <- p + geom_text(alpha = 0.4, data=df2, angle = 90, aes(x=maxx+3, y=max(df$value), label=annotation, hjust=1, size=6), show_guide = FALSE)
 		return(p)
 	}
 }
