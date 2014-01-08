@@ -95,7 +95,7 @@ class ExperimentServiceProto(LineReceiver):
 
     def connectionMade(self):
         msg("New connection from: ", str(self.transport.getPeer()), logLevel=logging.DEBUG)
-
+        self.factory.setConnectionMade(self)
         self.sendLine("id:%s" % self.id)
 
     def lineReceived(self, line):
@@ -162,9 +162,11 @@ class ExperimentServiceFactory(Factory):
         self.expected_subscribers = expected_subscribers
         self.experiment_start_delay = experiment_start_delay
         self.connection_counter = -1
-        self.connections = []
+        self.connections_made = []
+        self.connections_ready = []
         self.vars_received = []
         self._timeout_delayed_call = None
+        self._made_looping_call = None
         self._subscriber_looping_call = None
         self._subscriber_received_looping_call = None
 
@@ -172,12 +174,28 @@ class ExperimentServiceFactory(Factory):
         self.connection_counter += 1
         return ExperimentServiceProto(self, self.connection_counter + 1)
 
+    def setConnectionMade(self, proto):
+        self.connections_made.append(proto)
+
+        if len(self.connections_made) >= self.expected_subscribers:
+            msg("All subscribers connected!")
+            self._made_looping_call.stop()
+            self.connections_made = None
+        else:
+            if not self._made_looping_call:
+                self._made_looping_call = task.LoopingCall(self._print_subscribers_made)
+                self._made_looping_call.start(1.0)
+
+    def _print_subscribers_made(self):
+        if len(self.connections_made) < self.expected_subscribers:
+            msg("%d of %d expected subscribers connected." % (len(self.connections_made), self.expected_subscribers))
+
     def setConnectionReady(self, proto):
         if not self._timeout_delayed_call:
             self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
-        self.connections.append(proto)
+        self.connections_ready.append(proto)
 
-        if len(self.connections) >= self.expected_subscribers:
+        if len(self.connections_ready) >= self.expected_subscribers:
             msg("All subscribers are ready, pushing data!")
             self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
@@ -187,15 +205,15 @@ class ExperimentServiceFactory(Factory):
                 self._subscriber_looping_call.start(1.0)
 
     def _print_subscribers_ready(self):
-        if len(self.connections) < self.expected_subscribers:
-            msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers))
+        if len(self.connections_ready) < self.expected_subscribers:
+            msg("%d of %d expected subscribers ready." % (len(self.connections_ready), self.expected_subscribers))
         else:
             self._subscriber_looping_call.stop()
 
     def pushInfoToSubscribers(self):
         # Generate the json doc
         vars = {}
-        for subscriber in self.connections:
+        for subscriber in self.connections_ready:
             subscriber_vars = subscriber.vars.copy()
             subscriber_vars['port'] = subscriber.id + 12000
             subscriber_vars['host'] = subscriber.transport.getPeer().host
@@ -205,7 +223,7 @@ class ExperimentServiceFactory(Factory):
         msg("Pushing a %d bytes long json doc." % len(json_vars))
 
         # Send the json doc to the subscribers
-        for subscriber in self.connections:
+        for subscriber in self.connections_ready:
             subscriber.sendLine(json_vars)
 
     def setConnectionReceived(self, proto):
@@ -230,7 +248,7 @@ class ExperimentServiceFactory(Factory):
         msg("Starting the experiment!")
         deferreds = []
         start_time = time() + self.experiment_start_delay
-        for subscriber in self.connections:
+        for subscriber in self.connections_ready:
             # Sync the experiment start time among instances
             subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
             deferreds.append(deferLater(reactor, 1, subscriber.transport.loseConnection))
@@ -238,8 +256,8 @@ class ExperimentServiceFactory(Factory):
         d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
     def unregisterConnection(self, proto):
-        if proto in self.connections:
-            self.connections.remove(proto)
+        if proto in self.connections_ready:
+            self.connections_ready.remove(proto)
         msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
 
     def onExperimentStarted(self, _):
