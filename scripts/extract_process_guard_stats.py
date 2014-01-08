@@ -89,6 +89,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
             line = h_records.readline()
             metainfo = json.loads(line)
             sc_clk_tck = float(metainfo['sc_clk_tck'])
+            pagesize = float(metainfo['pagesize'])
 
             for line in h_records:
                 parts = line.split()
@@ -112,7 +113,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
                 vsizes[time].setdefault(nodename, []).append(vsizes[time][pid])
 
                 rss = long(parts[24])
-                rsizes.setdefault(time, {})[pid] = rss / 1048576.0
+                rsizes.setdefault(time, {})[pid] = (rss * pagesize) / 1048576.0
                 rsizes[time].setdefault(nodename, []).append(rsizes[time][pid])
 
                 # delay_io_ticks = long(parts[41])
