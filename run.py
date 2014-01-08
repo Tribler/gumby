@@ -90,12 +90,16 @@ if __name__ == '__main__':
 
         exp_runner = ExperimentRunner(conf_path)
         exp_runner.run()
+
+        reactor.exitCode = 0
         reactor.run()
 
         # Kill all the subprocesses before exiting
         msg("Killing leftover local sub processes...")
         _killGroup()
         msg("Done.")
+
+        exit(reactor.exitCode)
     else:
         print "Usage:\n%s EXPERIMENT_CONFIG" % sys.argv[0]
 

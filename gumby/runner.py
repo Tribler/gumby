@@ -294,7 +294,9 @@ class ExperimentRunner(Logger):
         def onExperimentFailed(failure):
             err("Experiment execution failed, exiting with error.")
             err(failure)
+
             if reactor.running:
+                reactor.exitCode = 1
                 reactor.stop()
             reactor.addSystemEventTrigger('after', 'shutdown', sys.exit, 1)
 
