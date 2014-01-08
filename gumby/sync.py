@@ -222,7 +222,7 @@ class ExperimentServiceFactory(Factory):
         task.cooperate(self._sendLineToAllGenerator(json_vars))
 
     def _sendLineToAllGenerator(self, line):
-        for subscriber in self.connections:
+        for subscriber in self.connections_ready:
             yield subscriber.sendLine(line)
 
     def setConnectionReceived(self, proto):
