@@ -248,7 +248,7 @@ class ExperimentServiceFactory(Factory):
             # Sync the experiment start time among instances
             subscriber.sendLine("go:%f" % (start_time + subscriber.vars.get('time_offset', 0)))
 
-        d = task.deferLater(reactor, 5, lambda _: msg("Done, disconnecting all clients."))
+        d = task.deferLater(reactor, 5, lambda : msg("Done, disconnecting all clients."))
         d.addCallback(lambda _: self.disconnectAll())
         d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
