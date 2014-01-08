@@ -58,20 +58,12 @@
 #
 
 # Code:
-
-from time import time
 import json
 import logging
+from time import time
 
-from twisted.internet import epollreactor
-epollreactor.install()
-
-from twisted.internet import reactor
-from twisted.internet import task
-from twisted.internet.defer import gatherResults
-from twisted.internet.error import ConnectionDone
+from twisted.internet import reactor, task
 from twisted.internet.protocol import Factory, ReconnectingClientFactory
-from twisted.internet.task import deferLater
 from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
 from twisted.python.log import msg, err
@@ -95,7 +87,10 @@ class ExperimentServiceProto(LineReceiver):
 
     def connectionMade(self):
         msg("New connection from: ", str(self.transport.getPeer()), logLevel=logging.DEBUG)
+<<<<<<< HEAD
         self.factory.setConnectionMade(self)
+=======
+>>>>>>> branch 'member_gumby_thingy' of ssh://git@github.com/Tribler/gumby.git
         self.sendLine("id:%s" % self.id)
 
     def lineReceived(self, line):
@@ -147,8 +142,12 @@ class ExperimentServiceProto(LineReceiver):
             return 'done'
 
     def proto_vars_received(self, line):
-        self.factory.setConnectionReceived(self)
-        return "wait"
+        if line.strip() == 'vars_received':
+            self.factory.setConnectionReceived(self)
+            return "wait"
+        err('Unexpected command received "%s"' % line)
+        err('closing connection.')
+        return 'done'
 
     def proto_wait(self, line):
         err('Unexpected command received "%s" while in ready state. Closing connection' % line)
@@ -197,6 +196,8 @@ class ExperimentServiceFactory(Factory):
 
         if len(self.connections_ready) >= self.expected_subscribers:
             msg("All subscribers are ready, pushing data!")
+            if self._subscriber_looping_call.running:
+                self._subscriber_looping_call.stop()
             self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
         else:
@@ -205,10 +206,7 @@ class ExperimentServiceFactory(Factory):
                 self._subscriber_looping_call.start(1.0)
 
     def _print_subscribers_ready(self):
-        if len(self.connections_ready) < self.expected_subscribers:
-            msg("%d of %d expected subscribers ready." % (len(self.connections_ready), self.expected_subscribers))
-        else:
-            self._subscriber_looping_call.stop()
+        msg("%d of %d expected subscribers ready." % (len(self.connections), self.expected_subscribers))
 
     def pushInfoToSubscribers(self):
         # Generate the json doc
@@ -220,11 +218,15 @@ class ExperimentServiceFactory(Factory):
             vars[subscriber.id] = subscriber_vars
 
         json_vars = json.dumps(vars)
+        del vars
         msg("Pushing a %d bytes long json doc." % len(json_vars))
 
         # Send the json doc to the subscribers
-        for subscriber in self.connections_ready:
-            subscriber.sendLine(json_vars)
+        task.cooperate(self._sendLineToAllGenerator(json_vars))
+
+    def _sendLineToAllGenerator(self, line):
+        for subscriber in self.connections:
+            yield subscriber.sendLine(line)
 
     def setConnectionReceived(self, proto):
         self.vars_received.append(proto)
@@ -238,26 +240,42 @@ class ExperimentServiceFactory(Factory):
                 self._subscriber_received_looping_call.start(1.0)
 
     def _print_subscribers_received(self):
-        if len(self.vars_received) < self.expected_subscribers:
-            msg("%d of %d expected subscribers received the data." % (len(self.vars_received), self.expected_subscribers))
-        else:
-            self._subscriber_received_looping_call.stop()
+        msg("%d of %d expected subscribers received the data." % (len(self.vars_received), self.expected_subscribers))
 
     def startExperiment(self):
         # Give the go signal and disconnect
         msg("Starting the experiment!")
+
+        if self._subscriber_received_looping_call.running :
+            self._subscriber_received_looping_call.stop()
+
         deferreds = []
         start_time = time() + self.experiment_start_delay
-        for subscriber in self.connections_ready:
-            # Sync the experiment start time among instances
-            subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
-            deferreds.append(deferLater(reactor, 1, subscriber.transport.loseConnection))
-        d = gatherResults(deferreds)
+        def goAll():
+            for subscriber in self.connections:
+                # Sync the experiment start time among instances
+                yield subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
+
+        d = task.cooperate(goAll()).whenDone()
+        d.addCallback(lambda _: msg("Done, disconnecting all clients."))
+        d.addCallback(lambda _: self.disconnectAll())
         d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
+    def disconnectAll(self):
+        reactor.runUntilCurrent()
+        def _disconnectAll():
+            for subscriber in self.connections:
+                yield subscriber.transport.loseConnection()
+        task.cooperate(_disconnectAll())
+
     def unregisterConnection(self, proto):
-        if proto in self.connections_ready:
-            self.connections_ready.remove(proto)
+        if proto in self.connections:
+            self.connections.remove(proto)
+        if proto in self.vars_received:
+            self.vars_received.remove(proto)
+        if proto.id in self.vars_received:
+            self.vars_received.remove(proto.id)
+
         msg("Connection cleanly unregistered.", logLevel=logging.DEBUG)
 
     def onExperimentStarted(self, _):
