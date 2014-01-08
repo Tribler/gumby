@@ -81,8 +81,10 @@ if __name__ == '__main__':
     experiment_start_delay = float(environ.get('SYNC_EXPERIMENT_START_DELAY', 5))
     server_port = int(environ['SYNC_PORT'])
 
+    reactor.exitCode = 0
     reactor.listenTCP(server_port, ExperimentServiceFactory(expected_subscribers, experiment_start_delay))
     reactor.run()
+    exit(reactor.exitCode)
 
 #
 # experiment_server.py ends here

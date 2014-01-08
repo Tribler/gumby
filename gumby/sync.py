@@ -248,12 +248,14 @@ class ExperimentServiceFactory(Factory):
 
     def onExperimentStartError(self, failure):
         err("Failed to start experiment")
+        reactor.exitCode = 1
         reactor.callLater(0, stopReactor)
         return failure
 
     def onExperimentSetupTimeout(self):
         err("Waiting for all peers timed out, exiting.")
-        reactor.stop()
+        reactor.exitCode = 1
+        reactor.callLater(0, stopReactor)
 
     def  lineLengthExceeded(self, line):
         err("Line length exceeded, %d bytes remain." % len(line))
