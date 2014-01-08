@@ -372,7 +372,7 @@ class ExperimentClient(LineReceiver):
         msg("Got experiment variables", logLevel=logging.DEBUG)
 
         self.all_vars = json.loads(line)
-        self.time_offset = self.all_vars[self.my_id]["time_offset"]
+        self.time_offset = self.all_vars[self.my_id].get("time_offset", 0)
         self.onAllVarsReceived()
 
         self.sendLine("vars_received")
