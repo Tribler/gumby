@@ -251,7 +251,7 @@ class ExperimentServiceFactory(Factory):
         def goAll():
             for subscriber in self.connections_ready:
                 # Sync the experiment start time among instances
-                yield subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
+                yield subscriber.sendLine("go:%f" % (start_time + subscriber.vars.get('time_offset', 0)))
 
         d = task.cooperate(goAll()).whenDone()
         d.addCallback(lambda _: msg("Done, disconnecting all clients."))
@@ -310,10 +310,13 @@ class ExperimentClient(LineReceiver):
 
     def connectionMade(self):
         msg("Connected to the experiment server", logLevel=logging.DEBUG)
-        self.sendLine("time:%f" % time())
+        self.sendTime()
         for key, val in self.vars.iteritems():
             self.sendLine("set:%s:%s" % (key, val))
         self.state = "id"
+
+    def sendTime(self):
+        self.sendLine("time:%f" % time())
 
     def lineReceived(self, line):
         try:
