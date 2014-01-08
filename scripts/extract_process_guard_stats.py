@@ -169,23 +169,22 @@ def parse_resource_files(input_directory, output_directory, start_timestamp):
     write_records(all_pids, vsizes, output_directory, "vsizes.txt")
     write_records(all_pids, rsizes, output_directory, "rsizes.txt")
 
-    if len(all_nodes) > 1:
-        # calculate sum for all nodes
-        for dictionary in [utimes, stimes, wchars, rchars, vsizes, rsizes, writebytes, readbytes]:
-            for time, values in dictionary.iteritems():
-                for node in all_nodes:
-                    if node in values:
-                        values[node] = sum(values[node])
+    # calculate sum for all nodes
+    for dictionary in [utimes, stimes, wchars, rchars, vsizes, rsizes, writebytes, readbytes]:
+        for time, values in dictionary.iteritems():
+            for node in all_nodes:
+                if node in values:
+                    values[node] = sum(values[node])
 
-        # write mean for all nodes to separate files
-        write_records(all_nodes, utimes, output_directory, "utimes_node.txt")
-        write_records(all_nodes, stimes, output_directory, "stimes_node.txt")
-        write_records(all_nodes, wchars, output_directory, "wchars_node.txt")
-        write_records(all_nodes, rchars, output_directory, "rchars_node.txt")
-        write_records(all_nodes, writebytes, output_directory, "writebytes_node.txt")
-        write_records(all_nodes, readbytes, output_directory, "readbytes_node.txt")
-        write_records(all_nodes, vsizes, output_directory, "vsizes_node.txt")
-        write_records(all_nodes, rsizes, output_directory, "rsizes_node.txt")
+    # write mean for all nodes to separate files
+    write_records(all_nodes, utimes, output_directory, "utimes_node.txt")
+    write_records(all_nodes, stimes, output_directory, "stimes_node.txt")
+    write_records(all_nodes, wchars, output_directory, "wchars_node.txt")
+    write_records(all_nodes, rchars, output_directory, "rchars_node.txt")
+    write_records(all_nodes, writebytes, output_directory, "writebytes_node.txt")
+    write_records(all_nodes, readbytes, output_directory, "readbytes_node.txt")
+    write_records(all_nodes, vsizes, output_directory, "vsizes_node.txt")
+    write_records(all_nodes, rsizes, output_directory, "rsizes_node.txt")
 
 def main(input_directory, output_directory, start_time=0):
     parse_resource_files(input_directory, output_directory, start_time)
