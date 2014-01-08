@@ -244,13 +244,11 @@ class ExperimentServiceFactory(Factory):
 
         deferreds = []
         start_time = time() + self.experiment_start_delay
-        def goAll():
-            for subscriber in self.connections_ready:
-                # Sync the experiment start time among instances
-                yield subscriber.sendLine("go:%f" % (start_time + subscriber.vars.get('time_offset', 0)))
+        for subscriber in self.connections_ready:
+            # Sync the experiment start time among instances
+            subscriber.sendLine("go:%f" % (start_time + subscriber.vars.get('time_offset', 0)))
 
-        d = task.cooperate(goAll()).whenDone()
-        d.addCallback(lambda _: msg("Done, disconnecting all clients."))
+        d = deferLater(reactor, 5, lambda _: msg("Done, disconnecting all clients."))
         d.addCallback(lambda _: self.disconnectAll())
         d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
