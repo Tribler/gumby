@@ -115,17 +115,13 @@ class ExperimentServiceProto(LineReceiver):
         if line.startswith("time"):
             self.vars["time_offset"] = float(line.strip().split(':')[1]) - time()
             msg("Time offset is %s" % (self.vars["time_offset"]), logLevel=logging.DEBUG)
-            return 'set'
-        else:
-            err("Haven't received the time command as the first line, closing connection")
-            return 'done'
+            return 'init'
 
-    def proto_set(self, line):
-        if line.startswith('set:'):
+        elif line.startswith('set:'):
             _, key, value = line.strip().split(':', 2)
             msg("This subscriber sets %s to %s" % (key, value), logLevel=logging.DEBUG)
             self.vars[key] = value
-            return 'set'
+            return 'init'
 
         elif line.strip() == 'ready':
             msg("This subscriber is ready now.", logLevel=logging.DEBUG)
