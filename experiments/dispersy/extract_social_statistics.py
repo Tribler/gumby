@@ -58,28 +58,27 @@ class EncMessages(AbstractHandler):
         return key in ["text-statistics", "encrypted-statistics", "community-churn"]
 
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
-        identifier = json['created_by'] + '@' + str(json['global_time'])
-
-        if key == "text-statistics":
-            if json['from_friend']:
-                self.received_friend += 1
-            if json['from_foaf']:
-                self.received_foaf += 1
-
-            self.send_received[identifier]['received'] = timestamp
-
-        elif key == 'encrypted-statistics':
-            if json['created_by_me']:
-                self.send_received[identifier]['created'] = timestamp
-            else:
-                self.send_received[identifier]['received_encrypted'].append(timestamp)
-                if json['from_friend']:
-                    self.encrypted_friend += 1
-                if json['from_foaf']:
-                    self.encrypted_foaf += 1
-                    
-        elif key == 'community-churn':
+        if key == 'community-churn':
             self.churn = json['args'][0]
+        else:
+            identifier = json['created_by'] + '@' + str(json['global_time'])
+            if key == "text-statistics":
+                if json['from_friend']:
+                    self.received_friend += 1
+                if json['from_foaf']:
+                    self.received_foaf += 1
+    
+                self.send_received[identifier]['received'] = timestamp
+
+            elif key == 'encrypted-statistics':
+                if json['created_by_me']:
+                    self.send_received[identifier]['created'] = timestamp
+                else:
+                    self.send_received[identifier]['received_encrypted'].append(timestamp)
+                    if json['from_friend']:
+                        self.encrypted_friend += 1
+                    if json['from_foaf']:
+                        self.encrypted_foaf += 1
 
     def all_files_done(self, extract_statistics):
         f = open(os.path.join(extract_statistics.node_directory, "_received_from.txt"), 'w')
