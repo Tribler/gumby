@@ -151,48 +151,51 @@ class SocialClient(DispersyExperimentScriptClient):
 
     @buffer_online
     def add_friend(self, peer_id):
-        peer_id = int(peer_id)
+        if peer_id != self.my_id:
+            peer_id = int(peer_id)
 
-        # if we don't get the ipport, then this peer isn't deployed to the das
-        ipport = self.get_peer_ip_port_by_id(peer_id)
-        key = self.get_private_keypair_by_id(peer_id)
+            # if we don't get the ipport, then this peer isn't deployed to the das
+            ipport = self.get_peer_ip_port_by_id(peer_id)
+            key = self.get_private_keypair_by_id(peer_id)
 
-        if ipport and key:
-            key = key.pub()
-            keyhash = long(sha1(self._crypto.key_to_bin(key)).hexdigest(), 16)
-            self._community._mypref_db.addMyPreference(keyhash, {})
-            self._community._friend_db.add_friend(str(peer_id), key, keyhash)
+            if ipport and key:
+                key = key.pub()
+                keyhash = long(sha1(self._crypto.key_to_bin(key)).hexdigest(), 16)
+                self._community._mypref_db.addMyPreference(keyhash, {})
+                self._community._friend_db.add_friend(str(peer_id), key, keyhash)
 
-            self.friends.add(ipport)
-            self.friendhashes[peer_id] = keyhash
-            self.not_connected_friends.add(ipport)
+                self.friends.add(ipport)
+                self.friendhashes[peer_id] = keyhash
+                self.not_connected_friends.add(ipport)
 
-            self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
+                self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
 
-        elif ipport:
-            print >> sys.stderr, "Got ip/port, but not key?", peer_id
+            elif ipport:
+                print >> sys.stderr, "Got ip/port, but not key?", peer_id
 
     @buffer_online
     def add_foaf(self, peer_id, his_friends):
-        peer_id = int(peer_id)
-        his_friends = [int(friend) for friend in his_friends[1:-1].split(",")]
+        if peer_id != self.my_id:
+            peer_id = int(peer_id)
 
-        # if we don't get the ipport, then this peer isn't deployed to the das
-        ipport = self.get_peer_ip_port_by_id(peer_id)
-        if ipport:
-            self.foafs.add(ipport)
-            self.foafhashes[ipport] = [self.friendhashes[peer_id] for peer_id in his_friends if peer_id in self.friendhashes]
-            self.not_connected_foafs.add(ipport)
+            his_friends = [int(friend) for friend in his_friends[1:-1].split(",") if friend != self.my_id]
 
-            self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
+            # if we don't get the ipport, then this peer isn't deployed to the das
+            ipport = self.get_peer_ip_port_by_id(peer_id)
+            if ipport:
+                self.foafs.add(ipport)
+                self.foafhashes[ipport] = [self.friendhashes[peer_id] for peer_id in his_friends if peer_id in self.friendhashes]
+                self.not_connected_foafs.add(ipport)
+
+                self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
 
     @buffer_online
     def send_post(self, peer_id, nr_messages=1):
-        peer_id = int(peer_id)
-
-        for _ in range(int(nr_messages)):
-            msg = u"Hello peer %d" % peer_id
-            self._community.create_text(msg, [str(peer_id), ])
+        if peer_id != self.my_id:
+            peer_id = int(peer_id)
+            for _ in range(int(nr_messages)):
+                msg = u"Hello peer %d" % peer_id
+                self._community.create_text(msg, [str(peer_id), ])
 
     @buffer_online
     def connect_to_friends(self):
