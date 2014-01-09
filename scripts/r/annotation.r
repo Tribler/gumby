@@ -6,6 +6,7 @@ load_annotations <- function(){
 		df2 <- ddply(df2, .(annotation), summarise, meanx = mean(value), minx = min(value), maxx = max(value))
 		df2$linesize <- max((df2$maxx - df2$minx) / 2, 1)
 		df2$linepos <- df2$minx + df2$linesize
+		df2$labelpos <- df2$maxx + max((maxX - minX) / 66, 1)
 		df2$show_mean <- show_mean
 		return(df2)
 	}
@@ -21,7 +22,7 @@ add_annotations <- function(p, df2){
 		}
 		df3 <- df2[]
 		df3$type <- 'Node'
-		p <- p + geom_text(alpha = 0.4, data=df3, angle = 90, aes(x=maxx+3, y=max(df$value), label=annotation, hjust=1, size=6), show_guide = FALSE)
+		p <- p + geom_text(alpha = 0.4, data=df3, angle = 90, aes(x=labelpos, y=max(df$value), label=annotation, hjust=1, size=6), show_guide = FALSE)
 		return(p)
 	}
 }
