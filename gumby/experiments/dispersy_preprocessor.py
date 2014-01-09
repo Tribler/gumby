@@ -5,7 +5,7 @@ from gumby.scenario import ScenarioRunner
 
 class ScenarioPreProcessor(ScenarioRunner):
 
-    def __init__(self, filename, outputfile=sys.stdout):
+    def __init__(self, filename, outputfile=sys.stdout, max_tstmp=0):
         self._cur_line = None
 
         self._callables = {}
@@ -13,7 +13,7 @@ class ScenarioPreProcessor(ScenarioRunner):
 
         print >> sys.stderr, "Looking for max_timestamp, max_peer... in %s" % filename,
 
-        max_tstmp = max_peer = 0
+        max_peer = 0
         for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
             max_tstmp = max(tstmp, max_tstmp)
             if peerspec[0]:
@@ -62,22 +62,25 @@ class ScenarioPreProcessor(ScenarioRunner):
             tstmp += get_delay()
             go_online = not go_online
 
-def main(inputfile, outputfile):
+def main(inputfile, outputfile, maxtime=0):
     inputfile = os.path.abspath(inputfile)
     if os.path.exists(inputfile):
         f = open(outputfile, 'w')
 
-        ScenarioPreProcessor(inputfile, f)
+        ScenarioPreProcessor(inputfile, f, maxtime)
 
         f.close()
     else:
         print >> sys.stderr, inputfile, "not found"
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print "Usage: %s <input-file> <output-file>" % (sys.argv[0])
+    if len(sys.argv) < 3:
+        print "Usage: %s <input-file> <output-file> (<max-time>)" % (sys.argv[0])
         print >> sys.stderr, sys.argv
 
         exit(1)
 
-    main(sys.argv[1], sys.argv[2])
+    if len(sys.argv) == 4:
+        main(sys.argv[1], sys.argv[2], float(sys.argv[3]))
+    else:
+        main(sys.argv[1], sys.argv[2])
