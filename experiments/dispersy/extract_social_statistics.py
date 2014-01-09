@@ -67,15 +67,17 @@ class EncMessages(AbstractHandler):
             self.send_received[identifier]['received'] = timestamp
 
         elif key == 'encrypted-statistics':
-            if json['from_friend']:
-                self.encrypted_friend += 1
-            if json['from_foaf']:
-                self.encrypted_foaf += 1
-
             if json['created_by_me']:
                 self.send_received[identifier]['created'] = timestamp
             else:
                 self.send_received[identifier]['received_encrypted'].append(timestamp)
+
+                if json['from_friend']:
+                    self.encrypted_friend += 1
+                if json['from_foaf']:
+                    self.encrypted_foaf += 1
+
+
 
     def all_files_done(self, extract_statistics):
         f = open(os.path.join(extract_statistics.node_directory, "_received_from.txt"), 'w')
