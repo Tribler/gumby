@@ -21,7 +21,7 @@ add_annotations <- function(p, df2){
 		}
 		df3 <- df2[]
 		df3$type <- 'Node'
-		p <- p + geom_text(alpha = 0.4, data=df3, angle = 90, aes(x=maxx+3, y=max(df$value), label=annotation, hjust=1, size=6))
+		p <- p + geom_text(alpha = 0.4, data=df3, angle = 90, aes(x=maxx+3, y=max(df$value), label=annotation, hjust=1, size=6), show_guide = FALSE)
 		return(p)
 	}
 }
