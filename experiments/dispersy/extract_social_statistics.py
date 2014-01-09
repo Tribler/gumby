@@ -44,6 +44,8 @@ class EncMessages(AbstractHandler):
 
     def __init__(self):
         AbstractHandler.__init__(self)
+        self.churn = -1
+        
         self.received_foaf = 0
         self.received_friend = 0
 
@@ -53,7 +55,7 @@ class EncMessages(AbstractHandler):
         self.send_received = defaultdict(lambda : {'received_encrypted':[]})
 
     def filter_line(self, node_nr, line_nr, timestamp, timeoffset, key):
-        return key in ["text-statistics", "encrypted-statistics"]
+        return key in ["text-statistics", "encrypted-statistics", "community-churn"]
 
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         identifier = json['created_by'] + '@' + str(json['global_time'])
@@ -75,14 +77,15 @@ class EncMessages(AbstractHandler):
                     self.encrypted_friend += 1
                 if json['from_foaf']:
                     self.encrypted_foaf += 1
-
-
+                    
+        elif key == 'community-churn':
+            self.churn = json['args'][0]
 
     def all_files_done(self, extract_statistics):
         f = open(os.path.join(extract_statistics.node_directory, "_received_from.txt"), 'w')
-        print >> f, "type friend foaf"
-        print >> f, "text", self.received_friend, self.received_foaf
-        print >> f, "encrypted", self.encrypted_friend, self.encrypted_foaf
+        print >> f, "churn type friend foaf"
+        print >> f, self.churn, "text", self.received_friend, self.received_foaf
+        print >> f, self.churn, "encrypted", self.encrypted_friend, self.encrypted_foaf
         f.close()
 
         if self.send_received:

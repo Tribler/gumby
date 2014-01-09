@@ -222,7 +222,11 @@ class SocialClient(DispersyExperimentScriptClient):
 
         self.reconnect_to_friends = True
 
-    def log_text(self, key, **kwargs):
+    def log_text(self, key, sock_addr, **kwargs):
+        kwargs['from_friend'] = sock_addr in self.friends
+        kwargs['from_foaf'] = sock_addr in self.foafs
+        kwargs['sock_addr'] = sock_addr
+        
         self.print_on_change(key, {}, kwargs)
 
     def monitor_friends(self):

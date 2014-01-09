@@ -23,6 +23,7 @@ class ScenarioPreProcessor(ScenarioRunner):
 
         print >> sys.stderr, "Preprocessing file...",
         for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
+            print >> outputfile, self._cur_line
             if clb in self._callables:
                 yes_peers, no_peers = peerspec
                 if not yes_peers:
@@ -33,8 +34,6 @@ class ScenarioPreProcessor(ScenarioRunner):
                 for peer in yes_peers:
                     for line in self._callables[clb](tstmp, max_tstmp, *args):
                         print >> outputfile, line, '{%s}' % peer
-            else:
-                print >> outputfile, self._cur_line
         print >> sys.stderr, "\tdone"
 
     def _parse_for_this_peer(self, peerspec):

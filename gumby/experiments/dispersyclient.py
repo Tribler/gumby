@@ -116,6 +116,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.echo)
         self.scenario_runner.register(self.online)
         self.scenario_runner.register(self.offline)
+        self.scenario_runner.register(self.churn)
         self.scenario_runner.register(self.set_community_kwarg)
         self.scenario_runner.register(self.set_database_file)
         self.scenario_runner.register(self.use_memory_database)
@@ -313,6 +314,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     def is_online(self):
         return self._community != None
+    
+    def churn(self, args):
+        self.print_on_change('community-churn', {}, {'args':args})
 
     def buffer_call(self, func, args, kargs):
         self._online_buffer.append((func, args, kargs))
