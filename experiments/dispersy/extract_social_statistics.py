@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-# extract_privatesearch_statistics.py ---
+# extract_social_statistics.py ---
 #
-# Filename: extract_privatesearch_statistics.py
+# Filename: extract_social_statistics.py
 # Description:
 # Author: Niels Zeilemaker
 # Maintainer:
-# Created: Mon Dec 2 18:10:17 2013 (+0200)
 
 # Commentary:
 #
@@ -41,7 +40,7 @@
 from itertools import groupby
 from extract_dispersy_statistics import *
 
-class SearchMessages(AbstractHandler):
+class EncMessages(AbstractHandler):
 
     def __init__(self):
         AbstractHandler.__init__(self)
@@ -79,14 +78,14 @@ class SearchMessages(AbstractHandler):
                 self.send_received[identifier]['received_encrypted'].append(timestamp)
 
     def all_files_done(self, extract_statistics):
-        f = open(os.path.join(extract_statistics.node_directory, "received_from.txt"), 'w')
+        f = open(os.path.join(extract_statistics.node_directory, "_received_from.txt"), 'w')
         print >> f, "type friend foaf"
         print >> f, "text", self.received_friend, self.received_foaf
         print >> f, "encrypted", self.encrypted_friend, self.encrypted_foaf
         f.close()
 
         if self.send_received:
-            f = open(os.path.join(extract_statistics.node_directory, "received_after.txt"), 'w')
+            f = open(os.path.join(extract_statistics.node_directory, "_received_after.txt"), 'w')
             print >> f, "identifier created received replicas"
             for identifier, received_dict in self.send_received.iteritems():
                 print >> f, identifier, received_dict['created'], received_dict['received'], len(received_dict['received_encrypted'])
@@ -100,8 +99,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     e = get_parser(sys.argv)
-    e.add_handler(SearchMessages())
+    e.add_handler(EncMessages())
     e.parse()
 
 #
-# extract_privatesearch_statistics.py ends here
+# extract_social_statistics.py ends here
