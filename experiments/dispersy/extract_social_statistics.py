@@ -56,7 +56,7 @@ class EncMessages(AbstractHandler):
         return key in ["text-statistics", "encrypted-statistics"]
 
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
-        identifier = json['created_by'] + '@' + json['global_time']
+        identifier = json['created_by'] + '@' + str(json['global_time'])
 
         if key == "text-statistics":
             if json['from_friend']:
