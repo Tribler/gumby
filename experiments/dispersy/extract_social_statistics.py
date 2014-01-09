@@ -90,7 +90,7 @@ class EncMessages(AbstractHandler):
             f = open(os.path.join(extract_statistics.node_directory, "_received_after.txt"), 'w')
             print >> f, "identifier created received replicas"
             for identifier, received_dict in self.send_received.iteritems():
-                print >> f, identifier, received_dict['created'], received_dict['received'], len(received_dict['received_encrypted'])
+                print >> f, identifier, received_dict['created'], received_dict.get('received', sys.maxint), len(received_dict['received_encrypted'])
             f.close()
 
 if __name__ == "__main__":
