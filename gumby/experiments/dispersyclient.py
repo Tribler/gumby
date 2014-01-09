@@ -315,7 +315,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def is_online(self):
         return self._community != None
     
-    def churn(self, args):
+    def churn(self, *args):
         self.print_on_change('community-churn', {}, {'args':args})
 
     def buffer_call(self, func, args, kargs):
