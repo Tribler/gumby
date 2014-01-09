@@ -71,7 +71,6 @@ class EncMessages(AbstractHandler):
                 self.send_received[identifier]['created'] = timestamp
             else:
                 self.send_received[identifier]['received_encrypted'].append(timestamp)
-
                 if json['from_friend']:
                     self.encrypted_friend += 1
                 if json['from_foaf']:
