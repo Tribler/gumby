@@ -38,6 +38,7 @@
 # Code:
 import sys
 from os import path, environ
+from time import time
 from random import sample
 from sys import path as pythonpath
 from hashlib import sha1
@@ -74,6 +75,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.set_community_kwarg('max_prefs', 100)
         self.set_community_kwarg('max_fprefs', 100)
         self.set_community_kwarg('use_cardinality', False)
+        self.set_community_kwarg('log_text', self.log_text)
 
     def start_dispersy(self):
         DispersyExperimentScriptClient.start_dispersy(self)
@@ -219,6 +221,9 @@ class SocialClient(DispersyExperimentScriptClient):
         self._community.create_msimilarity_request = self._orig_create_msimilarity_request
 
         self.reconnect_to_friends = True
+
+    def log_text(self, key, **kwargs):
+        self.print_on_change(key, {}, kwargs)
 
     def monitor_friends(self):
         prev_scenario_statistics = {}
