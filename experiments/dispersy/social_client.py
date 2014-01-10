@@ -227,8 +227,6 @@ class SocialClient(DispersyExperimentScriptClient):
         kwargs['from_foaf'] = sock_addr in self.foafs
         kwargs['sock_addr'] = sock_addr
         
-        print >> sys.stderr, "comparing", sock_addr, self.friends, self.foafs
-        
         self.print_on_change(key, {}, kwargs)
 
     def monitor_friends(self):
