@@ -171,7 +171,9 @@ class ExperimentServiceFactory(Factory):
 
         if len(self.connections_made) >= self.expected_subscribers:
             msg("All subscribers connected!")
-            self._made_looping_call.stop()
+            if self._made_looping_call and self._made_looping_call.running:
+                self._made_looping_call.stop()
+
             self.connections_made = None
         else:
             if not self._made_looping_call:
@@ -189,8 +191,9 @@ class ExperimentServiceFactory(Factory):
 
         if len(self.connections_ready) >= self.expected_subscribers:
             msg("All subscribers are ready, pushing data!")
-            if self._subscriber_looping_call.running:
+            if self._subscriber_looping_call and self._subscriber_looping_call.running:
                 self._subscriber_looping_call.stop()
+
             self._timeout_delayed_call.cancel()
             self.pushInfoToSubscribers()
         else:
@@ -239,7 +242,7 @@ class ExperimentServiceFactory(Factory):
         # Give the go signal and disconnect
         msg("Starting the experiment!")
 
-        if self._subscriber_received_looping_call.running :
+        if self._subscriber_received_looping_call and self._subscriber_received_looping_call.running:
             self._subscriber_received_looping_call.stop()
 
         deferreds = []
