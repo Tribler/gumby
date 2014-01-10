@@ -45,7 +45,7 @@ class EncMessages(AbstractHandler):
     def __init__(self):
         AbstractHandler.__init__(self)
         self.churn = -1
-        
+
         self.received_foaf = 0
         self.received_friend = 0
 
@@ -67,7 +67,7 @@ class EncMessages(AbstractHandler):
                     self.received_friend += 1
                 if json['from_foaf']:
                     self.received_foaf += 1
-    
+
                 self.send_received[identifier]['received'] = timestamp
 
             elif key == 'encrypted-statistics':
@@ -82,17 +82,17 @@ class EncMessages(AbstractHandler):
 
     def all_files_done(self, extract_statistics):
         f = open(os.path.join(extract_statistics.node_directory, "_received_from.txt"), 'w')
-        print >> f, "churn type friend foaf"
+        print >> f, "churn type Friend Foaf"
         print >> f, self.churn, "text", self.received_friend, self.received_foaf
         print >> f, self.churn, "encrypted", self.encrypted_friend, self.encrypted_foaf
         f.close()
 
         if self.send_received:
             f = open(os.path.join(extract_statistics.node_directory, "_received_after.txt"), 'w')
-            print >> f, "identifier created received replicas"
+            print >> f, "churn dentifier created received replicas"
             for identifier, received_dict in self.send_received.iteritems():
                 if 'created' in received_dict and 'received' in received_dict:
-                    print >> f, identifier, received_dict['created'], received_dict['received'], len(received_dict['received_encrypted'])
+                    print >> f, self.churn, identifier, received_dict['created'], received_dict['received'], len(received_dict['received_encrypted'])
             f.close()
 
 if __name__ == "__main__":
