@@ -89,7 +89,7 @@ class EncMessages(AbstractHandler):
 
         if self.send_received:
             f = open(os.path.join(extract_statistics.node_directory, "_received_after.txt"), 'w')
-            print >> f, "churn dentifier created received replicas"
+            print >> f, "churn identifier created received replicas"
             for identifier, received_dict in self.send_received.iteritems():
                 if 'created' in received_dict and 'received' in received_dict:
                     print >> f, self.churn, identifier, received_dict['created'], received_dict['received'], len(received_dict['received_encrypted'])
