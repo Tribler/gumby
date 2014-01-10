@@ -59,7 +59,7 @@ class EncMessages(AbstractHandler):
 
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         if key == 'community-churn':
-            self.churn = json['args'][0]
+            self.churn = json['args'][1]
         else:
             identifier = json['created_by'] + '@' + str(json['global_time'])
             if key == "text-statistics":
