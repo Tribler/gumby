@@ -226,7 +226,7 @@ class SocialClient(DispersyExperimentScriptClient):
         kwargs['from_friend'] = sock_addr in self.friends
         kwargs['from_foaf'] = sock_addr in self.foafs
         kwargs['sock_addr'] = sock_addr
-        
+
         self.print_on_change(key, {}, kwargs)
 
     def monitor_friends(self):
@@ -266,7 +266,7 @@ class SocialClient(DispersyExperimentScriptClient):
             yield 5.0
 
 if __name__ == '__main__':
-    SocialClient.scenario_file = "social.scenario"
+    SocialClient.scenario_file = environ.get('SCENARIO_FILE', 'social.scenario')
     main(SocialClient)
 
 #
