@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 # run_tracker.sh ---
 #
 # Filename: run_tracker.sh
