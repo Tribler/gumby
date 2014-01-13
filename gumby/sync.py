@@ -114,6 +114,9 @@ class ExperimentServiceProto(LineReceiver):
     def proto_init(self, line):
         if line.startswith("time"):
             self.vars["time_offset"] = float(line.strip().split(':')[1]) - time()
+            if abs(self.vars['time_offset']) < 0.5:  # ignore time_offset if smaller than +0.5/-0.5
+                self.vars['time_offset'] = 0
+
             msg("Time offset is %s" % (self.vars["time_offset"]), logLevel=logging.DEBUG)
             return 'init'
 
@@ -249,7 +252,7 @@ class ExperimentServiceFactory(Factory):
         start_time = time() + self.experiment_start_delay
         for subscriber in self.connections_ready:
             # Sync the experiment start time among instances
-            subscriber.sendLine("go:%f" % (start_time + subscriber.vars.get('time_offset', 0)))
+            subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
 
         d = task.deferLater(reactor, 5, lambda : msg("Done, disconnecting all clients."))
         d.addCallback(lambda _: self.disconnectAll())
@@ -373,7 +376,7 @@ class ExperimentClient(LineReceiver):
         msg("Got experiment variables", logLevel=logging.DEBUG)
 
         self.all_vars = json.loads(line)
-        self.time_offset = self.all_vars[self.my_id].get("time_offset", 0)
+        self.time_offset = self.all_vars[self.my_id]["time_offset"]
         self.onAllVarsReceived()
 
         self.sendLine("vars_received")

@@ -104,10 +104,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.generateMyMember()
         self.vars['private_keypair'] = base64.encodestring(self.my_member_private_key)
 
-    # don't use sendtime in dispersy client
-    def sendTime(self):
-        pass
-
     def onIdReceived(self):
         scenario_file_path = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
 
@@ -314,7 +310,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     def is_online(self):
         return self._community != None
-    
+
     def churn(self, *args):
         self.print_on_change('community-churn', {}, {'args':args})
 
