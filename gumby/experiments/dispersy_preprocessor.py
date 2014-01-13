@@ -10,6 +10,7 @@ class ScenarioPreProcessor(ScenarioRunner):
 
         self._callables = {}
         self._callables['churn'] = self.churn
+        self._callables['churn_pattern'] = self.churn_pattern
 
         print >> sys.stderr, "Looking for max_timestamp, max_peer... in %s" % filename,
 
@@ -60,6 +61,23 @@ class ScenarioPreProcessor(ScenarioRunner):
             yield "@0:%d %s" % (tstmp, "online" if go_online else "offline")
             tstmp += get_delay()
             go_online = not go_online
+
+    def churn_pattern(self, tstmp, max_tstmp, pattern, min_online=5.0):
+        pattern = [online / 100.0 for online in map(float, pattern.split(','))]
+        min_online = float(min_online)
+
+        i = 0
+        prev_state = False
+        while tstmp < max_tstmp:
+            go_online = random() < pattern[i]
+            i = (i + 1) % len(pattern)
+
+            if go_online != prev_state:
+                yield "@0:%d %s" % (tstmp, "online" if go_online else "offline")
+                prev_state = go_online
+
+            tstmp += min_online
+
 
 def main(inputfile, outputfile, maxtime=0):
     inputfile = os.path.abspath(inputfile)

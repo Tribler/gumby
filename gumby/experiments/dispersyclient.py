@@ -113,6 +113,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.online)
         self.scenario_runner.register(self.offline)
         self.scenario_runner.register(self.churn)
+        self.scenario_runner.register(self.churn, 'churn_pattern')
         self.scenario_runner.register(self.set_community_kwarg)
         self.scenario_runner.register(self.set_database_file)
         self.scenario_runner.register(self.use_memory_database)
