@@ -165,7 +165,7 @@ class ExperimentServiceFactory(Factory):
     def __init__(self, expected_subscribers, experiment_start_delay):
         self.expected_subscribers = expected_subscribers
         self.experiment_start_delay = experiment_start_delay
-        self.parsing_semaphore = DeferredSemaphore(500)
+        self.parsing_semaphore = DeferredSemaphore(1000)
         self.connection_counter = -1
         self.connections_made = []
         self.connections_ready = []
