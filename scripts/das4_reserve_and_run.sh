@@ -42,7 +42,7 @@ cancel_reservation () {
 # Cancel all our rc jobs in the queue
 cat <<EOF | at now + 2 minutes
 
-for RID in $(preserve -list | awk '{print $2 " " $1 " " $5 }' | grep dr$ | grep ^$USER | cut -f2 -d" "); do qdel $RID ; done
+for RID in $(preserve -list | awk '{print $2 " " $1 " " $5 }' | grep dr$ | grep ^$USER | cut -f2 -d" "); do qdel -f $RID ; done
 
 EOF
 
