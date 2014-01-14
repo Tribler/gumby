@@ -115,14 +115,7 @@ class ScenarioParser():
                 for line in lines:
                     if not line.startswith('#'):
                         line = line.strip()
-                        if line.endswith('}'):
-                            start = line.rfind('{') + 1
-                            peerspec = line[start:-1]
-                            line = line[:start - 1]
-                        else:
-                            peerspec = ''
-
-                        line_buffer.append((linenr, line, peerspec))
+                        line_buffer.append((linenr, line))
                     linenr += 1
 
                 self.file_buffer = (filename, line_buffer)
@@ -137,7 +130,14 @@ class ScenarioParser():
         the register() method.
         """
         try:
-            for lineno, line, peerspec in self._read_scenario(filename):
+            for lineno, line in self._read_scenario(filename):
+                if line.endswith('}'):
+                    start = line.rfind('{') + 1
+                    peerspec = line[start:-1]
+                    line = line[:start - 1]
+                else:
+                    peerspec = ''
+
                 cmd = self._parse_scenario_line(lineno, line, peerspec)
                 if cmd is not None:
                     yield cmd

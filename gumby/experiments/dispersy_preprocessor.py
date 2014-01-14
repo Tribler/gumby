@@ -8,8 +8,6 @@ class ScenarioPreProcessor(ScenarioRunner):
     def __init__(self, filename, outputfile=sys.stdout, max_tstmp=0):
         ScenarioRunner.__init__(self, filename)
 
-        self._cur_line = None
-
         self._callables = {}
         self._callables['churn'] = self.churn
         self._callables['churn_pattern'] = self.churn_pattern
@@ -26,7 +24,7 @@ class ScenarioPreProcessor(ScenarioRunner):
 
         print >> sys.stderr, "Preprocessing file...",
         for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
-            print >> outputfile, self._cur_line
+            print >> outputfile, self.file_buffer[1][lineno - 1][1]
             if clb in self._callables:
                 yes_peers, no_peers = peerspec
                 if not yes_peers:
@@ -41,10 +39,6 @@ class ScenarioPreProcessor(ScenarioRunner):
 
     def _parse_for_this_peer(self, peerspec):
         return True
-
-    def _preprocess_line(self, line):
-        self._cur_line = line.strip()
-        return line
 
     def churn(self, tstmp, max_tstmp, churn_type, desired_mean=300, min_online=5.0):
         desired_mean = float(desired_mean)
