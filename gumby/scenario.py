@@ -112,16 +112,17 @@ class ScenarioParser():
                 line_buffer = []
 
                 linenr = 1
-                for i, line in enumerate(lines):
-                    line = self._preprocess_line(line)
-                    if line.endswith('}'):
-                        start = line.rfind('{') + 1
-                        peerspec = line[start:-1]
-                        line = line[:start - 1]
-                    else:
-                        peerspec = ''
+                for line in lines:
+                    if not line.startswith('#'):
+                        line = line.strip()
+                        if line.endswith('}'):
+                            start = line.rfind('{') + 1
+                            peerspec = line[start:-1]
+                            line = line[:start - 1]
+                        else:
+                            peerspec = ''
 
-                    line_buffer.append((linenr, line, peerspec))
+                        line_buffer.append((linenr, line, peerspec))
                     linenr += 1
 
                 self.file_buffer = (filename, line_buffer)
@@ -137,11 +138,9 @@ class ScenarioParser():
         """
         try:
             for lineno, line, peerspec in self._read_scenario(filename):
-                line = line.strip()
-                if not line.startswith('#'):
-                    cmd = self._parse_scenario_line(lineno, line, peerspec)
-                    if cmd is not None:
-                        yield cmd
+                cmd = self._parse_scenario_line(lineno, line, peerspec)
+                if cmd is not None:
+                    yield cmd
 
         except EnvironmentError:
             print >> sys.stderr, "Scenario file open/read error", filename
@@ -156,7 +155,7 @@ class ScenarioParser():
         """
         peerspec = self._parse_peerspec(peerspec)
         if self._parse_for_this_peer(peerspec):
-            # print line
+            line = self._preprocess_line(line)
             match = self._re_line.match(line)
             if match:
                 # remove all entries that are None (to get default per key)
