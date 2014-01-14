@@ -42,23 +42,43 @@ from sys import stdout, exit
 from collections import defaultdict, Iterable
 import json
 from time import time
+from random import random
 
 from gumby.sync import ExperimentClient, ExperimentClientFactory
 from gumby.scenario import ScenarioRunner
 from gumby.log import setupLogging
-from twisted.python.log import msg
+
+from twisted.python.log import msg, err
 
 # TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
 # The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
+import base64
+from traceback import print_exc
+
+def register_or_call(callback, func, args=(), kargs={}):
+    if not callback.is_current_thread:
+        callback.register(func, args, kargs)
+    else:
+        func(*args, **kargs)
 
 def call_on_dispersy_thread(func):
     def helper(*args, **kargs):
-        if not args[0]._dispersy.callback.is_current_thread:
-            args[0]._dispersy.callback.register(func, args, kargs)
-        else:
-            func(*args, **kargs)
+        register_or_call(args[0]._dispersy.callback, func, args, kargs)
+
+    helper.__name__ = func.__name__
+    return helper
+
+def buffer_online(func):
+    def helper(*args, **kargs):
+        def buffer_call():
+            if not args[0].is_online():
+                args[0].buffer_call(func, args, kargs)
+            else:
+                func(*args, **kargs)
+
+        register_or_call(args[0]._dispersy.callback, buffer_call)
 
     helper.__name__ = func.__name__
     return helper
@@ -78,16 +98,28 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.community_kwargs = {}
         self._stats_file = None
         self._reset_statistics = True
+        self._online_buffer = []
 
-    def startExperiment(self):
-        msg("Starting dummy scenario experiment")
+        self._crypto = self.initializeCrypto()
+        self.generateMyMember()
+        self.vars['private_keypair'] = base64.encodestring(self.my_member_private_key)
+
+    def onVarsSend(self):
         scenario_file_path = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
+        self.scenario_runner = ScenarioRunner(scenario_file_path)
 
-        self.scenario_runner = ScenarioRunner(scenario_file_path, int(self.my_id))
+        t1 = time()
+        self.scenario_runner._read_scenario(scenario_file_path)
+        msg('Took %.2f to read scenario file' % (time() - t1))
+
+    def onIdReceived(self):
+        self.scenario_runner.set_peernumber(int(self.my_id))
         # TODO(emilon): Auto-register this stuff
         self.scenario_runner.register(self.echo)
         self.scenario_runner.register(self.online)
         self.scenario_runner.register(self.offline)
+        self.scenario_runner.register(self.churn)
+        self.scenario_runner.register(self.churn, 'churn_pattern')
         self.scenario_runner.register(self.set_community_kwarg)
         self.scenario_runner.register(self.set_database_file)
         self.scenario_runner.register(self.use_memory_database)
@@ -99,6 +131,15 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.scenario_runner.register(self.reset_dispersy_statistics, 'reset_dispersy_statistics')
         self.scenario_runner.register(self.annotate)
         self.scenario_runner.register(self.peertype)
+
+        self.registerCallbacks()
+
+        t1 = time()
+        self.scenario_runner.parse_file()
+        msg('Took %.2f to parse scenario file' % (time() - t1))
+
+    def startExperiment(self):
+        msg("Starting dispersy scenario experiment")
 
         # TODO(emilon): Move this to the right place
         # TODO(emilon): Do we want to have the .dbs in the output dirs or should they be dumped to /tmp?
@@ -113,13 +154,31 @@ class DispersyExperimentScriptClient(ExperimentClient):
         except OSError:
             pass
 
-        self.registerCallbacks()
-
         self.scenario_runner.run()
 
     def registerCallbacks(self):
         pass
 
+    def initializeCrypto(self):
+        from Tribler.dispersy.crypto import ECCrypto, NoCrypto
+        if environ.get('TRACKER_CRYPTO', 'ECCrypto'):
+            return ECCrypto()
+        msg('Turning off Crypto')
+        return NoCrypto()
+
+    @property
+    def my_member_key_curve(self):
+        # low (NID_sect233k1) isn't actually that low, switching to 160bits as this is comparable to rsa 1024
+        # http://www.nsa.gov/business/programs/elliptic_curve.shtml
+        # speed difference when signing/verifying 100 items
+        # NID_sect233k1 signing took 0.171 verify took 0.35 totals 0.521
+        # NID_secp160k1 signing took 0.04 verify took 0.04 totals 0.08
+        return u"NID_secp160k1"
+
+    def generateMyMember(self):
+        ec = self._crypto.generate_key(self.my_member_key_curve)
+        self.my_member_key = self._crypto.key_to_bin(ec.pub())
+        self.my_member_private_key = self._crypto.key_to_bin(ec)
     #
     # Actions
     #
@@ -161,8 +220,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         from Tribler.dispersy.dispersy import Dispersy
         from Tribler.dispersy.endpoint import StandaloneEndpoint
 
-        self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file)
+        self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
         self._dispersy.statistics.enable_debug_statistics(True)
+
+        self.original_on_incoming_packets = self._dispersy.on_incoming_packets
 
         if self._strict:
             def exception_handler(exception, fatal):
@@ -185,15 +246,14 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._dispersy.start()
 
-        # low (NID_sect233k1) isn't actually that low, switching to 160bits as this is comparable to rsa 1024
-        # http://www.nsa.gov/business/programs/elliptic_curve.shtml
-        # speed difference when signing/verifying 100 items
-        # NID_sect233k1 signing took 0.171 verify took 0.35 totals 0.521
-        # NID_secp160k1 signing took 0.04 verify took 0.04 totals 0.08
-        self._my_member = self._dispersy.callback.call(self._dispersy.get_new_member, (u"NID_secp160k1",))
-        self._master_member = self._dispersy.callback.call(self._dispersy.get_member, (self.master_key,))
+        self._master_member = self._dispersy.callback.call(self._dispersy.get_member, (self.master_key, self.master_private_key))
+        self._my_member = self._dispersy.callback.call(self._dispersy.get_member, (self.my_member_key, self.my_member_private_key))
 
         self._dispersy.callback.register(self._do_log)
+
+        self.print_on_change('community-kwargs', {}, self.community_kwargs)
+        self.print_on_change('community-env', {}, {'pid':getpid()})
+
         msg("Finished starting dispersy")
 
     def stop_dispersy(self):
@@ -206,43 +266,75 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def stop(self, retry=3):
         retry = int(retry)
         if self._dispersy_exit_status is None and retry:
-                reactor.callLater(1, self.stop, retry - 1)
+            reactor.callLater(1, self.stop, retry - 1)
         else:
-                msg("Dispersy exit status was:", self._dispersy_exit_status)
-                reactor.callLater(0, reactor.stop)
+            msg("Dispersy exit status was:", self._dispersy_exit_status)
+            reactor.callLater(0, reactor.stop)
 
-    def set_master_member(self, pub_key):
+    def set_master_member(self, pub_key, priv_key=''):
         self.master_key = pub_key.decode("HEX")
+        self.master_private_key = priv_key.decode("HEX")
 
     @call_on_dispersy_thread
-    def online(self):
+    def online(self, dont_empty=False):
         msg("Trying to go online")
         if self._community is None:
             msg("online")
 
+            self._dispersy.on_incoming_packets = self.original_on_incoming_packets
+
             if self._is_joined:
                 self._community = self.community_class.load_community(self._dispersy, self._master_member, *self.community_args, **self.community_kwargs)
-
             else:
                 msg("join community %s as %s", self._master_member.mid.encode("HEX"), self._my_member.mid.encode("HEX"))
                 self._community = self.community_class.join_community(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
                 self._community.auto_load = False
                 self._is_joined = True
 
-                self.print_on_change('community-kwargs', {}, self.community_kwargs)
-                self.print_on_change('community-env', {}, {'pid':getpid()})
+            assert self.is_online()
+            if not dont_empty:
+                self.empty_buffer()
         else:
             msg("online (we are already online)")
 
     @call_on_dispersy_thread
     def offline(self):
-        if self._community is None:
+        msg("Trying to go offline")
+
+        if self._community is None and self._is_joined:
             msg("offline (we are already offline)")
+
         else:
             msg("offline")
             for community in self._dispersy.get_communities():
                 community.unload_community()
+
             self._community = None
+            self._dispersy.on_incoming_packets = lambda *params: None
+
+        if self._database_file == u':memory:':
+            msg("Be careful with memory databases and nodes going offline, you could be losing database because we're closing databases.")
+
+    def is_online(self):
+        return self._community != None
+
+    def churn(self, *args):
+        self.print_on_change('community-churn', {}, {'args':args})
+
+    def buffer_call(self, func, args, kargs):
+        self._online_buffer.append((func, args, kargs))
+
+    def empty_buffer(self):
+        assert self.is_online()
+
+        # perform all tasks which were scheduled while we were offline
+        for func, args, kargs in self._online_buffer:
+            try:
+                func(*args, **kargs)
+            except:
+                print_exc()
+
+        self._online_buffer = []
 
     @call_on_dispersy_thread
     def reset_dispersy_statistics(self):
@@ -257,6 +349,26 @@ class DispersyExperimentScriptClient(ExperimentClient):
     #
     # Aux. functions
     #
+
+
+    def get_private_keypair_by_id(self, peer_id):
+        if str(peer_id) in self.all_vars:
+            key = self.all_vars[str(peer_id)]['private_keypair']
+            if isinstance(key, basestring):
+                key = self.all_vars[str(peer_id)]['private_keypair'] = self._crypto.key_from_private_bin(base64.decodestring(key))
+            return key
+
+    def get_private_keypair(self, ip, port):
+        port = int(port)
+        for peer_dict in self.all_vars.itervalues():
+            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
+                key = peer_dict['private_keypair']
+                if isinstance(key, basestring):
+                    key = peer_dict['private_keypair'] = self._crypto.key_from_private_bin(base64.decodestring(key))
+                return key
+
+        err("Could not get_private_keypair for", ip, port)
+
     def str2bool(self, v):
         return v.lower() in ("yes", "true", "t", "1")
 
@@ -310,7 +422,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
             communities_dict = []
             for c in self._dispersy.statistics.communities:
-
                 # we add all candidates which have a last_stumble > now - CANDIDATE_STUMBLE_LIFETIME
                 now = time()
                 for candidate in c._community.candidates.itervalues():
@@ -328,6 +439,15 @@ class DispersyExperimentScriptClient(ExperimentClient):
                                          'sync_bloom_skip': c.sync_bloom_skip,
                                          'nr_candidates': len(c.candidates) if c.candidates else 0,
                                          'nr_stumbled_candidates': nr_stumbled_candidates})
+
+            # check for missing communities, reset candidates to 0
+            cur_cids = [cur_c['cid'] for cur_c in communities_dict]
+            for c in prev_statistics.get('communities', []):
+                if c['cid'] not in cur_cids:
+                    _c = c.copy()
+                    _c['nr_candidates'] = 0
+                    _c['nr_stumbled_candidates'] = 0
+                    communities_dict.append(_c)
 
             statistics_dict = {'conn_type': self._dispersy.statistics.connection_type,
                                'received_count': self._dispersy.statistics.received_count,
@@ -354,6 +474,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
                                'walk_advice_incoming_response_new': self._dispersy.statistics.walk_advice_incoming_response_new,
                                'walk_advice_incoming_request': self._dispersy.statistics.walk_advice_incoming_request,
                                'walk_advice_outgoing_response': self._dispersy.statistics.walk_advice_outgoing_response,
+                               'is_online': self.is_online(),
                                'communities': communities_dict}
 
             prev_statistics = self.print_on_change("statistics", prev_statistics, statistics_dict)
@@ -374,8 +495,9 @@ def main(client_class):
     setupLogging()
     factory = ExperimentClientFactory({}, client_class)
     msg("Connecting to: %s:%s" % (environ['SYNC_HOST'], int(environ['SYNC_PORT'])))
-    reactor.connectTCP(environ['SYNC_HOST'], int(environ['SYNC_PORT']), factory)
-
+    # Wait for a random amount of time before connecting to try to not overload the server when we have a lot of connections
+    reactor.callLater(random() * 10,
+                      lambda: reactor.connectTCP(environ['SYNC_HOST'], int(environ['SYNC_PORT']), factory))
     reactor.exitCode = 0
     reactor.run()
     exit(reactor.exitCode)

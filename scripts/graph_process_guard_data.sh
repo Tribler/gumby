@@ -49,6 +49,8 @@ extract_process_guard_stats.py . .
 reduce_dispersy_statistics.py . 300
 
 #Create the graphs
+mkdir -p $R_LIBS_USER
+R --no-save --quiet < $R_SCRIPTS_PATH/install.r
 R --no-save --quiet < $R_SCRIPTS_PATH/cputimes.r 2>&1 > /dev/null
 
 

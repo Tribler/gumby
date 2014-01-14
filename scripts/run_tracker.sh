@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 # run_tracker.sh ---
 #
 # Filename: run_tracker.sh
@@ -37,17 +37,18 @@
 
 # Code:
 
-# find_free_port ()
-# {
-#     while true; do
-#         TRACKER_PORT=$[ ( $RANDOM % 65535 )  + 1 ]
-#         lsof -iudp -n -P | awk '{ print $9 }' | grep -q "^*:$TRACKER_PORT$" || ( echo "No one is listening in $TRACKER_PORT" >&2 ; break )
-#     done
-# }
-#
-#Find an unused port
-#find_free_port
-#echo "TRACKER_PORT=$TRACKER_PORT" >> experiment_run.conf
+# @CONF_OPTION TRACKER_PORT: Set the port to be used by the tracker. (required)
+# @CONF_OPTION TRACKER_CRYPTO: Set the type of crypto to be used by the tracker. (default is ECCrypto)
+
+if [ -z "$TRACKER_PORT" ]; then
+    echo "ERROR: you need to specify at least DAS4_NODE_AMOUNT when using $0" >&2
+    exit 1
+fi
+if [ -z "$TRACKER_CRYPTO" ]; then
+    echo "TRACKER_CRYPTO not set, using ECCrypto"
+    export TRACKER_CRYPTO="ECCrypto"
+fi
+
 
 cd $PROJECT_DIR
 
@@ -62,10 +63,8 @@ if [ -z "$HEAD_HOST" ]; then
     HEAD_HOST=$(hostname)
 fi
 
-# @CONF_OPTION TRACKER_PORT: Port in which the Dispersy tracker should be listening on.
 echo $HEAD_HOST $TRACKER_PORT > bootstraptribler.txt
-
-python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT 2>&1 > "$OUTPUT_DIR/tracker_out.log"
+python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT --crypto $TRACKER_CRYPTO 2>&1 > "$OUTPUT_DIR/tracker_out.log"
 
 #
 # run_tracker.sh ends here

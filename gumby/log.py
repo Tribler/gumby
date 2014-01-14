@@ -180,7 +180,7 @@ def setupLogging():
         stderr_handler.setLevel(logging.WARNING)
         root.addHandler(stderr_handler)
 
-    observer = PythonLoggingObserver('root')
+    observer = PythonLoggingObserver('root', defaultLogLevel=logging.INFO)
     observer.start()
 
 

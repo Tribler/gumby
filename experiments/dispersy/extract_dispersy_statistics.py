@@ -168,7 +168,7 @@ class ExtractStatistics:
     def merge_records(self, inputfilename, outputfilename, columnindex, diffoutputfilename=None):
         all_nodes = []
 
-        sum_records = {}
+        sum_records = defaultdict(dict)
         for node_nr, _, inputdir in self.yield_files(inputfilename):
             all_nodes.append(node_nr)
 
@@ -181,9 +181,9 @@ class ExtractStatistics:
                 if len(parts) > columnindex:
                     timestamp = float(parts[1])
                     record = float(parts[columnindex])
-                    if record == 0:
+                    if record == 0 and len(sum_records) == 0:
                         continue
-                    sum_records.setdefault(timestamp, {})[node_nr] = record
+                    sum_records[timestamp][node_nr] = record
             h_records.close()
 
         diffoutputfile = os.path.join(self.node_directory, diffoutputfilename) if diffoutputfilename else None
@@ -334,17 +334,18 @@ class BasicExtractor(AbstractHandler):
     def end_file(self, node_nr, timestamp, timeoffset):
         print >> self.h_drop, timestamp, timeoffset, self.c_dropped_record
 
-        print >> self.h_total_connections, timestamp, timeoffset,
-        for community in self.communities:
-            print >> self.h_total_connections, self.c_communities[community][0],
-        for community in self.communities:
-                print >> self.h_total_connections, self.c_communities[community][1],
-        print >> self.h_total_connections, ''
+        if self.c_communities.values():
+            print >> self.h_total_connections, timestamp, timeoffset,
+            for community in self.communities:
+                print >> self.h_total_connections, self.c_communities[community][0],
+            for community in self.communities:
+                    print >> self.h_total_connections, self.c_communities[community][1],
+            print >> self.h_total_connections, ''
 
-        max_incomming_connections = max(nr_candidates for nr_candidates, _ in self.c_communities.values())
-        self.nr_connections.append((max_incomming_connections, node_nr))
-        self.nr_connections.sort(reverse=True)
-        self.nr_connections = self.nr_connections[:10]
+            max_incomming_connections = max(nr_candidates for nr_candidates, _ in self.c_communities.values())
+            self.nr_connections.append((max_incomming_connections, node_nr))
+            self.nr_connections.sort(reverse=True)
+            self.nr_connections = self.nr_connections[:10]
 
         self.h_stat.close()
         self.h_drop.close()
@@ -369,10 +370,8 @@ class BasicExtractor(AbstractHandler):
 
         if 'communities' in value:
             for community in value['communities']:
-                if community.get('nr_candidates'):
-                    self.c_communities[community['cid']][0] = community.get('nr_candidates')
-                if community.get('nr_stumbled_candidates'):
-                    self.c_communities[community['cid']][1] = community.get('nr_stumbled_candidates')
+                self.c_communities[community['cid']][0] = community.get('nr_candidates', self.c_communities[community['cid']][0])
+                self.c_communities[community['cid']][1] = community.get('nr_stumbled_candidates', self.c_communities[community['cid']][1])
 
                 self.c_blstats[community['cid']][0] = community.get('sync_bloom_reuse', self.c_blstats[community['cid']][0])
                 self.c_blstats[community['cid']][1] = community.get('sync_bloom_skip', self.c_blstats[community['cid']][1])
@@ -669,6 +668,32 @@ class DebugMessages(AbstractHandler):
         for debug_stat in self.dispersy_debugstatistics:
             extract_statistics.merge_records("scenario-%s-debugstatistics.txt" % debug_stat, "scenario-%s-debugstatistics.txt" % debug_stat, 2)
 
+class AnnotateMessages(AbstractHandler):
+
+    def __init__(self):
+        AbstractHandler.__init__(self)
+
+        self.annotate_dict = defaultdict(dict)
+        self.nodes = []
+
+    def new_file(self, node_nr, filename, outputdir):
+        self.nodes.append(node_nr)
+
+    def filter_line(self, node_nr, line_nr, timestamp, timeoffset, key):
+        return key == "annotate"
+
+    def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
+        self.annotate_dict[json][node_nr] = timeoffset
+
+    def all_files_done(self, extract_statistics):
+        h_annotations = open(os.path.join(extract_statistics.node_directory, "annotations.txt"), "w+")
+        print >> h_annotations, "annotation", " ".join(map(str, self.nodes))
+        for annotation, node_dict in self.annotate_dict.iteritems():
+            print >> h_annotations, '"%s"' % annotation,
+            for node in self.nodes:
+                print >> h_annotations, node_dict.get(node, '?'),
+            print >> h_annotations, ''
+
 def get_parser(argv):
     e = ExtractStatistics(argv[1])
     e.add_handler(BasicExtractor())
@@ -677,6 +702,7 @@ def get_parser(argv):
     e.add_handler(DropMessages())
     e.add_handler(BootstrapMessages())
     e.add_handler(DebugMessages())
+    e.add_handler(AnnotateMessages())
     return e
 
 if __name__ == "__main__":

@@ -49,6 +49,7 @@ from itertools import ifilter
 from os import environ
 from re import compile as re_compile
 from time import time
+from threading import RLock
 import shlex
 import sys
 
@@ -90,33 +91,61 @@ class ScenarioParser():
         r"\s*"
         r"(?:(?P<beginH>\d+):)?(?P<beginM>\d+):(?P<beginS>\d+)"
         r"\s+"
-        r"(?P<callable>\w+)(?P<args>\s+(.+?))??"
-        r"(?:\s*"
-        r"{(?P<peers>\s*!?\d+(?:-\d+)?(?:\s*,\s*\d+(?:-\d+)?)*\s*)}"
-        r")?\s*(?:\n)?$"
+        r"(?P<callable>\w+)(?P<args>\s+(.+))?"
     )
     _re_substitution = re_compile("(\$\w+)")
 
-    # TODO(emilon): We should make the minutes and its colon optional, so we can just use secs.
+    def __init__(self):
+        self.file_lock = RLock()
+        self.file_buffer = None
+
+    def _read_scenario(self, filename):
+        """
+        Read the scenario into memory return a list containing the lines.
+        """
+        with self.file_lock:
+            if not self.file_buffer or self.file_buffer[0] != filename:
+                f = open(filename, "r")
+                lines = f.readlines()
+                f.close()
+
+                line_buffer = []
+
+                linenr = 1
+                for line in lines:
+                    if not line.startswith('#'):
+                        line = line.strip()
+                        if line.endswith('}'):
+                            start = line.rfind('{') + 1
+                            peerspec = line[start:-1]
+                            line = line[:start - 1]
+                        else:
+                            peerspec = ''
+
+                        line_buffer.append((linenr, line, peerspec))
+                    linenr += 1
+
+                self.file_buffer = (filename, line_buffer)
+        return self.file_buffer[1]
 
     def _parse_scenario(self, filename):
         """
         Returns a list of commands that will be executed.
 
-        A command is a (TIMESTAMP, LINENO, CALLABLE, ARGS) tuple. CALLABLE is
+        A command is a (TIMESTAMP, LINENO, CALLABLE, ARGS, PEERSPEC) tuple. CALLABLE is
         the name of a function, method, etc. registered with this scenario using
         the register() method.
         """
         try:
-            for lineno, line in enumerate(open(filename, "r")):
-                if not line.startswith('#'):
-                    cmd = self._parse_scenario_line(lineno + 1, line)
-                    if cmd is not None:
-                        yield cmd
+            for lineno, line, peerspec in self._read_scenario(filename):
+                cmd = self._parse_scenario_line(lineno, line, peerspec)
+                if cmd is not None:
+                    yield cmd
+
         except EnvironmentError:
             print >> sys.stderr, "Scenario file open/read error", filename
 
-    def _parse_scenario_line(self, lineno, line):
+    def _parse_scenario_line(self, lineno, line, peerspec):
         """
         Parses one scenario line, and returns a command tuple. If a parsing
         error is encountered or the line should not be executed by this peer,
@@ -124,20 +153,21 @@ class ScenarioParser():
 
         The command tuple is described in _parse_scenario().
         """
-        match = self._re_line.match(self._preprocess_line(line))
-        if match:
-            # remove all entries that are None (to get default per key)
-            dic = dict(ifilter(
-                lambda key_value: key_value[1] is not None,
-                match.groupdict().iteritems()
-            ))
+        peerspec = self._parse_peerspec(peerspec)
+        if self._parse_for_this_peer(peerspec):
+            line = self._preprocess_line(line)
+            match = self._re_line.match(line)
+            if match:
+                # remove all entries that are None (to get default per key)
+                dic = dict(ifilter(
+                    lambda key_value: key_value[1] is not None,
+                    match.groupdict().iteritems()
+                ))
 
-            # only return lines that belong to this peer
-            peerspec = self._parse_peerspec(dic.get("peers", ""))
-            if self._parse_for_this_peer(peerspec):
                 begin = int(dic.get("beginH", 0)) * 3600.0 + \
                     int(dic.get("beginM", 0)) * 60.0 + \
                     int(dic.get("beginS", 0))
+
                 return (
                     begin,
                     lineno,
@@ -145,8 +175,9 @@ class ScenarioParser():
                     tuple(shlex.split(dic.get("args", ""))),
                     peerspec
                 )
-        elif line.strip():
-            print >> sys.stderr, "Ignoring invalid scenario line", lineno
+
+            else:
+                print >> sys.stderr, "Ignoring invalid scenario line", lineno, line
 
         # line not for this peer or a parse error occurred
         return None
@@ -206,13 +237,19 @@ class ScenarioRunner(ScenarioParser):
     ignored. The callables will be executed on the main Twisted thread.
     """
 
-    def __init__(self, filename, peernumber, expstartstamp=None):
+    def __init__(self, filename, expstartstamp=None):
+        ScenarioParser.__init__(self)
         self.filename = filename
 
         self._callables = {}
         self._expstartstamp = expstartstamp
-        self._peernumber = peernumber
         self._origin = None  # will be set just before run()-ing
+        self._my_actions = []
+
+        self._is_parsed = False
+
+    def set_peernumber(self, peernumber):
+        self._peernumber = peernumber
 
     def register(self, clb, name=None):
         """
@@ -223,20 +260,29 @@ class ScenarioRunner(ScenarioParser):
             name = clb.__name__
         self._callables[name] = clb
 
+    def parse_file(self):
+        for (tstmp, _, clb, args, _) in self._parse_scenario(self.filename):
+            if clb not in self._callables:
+                err(clb, "is not registered as an action!")
+                continue
+
+            self._my_actions.append((tstmp, clb, args))
+
+        self._is_parsed = True
+
     def run(self):
         """
         Schedules calls for each scenario line.
         """
         msg("Running scenario from file:", self.filename)
 
+        if not self._is_parsed:
+            self.parse_file()
+
         if self._expstartstamp == None:
             self._expstartstamp = time()
 
-        for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(self.filename):
-            if clb not in self._callables:
-                err(clb, "is not registered as an action!")
-                continue
-
+        for tstmp, clb, args in self._my_actions:
             tstmp = tstmp + self._expstartstamp
             delay = tstmp - time()
             reactor.callLater(
@@ -255,3 +301,24 @@ class ScenarioRunner(ScenarioParser):
 
 #
 # scenario.py ends here
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print >> sys.stderr, "Usage: %s <inputfile> [<peer-id>]" % (sys.argv[0])
+        print >> sys.stderr, "Got:", sys.argv
+
+        exit(1)
+
+    if len(sys.argv) == 3:
+        peer_id = int(sys.argv[2])
+    else:
+        peer_id = 1
+
+    t1 = time()
+    sr = ScenarioRunner(sys.argv[1])
+    sr.set_peernumber(peer_id)
+    sr.parse_file()
+
+    print >> sys.stderr, "Took %.2f to parse %s" % (time() - t1, sys.argv[1])
+    for tstmp, clb, args in sr._my_actions:
+        print >> sys.stderr, tstmp, clb, args

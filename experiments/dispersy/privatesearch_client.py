@@ -121,13 +121,13 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
     def availability(self, infohash, peers):
         infohash_str = infohash + " "* (20 - len(infohash))
 
-        peers = [peer for peer in peers.split(',') if peer != str(self.my_id) and self.get_peer_ip_port(peer)]
+        peers = [peer for peer in peers.split(',') if peer != str(self.my_id) and self.get_peer_ip_port_by_id(peer)]
         self.file_availability[infohash_str] = peers
 
     def taste_buddy(self, peer_id, similarity):
         peer_id = int(peer_id)
         similarity = float(similarity)
-        ipport = self.get_peer_ip_port(peer_id)
+        ipport = self.get_peer_ip_port_by_id(peer_id)
 
         if ipport:
             self.taste_buddies[ipport] = similarity
@@ -246,7 +246,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
             print >> sys.stderr, "will connect to", nr_to_connect
 
             if self.random_connect:
-                taste_addresses = [self.get_peer_ip_port(peer_id) for peer_id in sample(self.get_peers(), nr_to_connect)]
+                taste_addresses = [self.get_peer_ip_port_by_id(peer_id) for peer_id in sample(self.get_peers(), nr_to_connect)]
                 for ipport in taste_addresses:
                     self._community._peercache.add_peer(0, *ipport)
             else:

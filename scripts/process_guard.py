@@ -169,7 +169,7 @@ class ResourceMonitor(object):
 class ProcessMonitor(object):
     def __init__(self, commands, timeout, interval, output_dir=None, monitor_dir=None):
         self.start_time = time()
-        self.end_time = self.start_time + timeout if timeout else 0 # Do not time out if time_limit is 0.
+        self.end_time = self.start_time + timeout if timeout else 0  # Do not time out if time_limit is 0.
         self._interval = interval
 
         self._rm = ResourceMonitor(output_dir, commands)
@@ -181,7 +181,14 @@ class ProcessMonitor(object):
                 sc_clk_tck = float(sysconf(sysconf_names['SC_CLK_TCK']))
             except AttributeError:
                 sc_clk_tck = 100.0
-            self.monitor_file.write(json.dumps({"sc_clk_tck": sc_clk_tck})+"\n")
+
+            try:
+                import resource
+                pagesize = resource.getpagesize()
+            except:
+                pagesize = 4 * 1024
+
+            self.monitor_file.write(json.dumps({"sc_clk_tck": sc_clk_tck, 'pagesize': pagesize}) + "\n")
         else:
             self.monitor_file = None
         # Capture SIGTERM to kill all the child processes before dying
@@ -230,7 +237,7 @@ class ProcessMonitor(object):
                     print "Can't keep up with this interval, try a higher value!", sleep_time
                     self.stop()
 
-            if self.end_time and timestamp > self.end_time: # if self.end_time == 0 the time out is disabled.
+            if self.end_time and timestamp > self.end_time:  # if self.end_time == 0 the time out is disabled.
                 print "Time out, killing monitored processes."
                 return self.stop()
             sleep(sleep_time)
@@ -241,33 +248,33 @@ if __name__ == "__main__":
     parser.add_option("-t", "--timeout",
                       metavar='TIMEOUT',
                       default=0,
-                      type   =int,
-                      help   ="Hard timeout, after this amount of seconds all the child processes will be killed."
+                      type=int,
+                      help="Hard timeout, after this amount of seconds all the child processes will be killed."
                       )
     parser.add_option("-m", "--monitor-dir",
                       metavar='OUTDIR',
-                      help   ="Monitor individual process/thread resource consumption and write the logs in the specified dir."
+                      help="Monitor individual process/thread resource consumption and write the logs in the specified dir."
                       )
     parser.add_option("-o", "--output-dir",
                       metavar='OUTDIR',
-                      help   ="Capture individual process std{out|err} and write the logs in the specified dir."
+                      help="Capture individual process std{out|err} and write the logs in the specified dir."
                       )
     parser.add_option("-f", "--commands-file",
                       metavar='COMMANDS_FILE',
-                      help   ="Read this file and spawn a subprocess using each line as the command line."
+                      help="Read this file and spawn a subprocess using each line as the command line."
                       )
     parser.add_option("-c", "--command",
                       metavar='COMMAND',
-                      action ="append",
+                      action="append",
                       dest="commands",
-                      help   ="Run this command (can be specified multiple times and in addition of --commands-file)"
+                      help="Run this command (can be specified multiple times and in addition of --commands-file)"
                       )
     parser.add_option("-i", "--interval",
                       metavar='FLOAT',
                       default=1.0,
-                      type   =float,
-                      action ="store",
-                      help   ="Sample monitoring stats and check processes/threads every FLOAT seconds"
+                      type=float,
+                      action="store",
+                      help="Sample monitoring stats and check processes/threads every FLOAT seconds"
                       )
     (options, args) = parser.parse_args()
     if not (options.commands_file or options.commands):
@@ -286,7 +293,7 @@ if __name__ == "__main__":
     if not commands:
         parser.error("Could not collect a list of commands to run.\nMake sure that the commands file is not empty or has all the lines commented out.")
 
-    pm = ProcessMonitor(commands,  options.timeout, options.interval, options.output_dir, options.monitor_dir)
+    pm = ProcessMonitor(commands, options.timeout, options.interval, options.output_dir, options.monitor_dir)
     try:
         pm.monitoring_loop()
 

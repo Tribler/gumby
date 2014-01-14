@@ -1,18 +1,22 @@
 import os
 import sys
-from random import expovariate
+from random import expovariate, random
 from gumby.scenario import ScenarioRunner
 
 class ScenarioPreProcessor(ScenarioRunner):
 
-    def __init__(self, filename, outputfile=sys.stdout):
+    def __init__(self, filename, outputfile=sys.stdout, max_tstmp=0):
+        ScenarioRunner.__init__(self, filename)
+
         self._cur_line = None
 
         self._callables = {}
         self._callables['churn'] = self.churn
+        self._callables['churn_pattern'] = self.churn_pattern
 
-        print >> sys.stderr, "Looking for max_timestamp, max_peer...",
-        max_tstmp = max_peer = 0
+        print >> sys.stderr, "Looking for max_timestamp, max_peer... in %s" % filename,
+
+        max_peer = 0
         for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
             max_tstmp = max(tstmp, max_tstmp)
             if peerspec[0]:
@@ -22,6 +26,7 @@ class ScenarioPreProcessor(ScenarioRunner):
 
         print >> sys.stderr, "Preprocessing file...",
         for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
+            print >> outputfile, self._cur_line
             if clb in self._callables:
                 yes_peers, no_peers = peerspec
                 if not yes_peers:
@@ -32,8 +37,6 @@ class ScenarioPreProcessor(ScenarioRunner):
                 for peer in yes_peers:
                     for line in self._callables[clb](tstmp, max_tstmp, *args):
                         print >> outputfile, line, '{%s}' % peer
-            else:
-                print >> outputfile, self._cur_line
         print >> sys.stderr, "\tdone"
 
     def _parse_for_this_peer(self, peerspec):
@@ -43,34 +46,60 @@ class ScenarioPreProcessor(ScenarioRunner):
         self._cur_line = line.strip()
         return line
 
-    def churn(self, tstmp, max_tstmp, churn_type, desired_mean=300):
+    def churn(self, tstmp, max_tstmp, churn_type, desired_mean=300, min_online=5.0):
         desired_mean = float(desired_mean)
+        min_online = float(min_online)
 
         def get_delay():
             if churn_type == 'expon':
-                return 5.0 + expovariate(1.0 / (desired_mean - 5))
+                return min_online + expovariate(1.0 / (desired_mean - min_online))
+            elif churn_type == 'fixed':
+                return desired_mean
             else:
                 raise NotImplementedError('only expon churn is implemented, got %s' % churn_type)
 
+        go_online = random() < 0.5
         while tstmp < max_tstmp:
-            yield "@0:%d online" % tstmp
+            yield "@0:%d %s" % (tstmp, "online" if go_online else "offline")
             tstmp += get_delay()
-            yield "@0:%d offline" % tstmp
-            tstmp += get_delay()
+            go_online = not go_online
 
-def main(inputfile, outputfile):
+    def churn_pattern(self, tstmp, max_tstmp, pattern, min_online=5.0):
+        pattern = [online / 100.0 for online in map(float, pattern.split(','))]
+        min_online = float(min_online)
+
+        i = 0
+        prev_state = None
+        while tstmp < max_tstmp:
+            go_online = random() < pattern[i]
+            i = (i + 1) % len(pattern)
+
+            if go_online != prev_state:
+                yield "@0:%d %s" % (tstmp, "online" if go_online else "offline")
+                prev_state = go_online
+
+            tstmp += min_online
+
+
+def main(inputfile, outputfile, maxtime=0):
+    inputfile = os.path.abspath(inputfile)
     if os.path.exists(inputfile):
         f = open(outputfile, 'w')
 
-        ScenarioPreProcessor(inputfile, f)
+        ScenarioPreProcessor(inputfile, f, maxtime)
 
         f.close()
+    else:
+        print >> sys.stderr, inputfile, "not found"
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print "Usage: %s <input-file> <output-file>" % (sys.argv[0])
+    if len(sys.argv) < 3:
+        print "Usage: %s <input-file> <output-file> (<max-time>)" % (sys.argv[0])
         print >> sys.stderr, sys.argv
 
         exit(1)
 
-    main(sys.argv[1], sys.argv[2])
+    if len(sys.argv) == 4:
+        main(sys.argv[1], sys.argv[2], float(sys.argv[3]))
+    else:
+        main(sys.argv[1], sys.argv[2])
