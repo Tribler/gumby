@@ -6,6 +6,8 @@ from gumby.scenario import ScenarioRunner
 class ScenarioPreProcessor(ScenarioRunner):
 
     def __init__(self, filename, outputfile=sys.stdout, max_tstmp=0):
+        ScenarioRunner.__init__(self, filename)
+
         self._cur_line = None
 
         self._callables = {}
@@ -67,7 +69,7 @@ class ScenarioPreProcessor(ScenarioRunner):
         min_online = float(min_online)
 
         i = 0
-        prev_state = False
+        prev_state = None
         while tstmp < max_tstmp:
             go_online = random() < pattern[i]
             i = (i + 1) % len(pattern)
