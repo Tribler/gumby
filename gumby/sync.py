@@ -70,7 +70,7 @@ from twisted.python.log import msg, err
 from twisted.internet.defer import DeferredSemaphore, Deferred
 
 
-EXPERIMENT_SYNC_TIMEOUT = 60
+EXPERIMENT_SYNC_TIMEOUT = 30
 
 #
 # Server side
@@ -165,7 +165,7 @@ class ExperimentServiceFactory(Factory):
     def __init__(self, expected_subscribers, experiment_start_delay):
         self.expected_subscribers = expected_subscribers
         self.experiment_start_delay = experiment_start_delay
-        self.parsing_semaphore = DeferredSemaphore(1000)
+        self.parsing_semaphore = DeferredSemaphore(500)
         self.connection_counter = -1
         self.connections_made = []
         self.connections_ready = []
@@ -183,14 +183,15 @@ class ExperimentServiceFactory(Factory):
     def setConnectionMade(self, proto):
         if not self._timeout_delayed_call:
             self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
+        else:
+            self._timeout_delayed_call.reset(EXPERIMENT_SYNC_TIMEOUT)
 
         self.connections_made.append(proto)
-
         if len(self.connections_made) >= self.expected_subscribers:
             msg("All subscribers connected!")
             if self._made_looping_call and self._made_looping_call.running:
                 self._made_looping_call.stop()
-            self._timeout_delayed_call.reset(EXPERIMENT_SYNC_TIMEOUT)
+
             self.pushIdToSubscribers()
         else:
             if not self._made_looping_call:
@@ -206,6 +207,7 @@ class ExperimentServiceFactory(Factory):
             self.parsing_semaphore.run(proto.sendAndWaitForReady)
 
     def setConnectionReady(self, proto):
+        self._timeout_delayed_call.reset(EXPERIMENT_SYNC_TIMEOUT)
         self.connections_ready.append(proto)
 
         if len(self.connections_ready) >= self.expected_subscribers:
@@ -213,7 +215,6 @@ class ExperimentServiceFactory(Factory):
             if self._subscriber_looping_call and self._subscriber_looping_call.running:
                 self._subscriber_looping_call.stop()
 
-            self._timeout_delayed_call.reset(EXPERIMENT_SYNC_TIMEOUT)
             self.pushInfoToSubscribers()
         else:
             if not self._subscriber_looping_call:
@@ -244,6 +245,7 @@ class ExperimentServiceFactory(Factory):
             yield subscriber.sendLine(line)
 
     def setConnectionReceived(self, proto):
+        self._timeout_delayed_call.reset(EXPERIMENT_SYNC_TIMEOUT)
         self.vars_received.append(proto)
 
         if len(self.vars_received) >= self.expected_subscribers:
