@@ -160,10 +160,11 @@ class ExperimentServiceFactory(Factory):
         self.connections_made = []
         self.connections_ready = []
         self.vars_received = []
-        self._timeout_delayed_call = None
+
         self._made_looping_call = None
         self._subscriber_looping_call = None
         self._subscriber_received_looping_call = None
+        self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
 
     def buildProtocol(self, addr):
         self.connection_counter += 1
@@ -177,7 +178,7 @@ class ExperimentServiceFactory(Factory):
             if self._made_looping_call and self._made_looping_call.running:
                 self._made_looping_call.stop()
 
-            self.connections_made = None
+            self._timeout_delayed_call.reset()
         else:
             if not self._made_looping_call:
                 self._made_looping_call = task.LoopingCall(self._print_subscribers_made)
@@ -188,8 +189,6 @@ class ExperimentServiceFactory(Factory):
             msg("%d of %d expected subscribers connected." % (len(self.connections_made), self.expected_subscribers))
 
     def setConnectionReady(self, proto):
-        if not self._timeout_delayed_call:
-            self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
         self.connections_ready.append(proto)
 
         if len(self.connections_ready) >= self.expected_subscribers:
@@ -197,7 +196,7 @@ class ExperimentServiceFactory(Factory):
             if self._subscriber_looping_call and self._subscriber_looping_call.running:
                 self._subscriber_looping_call.stop()
 
-            self._timeout_delayed_call.cancel()
+            self._timeout_delayed_call.reset()
             self.pushInfoToSubscribers()
         else:
             if not self._subscriber_looping_call:
@@ -233,6 +232,7 @@ class ExperimentServiceFactory(Factory):
         if len(self.vars_received) >= self.expected_subscribers:
             msg("Data sent to all subscribers, giving the go signal in %f secs." % self.experiment_start_delay)
             reactor.callLater(0, self.startExperiment)
+            self._timeout_delayed_call.cancel()
         else:
             if not self._subscriber_received_looping_call:
                 self._subscriber_received_looping_call = task.LoopingCall(self._print_subscribers_received)
@@ -248,7 +248,6 @@ class ExperimentServiceFactory(Factory):
         if self._subscriber_received_looping_call and self._subscriber_received_looping_call.running:
             self._subscriber_received_looping_call.stop()
 
-        deferreds = []
         start_time = time() + self.experiment_start_delay
         for subscriber in self.connections_ready:
             # Sync the experiment start time among instances
