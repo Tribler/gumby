@@ -237,6 +237,7 @@ class ExperimentRunner(Logger):
         def onTrackerFailure(failure):
             err("Tracker has exited with status:", failure.getErrorMessage())
             # TODO: Add a config option to not shut down the experiment when the tracker dies
+            reactor.exitCode = 1
             reactor.stop()
 
         if self._cfg['tracker_cmd']:
@@ -252,6 +253,7 @@ class ExperimentRunner(Logger):
         def onConfigServerDied(failure):
             err("Config server has exited with status:", failure.getErrorMessage())
             # TODO: Add a config option to not shut down the experiment when the config server dies???
+            reactor.exitCode = 1
             reactor.stop()
 
         if self._cfg['experiment_server_cmd']:
