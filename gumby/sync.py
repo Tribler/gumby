@@ -310,13 +310,12 @@ class ExperimentClient(LineReceiver):
 
     def connectionMade(self):
         msg("Connected to the experiment server", logLevel=logging.DEBUG)
-        self.sendTime()
+        self.sendLine("time:%f" % time())
         for key, val in self.vars.iteritems():
             self.sendLine("set:%s:%s" % (key, val))
-        self.state = "id"
 
-    def sendTime(self):
-        self.sendLine("time:%f" % time())
+        d = deferToThread(self.onVarsSend)
+        self.state = "id"
 
     def lineReceived(self, line):
         try:
@@ -329,6 +328,9 @@ class ExperimentClient(LineReceiver):
             self.state = statehandler(line)
             if self.state == 'done':
                 self.transport.loseConnection()
+
+    def onVarsSend(self):
+        msg("onVarsSend: Call not implemented", logLevel=logging.DEBUG)
 
     def onIdReceived(self):
         msg("onIdReceived: Call not implemented", logLevel=logging.DEBUG)

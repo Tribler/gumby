@@ -104,10 +104,13 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.generateMyMember()
         self.vars['private_keypair'] = base64.encodestring(self.my_member_private_key)
 
-    def onIdReceived(self):
+    def onVarsSend(self):
         scenario_file_path = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
+        self.scenario_runner = ScenarioRunner(scenario_file_path)
+        self.scenario_runner._read_scenario(scenario_file_path)
 
-        self.scenario_runner = ScenarioRunner(scenario_file_path, int(self.my_id))
+    def onIdReceived(self):
+        self.scenario_runner.set_peernumber(int(self.my_id))
         # TODO(emilon): Auto-register this stuff
         self.scenario_runner.register(self.echo)
         self.scenario_runner.register(self.online)

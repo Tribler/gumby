@@ -49,6 +49,7 @@ from itertools import ifilter
 from os import environ
 from re import compile as re_compile
 from time import time
+from threading import RLock
 import shlex
 import sys
 
@@ -94,6 +95,24 @@ class ScenarioParser():
     )
     _re_substitution = re_compile("(\$\w+)")
 
+    def __init__(self):
+        self.file_lock = RLock()
+        self.file_buffer = None
+
+    def _read_scenario(self, filename):
+        """
+        Read the scenario into memory return a list containing the lines.
+        """
+        with self.file_lock:
+            if not self.file_buffer or self.file_buffer[0] != filename:
+                f = open(filename, "r")
+                self.file_buffer = (filename, f.readlines())
+                f.close()
+            else:
+                print >> sys.stderr, "Already read file, reusing buffer"
+
+        return self.file_buffer[1]
+
     def _parse_scenario(self, filename):
         """
         Returns a list of commands that will be executed.
@@ -103,12 +122,13 @@ class ScenarioParser():
         the register() method.
         """
         try:
-            for lineno, line in enumerate(open(filename, "r")):
+            for lineno, line in enumerate(self._read_scenario(filename)):
                 line = line.strip()
                 if not line.startswith('#'):
                     cmd = self._parse_scenario_line(lineno + 1, line)
                     if cmd is not None:
                         yield cmd
+
         except EnvironmentError:
             print >> sys.stderr, "Scenario file open/read error", filename
 
@@ -122,15 +142,15 @@ class ScenarioParser():
         """
         line = self._preprocess_line(line)
         if line.endswith('}'):
-            start = line.rfind('{')+1
+            start = line.rfind('{') + 1
             peerspec = line[start:-1]
-            line = line[:start-1]
+            line = line[:start - 1]
         else:
             peerspec = ''
-        
+
         peerspec = self._parse_peerspec(peerspec)
         if self._parse_for_this_peer(peerspec):
-            #print line
+            # print line
             match = self._re_line.match(line)
             if match:
                 # remove all entries that are None (to get default per key)
@@ -142,7 +162,7 @@ class ScenarioParser():
                 begin = int(dic.get("beginH", 0)) * 3600.0 + \
                     int(dic.get("beginM", 0)) * 60.0 + \
                     int(dic.get("beginS", 0))
-                    
+
                 return (
                     begin,
                     lineno,
@@ -150,7 +170,7 @@ class ScenarioParser():
                     tuple(shlex.split(dic.get("args", ""))),
                     peerspec
                 )
-                
+
             else:
                 print >> sys.stderr, "Ignoring invalid scenario line", lineno, line
 
@@ -212,16 +232,19 @@ class ScenarioRunner(ScenarioParser):
     ignored. The callables will be executed on the main Twisted thread.
     """
 
-    def __init__(self, filename, peernumber, expstartstamp=None):
+    def __init__(self, filename, expstartstamp=None):
+        ScenarioParser.__init__(self)
         self.filename = filename
 
         self._callables = {}
         self._expstartstamp = expstartstamp
-        self._peernumber = peernumber
         self._origin = None  # will be set just before run()-ing
         self._my_actions = []
 
         self._is_parsed = False
+
+    def set_peernumber(self, peernumber):
+        self._peernumber = peernumber
 
     def register(self, clb, name=None):
         """
@@ -280,16 +303,17 @@ if __name__ == '__main__':
         print >> sys.stderr, "Got:", sys.argv
 
         exit(1)
-    
+
     if len(sys.argv) == 3:
         peer_id = int(sys.argv[2])
     else:
         peer_id = 1
-    
+
     t1 = time()
-    sr = ScenarioRunner(sys.argv[1], peer_id)
+    sr = ScenarioRunner(sys.argv[1])
+    sr.set_peernumber(peer_id)
     sr.parse_file()
-    
-    print >> sys.stderr, "Took %.2f to parse %s"%(time() - t1, sys.argv[1])
-    for tstmp, clb, args in sr._my_actions: 
+
+    print >> sys.stderr, "Took %.2f to parse %s" % (time() - t1, sys.argv[1])
+    for tstmp, clb, args in sr._my_actions:
         print >> sys.stderr, tstmp, clb, args
