@@ -171,7 +171,7 @@ class ExperimentServiceFactory(Factory):
         return ExperimentServiceProto(self, self.connection_counter + 1)
 
     def setConnectionMade(self, proto):
-        if self._timeout_delayed_call:
+        if not self._timeout_delayed_call:
             self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
 
         self.connections_made.append(proto)

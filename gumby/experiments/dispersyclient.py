@@ -107,7 +107,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def onVarsSend(self):
         scenario_file_path = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
         self.scenario_runner = ScenarioRunner(scenario_file_path)
+
+        t1 = time()
         self.scenario_runner._read_scenario(scenario_file_path)
+        msg('Took %.2f to read scenario file' % (time() - t1))
 
     def onIdReceived(self):
         self.scenario_runner.set_peernumber(int(self.my_id))
