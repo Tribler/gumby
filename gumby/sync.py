@@ -67,6 +67,8 @@ from twisted.internet.protocol import Factory, ReconnectingClientFactory
 from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
 from twisted.python.log import msg, err
+from twisted.internet.defer import DeferredSemaphore
+
 
 EXPERIMENT_SYNC_TIMEOUT = 60
 
@@ -84,11 +86,11 @@ class ExperimentServiceProto(LineReceiver):
         self.factory = factory
         self.state = 'init'
         self.vars = {}
+        self.ready_d = None
 
     def connectionMade(self):
         msg("New connection from: ", str(self.transport.getPeer()), logLevel=logging.DEBUG)
         self.factory.setConnectionMade(self)
-        self.sendLine("id:%s" % self.id)
 
     def lineReceived(self, line):
         try:
@@ -101,6 +103,12 @@ class ExperimentServiceProto(LineReceiver):
             self.state = statehandler(line)
             if self.state == 'done':
                 self.transport.loseConnection()
+
+
+    def sendAndWaitForReady(self, _):
+        self.ready_d = Deferred()
+        self.sendLine("id:%s" % self.id)
+        return self.ready_d
 
     def connectionLost(self, reason):
         msg("Lost connection with: %s with ID %s" % (str(self.transport.getPeer()), self.id), logLevel=logging.DEBUG)
@@ -130,6 +138,7 @@ class ExperimentServiceProto(LineReceiver):
             msg("This subscriber is ready now.", logLevel=logging.DEBUG)
             self.ready = True
             self.factory.setConnectionReady(self)
+            self.ready_d.callback(self)
             return 'vars_received'
 
         else:
@@ -156,6 +165,7 @@ class ExperimentServiceFactory(Factory):
     def __init__(self, expected_subscribers, experiment_start_delay):
         self.expected_subscribers = expected_subscribers
         self.experiment_start_delay = experiment_start_delay
+        self.parsing_semaphore = DeferredSemaphore(100)
         self.connection_counter = -1
         self.connections_made = []
         self.connections_ready = []
@@ -180,8 +190,8 @@ class ExperimentServiceFactory(Factory):
             msg("All subscribers connected!")
             if self._made_looping_call and self._made_looping_call.running:
                 self._made_looping_call.stop()
-
             self._timeout_delayed_call.reset(EXPERIMENT_SYNC_TIMEOUT)
+            self.pushIdToSubscribers()
         else:
             if not self._made_looping_call:
                 self._made_looping_call = task.LoopingCall(self._print_subscribers_made)
@@ -190,6 +200,10 @@ class ExperimentServiceFactory(Factory):
     def _print_subscribers_made(self):
         if len(self.connections_made) < self.expected_subscribers:
             msg("%d of %d expected subscribers connected." % (len(self.connections_made), self.expected_subscribers))
+
+    def pushIdToSubscribers(self):
+        for proto in self.connections_made:
+            self.parsing_semaphore.run(proto.sendAndWaitForReady)
 
     def setConnectionReady(self, proto):
         self.connections_ready.append(proto)
