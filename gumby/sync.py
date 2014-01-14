@@ -164,13 +164,16 @@ class ExperimentServiceFactory(Factory):
         self._made_looping_call = None
         self._subscriber_looping_call = None
         self._subscriber_received_looping_call = None
-        self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
+        self._timeout_delayed_call = None
 
     def buildProtocol(self, addr):
         self.connection_counter += 1
         return ExperimentServiceProto(self, self.connection_counter + 1)
 
     def setConnectionMade(self, proto):
+        if self._timeout_delayed_call:
+            self._timeout_delayed_call = reactor.callLater(EXPERIMENT_SYNC_TIMEOUT, self.onExperimentSetupTimeout)
+
         self.connections_made.append(proto)
 
         if len(self.connections_made) >= self.expected_subscribers:
