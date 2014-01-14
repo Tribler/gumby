@@ -106,11 +106,25 @@ class ScenarioParser():
         with self.file_lock:
             if not self.file_buffer or self.file_buffer[0] != filename:
                 f = open(filename, "r")
-                self.file_buffer = (filename, f.readlines())
+                lines = f.readlines()
                 f.close()
-            else:
-                print >> sys.stderr, "Already read file, reusing buffer"
 
+                line_buffer = []
+
+                linenr = 1
+                for i, line in enumerate(lines):
+                    line = self._preprocess_line(line)
+                    if line.endswith('}'):
+                        start = line.rfind('{') + 1
+                        peerspec = line[start:-1]
+                        line = line[:start - 1]
+                    else:
+                        peerspec = ''
+
+                    line_buffer.append((linenr, line, peerspec))
+                    linenr += 1
+
+                self.file_buffer = (filename, line_buffer)
         return self.file_buffer[1]
 
     def _parse_scenario(self, filename):
@@ -122,17 +136,17 @@ class ScenarioParser():
         the register() method.
         """
         try:
-            for lineno, line in enumerate(self._read_scenario(filename)):
+            for lineno, line, peerspec in self._read_scenario(filename):
                 line = line.strip()
                 if not line.startswith('#'):
-                    cmd = self._parse_scenario_line(lineno + 1, line)
+                    cmd = self._parse_scenario_line(lineno, line, peerspec)
                     if cmd is not None:
                         yield cmd
 
         except EnvironmentError:
             print >> sys.stderr, "Scenario file open/read error", filename
 
-    def _parse_scenario_line(self, lineno, line):
+    def _parse_scenario_line(self, lineno, line, peerspec):
         """
         Parses one scenario line, and returns a command tuple. If a parsing
         error is encountered or the line should not be executed by this peer,
@@ -140,14 +154,6 @@ class ScenarioParser():
 
         The command tuple is described in _parse_scenario().
         """
-        line = self._preprocess_line(line)
-        if line.endswith('}'):
-            start = line.rfind('{') + 1
-            peerspec = line[start:-1]
-            line = line[:start - 1]
-        else:
-            peerspec = ''
-
         peerspec = self._parse_peerspec(peerspec)
         if self._parse_for_this_peer(peerspec):
             # print line

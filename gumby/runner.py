@@ -235,9 +235,9 @@ class ExperimentRunner(Logger):
 
     def startTracker(self):
         def onTrackerFailure(failure):
-            err("Tracker has exited with status, collecting data before failing: %s", failure.getErrorMessage())
+            err("Tracker has exited with status:", failure.getErrorMessage())
             # TODO: Add a config option to not shut down the experiment when the tracker dies
-            return self.collectOutputFromHeadNodes().addCallback(lambda _: reactor.stop())
+            reactor.stop()
 
         if self._cfg['tracker_cmd']:
             self._tracker_d = self.runCommand(self._cfg['tracker_cmd'], self._cfg.as_bool('tracker_run_remote'))
@@ -250,9 +250,9 @@ class ExperimentRunner(Logger):
 
     def startExperimentServer(self):
         def onConfigServerDied(failure):
-            err("Config server has exited with status, collecting data before failing: %s", failure.getErrorMessage())
+            err("Config server has exited with status:", failure.getErrorMessage())
             # TODO: Add a config option to not shut down the experiment when the config server dies???
-            return self.collectOutputFromHeadNodes().addCallback(lambda _: reactor.stop())
+            reactor.stop()
 
         if self._cfg['experiment_server_cmd']:
             # TODO: This is not very flexible, refactor it to have a background_commands
