@@ -67,7 +67,7 @@ from twisted.internet.protocol import Factory, ReconnectingClientFactory
 from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
 from twisted.python.log import msg, err
-from twisted.internet.defer import DeferredSemaphore
+from twisted.internet.defer import DeferredSemaphore, Deferred
 
 
 EXPERIMENT_SYNC_TIMEOUT = 60
@@ -105,7 +105,7 @@ class ExperimentServiceProto(LineReceiver):
                 self.transport.loseConnection()
 
 
-    def sendAndWaitForReady(self, _):
+    def sendAndWaitForReady(self):
         self.ready_d = Deferred()
         self.sendLine("id:%s" % self.id)
         return self.ready_d
