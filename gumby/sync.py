@@ -178,7 +178,7 @@ class ExperimentServiceFactory(Factory):
             if self._made_looping_call and self._made_looping_call.running:
                 self._made_looping_call.stop()
 
-            self._timeout_delayed_call.reset()
+            self._timeout_delayed_call.reset(EXPERIMENT_SYNC_TIMEOUT)
         else:
             if not self._made_looping_call:
                 self._made_looping_call = task.LoopingCall(self._print_subscribers_made)
@@ -196,7 +196,7 @@ class ExperimentServiceFactory(Factory):
             if self._subscriber_looping_call and self._subscriber_looping_call.running:
                 self._subscriber_looping_call.stop()
 
-            self._timeout_delayed_call.reset()
+            self._timeout_delayed_call.reset(EXPERIMENT_SYNC_TIMEOUT)
             self.pushInfoToSubscribers()
         else:
             if not self._subscriber_looping_call:
