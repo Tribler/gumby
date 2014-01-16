@@ -121,6 +121,12 @@ class SocialClient(DispersyExperimentScriptClient):
         else:
             raise RuntimeError("undefined class type, %s" % commtype)
 
+    def set_community_kwarg(self, key, value):
+        if key == 'send_simi_reveal':
+            value = self.str2bool(value)
+
+        DispersyExperimentScriptClient.set_community_kwarg(self, key, value)
+
     @call_on_dispersy_thread
     def online(self):
         if self.peercache:
