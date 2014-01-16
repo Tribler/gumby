@@ -78,6 +78,7 @@ cputimes.r
 statistics.r
 writebytes.r
 readbytes.r
+bl.r
 "
 
 graph_data.sh

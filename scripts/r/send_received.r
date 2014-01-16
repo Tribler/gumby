@@ -41,12 +41,22 @@ if(file.exists("received_diff_reduced.txt")){
 
 if(file.exists("send_reduced.txt")){
 	df <- read.table("send_reduced.txt", header = TRUE, check.names = FALSE)
+	num_columns <- ncol(df) - 1
 	df <- melt(df, id="time")
 	df$value = df$value/1024.0
 	
+	if (num_columns > 1000){
+		df <- ddply(df, .(time), summarise, mean = mean(value), min=min(value), max=max(value))
+	}
+	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df2)
-	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
+	if (num_columns <= 1000){
+		p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
+	} else {
+		p <- p + geom_step(aes(time, mean), colour = '2')
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+	}
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KiBytes total upload)\n")
 	p <- p + xlim(minX, maxX)
@@ -56,12 +66,22 @@ if(file.exists("send_reduced.txt")){
 
 if(file.exists("received_reduced.txt")){
 	df <- read.table("received_reduced.txt", header = TRUE, check.names = FALSE)
+	num_columns <- ncol(df) - 1
 	df <- melt(df, id="time")
 	df$value = df$value/1024.0
 	
+	if (num_columns > 1000){
+		df <- ddply(df, .(time), summarise, mean = mean(value), min=min(value), max=max(value))
+	}
+	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df2)
-	p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
+	if (num_columns <= 1000){
+		p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
+	} else {
+		p <- p + geom_step(aes(time, mean), colour = '2')
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+	}
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KiBytes total download)\n")
 	p <- p + xlim(minX, maxX)
