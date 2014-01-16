@@ -64,6 +64,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.not_connected_foafs = set()
 
         self.peercache = False
+        self.nocache = False
         self.reconnect_to_friends = False
         self._mypref_db = None
 
@@ -89,11 +90,15 @@ class SocialClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
         self.scenario_runner.register(self.set_community_class, 'set_community_class')
         self.scenario_runner.register(self.send_post, 'send_post')
+        self.scenario_runner.register(self.set_cache, 'set_cache')
 
     def peertype(self, peertype):
         DispersyExperimentScriptClient.peertype(self, peertype)
         if peertype == "peercache":
             self.peercache = True
+
+    def set_cache(self, cache):
+        self.nocache = self.str2bool(cache)
 
     def initializeCrypto(self):
         from Tribler.community.privatesemantic.elgamalcrypto import ElgamalCrypto, NoElgamalCrypto
@@ -206,6 +211,10 @@ class SocialClient(DispersyExperimentScriptClient):
         if self.peercache:
             friendsaddresses = sample(friendsaddresses, int(len(friendsaddresses) * 0.36))
             foafsaddresses = sample(foafsaddresses, int(len(foafsaddresses) * 0.36))
+
+        if self.nocache:
+            friendsaddresses = []
+            foafsaddresses = []
 
         my_hashes = [keyhash for _, keyhash in self._community._friend_db.get_my_keys()]
         for ipport in friendsaddresses:
