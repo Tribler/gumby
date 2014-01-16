@@ -467,7 +467,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
                                'walk_success': self._dispersy.statistics.walk_success,
                                'walk_bootstrap_attempt': self._dispersy.statistics.walk_bootstrap_attempt,
                                'walk_bootstrap_success': self._dispersy.statistics.walk_bootstrap_success,
-                               'walk_reset': self._dispersy.statistics.walk_reset,
                                'walk_invalid_response_identifier': self._dispersy.statistics.walk_invalid_response_identifier,
                                'walk_advice_outgoing_request': self._dispersy.statistics.walk_advice_outgoing_request,
                                'walk_advice_incoming_response': self._dispersy.statistics.walk_advice_incoming_response,
