@@ -61,7 +61,7 @@ class ScenarioParser():
     Scenario line format:
         TIMESPEC CALLABLE [ARGS] [PEERSPEC]
 
-        TIMESPEC = [@+][H:]M:S[-[H:]M:S]
+        TIMESPEC = [@][H:]M:S[-[H:]M:S]
 
             Use @ to schedule events based on the synchronized experiment starting timestamp.
 
@@ -85,14 +85,6 @@ class ScenarioParser():
              - Have in mind that in case of having several lines with the same
                time stamp, they will be executed in order.
     """
-    _re_line = re_compile(
-        r"^"
-        r"@?"
-        r"\s*"
-        r"(?:(?P<beginH>\d+):)?(?P<beginM>\d+):(?P<beginS>\d+)"
-        r"\s+"
-        r"(?P<callable>\w+)(?P<args>\s+(.+))?"
-    )
     _re_substitution = re_compile("(\$\w+)")
 
     def __init__(self):
@@ -153,31 +145,29 @@ class ScenarioParser():
 
         The command tuple is described in _parse_scenario().
         """
-        peerspec = self._parse_peerspec(peerspec)
         if self._parse_for_this_peer(peerspec):
             line = self._preprocess_line(line)
-            match = self._re_line.match(line)
-            if match:
-                # remove all entries that are None (to get default per key)
-                dic = dict(ifilter(
-                    lambda key_value: key_value[1] is not None,
-                    match.groupdict().iteritems()
-                ))
+            try:
+                parts = line.split(' ', 2)
+                if len(parts) == 3:
+                    timespec, callable, args = parts
+                else:
+                    timespec, callable = parts
+                    args = ''
 
-                begin = int(dic.get("beginH", 0)) * 3600.0 + \
-                    int(dic.get("beginM", 0)) * 60.0 + \
-                    int(dic.get("beginS", 0))
+                if timespec[0] == '@':
+                    timespec = timespec[1:]
+                timespec = timespec.split(':')
+                begin = int(timespec[-1])
+                if len(timespec) > 1:
+                    begin += int(timespec[-2]) * 60
+                if len(timespec) > 2:
+                    begin += int(timespec[-3]) * 3600
 
-                return (
-                    begin,
-                    lineno,
-                    dic.get("callable", ""),
-                    tuple(shlex.split(dic.get("args", ""))),
-                    peerspec
-                )
+                return (begin, lineno, callable, shlex.split(args))
 
-            else:
-                print >> sys.stderr, "Ignoring invalid scenario line", lineno, line
+            except Exception, e:
+                print >> sys.stderr, "Ignoring invalid scenario line", lineno, line, str(e)
 
         # line not for this peer or a parse error occurred
         return None
@@ -195,20 +185,21 @@ class ScenarioParser():
         yes_peers = set()
         no_peers = set()
 
-        if peerspec.startswith("!"):
-            peers = no_peers
-        else:
-            peers = yes_peers
+        if peerspec:
+            if peerspec[0] == "!":
+                peers = no_peers
+            else:
+                peers = yes_peers
 
-        for peer in peerspec.split(","):
-            peer = peer.strip()
-            if peer:
-                # parse the peer number (or peer number pair)
-                if "-" in peer:
-                    low, high = peer.split("-")
-                    peers.update(xrange(int(low), int(high) + 1))
-                else:
-                    peers.add(int(peer))
+            for peer in peerspec.split(","):
+                peer = peer.strip()
+                if peer:
+                    # parse the peer number (or peer number pair)
+                    if "-" in peer:
+                        low, high = peer.split("-")
+                        peers.update(xrange(int(low), int(high) + 1))
+                    else:
+                        peers.add(int(peer))
 
         return yes_peers, no_peers
 
@@ -292,12 +283,14 @@ class ScenarioRunner(ScenarioParser):
             )
 
     def _parse_for_this_peer(self, peerspec):
-        yes_peers, no_peers = peerspec
-        return (
-            not (yes_peers or no_peers) or
-            (yes_peers and self._peernumber in yes_peers) or
-            (no_peers and not self._peernumber in no_peers)
-        )
+        if peerspec:
+            yes_peers, no_peers = self._parse_peerspec(peerspec)
+            return (
+                not (yes_peers or no_peers) or
+                (yes_peers and self._peernumber in yes_peers) or
+                (no_peers and not self._peernumber in no_peers)
+            )
+        return True
 
 #
 # scenario.py ends here
