@@ -252,7 +252,7 @@ class ScenarioRunner(ScenarioParser):
         self._callables[name] = clb
 
     def parse_file(self):
-        for (tstmp, _, clb, args, _) in self._parse_scenario(self.filename):
+        for (tstmp, _, clb, args) in self._parse_scenario(self.filename):
             if clb not in self._callables:
                 err(clb, "is not registered as an action!")
                 continue
