@@ -208,13 +208,14 @@ class SocialClient(DispersyExperimentScriptClient):
     def connect_to_friends(self):
         friendsaddresses = self.friends
         foafsaddresses = self.foafs
-        if self.peercache:
-            friendsaddresses = sample(friendsaddresses, int(len(friendsaddresses) * 0.36))
-            foafsaddresses = sample(foafsaddresses, int(len(foafsaddresses) * 0.36))
 
-        if self.nocache:
-            friendsaddresses = []
-            foafsaddresses = []
+        if self.peercache:
+            if self.nocache:
+                friendsaddresses = []
+                foafsaddresses = []
+            else:
+                friendsaddresses = sample(friendsaddresses, int(len(friendsaddresses) * 0.36))
+                foafsaddresses = sample(foafsaddresses, int(len(foafsaddresses) * 0.36))
 
         my_hashes = [keyhash for _, keyhash in self._community._friend_db.get_my_keys()]
         for ipport in friendsaddresses:
