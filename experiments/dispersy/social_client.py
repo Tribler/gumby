@@ -98,7 +98,7 @@ class SocialClient(DispersyExperimentScriptClient):
             self.peercache = True
 
     def set_cache(self, cache):
-        self.nocache = self.str2bool(cache)
+        self.nocache = not self.str2bool(cache)
 
     def initializeCrypto(self):
         from Tribler.community.privatesemantic.elgamalcrypto import ElgamalCrypto, NoElgamalCrypto
