@@ -36,7 +36,7 @@
 
 # Code:
 
-from os import environ, path, chdir, makedirs, symlink
+from os import environ, path, chdir, makedirs
 from sys import stdout, stderr
 import logging
 import logging.config

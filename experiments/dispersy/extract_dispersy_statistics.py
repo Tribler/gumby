@@ -299,9 +299,9 @@ class BasicExtractor(AbstractHandler):
                         json = loads(json)
 
                         if json.get('communities'):
-                            for community in json['communities']:
-                                if community['nr_candidates']:
-                                    communities.add(community['cid'])
+                            for cid, community in json['communities'].iteritems():
+                                if community.get('nr_candidates', 0):
+                                    communities.add(cid)
             except:
                 print_exc()
 
@@ -369,13 +369,13 @@ class BasicExtractor(AbstractHandler):
             print >> self.h_drop, timestamp, timeoffset, self.c_dropped_record
 
         if 'communities' in value:
-            for community in value['communities']:
-                self.c_communities[community['cid']][0] = community.get('nr_candidates', self.c_communities[community['cid']][0])
-                self.c_communities[community['cid']][1] = community.get('nr_stumbled_candidates', self.c_communities[community['cid']][1])
+            for cid, community in value['communities'].iteritems():
+                self.c_communities[cid][0] = community.get('nr_candidates', self.c_communities[cid][0])
+                self.c_communities[cid][1] = community.get('nr_stumbled_candidates', self.c_communities[cid][1])
 
-                self.c_blstats[community['cid']][0] = community.get('sync_bloom_reuse', self.c_blstats[community['cid']][0])
-                self.c_blstats[community['cid']][1] = community.get('sync_bloom_skip', self.c_blstats[community['cid']][1])
-                self.c_blstats[community['cid']][2] = community.get('sync_bloom_new', self.c_blstats[community['cid']][2])
+                self.c_blstats[cid][0] = community.get('sync_bloom_reuse', self.c_blstats[cid][0])
+                self.c_blstats[cid][1] = community.get('sync_bloom_skip', self.c_blstats[cid][1])
+                self.c_blstats[cid][2] = community.get('sync_bloom_new', self.c_blstats[cid][2])
 
             print >> self.h_total_connections, timestamp, timeoffset,
             for community in self.communities:
