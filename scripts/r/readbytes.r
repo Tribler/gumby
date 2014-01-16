@@ -11,18 +11,14 @@ df3 <- load_annotations()
 if(file.exists("rchars_reduced.txt")){
 	df <- read.table("rchars_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
-	df <- melt(df, id="time")
+	df <- mean_max_min(num_columns, df)
 	df$type <- 'Process'
 	
 	df2 <- read.table("rchars_node_reduced.txt", header = TRUE, check.names = FALSE)
-	df2 <- melt(df2, id="time")
+	df2 <- mean_max_min(num_columns, df2)
 	df2$type <- 'Node'
 	
 	df <- rbind(df, df2)
-	
-	if (num_columns > 1000){
-		df <- ddply(df, .(time, type), summarise, mean = mean(value), min=min(value), max=max(value))
-	}
 	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df3)
@@ -46,18 +42,14 @@ if(file.exists("rchars_reduced.txt")){
 if(file.exists("readbytes_reduced.txt")){
 	df <- read.table("readbytes_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
-	df <- melt(df, id="time")
+	df <- mean_max_min(num_columns, df)
 	df$type <- 'Process'
 	
 	df2 <- read.table("readbytes_node_reduced.txt", header = TRUE, check.names = FALSE)
-	df2 <- melt(df2, id="time")
+	df2 <- mean_max_min(num_columns, df2)
 	df2$type <- 'Node'
 	
 	df <- rbind(df, df2)
-	
-	if (num_columns > 1000){
-		df <- ddply(df, .(time, type), summarise, mean = mean(value), min=min(value), max=max(value))
-	}
 	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df3)

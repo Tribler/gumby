@@ -11,21 +11,17 @@ df3 <- load_annotations()
 if(file.exists("utimes_reduced.txt")){
 	df <- read.table("utimes_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
-	df <- melt(df, id="time")
+	df <- mean_max_min(num_columns, df)
 	df$type <- 'Process'
 
 	df2 <- read.table("utimes_node_reduced.txt", header = TRUE, check.names = FALSE)
-	df2 <- melt(df2, id="time")
+	df2 <- mean_max_min(num_columns, df2)
 	df2$type <- 'Node'
 
 	df <- rbind(df, df2)
-	
-	if (num_columns > 1000){
-		df <- ddply(df, .(time, type), summarise, mean = mean(value), min=min(value), max=max(value))
-	}
-	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df3)
+	
 	if (num_columns <= 1000){
 		p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 	} else {
@@ -46,18 +42,14 @@ if(file.exists("utimes_reduced.txt")){
 if(file.exists("stimes_reduced.txt")){
 	df <- read.table("stimes_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
-	df <- melt(df, id="time")
+	df <- mean_max_min(num_columns, df)
 	df$type <- 'Process'
 
 	df2 <- read.table("stimes_node_reduced.txt", header = TRUE, check.names = FALSE)
-	df2 <- melt(df2, id="time")
+	df2 <- mean_max_min(num_columns, df2)
 	df2$type <- 'Node'
 
 	df <- rbind(df, df2)
-	
-	if (num_columns > 1000){
-		df <- ddply(df, .(time, type), summarise, mean = mean(value), min=min(value), max=max(value))
-	}
 
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df3)
@@ -81,18 +73,14 @@ if(file.exists("stimes_reduced.txt")){
 if(file.exists("rsizes_reduced.txt")){
 	df <- read.table("rsizes_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
-	df <- melt(df, id="time")
+	df <- mean_max_min(num_columns, df)
 	df$type <- 'Process'
 
 	df2 <- read.table("rsizes_node_reduced.txt", header = TRUE, check.names = FALSE)
-	df2 <- melt(df2, id="time")
+	df2 <- mean_max_min(num_columns, df2)
 	df2$type <- 'Node'
 
 	df <- rbind(df, df2)
-	
-	if (num_columns > 1000){
-		df <- ddply(df, .(time, type), summarise, mean = mean(value), min=min(value), max=max(value))
-	}
 
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df3)

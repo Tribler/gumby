@@ -11,11 +11,7 @@ i = 1
 while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep = ''))){
 	df <- read.table(paste("total_connections_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
-	df <- melt(df, id="time")
-	
-	if (num_columns > 1000){
-		df <- ddply(df, .(time), summarise, mean = mean(value), min=min(value), max=max(value))
-	}
+	df <- mean_max_min(num_columns, df)
 	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df2)

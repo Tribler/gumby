@@ -26,3 +26,16 @@ add_annotations <- function(p, df2){
 		return(p)
 	}
 }
+
+mean_max_min <- function(num_columns, df){
+	if (num_columns > 1000){
+		tdf <- df[,c('time')]
+		subdf <- df[,3:ncol(df)]
+		tdf$mean= apply(subdf,1,mean)
+		tdf$max = apply(subdf,1,max)
+		tdf$min = apply(subdf,1,min)
+		return(tdf)
+	} else {
+		return(melt(df, id="time"))
+	}
+}

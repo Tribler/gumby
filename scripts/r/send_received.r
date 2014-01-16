@@ -42,12 +42,8 @@ if(file.exists("received_diff_reduced.txt")){
 if(file.exists("send_reduced.txt")){
 	df <- read.table("send_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
-	df <- melt(df, id="time")
+	df <- mean_max_min(num_columns, df)
 	df$value = df$value/1024.0
-	
-	if (num_columns > 1000){
-		df <- ddply(df, .(time), summarise, mean = mean(value), min=min(value), max=max(value))
-	}
 	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df2)
@@ -67,12 +63,8 @@ if(file.exists("send_reduced.txt")){
 if(file.exists("received_reduced.txt")){
 	df <- read.table("received_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
-	df <- melt(df, id="time")
+	df <- mean_max_min(num_columns, df)
 	df$value = df$value/1024.0
-	
-	if (num_columns > 1000){
-		df <- ddply(df, .(time), summarise, mean = mean(value), min=min(value), max=max(value))
-	}
 	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df2)
