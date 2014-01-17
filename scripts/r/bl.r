@@ -20,6 +20,7 @@ while(file.exists(paste("bl_skip_", toString(i), "_reduced.txt", sep = ''))){
 	} else {
 		p <- p + geom_step(aes(time, mean), colour = '2')
 		p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3, linetype=NA))
 	}
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bloomfilter skips\n")
@@ -44,6 +45,7 @@ while(file.exists(paste("bl_reuse_", toString(i), "_reduced.txt", sep = ''))){
 	} else {
 		p <- p + geom_step(aes(time, mean), colour = '2')
 		p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3, linetype=NA))
 	}
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bloomfilter reuse\n")
@@ -68,6 +70,7 @@ while(file.exists(paste("bl_time_", toString(i), "_reduced.txt", sep = ''))){
 	} else {
 		p <- p + geom_step(aes(time, mean), colour = '2')
 		p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3, linetype=NA))
 	}
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bloomfilter CPU wall time spend\n")

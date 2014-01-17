@@ -27,6 +27,7 @@ if(file.exists("rchars_reduced.txt")){
 	} else {
 		p <- p + geom_line(aes(time, mean), colour = '2')
 		p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3, linetype=NA))
 	}
 	p <- p + facet_grid(type ~ ., scales = "free_y")
 	p <- p + theme(legend.position = "none")
@@ -58,6 +59,7 @@ if(file.exists("readbytes_reduced.txt")){
 	} else {
 		p <- p + geom_line(aes(time, mean), colour = '2')
 		p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3, linetype=NA))
 	}
 	p <- p + facet_grid(type ~ ., scales = "free_y")
 	p <- p + theme(legend.position = "none")
