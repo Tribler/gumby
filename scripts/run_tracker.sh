@@ -78,6 +78,7 @@ while [ $EXPECTED_SUBSCRIBERS -gt 0 ]; do
     let EXPECTED_SUBSCRIBERS=$EXPECTED_SUBSCRIBERS-1000
 done
 
+sleep 5
 wait
 
 #
