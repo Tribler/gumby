@@ -25,11 +25,18 @@ if(file.exists("dropped_diff_reduced.txt")){
 
 if(file.exists("dropped_reduced.txt")){
 	df <- read.table("dropped_reduced.txt", header = TRUE)
-	df <- melt(df, id="time")
+	num_columns <- ncol(df) - 1
+	df <- mean_max_min(num_columns, df)
 	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df2)
-	p <- p + geom_step(alpha = 0.8, aes(time, value, group=variable, colour=variable))
+	if (num_columns <= 1000){
+		p <- p + geom_step(alpha = 0.8, aes(time, value, group=variable, colour=variable))
+	} else {
+		p <- p + geom_step(aes(time, mean), colour = '2')
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3, linetype=NA))
+	}
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages dropped\n")
 	p <- p + xlim(minX, maxX)
