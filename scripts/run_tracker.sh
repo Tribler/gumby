@@ -71,7 +71,7 @@ fi
 
 rm -f bootstraptribler.txt
 
-while [ $EXPECTED_SUBSCRIBERS -gt 0 ]; do
+while [ $EXPECTED_SUBSCRIBERS -ge 0 ]; do
     echo $HEAD_HOST $TRACKER_PORT >> bootstraptribler.txt
     python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT --crypto $TRACKER_CRYPTO 2>&1 > "$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" &
     let TRACKER_PORT=$TRACKER_PORT+1
