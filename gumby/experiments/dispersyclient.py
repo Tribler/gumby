@@ -497,7 +497,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
             prev_endpoint_send = self.print_on_change("statistics-endpoint-send", prev_endpoint_send, self._dispersy.statistics.endpoint_send)
             prev_bootstrap_candidates = self.print_on_change("statistics-bootstrap-candidates", prev_bootstrap_candidates, self._dispersy.statistics.bootstrap_candidates)
 
-            yield 1.0
+            yield 5.0
 
 
 def main(client_class):
