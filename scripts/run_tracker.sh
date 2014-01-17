@@ -41,7 +41,7 @@
 # @CONF_OPTION TRACKER_CRYPTO: Set the type of crypto to be used by the tracker. (default is ECCrypto)
 
 if [ -z "$TRACKER_PORT" ]; then
-    echo "ERROR: you need to specify at least DAS4_NODE_AMOUNT when using $0" >&2
+    echo "ERROR: you need to specify the TRACKER_PORT when using $0" >&2
     exit 1
 fi
 if [ -z "$TRACKER_CRYPTO" ]; then
