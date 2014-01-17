@@ -63,8 +63,23 @@ if [ -z "$HEAD_HOST" ]; then
     HEAD_HOST=$(hostname)
 fi
 
-echo $HEAD_HOST $TRACKER_PORT > bootstraptribler.txt
-python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT --crypto $TRACKER_CRYPTO 2>&1 > "$OUTPUT_DIR/tracker_out.log"
+1000
+if [ ! -z "$SYNC_SUBSCRIBERS_AMOUNT" ]; then
+    EXPECTED_SUBSCRIBERS=$SYNC_SUBSCRIBERS_AMOUNT
+else
+    EXPECTED_SUBSCRIBERS=$DAS4_INSTANCES_TO_RUN
+fi
+
+rm -f bootstraptribler.txt
+
+while [ $EXPECTED_SUBSCRIBERS -ge 0 ]; do
+    echo $HEAD_HOST $TRACKER_PORT >> bootstraptribler.txt
+    python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT --crypto $TRACKER_CRYPTO 2>&1 > "$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" &
+    let TRACKER_PORT=$TRACKER_PORT+1
+    let EXPECTED_SUBSCRIBERS=$EXPECTED_SUBSCRIBERS-1000
+done
+
+wait
 
 #
 # run_tracker.sh ends here
