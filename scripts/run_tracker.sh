@@ -63,7 +63,6 @@ if [ -z "$HEAD_HOST" ]; then
     HEAD_HOST=$(hostname)
 fi
 
-1000
 if [ ! -z "$SYNC_SUBSCRIBERS_AMOUNT" ]; then
     EXPECTED_SUBSCRIBERS=$SYNC_SUBSCRIBERS_AMOUNT
 else
