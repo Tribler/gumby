@@ -10,8 +10,12 @@ df2 <- load_annotations()
 if(file.exists("send_diff_reduced.txt")){
 	df <- read.table("send_diff_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
+	
+	subdf <- df[,3:ncol(df)]
+	subdf[] <- lapply(subdf, function(x) x/1024.0)
+	df <- cbind(df['time'], subdf)
+	
 	df <- mean_max_min(num_columns, df)
-	df$value = df$value/1024.0
 	
 	if (num_columns <= 1000){
 		df <- subset(df, df$value > 0)
@@ -36,8 +40,12 @@ if(file.exists("send_diff_reduced.txt")){
 if(file.exists("received_diff_reduced.txt")){
 	df <- read.table("received_diff_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
+	
+	subdf <- df[,3:ncol(df)]
+	subdf[] <- lapply(subdf, function(x) x/1024.0)
+	df <- cbind(df['time'], subdf)
+	
 	df <- mean_max_min(num_columns, df)
-	df$value = df$value/1024.0
 	
 	if (num_columns <= 1000){
 		df <- subset(df, df$value > 0)
