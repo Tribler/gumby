@@ -4,7 +4,7 @@ import os
 from math import ceil
 from collections import defaultdict
 
-def reduce(base_directory, nrlines, inputfile, outputfile):
+def reduce(base_directory, nrlines, inputfile, outputfile, removeinputfile = True):
     inputfile = os.path.join(base_directory, inputfile)
     outputfile = os.path.join(base_directory, outputfile)
 
@@ -49,6 +49,9 @@ def reduce(base_directory, nrlines, inputfile, outputfile):
 
         ifp.close()
         ofp.close()
+        
+        if removeinputfile:
+            os.remove(ifp)
 
 def main(input_directory, nrlines):
     for filename in ['send', 'send_diff', 'received', 'received_diff', 'dropped', 'dropped_diff', 'bl_skip', 'bl_skip_diff', 'bl_reuse', 'bl_reuse_skip', 'utimes', 'stimes', 'wchars', 'rchars', 'writebytes', 'readbytes', 'vsizes', 'rsizes', 'utimes_node', 'stimes_node', 'wchars_node', 'rchars_node', 'writebytes_node', 'readbytes_node', 'vsizes_node', 'rsizes_node', 'sum_total_records', 'sum_statistics']:
