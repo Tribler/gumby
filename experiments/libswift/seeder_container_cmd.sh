@@ -49,7 +49,7 @@ tc filter add dev eth0 parent ffff: protocol ip prio 50 \
 tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
 
 # add netem stuff
-tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit 100k burst $BURST_UL
+tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit $BURST_UL burst $BURST_UL
    
 # !--------------------
 
@@ -63,7 +63,7 @@ tc qdisc show
 # @CONF_OPTION IPERF_TEST: Set to true to use iperf test, otherwise swift seeder is started.
 if $IPERF_TEST;
 then
-	iperf -s &	
+	iperf -s -w 64k -u -b 200M &	
 else
 	# leech file
 	SWIFT_CMD="$REPOSITORY_DIR/swift -l 0.0.0.0:$SEEDER_PORT -f $LOGS_DIR/$FILENAME -p -H -D $LOGS_DIR/src/seeder -L $LOGS_DIR/src/seeder_ledbat" 
