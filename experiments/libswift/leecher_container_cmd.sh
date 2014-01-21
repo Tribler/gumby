@@ -69,7 +69,7 @@ else
 	if [ "$TIME" -ne 0 ]; then
 		SWIFT_CMD="$SWIFT_CMD -w $TIME"
 	fi
-	if [ "$DEBUG_SWIFT" ]; then
+	if $DEBUG_SWIFT; then
 		SWIFT_CMD="$SWIFT_CMD -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID"
 	fi
 	su $USERNAME -c "mkdir -p $LOGS_DIR/dst/$LEECHER_ID"

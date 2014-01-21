@@ -68,7 +68,7 @@ then
 else
 	# leech file
 	SWIFT_CMD="$REPOSITORY_DIR/swift -l 0.0.0.0:$SEEDER_PORT -f $LOGS_DIR/$FILENAME -p -H "
-	if [ "$DEBUG_SWIFT" ]; then
+	if $DEBUG_SWIFT; then
 		SWIFT_CMD="$SWIFT_CMD -D $LOGS_DIR/src/seeder -L $LOGS_DIR/src/seeder_ledbat"
 	fi
 
