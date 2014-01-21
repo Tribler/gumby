@@ -10,16 +10,21 @@ df2 <- load_annotations()
 if(file.exists("send_reduced.txt")){
 	df <- read.table("send_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
+	
+	subdf <- df[,3:ncol(df)]
+	subdf[] <- lapply(subdf, function(x) x/1024.0)
+	df <- cbind(df['time'], subdf)
+	
 	df <- mean_max_min(num_columns, df)
-	df$value = df$value/1024.0
 	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df2)
 	if (num_columns <= 1000){
 		p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 	} else {
-		p <- p + geom_step(aes(time, mean), colour = '2')
+		p <- p + geom_line(aes(time, mean), colour = '2')
 		p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3, linetype=NA))
 	}
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KiBytes total upload)\n")
@@ -31,16 +36,21 @@ if(file.exists("send_reduced.txt")){
 if(file.exists("received_reduced.txt")){
 	df <- read.table("received_reduced.txt", header = TRUE, check.names = FALSE)
 	num_columns <- ncol(df) - 1
+	
+	subdf <- df[,3:ncol(df)]
+	subdf[] <- lapply(subdf, function(x) x/1024.0)
+	df <- cbind(df['time'], subdf)
+	
 	df <- mean_max_min(num_columns, df)
-	df$value = df$value/1024.0
 	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df2)
 	if (num_columns <= 1000){
 		p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 	} else {
-		p <- p + geom_step(aes(time, mean), colour = '2')
+		p <- p + geom_line(aes(time, mean), colour = '2')
 		p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+		p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3, linetype=NA))
 	}
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KiBytes total download)\n")
