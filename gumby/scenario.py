@@ -188,6 +188,7 @@ class ScenarioParser():
         if peerspec:
             if peerspec[0] == "!":
                 peers = no_peers
+                peerspec = peerspec[1:]
             else:
                 peers = yes_peers
 
