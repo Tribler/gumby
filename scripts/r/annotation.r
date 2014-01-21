@@ -1,8 +1,9 @@
 load_annotations <- function(){
 	if(file.exists("annotations.txt")){
-		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE)
+		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 		show_mean <- length(colnames(df2)) != 3
 		df2 <- melt(df2)
+		df2 <- na.omit(df2)
 		df2 <- ddply(df2, .(annotation), summarise, meanx = mean(value), minx = min(value), maxx = max(value))
 		df2$linesize <- max((df2$maxx - df2$minx) / 2, 1)
 		df2$linepos <- df2$minx + df2$linesize

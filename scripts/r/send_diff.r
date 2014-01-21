@@ -31,7 +31,7 @@ if(file.exists("send_diff_reduced.txt")){
 		p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3, linetype=NA))
 	}
 	p <- p + theme(legend.position = "none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KiBytes/s upload)\n")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "DIFF in Bandwidth usage for peer (KiBytes/s upload)\n")
 	p <- p + xlim(minX, maxX)
 	p
 	ggsave(file="send_diff.png", width=8, height=6, dpi=100)
@@ -61,7 +61,7 @@ if(file.exists("received_diff_reduced.txt")){
 		p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3, linetype=NA))
 	}
 	p <- p + theme(legend.position = "none")
-	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage for peer (KiBytes/s download)\n")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "DIFF in Bandwidth usage for peer (KiBytes/s download)\n")
 	p <- p + xlim(minX, maxX)
 	p
 	ggsave(file="received_diff.png", width=8, height=6, dpi=100)
