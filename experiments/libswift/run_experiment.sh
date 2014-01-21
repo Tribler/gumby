@@ -146,6 +146,7 @@ fi
 # @CONF_OPTION DEBUG_SWIFT: Store libswift debug output (optional).
 if [ -z "$DEBUG_SWIFT" ]; then
 	DEBUG_SWIFT=false
+fi
 
 # get full path, easier for use in container
 WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR)

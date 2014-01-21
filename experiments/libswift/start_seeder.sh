@@ -7,6 +7,7 @@ FILENAME=file_seed.tmp
 # @CONF_OPTION DEBUG_SWIFT: Store libswift debug output (optional).
 if [ -z "$DEBUG_SWIFT" ]; then
 	DEBUG_SWIFT=false
+fi
 
 # note: use 0.0.0.0:2000 for listening as using only the port will result in ipv6 communication
 # between the leechers (i.e., they can't connect to each other)
