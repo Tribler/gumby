@@ -143,6 +143,7 @@ else
 	HETEROGENEOUS_TIME=false
 fi
 
+# @CONF_OPTION DEBUG_SWIFT: Store libswift debug output (optional).
 if [ -z "$DEBUG_SWIFT" ]; then
 	DEBUG_SWIFT=false
 

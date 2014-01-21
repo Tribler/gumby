@@ -4,6 +4,7 @@
 WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR)
 FILENAME=file_seed.tmp
 
+# @CONF_OPTION DEBUG_SWIFT: Store libswift debug output (optional).
 if [ -z "$DEBUG_SWIFT" ]; then
 	DEBUG_SWIFT=false
 
