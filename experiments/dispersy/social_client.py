@@ -137,11 +137,13 @@ class SocialClient(DispersyExperimentScriptClient):
 
         if self.reconnect_to_friends:
             self._community.connect_to_peercache(sys.maxint)
+
+            # we're going to allow this peer to connect to its friends for 5.0 seconds, then empty the buffer
+            yield 5.0
         else:
             # if not reconnect_to_friends, connect_to_friend hasn't been called, hence
             # we disable simi requests
             self._community.create_msimilarity_request = lambda destination: False
-
         self.empty_buffer()
 
     @call_on_dispersy_thread

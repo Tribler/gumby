@@ -73,10 +73,7 @@ def call_on_dispersy_thread(func):
 def buffer_online(func):
     def helper(*args, **kargs):
         def buffer_call():
-            if not args[0].is_online():
-                args[0].buffer_call(func, args, kargs)
-            else:
-                func(*args, **kargs)
+            args[0].buffer_call(func, args, kargs)
 
         register_or_call(args[0]._dispersy.callback, buffer_call)
 
@@ -321,7 +318,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.print_on_change('community-churn', {}, {'args':args})
 
     def buffer_call(self, func, args, kargs):
-        self._online_buffer.append((func, args, kargs))
+        if len(self._online_buffer) == 0 and self.is_online():
+            func(*args, **kargs)
+        else:
+            self._online_buffer.append((func, args, kargs))
 
     def empty_buffer(self):
         assert self.is_online()
