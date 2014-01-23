@@ -40,7 +40,10 @@ It is useful to add the following commands to the /etc/sudoers file using sudo v
                     /bin/mount --bind /home /tmp/debian-libswift/home, \
                     /bin/umount /tmp/container -l, \
                     /bin/umount /tmp/debian-libswift -l, \
-                    /bin/mount -t aufs -o br\=/tmp/container\:/ none /tmp/debian-libswift
+                    /bin/mount -t aufs -o br\=/tmp/container\:/ none /tmp/debian-libswift, \
+                    /sbin/brctl *, \
+                    /sbin/iptables *, \
+                    /sbin/ifconfig
 ```
 
 Especially for user jenkins as this prevents sudo from asking for a password during execution of the experiment.
