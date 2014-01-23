@@ -1,15 +1,15 @@
 #!/bin/bash
-# post_process_dispersy_experiment.sh ---
+# graph_data.sh ---
 #
-# Filename: post_process_dispersy_experiment.sh
+# Filename: graph_data.sh
 # Description:
-# Author: Elric Milon
+# Author: Elric Milon & Riccardo Petrocco
 # Maintainer:
 # Created: Wed Oct  9 13:48:19 2013 (+0200)
 
 # Commentary:
 #
-# This script will extract the data from the experiment run and create the graphs from then.
+# Generic script that runs the graph creation
 #
 #
 
