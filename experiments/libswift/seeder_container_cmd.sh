@@ -3,10 +3,10 @@
 # %*% start_seeder.sh must be started first.
 
 
-EXPECTED_ARGS=14
+EXPECTED_ARGS=16
 if [ $# -ne $EXPECTED_ARGS ]
 then
-	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_port logs_dir username netem_rate netem_rate_ul iperf_test"
+	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_port logs_dir username netem_rate netem_rate_ul iperf_test debug_swift debug_ledbat"
 	exit 65
 fi
 
@@ -25,11 +25,13 @@ USERNAME="${11}"
 NETEM_RATE_DL="${12}"
 NETEM_RATE_UL="${13}"
 IPERF_TEST="${14}"
+DEBUG_SWIFT="${15}"
+DEBUG_LEDBAT="${16}"
 
 # fix formatting for random variation
-# @CONF_OPTION SEEDER_DELAY: Netem delay for the seeder. 
+# @CONF_OPTION SEEDER_DELAY: Netem delay for the seeder.
 NETEM_DELAY=${NETEM_DELAY/'_'/' '}
-# @CONF_OPTION SEEDER_RATE: Download rate limit for the seeder. Configure the rate as rate_burst, so e.g. seeder_rate="1mbit_100k" 
+# @CONF_OPTION SEEDER_RATE: Download rate limit for the seeder. Configure the rate as rate_burst, so e.g. seeder_rate="1mbit_100k"
 IFS='_' read -ra RATE_DL <<< "$NETEM_RATE_DL"
 RATE_DL=${RATE_DL[0]}
 BURST_DL=${RATE_DL[1]}
@@ -50,7 +52,7 @@ tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET
 
 # add netem stuff
 tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit $BURST_UL burst $BURST_UL
-   
+
 # !--------------------
 
 tc qdisc show
@@ -63,10 +65,18 @@ tc qdisc show
 # @CONF_OPTION IPERF_TEST: Set to true to use iperf test, otherwise swift seeder is started.
 if $IPERF_TEST;
 then
-	iperf -s -w 64k -u -b 200M &	
+	iperf -s -w 64k -u -b 200M &
 else
 	# leech file
-	SWIFT_CMD="$REPOSITORY_DIR/swift -l 0.0.0.0:$SEEDER_PORT -f $LOGS_DIR/$FILENAME -p -H -D $LOGS_DIR/src/seeder -L $LOGS_DIR/src/seeder_ledbat" 
+	SWIFT_CMD="$REPOSITORY_DIR/swift -l 0.0.0.0:$SEEDER_PORT -f $LOGS_DIR/$FILENAME -p -H "
+	if $DEBUG_SWIFT; then
+		SWIFT_CMD="$SWIFT_CMD -D $LOGS_DIR/src/seeder "
+	fi
+	if $DEBUG_LEDBAT; then
+		SWIFT_CMD="$SWIFT_CMD -L $LOGS_DIR/src/ledbat_seeder "
+	fi
+
+
 	su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/src -m $LOGS_DIR/src &" #|| :
 fi
 
