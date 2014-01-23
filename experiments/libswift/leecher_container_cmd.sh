@@ -3,10 +3,10 @@
 # %*% start_seeder.sh must be started first.
 
 
-EXPECTED_ARGS=18
+EXPECTED_ARGS=19
 if [ $# -ne $EXPECTED_ARGS ]
 then
-	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_ip seeder_port logs_dir leecher_id username rate_dl rate_ul iperf_test time debug_swift"
+	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_ip seeder_port logs_dir leecher_id username rate_dl rate_ul iperf_test time debug_swift debug_ledbat"
 	exit 65
 fi
 
@@ -29,6 +29,7 @@ NETEM_RATE_UL="${15}"
 IPERF_TEST="${16}"
 TIME="${17}"
 DEBUG_SWIFT="${18}"
+DEBUG_LEDBAT="${19}"
 
 # fix formatting for random variation
 NETEM_DELAY=${NETEM_DELAY/'_'/' '}
@@ -70,7 +71,10 @@ else
 		SWIFT_CMD="$SWIFT_CMD -w $TIME"
 	fi
 	if $DEBUG_SWIFT; then
-		SWIFT_CMD="$SWIFT_CMD -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID"
+		SWIFT_CMD="$SWIFT_CMD -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID "
+	fi
+	if $DEBUG_LEDBAT; then
+		SWIFT_CMD="$SWIFT_CMD -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID "
 	fi
 	su $USERNAME -c "mkdir -p $LOGS_DIR/dst/$LEECHER_ID"
 	su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/dst/$LEECHER_ID -m $LOGS_DIR/dst/$LEECHER_ID &"
