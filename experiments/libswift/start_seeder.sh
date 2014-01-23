@@ -4,9 +4,14 @@
 WORKSPACE_DIR=$(readlink -f $WORKSPACE_DIR)
 FILENAME=file_seed.tmp
 
-# @CONF_OPTION DEBUG_SWIFT: Store libswift debug output (optional).
+# @CONF_OPTION DEBUG_SWIFT: Store libswift debug output (optional, default = false).
 if [ -z "$DEBUG_SWIFT" ]; then
 	DEBUG_SWIFT=false
+fi
+
+# @CONF_OPTION DEBUG_LEDBAT: Store ledbat debug output (optional, default = false).
+if [ -z "$DEBUG_LEDBAT" ]; then
+	DEBUG_LEDBAT=false
 fi
 
 # note: use 0.0.0.0:2000 for listening as using only the port will result in ipv6 communication
@@ -25,7 +30,7 @@ sudo /usr/bin/lxc-execute -n seeder \
 	-s lxc.network.ipv4=$SEEDER_IP/24 \
 	-s lxc.rootfs=$CONTAINER_DIR \
 	-s lxc.pts=1024 \
-	-- $WORKSPACE_DIR/$SEEDER_CMD $WORKSPACE_DIR/swift $OUTPUT_DIR $FILENAME $SEEDER_DELAY $SEEDER_PACKET_LOSS $WORKSPACE_DIR/gumby/scripts/process_guard.py $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT $OUTPUT_DIR $USER $SEEDER_RATE $SEEDER_RATE_UL $IPERF_TEST $DEBUG_SWIFT &
+	-- $WORKSPACE_DIR/$SEEDER_CMD $WORKSPACE_DIR/swift $OUTPUT_DIR $FILENAME $SEEDER_DELAY $SEEDER_PACKET_LOSS $WORKSPACE_DIR/gumby/scripts/process_guard.py $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT $OUTPUT_DIR $USER $SEEDER_RATE $SEEDER_RATE_UL $IPERF_TEST $DEBUG_SWIFT $DEBUG_LEDBAT &
 
 
 	#$SEEDER_CMD $REPOSITORY_DIR /$SRC_STORE $FILENAME $PROCESS_GUARD_CMD $DATE $EXPERIMENT_TIME $BRIDGE_IP $SEEDER_PORT &
