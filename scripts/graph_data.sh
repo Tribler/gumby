@@ -39,48 +39,27 @@
 
 set -e
 
-# Step 1: Look for non-empty stderr files and print its contents
+# TODO(emilon): Maybe move this to the general setup script
+#make sure the R local install dir exists
+mkdir -p $R_LIBS_USER
+R --no-save --quiet < $R_SCRIPTS_PATH/install.r
 
-echo "Looking for execution errors..."
-for FILE in $(find -type f ! -empty -name "*.err"); do
-    echo "Found in: $FILE"
-    cat "$FILE"
+for R_SCRIPT in ""$R_SCRIPTS_TO_RUN $EXTRA_R_SCRIPTS_TO_RUN; do
+    if [ -e $EXPERIMENT_DIR/r/$R_SCRIPT ]; then
+        R_SCRIPT_PATH=$EXPERIMENT_DIR/r/$R_SCRIPT
+    else
+        if [ -e $R_SCRIPTS_PATH/$R_SCRIPT ]; then
+            R_SCRIPT_PATH=$R_SCRIPTS_PATH/$R_SCRIPT
+        else
+            echo "ERROR: $R_SCRIPT not found!"
+            FAILED=yes
+        fi
+    fi
+    R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPT_PATH  2>&1 > /dev/null | tee ${R_SCRIPT}.log &
 done
-echo "Done"
 
-# @CONF_OPTION DISPERSY_STATISTICS_EXTRACTION_CMD: Override the default statistics extraction script.
-if [ -z "$DISPERSY_STATISTICS_EXTRACTION_CMD" ]; then
-    DISPERSY_STATISTICS_EXTRACTION_CMD=extract_dispersy_statistics.py
-fi
+wait
 
-cd $OUTPUT_DIR
-#Step 2: Extract the data needed for the graphs from the experiment log file.
-
-TEMPFILE=$(mktemp)
-$DISPERSY_STATISTICS_EXTRACTION_CMD . $MESSAGES_TO_PLOT > $TEMPFILE
-#Get the XMIN XMAX XSTART vars from the extracted data
-source $TEMPFILE
-rm $TEMPFILE
-
-#Step 3: Extract the resource usage data from the process_guard logs.
-extract_process_guard_stats.py . . $XSTART
-
-#Step 4: Reduce the data
-reduce_dispersy_statistics.py . 300
-
-#Step 5: Graph the stuff
-export R_SCRIPTS_TO_RUN="\
-drop.r
-total_records.r
-connections.r
-send_received.r
-cputimes.r
-statistics.r
-writebytes.r
-readbytes.r
-"
-
-graph_data.sh
-
+exit $FAILED
 #
 # post_process_dispersy_experiment.sh ends here
