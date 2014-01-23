@@ -69,13 +69,7 @@ extract_process_guard_stats.py . . $XSTART
 reduce_dispersy_statistics.py . 300
 
 #Step 5: Graph the stuff
-# TODO(emilon): Maybe move this to the general setup script
-#make sure the R local install dir exists
-mkdir -p $R_LIBS_USER
-R --no-save --quiet < $R_SCRIPTS_PATH/install.r
-
-
-R_SCRIPTS_TO_RUN="\
+export R_SCRIPTS_TO_RUN="\
 drop.r
 total_records.r
 connections.r
@@ -86,23 +80,7 @@ writebytes.r
 readbytes.r
 "
 
-# @CONF_OPTION EXTRA_R_SCRIPTS_TO_RUN: adds thoes scripts on the post processing step, they can either be on the usual scripts/r dir or on $EXPERIMENT_DIR/r/
-for R_SCRIPT in $R_SCRIPTS_TO_RUN $EXTRA_R_SCRIPTS_TO_RUN; do
-    if [ -e $EXPERIMENT_DIR/r/$R_SCRIPT ]; then
-        R_SCRIPT_PATH=$EXPERIMENT_DIR/r/$R_SCRIPT
-    else
-        if [ -e $R_SCRIPTS_PATH/$R_SCRIPT ]; then
-            R_SCRIPT_PATH=$R_SCRIPTS_PATH/$R_SCRIPT
-        else
-            echo "ERROR: $R_SCRIPT not found!"
-            FAILED=yes
-        fi
-    fi
-    R --no-save --quiet --args $XMIN $XMAX < $R_SCRIPT_PATH  2>&1 > /dev/null | tee ${R_SCRIPT}.log &
-done
+graph_data.sh
 
-wait
-
-exit $FAILED
 #
 # post_process_dispersy_experiment.sh ends here
