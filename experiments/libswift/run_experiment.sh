@@ -120,7 +120,7 @@ else
 	HETEROGENEOUS_OFFSET=false
 fi
 
-# @CONF_OPTION LEECHER_TIME: Time a leecher will remain running (optional),
+# @CONF_OPTION LEECHER_TIME: Time a leecher will remain running (optional, default = exit on complete download),
 # @CONF_OPTION LEECHER_TIME: set 1 value, for a heterogeneous network separate values by ,
 # @CONF_OPTION LEECHER_TIME: e.g. leecher_time="100s,200s" (note that the number of elements should then match the number of leechers)
 if [ ! -z "$LEECHER_TIME" ]; then
@@ -143,9 +143,14 @@ else
 	HETEROGENEOUS_TIME=false
 fi
 
-# @CONF_OPTION DEBUG_SWIFT: Store libswift debug output (optional).
+# @CONF_OPTION DEBUG_SWIFT: Store libswift debug output (optional, default = false).
 if [ -z "$DEBUG_SWIFT" ]; then
 	DEBUG_SWIFT=false
+fi
+
+# @CONF_OPTION DEBUG_LEDBAT: Store ledbat debug output (optional, default = false).
+if [ -z "$DEBUG_LEDBAT" ]; then
+	DEBUG_LEDBAT=false
 fi
 
 # get full path, easier for use in container
