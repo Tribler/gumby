@@ -24,7 +24,8 @@ function cleanup {
 		sudo /bin/umount /tmp/container	-l
 	fi
 	rmdir $CONTAINER_DIR
-	sudo brctl delbr $BRIDGE_NAME
+	sudo /sbin/ifconfig $BRIDGE_NAME down
+	sudo /sbin/brctl delbr $BRIDGE_NAME
 }
 trap cleanup EXIT
 trap cleanup TERM
