@@ -199,7 +199,7 @@ class SocialClient(DispersyExperimentScriptClient):
                 self.foafhashes[ipport] = [self.friendhashes[peer_id] for peer_id in his_friends if peer_id in self.friendhashes]
                 self.not_connected_foafs.add(ipport)
 
-                if self.my_id == 1:
+                if self.my_id == '1':
                     print >> sys.stderr, self.my_id, his_friends, self.foafhashes[ipport]
 
                 self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
@@ -230,7 +230,7 @@ class SocialClient(DispersyExperimentScriptClient):
             self._community._peercache.add_peer(my_hashes, *ipport)
 
         for ipport in foafsaddresses:
-            if self.my_id == 1:
+            if self.my_id == '1':
                 print >> sys.stderr, ipport, self.foafhashes[ipport]
             self._community._peercache.add_peer(self.foafhashes[ipport], *ipport)
 
