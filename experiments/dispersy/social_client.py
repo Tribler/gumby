@@ -69,6 +69,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self._mypref_db = None
 
         self.friendhashes = {}
+        self.friendiphashes = {}
         self.foafhashes = {}
 
         self.set_community_kwarg('integrate_with_tribler', False)
@@ -178,6 +179,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
                 self.friends.add(ipport)
                 self.friendhashes[peer_id] = keyhash
+                self.friendiphashes[ipport] = keyhash
                 self.not_connected_friends.add(ipport)
 
                 self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
@@ -224,7 +226,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
         my_hashes = [keyhash for _, keyhash in self._community._friend_db.get_my_keys()]
         for ipport in friendsaddresses:
-            self._community._peercache.add_peer(my_hashes, *ipport)
+            self._community._peercache.add_peer(my_hashes + [self.friendiphashes[ipport], ], *ipport)
 
         for ipport in foafsaddresses:
             self._community._peercache.add_peer(self.foafhashes[ipport], *ipport)
