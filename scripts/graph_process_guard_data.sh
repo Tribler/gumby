@@ -52,6 +52,7 @@ reduce_dispersy_statistics.py . 300
 mkdir -p $R_LIBS_USER
 R --no-save --quiet < $R_SCRIPTS_PATH/install.r
 R --no-save --quiet < $R_SCRIPTS_PATH/cputimes.r 2>&1 > /dev/null
+R --no-save --quiet < $R_SCRIPTS_PATH/memtimes.r 2>&1 > /dev/null
 
 
 #

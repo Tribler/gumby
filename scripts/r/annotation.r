@@ -1,8 +1,9 @@
 load_annotations <- function(){
 	if(file.exists("annotations.txt")){
-		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE)
+		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 		show_mean <- length(colnames(df2)) != 3
 		df2 <- melt(df2)
+		df2 <- na.omit(df2)
 		df2 <- ddply(df2, .(annotation), summarise, meanx = mean(value), minx = min(value), maxx = max(value))
 		df2$linesize <- max((df2$maxx - df2$minx) / 2, 1)
 		df2$linepos <- df2$minx + df2$linesize
@@ -24,5 +25,15 @@ add_annotations <- function(p, df2){
 		df3$type <- 'Node'
 		p <- p + geom_text(alpha = 0.4, data=df3, angle = 90, aes(x=labelpos, y=max(df$value), label=annotation, hjust=1, size=6), show_guide = FALSE)
 		return(p)
+	}
+}
+
+mean_max_min <- function(num_columns, df){
+	if (num_columns > 1000){
+		tdf <- cbind(df['time'], t(apply(df[,3:ncol(df)], 1, summary)))
+		colnames(tdf) <- c('time', 'min', 'Q1', 'median', 'mean','Q3', 'max')
+		return(tdf)
+	} else {
+		return(melt(df, id="time"))
 	}
 }

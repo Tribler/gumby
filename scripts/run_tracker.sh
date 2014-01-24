@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 # run_tracker.sh ---
 #
 # Filename: run_tracker.sh
@@ -41,7 +41,7 @@
 # @CONF_OPTION TRACKER_CRYPTO: Set the type of crypto to be used by the tracker. (default is ECCrypto)
 
 if [ -z "$TRACKER_PORT" ]; then
-    echo "ERROR: you need to specify at least DAS4_NODE_AMOUNT when using $0" >&2
+    echo "ERROR: you need to specify the TRACKER_PORT when using $0" >&2
     exit 1
 fi
 if [ -z "$TRACKER_CRYPTO" ]; then
@@ -63,8 +63,22 @@ if [ -z "$HEAD_HOST" ]; then
     HEAD_HOST=$(hostname)
 fi
 
-echo $HEAD_HOST $TRACKER_PORT > bootstraptribler.txt
-python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT --crypto $TRACKER_CRYPTO 2>&1 > "$OUTPUT_DIR/tracker_out.log"
+if [ ! -z "$SYNC_SUBSCRIBERS_AMOUNT" ]; then
+    EXPECTED_SUBSCRIBERS=$SYNC_SUBSCRIBERS_AMOUNT
+else
+    EXPECTED_SUBSCRIBERS=$DAS4_INSTANCES_TO_RUN
+fi
+
+rm -f bootstraptribler.txt
+
+while [ $EXPECTED_SUBSCRIBERS -gt 0 ]; do
+    echo $HEAD_HOST $TRACKER_PORT >> bootstraptribler.txt
+    python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT --crypto $TRACKER_CRYPTO 2>&1 > "$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" &
+    let TRACKER_PORT=$TRACKER_PORT+1
+    let EXPECTED_SUBSCRIBERS=$EXPECTED_SUBSCRIBERS-1000
+done
+
+wait
 
 #
 # run_tracker.sh ends here

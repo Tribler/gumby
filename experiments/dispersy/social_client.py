@@ -64,10 +64,12 @@ class SocialClient(DispersyExperimentScriptClient):
         self.not_connected_foafs = set()
 
         self.peercache = False
+        self.nocache = False
         self.reconnect_to_friends = False
         self._mypref_db = None
 
         self.friendhashes = {}
+        self.friendiphashes = {}
         self.foafhashes = {}
 
         self.set_community_kwarg('integrate_with_tribler', False)
@@ -89,11 +91,15 @@ class SocialClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
         self.scenario_runner.register(self.set_community_class, 'set_community_class')
         self.scenario_runner.register(self.send_post, 'send_post')
+        self.scenario_runner.register(self.set_cache, 'set_cache')
 
     def peertype(self, peertype):
         DispersyExperimentScriptClient.peertype(self, peertype)
         if peertype == "peercache":
             self.peercache = True
+
+    def set_cache(self, cache):
+        self.nocache = not self.str2bool(cache)
 
     def initializeCrypto(self):
         from Tribler.community.privatesemantic.elgamalcrypto import ElgamalCrypto, NoElgamalCrypto
@@ -121,6 +127,9 @@ class SocialClient(DispersyExperimentScriptClient):
         if self.peercache:
             yield 30.0
 
+        # if we're peercache -> enable send_simi_reveal, else disable
+        self.set_community_kwarg('send_simi_reveal', self.peercache)
+
         DispersyExperimentScriptClient.online(self, dont_empty=True)
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
 
@@ -129,11 +138,13 @@ class SocialClient(DispersyExperimentScriptClient):
 
         if self.reconnect_to_friends:
             self._community.connect_to_peercache(sys.maxint)
+
+            # we're going to allow this peer to connect to its friends for 5.0 seconds, then empty the buffer
+            yield 5.0
         else:
             # if not reconnect_to_friends, connect_to_friend hasn't been called, hence
             # we disable simi requests
             self._community.create_msimilarity_request = lambda destination: False
-
         self.empty_buffer()
 
     @call_on_dispersy_thread
@@ -168,6 +179,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
                 self.friends.add(ipport)
                 self.friendhashes[peer_id] = keyhash
+                self.friendiphashes[ipport] = keyhash
                 self.not_connected_friends.add(ipport)
 
                 self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
@@ -203,13 +215,18 @@ class SocialClient(DispersyExperimentScriptClient):
     def connect_to_friends(self):
         friendsaddresses = self.friends
         foafsaddresses = self.foafs
+
         if self.peercache:
-            friendsaddresses = sample(friendsaddresses, int(len(friendsaddresses) * 0.36))
-            foafsaddresses = sample(foafsaddresses, int(len(foafsaddresses) * 0.36))
+            if self.nocache:
+                friendsaddresses = []
+                foafsaddresses = []
+            else:
+                friendsaddresses = sample(friendsaddresses, int(len(friendsaddresses) * 0.36))
+                foafsaddresses = sample(foafsaddresses, int(len(foafsaddresses) * 0.36))
 
         my_hashes = [keyhash for _, keyhash in self._community._friend_db.get_my_keys()]
         for ipport in friendsaddresses:
-            self._community._peercache.add_peer(my_hashes, *ipport)
+            self._community._peercache.add_peer(my_hashes + [self.friendiphashes[ipport], ], *ipport)
 
         for ipport in foafsaddresses:
             self._community._peercache.add_peer(self.foafhashes[ipport], *ipport)

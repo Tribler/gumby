@@ -73,10 +73,7 @@ def call_on_dispersy_thread(func):
 def buffer_online(func):
     def helper(*args, **kargs):
         def buffer_call():
-            if not args[0].is_online():
-                args[0].buffer_call(func, args, kargs)
-            else:
-                func(*args, **kargs)
+            args[0].buffer_call(func, args, kargs)
 
         register_or_call(args[0]._dispersy.callback, buffer_call)
 
@@ -97,7 +94,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.community_args = []
         self.community_kwargs = {}
         self._stats_file = None
-        self._reset_statistics = True
         self._online_buffer = []
 
         self._crypto = self.initializeCrypto()
@@ -322,7 +318,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.print_on_change('community-churn', {}, {'args':args})
 
     def buffer_call(self, func, args, kargs):
-        self._online_buffer.append((func, args, kargs))
+        if len(self._online_buffer) == 0 and self.is_online():
+            func(*args, **kargs)
+        else:
+            self._online_buffer.append((func, args, kargs))
 
     def empty_buffer(self):
         assert self.is_online()
@@ -338,7 +337,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     @call_on_dispersy_thread
     def reset_dispersy_statistics(self):
-        self._reset_statistics = True
         self._dispersy._statistics.reset()
 
     def annotate(self, message):
@@ -380,22 +378,37 @@ class DispersyExperimentScriptClient(ExperimentClient):
         return int(v)
 
     def print_on_change(self, name, prev_dict, cur_dict):
-        new_values = {}
-        changed_values = {}
-        if cur_dict:
-            for key, value in cur_dict.iteritems():
-                if not isinstance(key, (basestring, int, long, float)):
-                    key = str(key)
+        def get_changed_values(prev_dict, cur_dict):
+            new_values = {}
+            changed_values = {}
+            if cur_dict:
+                for key, value in cur_dict.iteritems():
+                    # convert key to make it printable
+                    if not isinstance(key, (basestring, int, long, float)):
+                        key = str(key)
 
-                if not isinstance(value, (basestring, int, long, float, Iterable)):
-                    value = str(value)
+                    # if this is a dict, recursively check for changed values
+                    if isinstance(value, dict):
+                        converted_dict, changed_in_dict = get_changed_values(prev_dict.get(key, {}), value)
 
-                new_values[key] = value
-                if prev_dict.get(key, None) != value:
-                    changed_values[key] = value
+                        new_values[key] = converted_dict
+                        if changed_in_dict:
+                            changed_values[key] = changed_in_dict
 
+                    # else convert and compare single value
+                    else:
+                        if not isinstance(value, (basestring, int, long, float, Iterable)):
+                            value = str(value)
+
+                        new_values[key] = value
+                        if prev_dict.get(key, None) != value:
+                            changed_values[key] = value
+
+            return new_values, changed_values
+
+        new_values, changed_values = get_changed_values(prev_dict, cur_dict)
         if changed_values:
-            self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
+            self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
             self._stats_file.flush()
             return new_values
         return prev_dict
@@ -404,23 +417,21 @@ class DispersyExperimentScriptClient(ExperimentClient):
         from Tribler.dispersy.candidate import CANDIDATE_STUMBLE_LIFETIME
         stumbled_candidates = defaultdict(lambda:defaultdict(set))
 
-        while True:
-            if self._reset_statistics:
-                prev_statistics = {}
-                prev_total_received = {}
-                prev_total_dropped = {}
-                prev_total_delayed = {}
-                prev_total_outgoing = {}
-                prev_total_fail = {}
-                prev_endpoint_recv = {}
-                prev_endpoint_send = {}
-                prev_created_messages = {}
-                prev_bootstrap_candidates = {}
-                self._reset_statistics = False
+        prev_statistics = {}
+        prev_total_received = {}
+        prev_total_dropped = {}
+        prev_total_delayed = {}
+        prev_total_outgoing = {}
+        prev_total_fail = {}
+        prev_endpoint_recv = {}
+        prev_endpoint_send = {}
+        prev_created_messages = {}
+        prev_bootstrap_candidates = {}
 
+        while True:
             self._dispersy.statistics.update()
 
-            communities_dict = []
+            communities_dict = {}
             for c in self._dispersy.statistics.communities:
                 # we add all candidates which have a last_stumble > now - CANDIDATE_STUMBLE_LIFETIME
                 now = time()
@@ -430,24 +441,23 @@ class DispersyExperimentScriptClient(ExperimentClient):
                         stumbled_candidates[c.hex_cid][candidate.last_stumble].add(mid)
                 nr_stumbled_candidates = sum(len(members) for members in stumbled_candidates[c.hex_cid].values())
 
-                communities_dict.append({'cid': c.hex_cid,
-                                         'classification': c.classification,
+                communities_dict[c.hex_cid] = {'classification': c.classification,
                                          'global_time': c.global_time,
                                          'sync_bloom_new': c.sync_bloom_new,
                                          'sync_bloom_reuse': c.sync_bloom_reuse,
                                          'sync_bloom_send': c.sync_bloom_send,
                                          'sync_bloom_skip': c.sync_bloom_skip,
                                          'nr_candidates': len(c.candidates) if c.candidates else 0,
-                                         'nr_stumbled_candidates': nr_stumbled_candidates})
+                                         'nr_stumbled_candidates': nr_stumbled_candidates}
 
             # check for missing communities, reset candidates to 0
-            cur_cids = [cur_c['cid'] for cur_c in communities_dict]
-            for c in prev_statistics.get('communities', []):
-                if c['cid'] not in cur_cids:
+            cur_cids = communities_dict.keys()
+            for cid, c in prev_statistics.get('communities', {}).iteritems():
+                if cid not in cur_cids:
                     _c = c.copy()
                     _c['nr_candidates'] = 0
                     _c['nr_stumbled_candidates'] = 0
-                    communities_dict.append(_c)
+                    communities_dict[cid] = _c
 
             statistics_dict = {'conn_type': self._dispersy.statistics.connection_type,
                                'received_count': self._dispersy.statistics.received_count,
@@ -487,7 +497,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
             prev_endpoint_send = self.print_on_change("statistics-endpoint-send", prev_endpoint_send, self._dispersy.statistics.endpoint_send)
             prev_bootstrap_candidates = self.print_on_change("statistics-bootstrap-candidates", prev_bootstrap_candidates, self._dispersy.statistics.bootstrap_candidates)
 
-            yield 1.0
+            yield 5.0
 
 
 def main(client_class):
@@ -503,3 +513,13 @@ def main(client_class):
 
 #
 # dispersyclient.py ends here
+
+if __name__ == '__main__':
+    import sys
+    dc = DispersyExperimentScriptClient({})
+    dc._stats_file = sys.stderr
+
+    prev_dict = json.loads('{"created_count": 2, "total_candidates_discovered": 12, "total_down": 107164, "success_count": 1, "total_up": 404, "is_online": true, "communities": {"bd152ce23576a515085268c671351ef37e796856" : {"global_time": 4, "sync_bloom_reuse": 0, "sync_bloom_skip": 0, "nr_stumbled_candidates": 0, "sync_bloom_new": 0, "sync_bloom_send": 0, "classification": "PoliSocialCommunity", "cid": "bd152ce23576a515085268c671351ef37e796856", "nr_candidates": 0}}, "total_send": 1, "received_count": 1}')
+    cur_dict = json.loads('{"walk_attempt": 3, "total_down": 108232, "success_count": 6, "total_up": 55585, "communities": {"bd152ce23576a515085268c671351ef37e796856" :{"global_time": 4, "sync_bloom_reuse": 0, "sync_bloom_skip": 0, "nr_stumbled_candidates": 0, "sync_bloom_new": 1, "sync_bloom_send": 1, "classification": "PoliSocialCommunity", "cid": "bd152ce23576a515085268c671351ef37e796856", "nr_candidates": 0}}, "total_send": 30, "received_count": 6}')
+
+    dc.print_on_change('test', prev_dict, cur_dict)

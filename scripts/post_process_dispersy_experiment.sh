@@ -74,10 +74,13 @@ drop.r
 total_records.r
 connections.r
 send_received.r
+send_diff.r
 cputimes.r
+memtimes.r
 statistics.r
 writebytes.r
 readbytes.r
+bl.r
 "
 
 graph_data.sh

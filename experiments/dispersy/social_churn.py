@@ -7,6 +7,8 @@ from collections import defaultdict
 class ChurnAnalyzer(ScenarioRunner):
 
     def __init__(self, filename, outputfile=sys.stdout, max_tstmp=0):
+        ScenarioRunner.__init__(self, filename)
+
         self._callables = {}
         self._callables['online'] = self.online
         self._callables['offline'] = self.offline
@@ -15,14 +17,16 @@ class ChurnAnalyzer(ScenarioRunner):
         self._peer_state = defaultdict(lambda: "offline")
         self._peer_friends = defaultdict(list)
 
+        self._time_online = defaultdict(lambda :[0, 0, 0, 0])
+        self._prev_online = defaultdict(int)
+        self._prev_offline = defaultdict(int)
+
         sorted_scenario = defaultdict(list)
 
         prev_tstmp = -1
-        for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
+        for (tstmp, lineno, clb, args) in self._parse_scenario(filename):
             if clb in self._callables:
-                yes_peers, _ = peerspec
-
-                sorted_scenario[tstmp].append((yes_peers, clb, args))
+                sorted_scenario[tstmp].append((self.yes_peers, clb, args))
 
         tstmps = sorted_scenario.keys()
         tstmps.sort()
@@ -30,22 +34,37 @@ class ChurnAnalyzer(ScenarioRunner):
         for tstmp in tstmps:
             for yes_peers, clb, args in sorted_scenario[tstmp]:
                 for peer in yes_peers:
-                        self._callables[clb](peer, *args)
+                    self._callables[clb](tstmp, peer, *args)
 
                 if prev_tstmp != tstmp:
                     self.print_connections(tstmp, outputfile)
                     prev_tstmp = tstmp
 
+        self.print_averages(outputfile, tstmps[-1])
+
     def _parse_for_this_peer(self, peerspec):
+        if peerspec:
+            self.yes_peers, self.no_peers = self._parse_peerspec(peerspec)
+        else:
+            self.yes_peers = set()
+            self.no_peers = set()
         return True
 
-    def online(self, peer):
+    def online(self, tstmp, peer):
         self._peer_state[peer] = "online"
+        self._prev_online[peer] = tstmp
 
-    def offline(self, peer):
+        self._time_online[peer][1] += tstmp - self._prev_offline[peer]
+        self._time_online[peer][3] += 1
+
+    def offline(self, tstmp, peer):
         self._peer_state[peer] = "offline"
+        self._prev_offline[peer] = tstmp
 
-    def add_friend(self, peer, friend):
+        self._time_online[peer][0] += tstmp - self._prev_online[peer]
+        self._time_online[peer][2] += 1
+
+    def add_friend(self, tstmp, peer, friend):
         self._peer_friends[peer].append(int(friend))
 
     def print_connections(self, tstmp, outputfile):
@@ -68,6 +87,20 @@ class ChurnAnalyzer(ScenarioRunner):
 
             print >> outputfile, "average", sum_can_connect_to / float(len(self._peer_friends))
 
+    def print_averages(self, outputfile, max_tstmp):
+        online_time = offline_time = 0
+        nr_peers = 0
+        ave_on_sessions = ave_off_sessions = 0
+        for on, off, nr_on_sessions, nr_off_sessions in self._time_online.values():
+            online_time += on / float(nr_on_sessions)
+            offline_time += off / float(nr_off_sessions)
+
+            ave_on_sessions += nr_on_sessions
+            ave_off_sessions += nr_off_sessions
+            nr_peers += 1
+
+        print >> outputfile, "average online", online_time / float(nr_peers), "offline", offline_time / float(nr_peers), nr_peers
+        print >> outputfile, "average online", ave_on_sessions / float(nr_peers), "offline", ave_off_sessions / float(nr_peers), nr_peers
 
 def main(inputfile, outputfile):
     inputfile = os.path.abspath(inputfile)

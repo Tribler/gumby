@@ -8,43 +8,43 @@ class ScenarioPreProcessor(ScenarioRunner):
     def __init__(self, filename, outputfile=sys.stdout, max_tstmp=0):
         ScenarioRunner.__init__(self, filename)
 
-        self._cur_line = None
-
         self._callables = {}
         self._callables['churn'] = self.churn
         self._callables['churn_pattern'] = self.churn_pattern
 
         print >> sys.stderr, "Looking for max_timestamp, max_peer... in %s" % filename,
 
-        max_peer = 0
-        for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
+        self.max_peer = 0
+        for (tstmp, lineno, clb, args) in self._parse_scenario(filename):
             max_tstmp = max(tstmp, max_tstmp)
-            if peerspec[0]:
-                max_peer = max(max_peer, max(peerspec[0]))
 
-        print >> sys.stderr, "\tfound %d and %d" % (max_tstmp, max_peer)
+        print >> sys.stderr, "\tfound %d and %d" % (max_tstmp, self.max_peer)
 
+        _max_peer = self.max_peer
         print >> sys.stderr, "Preprocessing file...",
-        for (tstmp, lineno, clb, args, peerspec) in self._parse_scenario(filename):
-            print >> outputfile, self._cur_line
-            if clb in self._callables:
-                yes_peers, no_peers = peerspec
-                if not yes_peers:
-                    yes_peers = set(range(1, max_peer + 1))
-                for peer in no_peers:
-                    yes_peers.discard(peer)
+        for (tstmp, lineno, clb, args) in self._parse_scenario(filename):
 
-                for peer in yes_peers:
+            print >> outputfile, self.file_buffer[1][lineno - 1][1]
+            if clb in self._callables:
+                for peer in self.yes_peers:
                     for line in self._callables[clb](tstmp, max_tstmp, *args):
                         print >> outputfile, line, '{%s}' % peer
         print >> sys.stderr, "\tdone"
 
     def _parse_for_this_peer(self, peerspec):
-        return True
+        if peerspec:
+            self.yes_peers, self.no_peers = self._parse_peerspec(peerspec)
+            self.max_peer = max(self.max_peer, max(self.yes_peers))
+        else:
+            self.yes_peers = set()
+            self.no_peers = set()
 
-    def _preprocess_line(self, line):
-        self._cur_line = line.strip()
-        return line
+        if not self.yes_peers:
+            self.yes_peers = set(range(1, self.max_peer + 1))
+        for peer in self.no_peers:
+            self.yes_peers.discard(peer)
+
+        return True
 
     def churn(self, tstmp, max_tstmp, churn_type, desired_mean=300, min_online=5.0):
         desired_mean = float(desired_mean)
