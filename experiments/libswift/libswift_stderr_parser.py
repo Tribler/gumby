@@ -6,6 +6,8 @@ from sys import argv, exit
 # parses the stderr output of each libswift client
 def parse_stderr(logDir, outputDir, clientName):
 
+    print >> stderr, "parsing {0}\n".format( clientName )
+
     logfile = os.path.join(logDir, '00000.err')
     datafile = os.path.join(outputDir, clientName + '.err')
     if not os.path.exists( logfile ) or not os.path.isfile( logfile ):
@@ -63,9 +65,9 @@ def check_single_experiment(inputDir, outputDir):
 # checks the current dir structure 
 def check_dir(inputDir, outputDir):
     # check for single execution
-    if os.path.exists( os.path.join(inputDir, 'output/src') ):
+    if os.path.exists( os.path.join(inputDir, 'src') ):
         #seeder
-        check_single_experiment( os.path.join(inputDir, 'output'), outputDir)
+        check_single_experiment( inputDir, outputDir)
 
     # TODO multiple experiments
     else:
