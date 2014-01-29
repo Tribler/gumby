@@ -1,14 +1,19 @@
 library(ggplot2)
 library(reshape)
 
-if(file.exists("stderr.data")){
-    df <- read.table("stderr.data", header = TRUE, check.names = FALSE)
+stderr_files <- list.files(pattern="*.err")
+for (k in 1:length(stderr_files)) {
+    df <- read.table(stderr_files[k], header = TRUE, check.names = FALSE)
+    df$percent <- NULL
+    df <- melt(df, id=c("time"))
 
-    p <- ggplot(df, aes(x=time, y=dlspeed))
-    p <- p + geom_line()
+    p <- ggplot(df, aes(x=time, y=value, fill=variable))
+    p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
+    p <- p + theme(legend.position="top")
+    p <- p + labs(x = "\nTime (Seconds)", y = "Speed (KByte/s)\n")
     p
 
-    ggsave(file="speed.png", width=8, height=6, dpi=100)
+    output <- unlist(strsplit(stderr_files[k], "\\."))
+    ggsave(file=paste(output[1], ".png"), width=8, height=6, dpi=100)
 }
-
 

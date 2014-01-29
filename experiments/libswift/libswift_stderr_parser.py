@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import sys
 import os
-from sys import argv, exit
+from sys import argv
 
 # parses the stderr output of each libswift client
 def parse_stderr(logDir, outputDir, clientName):
 
-    print >> sys.stderr, "Parsing stderr output of: {0}\n".format( clientName )
+    print >> sys.stderr, "Parsing stderr output of: {0}".format( clientName )
 
     logfile = os.path.join(logDir, '00000.err')
     datafile = os.path.join(outputDir, clientName + '.err')
@@ -61,6 +61,17 @@ def check_single_experiment(inputDir, outputDir):
         parse_stderr( os.path.join(inputDir, 'src'), outputDir, "seeder" )
     else:
         print >> sys.stderr, "Missing seeder stderr log!!"
+
+    if os.path.exists( os.path.join(inputDir, 'dst', '111') ):
+        leechers = [d for d in os.listdir(os.path.join(inputDir, 'dst')) if os.path.isdir(d)]
+        if len(leechers) > 1:
+            # TODO
+            pass
+        else:
+            parse_stderr( os.path.join(inputDir, 'dst', '111'), outputDir, "leecher" )
+    else:
+        print >> sys.stderr, "Missing stderr log for first leecher!!"
+
 
 # checks the current dir structure 
 def check_dir(inputDir, outputDir):
