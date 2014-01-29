@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import os
+import glob
 from sys import argv
 
 # parses the stderr output of each libswift client
@@ -22,7 +23,7 @@ def parse_stderr(logDir, outputDir, clientName):
     try:
         fl = open( logfile, 'r' )
         fd = open( datafile, 'w' )
-        fd.write( "time percent upspeed dlspeed\n0 0 0 0\n" )
+        fd.write( "time percent upload download\n0 0 0 0\n" )
         relTime = 0
         up_bytes = 0
         down_bytes = 0
@@ -55,6 +56,68 @@ def parse_stderr(logDir, outputDir, clientName):
         except Exception:
             pass
 
+
+# parses the ledbat log of each libswift client
+def parse_ledbat(logDir, outputDir, clientName):
+
+    print >> sys.stderr, "Parsing ledbat of: {0}".format( clientName )
+
+    # input file
+    logfiles = glob.glob(os.path.join(logDir, '*ledbat*'))
+    # output congestion control window
+    ccfile = os.path.join(outputDir, clientName + '.cc')
+
+    if len(logfiles) > 1:
+        print >> sys.stderr, "Too many ledbat logs!"
+        sys.exit(1)
+    logfile = logfiles[0]
+    if not os.path.exists( logfile ) or not os.path.isfile( logfile ):
+        print >> sys.stderr, "Input file missing"
+    if os.path.exists( ccfile ):
+        print >> sys.stderr, "Output already present"
+        sys.exit(1)
+        
+    fl = None
+    fc = None
+    
+    try:
+        fl = open( logfile, 'r' )
+        fd = open( ccfile, 'w' )
+        fd.write( "time window hints_in hints_out\n0 0\n" )
+        for line in fl:
+            split = line.split()
+            proceed = True
+            for s in split:
+                try:
+                    int(s)
+                except:
+                    proceed = False
+            
+            if len(split) > 6 and proceed: 
+                time = int(split[0])/1000000.0
+                fd.write( "{0} {1} ".format( time, str(split[7]) ) )
+    
+                if len(split) > 7:
+                    if split[7] == '0':
+                        fd.write( "0 {0}\n".format( split[9] ) )
+                    else:
+                        fd.write( "{0} 0\n".format( split[8] ) )
+                else:
+                    fd.write("0 0\n")
+
+    finally:
+        try:
+            if fd:
+                fd.close()
+        except Exception:
+            pass
+        try:
+            if fl:
+                fl.close()
+        except Exception:
+            pass
+
+
 def check_single_experiment(inputDir, outputDir):
     #seeder
     if os.path.exists( os.path.join(inputDir, 'src') ):
@@ -65,22 +128,24 @@ def check_single_experiment(inputDir, outputDir):
     if os.path.exists( os.path.join(inputDir, 'dst', '111') ):
         leechers = [d for d in os.listdir(os.path.join(inputDir, 'dst')) if os.path.isdir(d)]
         if len(leechers) > 1:
-            # TODO
+            # TODO multiple leechers
             pass
         else:
             parse_stderr( os.path.join(inputDir, 'dst', '111'), outputDir, "leecher" )
+            parse_ledbat( os.path.join(inputDir, 'dst', '111'), outputDir, "leecher" )
+            parse_ledbat( os.path.join(inputDir, 'src'), outputDir, "seeder" )
     else:
         print >> sys.stderr, "Missing stderr log for first leecher!!"
 
 
 # checks the current dir structure 
 def check_dir(inputDir, outputDir):
-    # check for single execution
+    # check for single experiment
     if os.path.exists( os.path.join(inputDir, 'src') ):
         #seeder
         check_single_experiment( inputDir, outputDir)
 
-    # TODO multiple experiments
+    # TODO multiple experiments aggregate
     else:
         print >> sys.stderr, "Multiple experiments"
         pass

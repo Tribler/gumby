@@ -48,7 +48,7 @@ echo "Done"
 
 # @CONF_OPTION LIBSWIFT_STDERR_PARSER_CMD: Override the default stderr parser script (default: TODO).
 if [ -z "$LIBSWIFT_STDERR_PARSER_CMD" ]; then
-    LIBSWIFT_STDERR_PARSER_CMD=libswift_stderr_parser.py
+    LIBSWIFT_STDERR_PARSER_CMD=parser.py
 fi
 
 #Step 3: Extract the data needed for the graphs from the experiment log file.
@@ -56,7 +56,11 @@ cd $OUTPUT_DIR
 $LIBSWIFT_STDERR_PARSER_CMD . . 
 
 #Step 4: Graph the stuff
-export R_SCRIPTS_TO_RUN="downloadtime.r"
+if [ -z "$R_SCRIPTS_TO_RUN" ]; then
+    export R_SCRIPTS_TO_RUN="downloadtime.r"
+else
+    R_SCRIPTS_TO_RUN += " downlaodtime.r"
+fi
 
 graph_data.sh
 
