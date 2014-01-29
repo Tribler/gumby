@@ -6,7 +6,7 @@ from sys import argv, exit
 # parses the stderr output of each libswift client
 def parse_stderr(logDir, outputDir, clientName):
 
-    print >> stderr, "parsing {0}\n".format( clientName )
+    print >> sys.stderr, "parsing {0}\n".format( clientName )
 
     logfile = os.path.join(logDir, '00000.err')
     datafile = os.path.join(outputDir, clientName + '.err')
