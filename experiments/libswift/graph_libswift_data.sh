@@ -51,20 +51,12 @@ if [ -z "$LIBSWIFT_STDERR_PARSER_CMD" ]; then
     LIBSWIFT_STDERR_PARSER_CMD=libswift_stderr_parser.py
 fi
 
+#Step 3: Extract the data needed for the graphs from the experiment log file.
 cd $OUTPUT_DIR
-#Step 2: Extract the data needed for the graphs from the experiment log file.
-
 $LIBSWIFT_STDERR_PARSER_CMD . . 
 
-#Step 3: Extract the resource usage data from the process_guard logs.
-extract_process_guard_stats.py . . $XSTART
-
-
-#Step 5: Graph the stuff
-export R_SCRIPTS_TO_RUN="\
-downloadtime.r
-"
-
+#Step 4: Graph the stuff
+export R_SCRIPTS_TO_RUN="downloadtime.r"
 
 graph_data.sh
 
