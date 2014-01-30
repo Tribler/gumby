@@ -89,7 +89,7 @@ def parse_ledbat(logDir, outputDir, clientName):
             proceed = True
             for s in split:
                 try:
-                    int(s)
+                    float(s)
                 except:
                     proceed = False
             
@@ -98,10 +98,12 @@ def parse_ledbat(logDir, outputDir, clientName):
                 fd.write( "{0} {1} ".format( time, str(split[7]) ) )
     
                 if len(split) > 7:
-                    if split[7] == '0':
+                    if split[7] == '0' and len(split) == 10:
                         fd.write( "0 {0}\n".format( split[9] ) )
-                    else:
+                    elif split[7] != '0' and len(split) > 8:
                         fd.write( "{0} 0\n".format( split[8] ) )
+                    else:
+                        fd.write("0 0\n")
                 else:
                     fd.write("0 0\n")
 
@@ -134,6 +136,10 @@ def check_single_experiment(inputDir, outputDir):
             parse_stderr( os.path.join(inputDir, 'dst', '111'), outputDir, "leecher" )
             parse_ledbat( os.path.join(inputDir, 'dst', '111'), outputDir, "leecher" )
             parse_ledbat( os.path.join(inputDir, 'src'), outputDir, "seeder" )
+            if os.environ.get("R_SCRIPTS_TO_RUN"):
+                os.environ["R_SCRIPTS_TO_RUN"] = os.environ["R_SCRIPTS_TO_RUN"] + " ledbat.r requests.r"
+            else:
+                os.environ["R_SCRIPTS_TO_RUN"] = "ledbat.r requests.r"
     else:
         print >> sys.stderr, "Missing stderr log for first leecher!!"
 
