@@ -57,9 +57,9 @@ $LIBSWIFT_STDERR_PARSER_CMD . .
 
 #Step 4: Graph the stuff
 if [ -z "$R_SCRIPTS_TO_RUN" ]; then
-    export R_SCRIPTS_TO_RUN="downloadtime.r ledbat.r requests.r"
+    export R_SCRIPTS_TO_RUN="downloadtime.r ledbat.r requests.r dip.r"
 else
-    R_SCRIPTS_TO_RUN += " downlaodtime.r ledbat.r requests.r"
+    R_SCRIPTS_TO_RUN += " downlaodtime.r ledbat.r requests.r dip.r"
 fi
 
 graph_data.sh

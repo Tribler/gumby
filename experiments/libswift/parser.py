@@ -83,7 +83,7 @@ def parse_ledbat(logDir, outputDir, clientName):
     try:
         fl = open( logfile, 'r' )
         fd = open( ccfile, 'w' )
-        fd.write( "time window hints_in hints_out\n0 0\n" )
+        fd.write( "time window hints_in hints_out dip\n0 0 0 0 0\n" )
         for line in fl:
             split = line.split()
             proceed = True
@@ -93,19 +93,19 @@ def parse_ledbat(logDir, outputDir, clientName):
                 except:
                     proceed = False
             
-            if len(split) > 6 and proceed: 
+            if len(split) > 7 and proceed: 
                 time = int(split[0])/1000000.0
                 fd.write( "{0} {1} ".format( time, str(split[7]) ) )
     
                 if len(split) > 7:
                     if split[7] == '0' and len(split) == 10:
-                        fd.write( "0 {0}\n".format( split[9] ) )
+                        fd.write( "0 {0} {1}\n".format( split[9], split[8] ) )
                     elif split[7] != '0' and len(split) > 8:
-                        fd.write( "{0} 0\n".format( split[8] ) )
+                        fd.write( "{0} 0 0\n".format( split[8] ) )
                     else:
-                        fd.write("0 0\n")
+                        fd.write("0 0 0\n")
                 else:
-                    fd.write("0 0\n")
+                    fd.write("0 0 0\n")
 
     finally:
         try:
