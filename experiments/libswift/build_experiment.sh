@@ -15,7 +15,7 @@ mkdir -p $OUTPUT_DIR/dst
 
 # kill previous bridge
 interface="/sys/class/net/"$BRIDGE_NAME
-if [ -d "interface" ]; then
+if [ -d $interface ]; then
     sudo /sbin/ifconfig $BRIDGE_NAME down 2>/dev/null 
     sudo /sbin/brctl delbr $BRIDGE_NAME 2>/dev/null
 fi
