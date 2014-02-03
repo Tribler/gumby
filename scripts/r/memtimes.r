@@ -14,14 +14,16 @@ if(file.exists("rsizes_reduced.txt")){
 	df <- mean_max_min(num_columns, df)
 	df$type <- 'Process'
 	
-	df2 <- read.table("rsizes_node_reduced.txt", header = TRUE, check.names = FALSE)
-	df2 <- mean_max_min(num_columns, df2)
-	df2$type <- 'Node'
-	
-	df <- rbind(df, df2)
+	if(file.exists("rsizes_node_reduced.txt")){
+		df2 <- read.table("rsizes_node_reduced.txt", header = TRUE, check.names = FALSE)
+		df2 <- mean_max_min(num_columns, df2)
+		df2$type <- 'Node'
+		
+		df <- rbind(df, df2)
+	}
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df3)
+	p <- add_annotations(p, df, df3)
 	if (num_columns <= 1000){
 		p <- p + geom_step(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 	} else {

@@ -12,7 +12,7 @@ if(file.exists("sum_total_records_reduced.txt")){
 	df <- melt(df, id="time")
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df, df2)
 	p <- p + geom_step(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Messages received by peer\n")

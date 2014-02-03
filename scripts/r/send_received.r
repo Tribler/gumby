@@ -14,11 +14,10 @@ if(file.exists("send_reduced.txt")){
 	subdf <- df[,3:ncol(df)]
 	subdf[] <- lapply(subdf, function(x) x/1024.0)
 	df <- cbind(df['time'], subdf)
-	
 	df <- mean_max_min(num_columns, df)
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df, df2)
 	if (num_columns <= 1000){
 		p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 	} else {
@@ -40,11 +39,10 @@ if(file.exists("received_reduced.txt")){
 	subdf <- df[,3:ncol(df)]
 	subdf[] <- lapply(subdf, function(x) x/1024.0)
 	df <- cbind(df['time'], subdf)
-	
 	df <- mean_max_min(num_columns, df)
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df, df2)
 	if (num_columns <= 1000){
 		p <- p + geom_line(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 	} else {

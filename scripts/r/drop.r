@@ -14,16 +14,14 @@ if(file.exists("dropped_diff_reduced.txt")){
 	subdf <- df[,3:ncol(df)]
 	subdf[] <- lapply(subdf, function(x) x/1024.0)
 	df <- cbind(df['time'], subdf)
-	
 	df <- mean_max_min(num_columns, df)
-	
 	
 	if (num_columns <= 1000){
 		df <- subset(df, df$value > 0)
 	}
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df, df2)
 	if (num_columns <= 1000){
 		p <- p + geom_point(alpha = 0.8, aes(time, value, size=value, group=variable, colour=variable)) + scale_size(range = c(1, 3))
 	} else {
@@ -45,7 +43,7 @@ if(file.exists("dropped_reduced.txt")){
 	df <- mean_max_min(num_columns, df)
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df, df2)
 	if (num_columns <= 1000){
 		p <- p + geom_step(alpha = 0.8, aes(time, value, group=variable, colour=variable))
 	} else {
