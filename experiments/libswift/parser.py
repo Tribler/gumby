@@ -67,6 +67,8 @@ def parse_ledbat(logDir, outputDir, clientName):
     # output congestion control window
     ccfile = os.path.join(outputDir, clientName + '.cc')
 
+    if not logfiles:
+        return
     if len(logfiles) > 1:
         print >> sys.stderr, "Too many ledbat logs!"
         sys.exit(1)
