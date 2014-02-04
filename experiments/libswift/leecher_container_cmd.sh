@@ -3,10 +3,10 @@
 # %*% start_seeder.sh must be started first.
 
 
-EXPECTED_ARGS=16
+EXPECTED_ARGS=19
 if [ $# -ne $EXPECTED_ARGS ]
 then
-	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_ip seeder_port logs_dir leecher_id username rate_dl rate_ul iperf_test"
+	echo "Usage: `basename $0` repository_dir dst_store hash netem_delay netem_packet_loss process_guard_cmd experiment_time bridge_ip seeder_ip seeder_port logs_dir leecher_id username rate_dl rate_ul iperf_test time debug_swift debug_ledbat"
 	exit 65
 fi
 
@@ -27,6 +27,9 @@ USERNAME="${13}"
 NETEM_RATE_DL="${14}"
 NETEM_RATE_UL="${15}"
 IPERF_TEST="${16}"
+TIME="${17}"
+DEBUG_SWIFT="${18}"
+DEBUG_LEDBAT="${19}"
 
 # fix formatting for random variation
 NETEM_DELAY=${NETEM_DELAY/'_'/' '}
@@ -50,8 +53,8 @@ tc filter add dev eth0 parent ffff: protocol ip prio 50 \
 tc qdisc add dev eth0 root handle 1: netem delay $NETEM_DELAY loss $NETEM_PACKET_LOSS
 
 # add netem stuff
-tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit 100k burst $BURST_UL
-   
+tc qdisc add dev eth0 parent 1: tbf rate $RATE_UL limit $BURST_UL burst $BURST_UL
+
 # !--------------------
 
 tc qdisc show
@@ -59,10 +62,20 @@ tc qdisc show
 # leave here for testing TODO make configurable
 if $IPERF_TEST;
 then
-	iperf -c 192.168.1.110 -r
+	iperf -c 192.168.1.110 -r -w 64k -M 2000 -u -b 200M
 else
 	# leech file
-	SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID"
+	SWIFT_CMD="$REPOSITORY_DIR/swift -t $SEEDER_IP:$SEEDER_PORT -o $LOGS_DIR/dst/$LEECHER_ID -h $HASH -p "
+	# add optional parameters iff set
+	if [ "$TIME" -ne 0 ]; then
+		SWIFT_CMD="$SWIFT_CMD -w $TIME"
+	fi
+	if $DEBUG_SWIFT; then
+		SWIFT_CMD="$SWIFT_CMD -D $LOGS_DIR/dst/$LEECHER_ID/leecher_$LEECHER_ID "
+	fi
+	if $DEBUG_LEDBAT; then
+		SWIFT_CMD="$SWIFT_CMD -L $LOGS_DIR/dst/$LEECHER_ID/ledbat_leecher_$LEECHER_ID "
+	fi
 	su $USERNAME -c "mkdir -p $LOGS_DIR/dst/$LEECHER_ID"
 	su $USERNAME -c "$PROCESS_GUARD_CMD -c '${SWIFT_CMD}' -t $EXPERIMENT_TIME -o $LOGS_DIR/dst/$LEECHER_ID -m $LOGS_DIR/dst/$LEECHER_ID &"
 fi

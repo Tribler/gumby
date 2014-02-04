@@ -13,6 +13,19 @@
 mkdir -p $OUTPUT_DIR/src
 mkdir -p $OUTPUT_DIR/dst
 
+# kill previous bridge
+sudo /sbin/ifconfig $BRIDGE_NAME down
+sudo /sbin/brctl delbr $BRIDGE_NAME
+
+# setup networking bridge
+sudo /sbin/brctl addbr $BRIDGE_NAME
+sudo /sbin/brctl setfd $BRIDGE_NAME 0
+
+sudo /sbin/ifconfig $BRIDGE_NAME $BRIDGE_IP netmask 255.255.255.0 up
+
+sudo /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo /sbin/iptables -A FORWARD -i $BRIDGE_NAME -o eth0 -j ACCEPT
+
 # create data file
 # @CONF_OPTION FILE_SIZE: Size of the file to seed. (e,g., 10M - for syntax see man truncate)
 [ -z "$FILE_SIZE" ] && FILE_SIZE="10M"
