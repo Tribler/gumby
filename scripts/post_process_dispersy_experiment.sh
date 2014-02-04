@@ -82,7 +82,8 @@ writebytes.r
 readbytes.r
 bl.r
 "
-
+export XMIN
+export XMAX
 graph_data.sh
 
 #

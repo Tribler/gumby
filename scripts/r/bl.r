@@ -14,7 +14,7 @@ while(file.exists(paste("bl_skip_", toString(i), "_reduced.txt", sep = ''))){
 	df <- mean_max_min(num_columns, df)
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df, df2)
 	if (num_columns <= 1000){
 		p <- p + geom_step(data = df, alpha=0.8, aes(time, value, group=variable, colour=variable))
 	} else {
@@ -38,8 +38,7 @@ while(file.exists(paste("bl_reuse_", toString(i), "_reduced.txt", sep = ''))){
 	df <- mean_max_min(num_columns, df)
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
-	
+	p <- add_annotations(p, df, df2)	
 	if (num_columns <= 1000){
 		p <- p + geom_step(data = df, alpha=0.8, aes(time, value, group=variable, colour=variable))
 	} else {
@@ -64,7 +63,7 @@ while(file.exists(paste("bl_time_", toString(i), "_reduced.txt", sep = ''))){
 	df <- mean_max_min(num_columns, df)
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df, df2)
 	if (num_columns <= 1000){
 		p <- p + geom_step(data = df, alpha=0.8, aes(time, value, group=variable, colour=variable))
 	} else {

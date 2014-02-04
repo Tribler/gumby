@@ -6,7 +6,7 @@ from collections import defaultdict
 
 class ChurnAnalyzer(ScenarioRunner):
 
-    def __init__(self, filename, outputfile=sys.stdout, max_tstmp=0):
+    def __init__(self, filename, outputfile=sys.stdout, max_tstmp=sys.maxint):
         ScenarioRunner.__init__(self, filename)
 
         self._callables = {}
@@ -21,11 +21,13 @@ class ChurnAnalyzer(ScenarioRunner):
         self._prev_online = defaultdict(int)
         self._prev_offline = defaultdict(int)
 
+        self.max_online = self.max_offline = 0
+
         sorted_scenario = defaultdict(list)
 
         prev_tstmp = -1
         for (tstmp, lineno, clb, args) in self._parse_scenario(filename):
-            if clb in self._callables:
+            if clb in self._callables and tstmp < max_tstmp:
                 sorted_scenario[tstmp].append((self.yes_peers, clb, args))
 
         tstmps = sorted_scenario.keys()
@@ -54,15 +56,21 @@ class ChurnAnalyzer(ScenarioRunner):
         self._peer_state[peer] = "online"
         self._prev_online[peer] = tstmp
 
-        self._time_online[peer][1] += tstmp - self._prev_offline[peer]
+        been_offline = tstmp - self._prev_offline[peer]
+        self._time_online[peer][1] += been_offline
         self._time_online[peer][3] += 1
+
+        self.max_offline = max(self.max_offline, been_offline)
 
     def offline(self, tstmp, peer):
         self._peer_state[peer] = "offline"
         self._prev_offline[peer] = tstmp
 
-        self._time_online[peer][0] += tstmp - self._prev_online[peer]
+        been_online = tstmp - self._prev_online[peer]
+        self._time_online[peer][0] += been_online
         self._time_online[peer][2] += 1
+
+        self.max_online = max(self.max_online, been_online)
 
     def add_friend(self, tstmp, peer, friend):
         self._peer_friends[peer].append(int(friend))
@@ -92,8 +100,10 @@ class ChurnAnalyzer(ScenarioRunner):
         nr_peers = 0
         ave_on_sessions = ave_off_sessions = 0
         for on, off, nr_on_sessions, nr_off_sessions in self._time_online.values():
-            online_time += on / float(nr_on_sessions)
-            offline_time += off / float(nr_off_sessions)
+            if nr_on_sessions:
+                online_time += on / float(nr_on_sessions)
+            if nr_off_sessions:
+                offline_time += off / float(nr_off_sessions)
 
             ave_on_sessions += nr_on_sessions
             ave_off_sessions += nr_off_sessions
@@ -101,23 +111,27 @@ class ChurnAnalyzer(ScenarioRunner):
 
         print >> outputfile, "average online", online_time / float(nr_peers), "offline", offline_time / float(nr_peers), nr_peers
         print >> outputfile, "average online", ave_on_sessions / float(nr_peers), "offline", ave_off_sessions / float(nr_peers), nr_peers
+        print >> outputfile, "max online", self.max_online, "offline", self.max_offline
 
-def main(inputfile, outputfile):
+def main(inputfile, outputfile, max_tstmp=sys.maxint):
     inputfile = os.path.abspath(inputfile)
     if os.path.exists(inputfile):
         f = open(outputfile, 'w')
 
-        ChurnAnalyzer(inputfile, f)
+        ChurnAnalyzer(inputfile, f, int(max_tstmp))
 
         f.close()
     else:
         print >> sys.stderr, inputfile, "not found"
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print "Usage: %s <input-file> <output-file>" % (sys.argv[0])
+    if len(sys.argv) < 3:
+        print "Usage: %s <input-file> <output-file> (<max_tstmp>)" % (sys.argv[0])
         print >> sys.stderr, sys.argv
 
         exit(1)
 
-    main(sys.argv[1], sys.argv[2])
+    if len(sys.argv) == 3:
+        main(sys.argv[1], sys.argv[2])
+    else:
+        main(sys.argv[1], sys.argv[2], sys.argv[3])

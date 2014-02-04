@@ -1,6 +1,6 @@
 import os
 import sys
-from random import expovariate, random
+from random import expovariate, random, randint
 from gumby.scenario import ScenarioRunner
 
 class ScenarioPreProcessor(ScenarioRunner):
@@ -50,19 +50,23 @@ class ScenarioPreProcessor(ScenarioRunner):
         desired_mean = float(desired_mean)
         min_online = float(min_online)
 
-        def get_delay():
+        def get_delay(step):
             if churn_type == 'expon':
                 return min_online + expovariate(1.0 / (desired_mean - min_online))
             elif churn_type == 'fixed':
+                if step == 1:
+                    return randint(min_online, desired_mean)
                 return desired_mean
             else:
                 raise NotImplementedError('only expon churn is implemented, got %s' % churn_type)
 
         go_online = random() < 0.5
+        step = 1
         while tstmp < max_tstmp:
             yield "@0:%d %s" % (tstmp, "online" if go_online else "offline")
-            tstmp += get_delay()
+            tstmp += get_delay(step)
             go_online = not go_online
+            step += 1
 
     def churn_pattern(self, tstmp, max_tstmp, pattern, min_online=5.0):
         pattern = [online / 100.0 for online in map(float, pattern.split(','))]

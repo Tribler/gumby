@@ -14,7 +14,6 @@ if(file.exists("send_diff_reduced.txt")){
 	subdf <- df[,3:ncol(df)]
 	subdf[] <- lapply(subdf, function(x) x/1024.0)
 	df <- cbind(df['time'], subdf)
-	
 	df <- mean_max_min(num_columns, df)
 	
 	if (num_columns <= 1000){
@@ -22,7 +21,7 @@ if(file.exists("send_diff_reduced.txt")){
 	}
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df, df2)
 	if (num_columns <= 1000){
 		p <- p + geom_point(data = df, aes(time, value, group=variable, colour=variable, size=value), alpha=0.8)  + scale_size(range = c(1, 3))
 	} else {
@@ -44,7 +43,6 @@ if(file.exists("received_diff_reduced.txt")){
 	subdf <- df[,3:ncol(df)]
 	subdf[] <- lapply(subdf, function(x) x/1024.0)
 	df <- cbind(df['time'], subdf)
-	
 	df <- mean_max_min(num_columns, df)
 	
 	if (num_columns <= 1000){
@@ -52,7 +50,7 @@ if(file.exists("received_diff_reduced.txt")){
 	}
 	
 	p <- ggplot(df) + theme_bw()
-	p <- add_annotations(p, df2)
+	p <- add_annotations(p, df, df2)
 	if (num_columns <= 1000){
 		p <- p + geom_point(data = df, aes(time, value, group=variable, colour=variable, size=value), alpha=0.8)  + scale_size(range = c(1, 3))
 	} else {
