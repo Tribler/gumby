@@ -128,6 +128,8 @@ class AllChannelClient(DispersyExperimentScriptClient):
                 self.torrentindex += 1
                 torrents.append((infohash, int(time()), name, files, trackers))
         if torrents:
+            import sys
+            print >> sys.stderr, "Current tor_index", self.torrentindex, "this batch", len(torrents)
             self.my_channel._disp_create_torrents(torrents)
 
     @call_on_dispersy_thread
