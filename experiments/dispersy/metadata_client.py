@@ -60,11 +60,6 @@ class MetadataClient(DispersyExperimentScriptClient):
 
         self.set_community_kwarg('integrate_with_tribler', False)
 
-    def start_dispersy(self):
-        DispersyExperimentScriptClient.start_dispersy(self)
-
-        self.community_args = (self._my_member,)
-
     def registerCallbacks(self):
         self.scenario_runner.register(self.insert_metadata, 'insert_metadata')
 
