@@ -38,8 +38,6 @@
 # Code:
 import sys
 from os import path, environ
-from time import time
-from random import sample
 from sys import path as pythonpath
 from hashlib import sha1
 
