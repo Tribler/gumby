@@ -157,7 +157,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     def initializeCrypto(self):
         from Tribler.dispersy.crypto import ECCrypto, NoCrypto
-        if environ.get('TRACKER_CRYPTO', 'ECCrypto'):
+
+        if environ.get('TRACKER_CRYPTO', 'ECCrypto') == 'ECCrypto':
+            msg('Turning on ECCrypto')
             return ECCrypto()
         msg('Turning off Crypto')
         return NoCrypto()
