@@ -62,17 +62,16 @@ class MetadataClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.insert_metadata, 'insert_metadata')
 
     @call_on_dispersy_thread
-    def insert_metadata(self, hash_data="", amount=1):
+    def insert_metadata(self, infohash_data="", roothash_data="", amount=1):
         amount = int(amount)
         for _ in xrange(amount):
             msg('creating-metadata')
 
-            from Tribler.community.metadata.payload import METADATA_HASHTYPE_BITTORRENT, METADATA_HASHTYPE_SWIFT
-            hash_type = METADATA_HASHTYPE_BITTORRENT
-            hash_value = sha1(hash_data).digest()
+            infohash = sha1(infohash_data).digest()
+            roothash = sha1(roothash_data).digest()
             data_list = [(u"name", u"test-metadata"), (u"category", u"test")]
 
-            self._community.create_metadata_message(hash_type, hash_value, data_list)
+            self._community.create_metadata_message(infohash, roothash, data_list)
 
 
 if __name__ == '__main__':
