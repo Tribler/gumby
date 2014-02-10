@@ -58,10 +58,13 @@ class MetadataClient(DispersyExperimentScriptClient):
 
         self.set_community_kwarg('integrate_with_tribler', False)
 
-        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
-
     def registerCallbacks(self):
         self.scenario_runner.register(self.insert_metadata, 'insert_metadata')
+
+    def start_dipersy(self):
+        DispersyExperimentScriptClient.start_dispersy(self)
+
+        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
 
     @call_on_dispersy_thread
     def insert_metadata(self, infohash_data="", roothash_data="", amount=1):
