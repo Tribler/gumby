@@ -61,8 +61,9 @@ class MetadataClient(DispersyExperimentScriptClient):
     def registerCallbacks(self):
         self.scenario_runner.register(self.insert_metadata, 'insert_metadata')
 
-    def start_dispersy(self):
-        DispersyExperimentScriptClient.start_dispersy(self)
+    @call_on_dispersy_thread
+    def online(self):
+        DispersyExperimentScriptClient.online(self)
 
         self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
 
