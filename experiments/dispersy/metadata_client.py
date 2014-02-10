@@ -58,6 +58,8 @@ class MetadataClient(DispersyExperimentScriptClient):
 
         self.set_community_kwarg('integrate_with_tribler', False)
 
+        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
+
     def registerCallbacks(self):
         self.scenario_runner.register(self.insert_metadata, 'insert_metadata')
 
@@ -72,6 +74,17 @@ class MetadataClient(DispersyExperimentScriptClient):
             data_list = [(u"name", u"test-metadata"), (u"category", u"test")]
 
             self._community.create_metadata_message(infohash, roothash, data_list)
+
+    def log_statistics(self):
+        prev_scenario_statistics = {}
+
+        while True:
+            all_metadata_msg = self._community._metadata_db.GetAllMetadataMessage()
+            metadata_msg_count = len(all_metadata_msg)
+
+            self.print_on_change("scenario-statistics", prev_scenario_statistics, {"metadata_msg_count": metadata_msg_count})
+
+            yield 5.0
 
 
 if __name__ == '__main__':
