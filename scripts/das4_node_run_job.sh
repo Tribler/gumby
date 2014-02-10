@@ -41,7 +41,7 @@
 let "PROCESSES_PER_NODE=$DAS4_INSTANCES_TO_RUN/$DAS4_NODE_AMOUNT"
 let "PLUS_ONE_NODES=$DAS4_INSTANCES_TO_RUN%$DAS4_NODE_AMOUNT"
 
-# let will return 1 if the last expression evaluates to 0, so set -e after it
+# let will return 1 if the last expression evaluates to 0, so set -e after calling it
 set -e
 
 PROCESSES_IN_THIS_NODE=$PROCESSES_PER_NODE
@@ -68,7 +68,7 @@ for INSTANCE in $(seq 1 1 $PROCESSES_IN_THIS_NODE); do
 done
 
 # @CONF_OPTION DAS4_NODE_TIMEOUT: Time in seconds to wait for the sub-processes to run before killing them. (required)
-process_guard.py -f $CMDFILE -t $DAS4_NODE_TIMEOUT -o $OUTPUT_DIR -m $OUTPUT_DIR  -i 5 2>&1 | tee process_guard.log ||:
+(process_guard.py -f $CMDFILE -t $DAS4_NODE_TIMEOUT -o $OUTPUT_DIR -m $OUTPUT_DIR  -i 5 2>&1 | tee process_guard.log) ||:
 
 rm $CMDFILE
 
