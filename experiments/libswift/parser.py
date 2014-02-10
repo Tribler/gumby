@@ -105,8 +105,8 @@ def parse_ledbat(logDir, outputDir, clientName):
                 else:
                     fd.write( "{0} 0 0 0 0\n".format( time ) )
 
-            elif clientName is "leecher":
-                if split[4] != '0' and len(split) == 10:
+            elif clientName is "leecher" and len(split) == 10:
+                if split[4] != '0':
                     fd.write( "{0} 0 0 {1} {2}\n".format( time, split[9], split[8] ) )
 
     finally:
