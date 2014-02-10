@@ -86,7 +86,7 @@ class MetadataClient(DispersyExperimentScriptClient):
             all_metadata_msg = self._community._metadata_db.getAllMetadataMessage()
             metadata_msg_count = len(all_metadata_msg)
 
-            self.print_on_change("scenario-statistics", prev_scenario_statistics, {"metadata_msg_count": metadata_msg_count})
+            prev_scenario_statistics = self.print_on_change("scenario-statistics", prev_scenario_statistics, {"metadata_msg_count": metadata_msg_count})
 
             yield 5.0
 
