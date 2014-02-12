@@ -35,6 +35,7 @@ probe python.function.entry
 	backtrace[tid(), i[tid()]] = sprintf("%s:%s", filename, funcname);
 	times[tid(), funcname] = gettimeofday_us();
 	doesIO[tid(), i[tid()]] = 0;
+	// print IN file_mem lineno
 }
 
 probe python.function.return
@@ -60,6 +61,8 @@ probe python.function.return
 		delete ioWriteCounter[tid(), i[tid()]];
 		delete backtrace[tid(), i[tid()]];
 		i[tid()] -= 1
+		
+		// print OUT file_mem lineno bytes_out newline
 	}
 
 }
@@ -89,6 +92,10 @@ probe syscall.read.return {
 */
 probe begin {
 	printf("\"TIMESTAMP\",\"TYPE\",\"FILE\",\"TRACE\",\"BYTES\",\"PROCESS\",\"TIME\"\n");
+}
+
+probe end {
+ // print mapping fd -> filename 
 }
 
 /*

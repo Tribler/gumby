@@ -40,6 +40,9 @@
 
 set -e
 
+echo $LD_LIBRARY_PATH
+ldd /home/jenkins/venv/inst/bin/python
+
 # @CONF_OPTION NOSE_RUN_DIR: Specify from which directory nose should run (default is $PWD)
 if [ ! -z "$NOSE_RUN_DIR" ]; then
     cd $NOSE_RUN_DIR

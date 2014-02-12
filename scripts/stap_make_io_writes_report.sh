@@ -21,6 +21,8 @@ if [ ! -d "$SCRIPTDIR" ]; then
     exit 1
 fi
 
+$SCRIPTDIR/stap_preprocess_csv.sh $2
+
 Rscript $SCRIPTDIR/r/io_writes_report.R $1 $2 "$3"
 
 cd $SCRIPTDIR
