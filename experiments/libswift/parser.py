@@ -138,10 +138,6 @@ def check_single_experiment(inputDir, outputDir):
             parse_stderr( os.path.join(inputDir, 'dst', '111'), outputDir, "leecher" )
             parse_ledbat( os.path.join(inputDir, 'dst', '111'), outputDir, "leecher" )
             parse_ledbat( os.path.join(inputDir, 'src'), outputDir, "seeder" )
-            if os.environ.get("R_SCRIPTS_TO_RUN"):
-                os.environ["R_SCRIPTS_TO_RUN"] = os.environ["R_SCRIPTS_TO_RUN"] + " ledbat.r requests.r"
-            else:
-                os.environ["R_SCRIPTS_TO_RUN"] = "ledbat.r requests.r"
     else:
         print >> sys.stderr, "Missing stderr log for first leecher!!"
 
