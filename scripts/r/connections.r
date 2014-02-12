@@ -44,7 +44,7 @@ while(file.exists(paste("total_walked_", toString(i), "_reduced.txt", sep = ''))
 	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df, df2)
-	p <- p + facet_grid(category ~ ., scales = "free_y")
+	p <- p + facet_grid(category ~ .)
 	p <- p + geom_step(aes(time, mean), colour='2')
 	p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
 	p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3))
