@@ -102,7 +102,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.nocache = not self.str2bool(cache)
 
     def initializeCrypto(self):
-        from Tribler.community.privatesemantic.elgamalcrypto import ElgamalCrypto, NoElgamalCrypto
+        from Tribler.community.privatesemantic.crypto.elgamalcrypto import ElgamalCrypto, NoElgamalCrypto
         if environ.get('TRACKER_CRYPTO', 'ECCrypto') == 'ECCrypto':
             return ElgamalCrypto()
 
