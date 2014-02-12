@@ -40,13 +40,23 @@
 
 set -e
 
-echo $LD_LIBRARY_PATH
-ldd /home/jenkins/venv/inst/bin/python
+#echo $LD_LIBRARY_PATH
+#ldd /home/jenkins/venv/inst/bin/python
+
+#pip install PIL --upgrade
+
+
 
 # @CONF_OPTION NOSE_RUN_DIR: Specify from which directory nose should run (default is $PWD)
 if [ ! -z "$NOSE_RUN_DIR" ]; then
     cd $NOSE_RUN_DIR
 fi
+
+env
+
+# see if we can fix the PIL error
+sed -i "s/from Tribler.Utilities import LinuxSingleInstanceChecker/from Tribler.Utilities import LinuxSingleInstanceChecker\\nfrom PIL import PngImagePlugin/g" $NOSE_TESTS_TO_RUN/test_as_server.py 
+#sed -i "s/from Tribler.Utilities import LinuxSingleInstanceChecker/from Tribler.Utilities import LinuxSingleInstanceChecker\\nfrom PIL import PngImagePlugin/g" $NOSE_TESTS_TO_RUN
 
 # Run pylint and sloccount in the background to save time
 nice pylint --output-format=parseable --reports=y  Tribler > $OUTPUT_DIR/pylint.out 2> $OUTPUT_DIR/pylint.log &
@@ -63,7 +73,7 @@ echo Nose will run from $PWD
 # TODO(emilon): Make the timeout configurable
 
 # @CONF_OPTION NOSE_TESTS_TO_RUN: Specify which tests to run in nose syntax. (default is everything nose can find from within NOSE_RUN_DIR)
-NOSECMD="python /usr/bin/nosetests -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml  --with-xunit --xunit-file=$OUTPUT_DIR/nosetests.xml --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive $NOSE_TESTS_TO_RUN"
+NOSECMD="nosetests -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml  --with-xunit --xunit-file=$OUTPUT_DIR/nosetests.xml --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive $NOSE_TESTS_TO_RUN"
 process_guard.py -t 3600 -m $OUTPUT_DIR -c "$NOSECMD"
 
 echo Nose finished.

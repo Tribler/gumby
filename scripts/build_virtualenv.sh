@@ -352,10 +352,14 @@ if [ ! -e $VENV/include/gmp.h ]; then
     make install
 fi
 
+# remove pil cause its a piece of crap
+rm -f $VENV/bin/pil*
+rm -rf $VENV/lib/python2.7/site-packages/PIL
+
+pip install pillow --upgrade --force-reinstall
 
 echo "
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
-PIL
 configobj
 gmpy==1.16
 ipython
@@ -370,6 +374,7 @@ pysqlite
 pyzmq
 twisted # Used by the config server/clients
 unicodecsv # used for report generation scripts from Cor-Paul
+pillow
 " > ~/requirements.txt
 
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
