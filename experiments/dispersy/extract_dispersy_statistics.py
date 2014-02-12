@@ -380,10 +380,9 @@ class BasicExtractor(AbstractHandler):
                 self.c_blstats[cid][2] = community.get('sync_bloom_new', self.c_blstats[cid][2])
 
             print >> self.h_total_connections, timestamp, timeoffset,
-            for community in self.communities:
-                print >> self.h_total_connections, self.c_communities[community][0],
-            for community in self.communities:
-                print >> self.h_total_connections, self.c_communities[community][1],
+            for i in range(5):
+                for community in self.communities:
+                    print >> self.h_total_connections, self.c_communities[community][i],
             print >> self.h_total_connections, ''
 
             print >> self.h_blstats, timestamp, timeoffset,
