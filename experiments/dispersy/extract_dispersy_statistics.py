@@ -310,7 +310,7 @@ class BasicExtractor(AbstractHandler):
 
     def new_file(self, node_nr, filename, outputdir):
         self.c_dropped_record = 0
-        self.c_communities = defaultdict(lambda: [0, 0])
+        self.c_communities = defaultdict(lambda: [0, 0, 0, 0, 0])
         self.c_blstats = defaultdict(lambda: [0, 0, 0])
 
         self.h_stat = open(os.path.join(outputdir, "stat.txt"), "w+")
@@ -322,7 +322,7 @@ class BasicExtractor(AbstractHandler):
         print >> self.h_drop, "0 0 0"
 
         self.h_total_connections = open(os.path.join(outputdir, "total_connections.txt"), "w+")
-        print >> self.h_total_connections, "# timestamp timeoffset (num-connections +) (sum-incomming-connections+)"
+        print >> self.h_total_connections, "# timestamp timeoffset (num-connections +) (num-walked + ) (num-stumbled + ) (num-intro + ) (sum-incoming-connections+)"
         print >> self.h_total_connections, "#", " ".join(self.communities)
         print >> self.h_total_connections, "0 0" + (" 0 0" * len(self.communities))
 
@@ -336,14 +336,13 @@ class BasicExtractor(AbstractHandler):
 
         if self.c_communities.values():
             print >> self.h_total_connections, timestamp, timeoffset,
-            for community in self.communities:
-                print >> self.h_total_connections, self.c_communities[community][0],
-            for community in self.communities:
-                    print >> self.h_total_connections, self.c_communities[community][1],
+            for i in range(5):
+                for community in self.communities:
+                    print >> self.h_total_connections, self.c_communities[community][i],
             print >> self.h_total_connections, ''
 
-            max_incomming_connections = max(nr_candidates for nr_candidates, _ in self.c_communities.values())
-            self.nr_connections.append((max_incomming_connections, node_nr))
+            max_incoming_connections = max(nr_candidates[0] for nr_candidates in self.c_communities.values())
+            self.nr_connections.append((max_incoming_connections, node_nr))
             self.nr_connections.sort(reverse=True)
             self.nr_connections = self.nr_connections[:10]
 
@@ -371,17 +370,19 @@ class BasicExtractor(AbstractHandler):
         if 'communities' in value:
             for cid, community in value['communities'].iteritems():
                 self.c_communities[cid][0] = community.get('nr_candidates', self.c_communities[cid][0])
-                self.c_communities[cid][1] = community.get('nr_stumbled_candidates', self.c_communities[cid][1])
+                self.c_communities[cid][1] = community.get('nr_walked', self.c_communities[cid][1])
+                self.c_communities[cid][2] = community.get('nr_stumbled', self.c_communities[cid][2])
+                self.c_communities[cid][3] = community.get('nr_intro', self.c_communities[cid][3])
+                self.c_communities[cid][4] = community.get('total_stumbled_candidates', self.c_communities[cid][4])
 
                 self.c_blstats[cid][0] = community.get('sync_bloom_reuse', self.c_blstats[cid][0])
                 self.c_blstats[cid][1] = community.get('sync_bloom_skip', self.c_blstats[cid][1])
                 self.c_blstats[cid][2] = community.get('sync_bloom_new', self.c_blstats[cid][2])
 
             print >> self.h_total_connections, timestamp, timeoffset,
-            for community in self.communities:
-                print >> self.h_total_connections, self.c_communities[community][0],
-            for community in self.communities:
-                print >> self.h_total_connections, self.c_communities[community][1],
+            for i in range(5):
+                for community in self.communities:
+                    print >> self.h_total_connections, self.c_communities[community][i],
             print >> self.h_total_connections, ''
 
             print >> self.h_blstats, timestamp, timeoffset,
@@ -407,7 +408,10 @@ class BasicExtractor(AbstractHandler):
 
         for column in xrange(len(self.communities)):
             extract_statistics.merge_records("total_connections.txt", 'total_connections_%d.txt' % (column + 1), 2 + column)
-            extract_statistics.merge_records("total_connections.txt", 'sum_incomming_connections_%d.txt' % (column + 1), 2 + len(self.communities) + column)
+            extract_statistics.merge_records("total_connections.txt", 'total_walked_%d.txt' % (column + 1), 2 + len(self.communities) + column)
+            extract_statistics.merge_records("total_connections.txt", 'total_stumbled_%d.txt' % (column + 1), 2 + len(self.communities) + len(self.communities) + column)
+            extract_statistics.merge_records("total_connections.txt", 'total_intro_%d.txt' % (column + 1), 2 + len(self.communities) + len(self.communities) + len(self.communities) + column)
+            extract_statistics.merge_records("total_connections.txt", 'sum_incomming_connections_%d.txt' % (column + 1), 2 + len(self.communities) + len(self.communities) + len(self.communities) + len(self.communities) + column)
 
             extract_statistics.merge_records("bl_stat.txt", 'bl_reuse_%d.txt' % (column + 1), 2 + column)
             extract_statistics.merge_records("bl_stat.txt", 'bl_skip_%d.txt' % (column + 1), 2 + len(self.communities) + column)

@@ -4,7 +4,7 @@ import os
 from math import ceil
 from collections import defaultdict
 
-def reduce(base_directory, nrlines, inputfile, outputfile, removeinputfile = True):
+def reduce(base_directory, nrlines, inputfile, outputfile, removeinputfile=True):
     inputfile = os.path.join(base_directory, inputfile)
     outputfile = os.path.join(base_directory, outputfile)
 
@@ -49,7 +49,7 @@ def reduce(base_directory, nrlines, inputfile, outputfile, removeinputfile = Tru
 
         ifp.close()
         ofp.close()
-        
+
         if removeinputfile:
             os.remove(inputfile)
 
@@ -60,6 +60,9 @@ def main(input_directory, nrlines):
     total_communities = 1
     while os.path.exists(os.path.join(input_directory, 'total_connections_%d.txt' % total_communities)):
         reduce(input_directory, nrlines, 'total_connections_%d.txt' % total_communities, 'total_connections_%d_reduced.txt' % total_communities)
+        reduce(input_directory, nrlines, 'total_walked_%d.txt' % total_communities, 'total_walked_%d_reduced.txt' % total_communities)
+        reduce(input_directory, nrlines, 'total_stumbled_%d.txt' % total_communities, 'total_stumbled_%d_reduced.txt' % total_communities)
+        reduce(input_directory, nrlines, 'total_intro_%d.txt' % total_communities, 'total_intro_%d_reduced.txt' % total_communities)
         reduce(input_directory, nrlines, 'sum_incomming_connections_%d.txt' % total_communities, 'sum_incomming_connections_%d_reduced.txt' % total_communities)
 
         reduce(input_directory, nrlines, 'bl_reuse_%d.txt' % total_communities, 'bl_reuse_%d_reduced.txt' % total_communities)

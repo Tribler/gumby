@@ -32,6 +32,32 @@ while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep =
 }
 
 i = 1
+while(file.exists(paste("total_walked_", toString(i), "_reduced.txt", sep = ''))){
+	df <- NULL
+	for(category in c('walked', 'intro', 'stumbled')){
+		subdf <- read.table(paste("total_",category,"_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
+		subdf <- mean_max_min(1001, subdf)
+		subdf$category <- category
+		
+		df <- rbind(df, subdf)
+	}
+	
+	p <- ggplot(df) + theme_bw()
+	p <- add_annotations(p, df, df2)
+	p <- p + facet_grid(category ~ .)
+	p <- p + geom_step(aes(time, mean), colour='2')
+	p <- p + geom_ribbon(alpha = 0.3, aes(time, mean, ymin=min, ymax=max, linetype=NA))
+	p <- p + geom_ribbon(alpha = 0.3, aes(time, ymin=Q1, ymax=Q3))
+	p <- p + theme(legend.position = "none")
+	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Connections per peer\n")
+	p <- p + xlim(minX, maxX)
+	p
+	
+	ggsave(file=paste("type_connections_", toString(i), ".png", sep = ''), width=8, height=6, dpi=100)
+	i = i + 1
+}
+
+i = 1
 while(file.exists(paste("sum_incomming_connections_", toString(i), "_reduced.txt", sep = ''))){
 	df <- read.table(paste("sum_incomming_connections_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
 	df <- subset(df, df$time == max(df$time))
