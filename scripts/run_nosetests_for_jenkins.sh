@@ -40,23 +40,10 @@
 
 set -e
 
-#echo $LD_LIBRARY_PATH
-#ldd /home/jenkins/venv/inst/bin/python
-
-#pip install PIL --upgrade
-
-
-
 # @CONF_OPTION NOSE_RUN_DIR: Specify from which directory nose should run (default is $PWD)
 if [ ! -z "$NOSE_RUN_DIR" ]; then
     cd $NOSE_RUN_DIR
 fi
-
-env
-
-# see if we can fix the PIL error
-sed -i "s/from Tribler.Utilities import LinuxSingleInstanceChecker/from Tribler.Utilities import LinuxSingleInstanceChecker\\nfrom PIL import PngImagePlugin/g" $NOSE_TESTS_TO_RUN/test_as_server.py 
-#sed -i "s/from Tribler.Utilities import LinuxSingleInstanceChecker/from Tribler.Utilities import LinuxSingleInstanceChecker\\nfrom PIL import PngImagePlugin/g" $NOSE_TESTS_TO_RUN
 
 # Run pylint and sloccount in the background to save time
 nice pylint --output-format=parseable --reports=y  Tribler > $OUTPUT_DIR/pylint.out 2> $OUTPUT_DIR/pylint.log &

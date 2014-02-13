@@ -66,6 +66,9 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
     For WX:
       sudo apt-get build-dep wxwidgets2.8
       sudo apt-get install libpangox-1.0-dev
+      
+    For Boost:
+      sudo apt-get install libboost-system-dev libboost-python-dev
 "
     mkdir -p $VENV/src
     pushd $VENV/src
@@ -79,7 +82,8 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
 
     if [ "$WITH_SYSTEMTAP" == yes ]; then
         if [ ! -e libdwarf-*gz ]; then
-            wget http://reality.sgiweb.org/davea/libdwarf-20130207.tar.gz
+            #wget http://reality.sgiweb.org/davea/libdwarf-20130207.tar.gz
+            wget http://pkgs.fedoraproject.org/repo/pkgs/libdwarf/libdwarf-20130207.tar.gz/64b42692e947d5180e162e46c689dfbf/libdwarf-20130207.tar.gz
         fi
 
         if [ ! -d libdwarf-*/ ]; then
@@ -201,7 +205,8 @@ mkdir -p $M2CDEPS
 if [ ! -e $M2CDEPS/lib/libcrypto.a ]; then
     pushd $VENV/src
     if [ ! -e openssl-*.tar.gz ]; then
-        wget --no-check-certificate https://www.openssl.org/source/openssl-1.0.1e.tar.gz
+        #wget --no-check-certificate https://www.openssl.org/source/openssl-1.0.1e.tar.gz
+        wget --no-check-certificate https://www.openssl.org/source/openssl-1.0.1f.tar.gz
     fi
     if [ ! -d openssl-*/ ]; then
         tar xvzpf openssl*tar.gz
@@ -210,7 +215,7 @@ if [ ! -e $M2CDEPS/lib/libcrypto.a ]; then
 
     ./config -fPIC --prefix=$M2CDEPS threads --openssldir=$M2CDEPS/share/openssl
     make -j2 || make #Fails when building in multithreaded mode (at least with -j24)
-    make install
+    make install_sw
     # Proper names for M2Crypto
     #ln -sf $M2CDEPS/lib/libssl.so.1.0.0 $M2CDEPS/lib/libssl.so.10
     #ln -sf $M2CDEPS/lib/libcrypto.so.1.0.0 $M2CDEPS/lib/libcrypto.so.10
@@ -253,21 +258,23 @@ python -c "from M2Crypto import EC"
 
 # Build libboost
 # TODO(vladum): If you use this, see TODO about libtorrent's bug.
-# if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
-#     pushd $VENV/src
-#     wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.53.0/boost_1_53_0.tar.bz2
-#     tar xavf boost_*.tar.bz2
-#     cd boost*/
-#     ./bootstrap.sh
-#     ./b2 -j$(grep process /proc/cpuinfo | wc -l) --prefix=$VENV install
-#     popd
-# fi
+ if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
+     pushd $VENV/src
+    # wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.42.0/boost_1_42_0.tar.bz2
+    wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.bz2
+    tar xavf boost_*.tar.bz2
+     cd boost*/
+     ./bootstrap.sh
+     #./b2 -j$(grep process /proc/cpuinfo | wc -l) --prefix=$VENV install
+     ./bjam  threading=multi --prefix=$VENV install 
+     popd
+ fi
 
 # Build Libtorrent and its python bindings
 pushd $VENV/src
 if [ ! -e $VENV/lib*/python*/site-packages/libtorrent.so ]; then
     if [ ! -e libtorrent-rasterbar-*gz ]; then
-        wget --no-check-certificate https://libtorrent.googlecode.com/files/libtorrent-rasterbar-0.16.10.tar.gz
+        wget --no-check-certificate http://downloads.sourceforge.net/project/libtorrent/libtorrent/libtorrent-rasterbar-0.16.15.tar.gz
     fi
     if [ ! -d libtorrent-rasterbar*/ ]; then
         tar xavf libtorrent-rasterbar-*.tar.gz
@@ -278,12 +285,14 @@ if [ ! -e $VENV/lib*/python*/site-packages/libtorrent.so ]; then
     # has been renamed in version 1.43.0 to boost::system::system_category().
     # Using a newer Boost requires patching libtorrent, so, for now, we will use
     # the system's Boost, which is 1.41.0 on DAS4 and works fine.
-    ./configure --with-boost-python --with-boost-system=boost_system --prefix=$VENV --enable-python-binding
+    #./configure --with-boost-python --with-boost-system=boost_system --prefix=$VENV --enable-python-binding
+    #./configure --with-boost-python --with-boost-system=lib --prefix=$VENV --enable-python-binding
+    ./configure --with-boost-python  --prefix=$VENV --enable-python-binding --with-boost-libdir=$VENV/lib --with-boost=$VENV
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
     cd $VENV/lib
     # TODO(vladum): Uncomment for custom Boost, but see upper comment.
-    # ln -fs libboost_python.so libboost_python-py27.so.1.53.0
+    ln -fs libboost_python.so libboost_python-py27.so.1.54.0
     cd ../..
 fi
 
@@ -363,7 +372,6 @@ Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 configobj
 gmpy==1.16
 ipython
-netifaces
 nose
 nosexcover
 ntplib
@@ -382,6 +390,9 @@ sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
 
 # numpy # used for report generation scripts from Cor-Paul, installed all by itself as it fails to build if we pass CFLAGS & co.
 pip install numpy
+
+# install netifaces separately because it requires some params now
+pip install netifaces --allow-external netifaces --allow-unverified netifaces 
 
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~/requirements.txt
 
