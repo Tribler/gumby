@@ -126,7 +126,15 @@ CONFIG_FILE_HEADER = '''\
 #
 '''
 if __name__ == '__main__':
+    if len(argv) != 2:
+        print "Usage:\n    %s experiments/myexperiment/myconfig.conf" % argv[0]
+        exit(3)
     config_file_path = argv[1]
+    config_file_dir = path.dirname(config_file_path)
+    if not path.exists(config_file_dir):
+        print "Directory %s does not exist, please create it first." % config_file_dir
+        exit(2)
+
     if path.exists(config_file_path):
         print "Specified output file already exists, bailing out."
         exit(1)
