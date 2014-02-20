@@ -88,7 +88,12 @@ git clean -fd
 
 COUNT=0
 
-for REV in $(git log --topo-order --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f2 -d" "); do
+GIT_LOG_CMD=""
+if [ ! -z "$STAP_RUN_REVS" ]; then
+	GIT_LOG_CMD="--topo-order --merges --quiet $STAP_RUN_REVS"
+fi
+
+for REV in $(git log $GIT_LOG_CMD | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
 
     git checkout $REV

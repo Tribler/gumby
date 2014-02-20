@@ -67,8 +67,6 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
       sudo apt-get build-dep wxwidgets2.8
       sudo apt-get install libpangox-1.0-dev
       
-    For Boost:
-      sudo apt-get install libboost-system-dev libboost-python-dev
 "
     mkdir -p $VENV/src
     pushd $VENV/src
@@ -82,7 +80,6 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
 
     if [ "$WITH_SYSTEMTAP" == yes ]; then
         if [ ! -e libdwarf-*gz ]; then
-            #wget http://reality.sgiweb.org/davea/libdwarf-20130207.tar.gz
             wget http://pkgs.fedoraproject.org/repo/pkgs/libdwarf/libdwarf-20130207.tar.gz/64b42692e947d5180e162e46c689dfbf/libdwarf-20130207.tar.gz
         fi
 
@@ -260,7 +257,6 @@ python -c "from M2Crypto import EC"
 # TODO(vladum): If you use this, see TODO about libtorrent's bug.
  if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
      pushd $VENV/src
-    # wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.42.0/boost_1_42_0.tar.bz2
     wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.bz2
     tar xavf boost_*.tar.bz2
      cd boost*/
@@ -285,8 +281,6 @@ if [ ! -e $VENV/lib*/python*/site-packages/libtorrent.so ]; then
     # has been renamed in version 1.43.0 to boost::system::system_category().
     # Using a newer Boost requires patching libtorrent, so, for now, we will use
     # the system's Boost, which is 1.41.0 on DAS4 and works fine.
-    #./configure --with-boost-python --with-boost-system=boost_system --prefix=$VENV --enable-python-binding
-    #./configure --with-boost-python --with-boost-system=lib --prefix=$VENV --enable-python-binding
     ./configure --with-boost-python  --prefix=$VENV --enable-python-binding --with-boost-libdir=$VENV/lib --with-boost=$VENV
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
