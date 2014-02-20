@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Author: Niels Zeilemaker
 
 import sys
