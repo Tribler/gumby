@@ -58,11 +58,8 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def testset(self, infohash):
-        infohash_str = infohash + " "* (20 - len(infohash))
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
-
         self._community._mypref_db.addTestPreference(infohash)
-        self.test_set.add(infohash_str)
 
     def availability(self, infohash, peers):
         infohash_str = infohash + " "* (20 - len(infohash))
