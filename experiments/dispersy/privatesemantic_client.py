@@ -194,7 +194,7 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
                 else:
                     self.not_connected_taste_buddies.add(sock_addr)
 
-            connected_friends = len(self.taste_buddies) - len(self.not_connected_taste_buddies)
+            connected_friends = min(len(self.taste_buddies) - len(self.not_connected_taste_buddies), 10)
             max_connected = min(int(10 * self.bootstrap_percentage), len(self.taste_buddies))
             if max_connected:
                 bootstrapped = connected_friends / float(max_connected)
