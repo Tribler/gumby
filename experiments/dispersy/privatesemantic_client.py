@@ -41,7 +41,6 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
     def registerCallbacks(self):
         self.scenario_runner.register(self.download, 'download')
         self.scenario_runner.register(self.testset, 'testset')
-        self.scenario_runner.register(self.availability, 'availability')
         self.scenario_runner.register(self.taste_buddy, 'taste_buddy')
         self.scenario_runner.register(self.connect_to_taste_buddies, 'connect_to_taste_buddies')
 
@@ -60,12 +59,6 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
     def testset(self, infohash):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
         self._community._mypref_db.addTestPreference(infohash)
-
-    def availability(self, infohash, peers):
-        infohash_str = infohash + " "* (20 - len(infohash))
-
-        peers = [peer for peer in peers.split(',') if peer != str(self.my_id) and self.get_peer_ip_port_by_id(peer)]
-        self.file_availability[infohash_str] = peers
 
     def taste_buddy(self, peer_id, similarity):
         peer_id = int(peer_id)
