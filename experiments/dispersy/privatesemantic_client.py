@@ -82,11 +82,11 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
     def set_community_class(self, commtype):
         from Tribler.community.privatesemantic.test import NoFSemanticCommunity, HFSemanticCommunity, PFSemanticCommunity, PoliFSemanticCommunity
 
-        if self.community_type == 'nof':
+        if commtype == 'nof':
             self.community_class = NoFSemanticCommunity
-        elif self.community_type == 'hsem':
+        elif commtype == 'hsem':
             self.community_class = HFSemanticCommunity
-        elif self.community_type == 'polisem':
+        elif commtype == 'polisem':
             self.community_class = PoliFSemanticCommunity
         else:
             self.community_class = PFSemanticCommunity

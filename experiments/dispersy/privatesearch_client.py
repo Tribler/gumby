@@ -138,13 +138,13 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         from Tribler.community.privatesearch.community import SearchCommunity, PSearchCommunity, HSearchCommunity, PoliSearchCommunity
         from Tribler.community.privatesearch.oneswarm.community import PoliOneSwarmCommunity
 
-        if self.community_type == 'search':
+        if commtype == 'search':
             self.community_class = SearchCommunity
-        elif self.community_type == 'hsearch':
+        elif commtype == 'hsearch':
             self.community_class = HSearchCommunity
-        elif self.community_type == 'polisearch':
+        elif commtype == 'polisearch':
             self.community_class = PoliSearchCommunity
-        elif self.community_type == 'oneswarm':
+        elif commtype == 'oneswarm':
             self.community_class = PoliOneSwarmCommunity
         else:
             self.community_class = PSearchCommunity
