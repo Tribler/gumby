@@ -45,6 +45,7 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.taste_buddy, 'taste_buddy')
         self.scenario_runner.register(self.connect_to_taste_buddies, 'connect_to_taste_buddies')
 
+        self.scenario_runner.register(self.set_community_class, 'set_community_class')
         self.scenario_runner.register(self.set_manual_connect, 'set_manual_connect')
         self.scenario_runner.register(self.set_random_connect, 'set_random_connect')
         self.scenario_runner.register(self.set_bootstrap_percentage, 'set_bootstrap_percentage')
@@ -52,11 +53,8 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def download(self, infohash):
-        infohash_str = infohash + " "* (20 - len(infohash))
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
-
         self._community._mypref_db.addMyPreference(infohash, {})
-        self._community._torrent_db.addTorrent(infohash_str, True)
 
     @call_on_dispersy_thread
     def testset(self, infohash):
@@ -64,7 +62,6 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
 
         self._community._mypref_db.addTestPreference(infohash)
-        self._community._torrent_db.addTorrent(infohash_str, False)
         self.test_set.add(infohash_str)
 
     def availability(self, infohash, peers):

@@ -93,6 +93,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.perform_searches, 'perform_searches')
         self.scenario_runner.register(self.connect_to_taste_buddies, 'connect_to_taste_buddies')
 
+        self.scenario_runner.register(self.set_community_class, 'set_community_class')
         self.scenario_runner.register(self.set_manual_connect, 'set_manual_connect')
         self.scenario_runner.register(self.set_random_connect, 'set_random_connect')
         self.scenario_runner.register(self.set_bootstrap_percentage, 'set_bootstrap_percentage')
