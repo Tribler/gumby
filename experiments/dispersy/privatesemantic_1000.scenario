@@ -8,7 +8,7 @@
 @0:0 set_community_kwarg encryption $ENCRYPTION
 @0:0 set_community_kwarg max_prefs $MAX_PREFS
 @0:0 set_community_kwarg max_fprefs $MAX_F_PREFS
-@0:0 set_community_kwarg foward_to $FORWARD_TO
+@0:0 set_community_kwarg send_simi_reveal $SIMI_REVEAL
 
 @0:0 use_memory_database
 @0:0 start_dispersy
