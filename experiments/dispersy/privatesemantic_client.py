@@ -68,6 +68,16 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         if ipport:
             self.taste_buddies[ipport] = similarity
             self.not_connected_taste_buddies.add(ipport)
+            
+            similarities = self.taste_buddies.keys()
+            similarities.sort(reverse = True, cmp = lambda a,b: cmp(self.taste_buddies[a], self.taste_buddies[b]))
+            
+            for ipport in similarities[10:]:
+                if self.taste_buddies[similarities[9]] > self.taste_buddies[ipport]:
+                    del self.taste_buddies[ipport]
+                    self.not_connected_taste_buddies.discard(ipport)
+                    
+            print >> sys.stderr, "tbs:", self.taste_buddies.items()
 
     def set_community_class(self, commtype):
         from Tribler.community.privatesemantic.test import NoFSemanticCommunity, HFSemanticCommunity, PFSemanticCommunity, PoliFSemanticCommunity
@@ -159,6 +169,9 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
     @call_on_dispersy_thread
     def connect_to_taste_buddies(self):
         self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
+        
+        
+        
         if int(self.my_id) > self.late_join:
             nr_to_connect = int(10 * self.bootstrap_percentage)
             print >> sys.stderr, "will connect to", nr_to_connect
