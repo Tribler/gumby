@@ -50,7 +50,7 @@ probe python.function.return
 				execTime = 0;
 
 				printf("%d,WRITE,%s,%s,%d,%s,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime );
-				
+
 			}
 
 
@@ -60,7 +60,7 @@ probe python.function.return
 		delete ioWriteCounter[tid(), i[tid()]];
 		delete backtrace[tid(), i[tid()]];
 		i[tid()] -= 1
-		
+
 		// print OUT file_mem lineno bytes_out newline
 	}
 
@@ -94,7 +94,7 @@ probe begin {
 }
 
 probe end {
- // print mapping fd -> filename 
+ // print mapping fd -> filename
 }
 
 /*

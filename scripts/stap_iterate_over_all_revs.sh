@@ -50,7 +50,7 @@ if [ -z "$OUTPUT_DIR_NAME" ]; then
 	exit 2
 fi
 
-export CONFFILE=$(readlink -f $CONFFILE) 
+export CONFFILE=$(readlink -f $CONFFILE)
 
 rm -f /tmp/results.log
 
@@ -72,19 +72,10 @@ if [ -z "$TESTNAME" ]; then
     TESTNAME="Whatever"
 fi
 
-# TODO: I think this is not needed anymore
-#export PYTHONPATH=.
-#mkdir -p $OUTPUT_DIR_NAME
-#export OUTPUTDIR=$(readlink -f $OUTPUT_DIR_NAME)
 ITERATION_RESULTS_FILE=$OUTPUT_DIR/rev_iter_results.log
 
 pushd $REPOSITORY_DIR
 git clean -fd
-
-# why is this here?
-#if [ ! -z "$REPOSITORY_BRANCH" ]; then
-#    git checkout $REPOSITORY_BRANCH
-#fi
 
 COUNT=0
 
