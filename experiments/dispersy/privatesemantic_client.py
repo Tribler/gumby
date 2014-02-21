@@ -77,7 +77,8 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
                     del self.taste_buddies[ipport]
                     self.not_connected_taste_buddies.discard(ipport)
 
-            print >> sys.stderr, "tbs:", self.taste_buddies.items()
+            if DEBUG:
+                print >> sys.stderr, "tbs:", self.taste_buddies.items()
 
     def set_community_class(self, commtype):
         from Tribler.community.privatesemantic.test import NoFSemanticCommunity, HFSemanticCommunity, PFSemanticCommunity, PoliFSemanticCommunity
