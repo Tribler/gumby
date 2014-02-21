@@ -29,6 +29,7 @@ def readDataframeDump(filename):
     with open(filename, 'rb') as csvfile:
         reader = unicodecsv.DictReader(csvfile, delimiter=',')
         for line in reader:
+            cleanUp(line)
             var.append(line)
     return var
 
@@ -50,6 +51,15 @@ def print_html_doc():
             ).encode("utf-8")
     with open(THIS_DIR + '/io_writes_report.html', 'wb') as fh:
         fh.write(report)
+
+
+def cleanUp(line):
+    if 'TRACE' in line:
+        line['TRACE'] = line['TRACE'].replace("/home/jenkins/workspace/", "")
+
+    # for l in line:
+       # l['TRACE'] = l['TRACE'].replace("/home/jenkins/workspace/", "")
+
 
 if __name__ == '__main__':
     setReportName()

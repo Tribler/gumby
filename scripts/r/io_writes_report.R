@@ -118,7 +118,7 @@ p = ggplot(data = topPerFilename, aes(x = topPerFilename$BYTES, y = topPerFilena
 p + geom_point() +
  scale_x_continuous(breaks=ticksSeq, limits = c(0,maxVal), expand = c(0,0)) +
  theme(axis.text.x=element_text(angle = 90))
-ggsave(file=sprintf("%s/top_per_filename.svg", outputDir), width=12, height=6, dpi=100)
+ggsave(file=sprintf("%s/top_per_filename.svg", outputDir), width=18, height=6, dpi=100)
 
 
 

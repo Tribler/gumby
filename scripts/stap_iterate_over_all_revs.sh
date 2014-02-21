@@ -50,18 +50,19 @@ if [ -z "$OUTPUT_DIR_NAME" ]; then
 	exit 2
 fi
 
-export CONFFILE=$(readlink -f $CONFFILE) 
+export CONFFILE=$(readlink -f $CONFFILE)
 
 rm -f /tmp/results.log
 
-if [ -z "$REPOSITORY_DIR" ]; then
-    echo "ERROR: REPOSITORY_DIR variable not set, bailing out."
-    exit 2
-fi
+# do this in jenkins instead
+#if [ -z "$REPOSITORY_DIR" ]; then
+#    echo "ERROR: REPOSITORY_DIR variable not set, bailing out."
+#    exit 2
+#fi
 
-if [ ! -d "$REPOSITORY_DIR" -a ! -z "$REPOSITORY_URL" ]; then
-    git clone "$REPOSITORY_URL" "$REPOSITORY_DIR"
-fi
+#if [ ! -d "$REPOSITORY_DIR" -a ! -z "$REPOSITORY_URL" ]; then
+#    git clone "$REPOSITORY_URL" "$REPOSITORY_DIR"
+#fi
 
 # Do only one iteration by default
 if [ -z "$STAP_RUN_ITERATIONS" ]; then
@@ -71,21 +72,19 @@ if [ -z "$TESTNAME" ]; then
     TESTNAME="Whatever"
 fi
 
-# TODO: I think this is not needed anymore
-export PYTHONPATH=.
-mkdir -p $OUTPUT_DIR_NAME
-export OUTPUTDIR=$(readlink -f $OUTPUT_DIR_NAME)
-ITERATION_RESULTS_FILE=$OUTPUTDIR/rev_iter_results.log
+ITERATION_RESULTS_FILE=$OUTPUT_DIR/rev_iter_results.log
 
 pushd $REPOSITORY_DIR
 git clean -fd
-if [ ! -z "$REPOSITORY_BRANCH" ]; then
-    git checkout $REPOSITORY_BRANCH
-fi
 
 COUNT=0
 
-for REV in $(git log --topo-order --quiet $INITIAL_REV..$FINAL_REV | grep ^"commit " | cut -f2 -d" "); do
+GIT_LOG_CMD=""
+if [ ! -z "$STAP_RUN_REVS" ]; then
+	GIT_LOG_CMD="--topo-order --merges --quiet $STAP_RUN_REVS"
+fi
+
+for REV in $(git log $GIT_LOG_CMD | grep ^"commit " | cut -f2 -d" "); do
     let COUNT=1+$COUNT
 
     git checkout $REV

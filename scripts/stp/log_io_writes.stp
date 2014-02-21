@@ -30,11 +30,10 @@ function getPyBacktrace(currentTid)
 probe python.function.entry
 {
 	i[tid()] += 1
-	//backtrace[tid(), i[tid()]] = sprintf("%s:%d:%s (%d  %d)", filename, lineno, funcname, tid(), i[tid()]);
-	//backtrace[tid(), i[tid()]] = sprintf("%s:%d:%s", filename, lineno, funcname);
 	backtrace[tid(), i[tid()]] = sprintf("%s:%s", filename, funcname);
-	times[tid(), funcname] = gettimeofday_us();
+	//times[tid(), funcname] = gettimeofday_us();
 	doesIO[tid(), i[tid()]] = 0;
+	// print IN file_mem lineno
 }
 
 probe python.function.return
@@ -46,8 +45,9 @@ probe python.function.return
 			if(tid == tid() && i2 == i[tid()] && ioWriteCounter[tid, i2] > 0)
 			{
 				bt = getPyBacktrace(tid());
-				execTime =  gettimeofday_us()-times[tid(), funcname];
-
+				//execTime =  gettimeofday_us()-times[tid(), funcname];
+				// disable execTime as it is not accurate here anyway
+				execTime = 0;
 
 				printf("%d,WRITE,%s,%s,%d,%s,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime );
 
@@ -60,6 +60,8 @@ probe python.function.return
 		delete ioWriteCounter[tid(), i[tid()]];
 		delete backtrace[tid(), i[tid()]];
 		i[tid()] -= 1
+
+		// print OUT file_mem lineno bytes_out newline
 	}
 
 }
@@ -89,6 +91,10 @@ probe syscall.read.return {
 */
 probe begin {
 	printf("\"TIMESTAMP\",\"TYPE\",\"FILE\",\"TRACE\",\"BYTES\",\"PROCESS\",\"TIME\"\n");
+}
+
+probe end {
+ // print mapping fd -> filename
 }
 
 /*
