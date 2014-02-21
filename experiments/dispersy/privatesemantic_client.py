@@ -48,7 +48,7 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.set_manual_connect, 'set_manual_connect')
         self.scenario_runner.register(self.set_random_connect, 'set_random_connect')
         self.scenario_runner.register(self.set_bootstrap_percentage, 'set_bootstrap_percentage')
-        self.scenario_runner.register(self.set_late_join, 'set_late_join')
+        self.scenario_runner.register(self.set_latejoin, 'set_latejoin')
 
     @call_on_dispersy_thread
     def download(self, infohash):
@@ -99,7 +99,7 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: bootstrap_percentage is now", self.bootstrap_percentage
 
-    def set_late_join(self, latejoin):
+    def set_latejoin(self, latejoin):
         self.late_join = int(latejoin)
         if int(self.my_id) <= self.late_join:
             self.peertype('latejoining')

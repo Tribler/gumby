@@ -97,7 +97,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.set_manual_connect, 'set_manual_connect')
         self.scenario_runner.register(self.set_random_connect, 'set_random_connect')
         self.scenario_runner.register(self.set_bootstrap_percentage, 'set_bootstrap_percentage')
-        self.scenario_runner.register(self.set_late_join, 'set_late_join')
+        self.scenario_runner.register(self.set_latejoin, 'set_latejoin')
         self.scenario_runner.register(self.set_do_search, 'set_do_search')
         self.scenario_runner.register(self.set_search_limit, 'set_search_limit')
         self.scenario_runner.register(self.set_search_spacing, 'set_search_spacing')
@@ -167,7 +167,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: bootstrap_percentage is now", self.bootstrap_percentage
 
-    def set_late_join(self, latejoin):
+    def set_latejoin(self, latejoin):
         self.late_join = int(latejoin)
         if int(self.my_id) <= self.late_join:
             self.peertype('latejoining')
