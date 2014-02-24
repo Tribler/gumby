@@ -37,6 +37,12 @@ if __name__ == '__main__':
     print "previous revision: %s" % prevRevision
     print "__________________"
 
+    if 'stap_run_iterations' in config:
+        stapRunIterations = int(config['stap_run_iterations'])
+    else:
+        stapRunIterations = 1
+    print "Nr of iterations expected: %d" % stapRunIterations
+
     # load profile for revision and testcase
     profileHelper = ProfileHelper(config)
     p = profileHelper.loadFromDatabase(prevRevision, testcase)
@@ -44,9 +50,9 @@ if __name__ == '__main__':
     if p != -1:
         output = ""
 
-        matrix = ActivityMatrix(p.getDatabaseId(), 5, Type.BYTESWRITTEN, rev, testcase)
+        matrix = ActivityMatrix(p.getDatabaseId(), stapRunIterations, Type.BYTESWRITTEN, rev, testcase)
 
-        for i in range(1, 6):
+        for i in range(1, stapRunIterations + 1):
             helper = SessionHelper(config)
             csv = "%s/report_%s_%d/summary_per_stacktrace.csv" % (csvPath, rev, i)
             csvExtra = "%s/report_%s_%d/summary.txt" % (csvPath, rev, i)
