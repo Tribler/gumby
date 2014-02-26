@@ -7,7 +7,7 @@ from os import path
 from random import choice, randint, sample, random
 from string import letters
 from sys import path as pythonpath
-from time import time
+from time import time, sleep
 from collections import defaultdict
 from hashlib import sha1
 
@@ -161,7 +161,7 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def online(self):
-        yield random() * 5.0
+        sleep(random() * 5.0)
 
         DispersyExperimentScriptClient.online(self)
 
