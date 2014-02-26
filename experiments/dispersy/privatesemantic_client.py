@@ -4,7 +4,7 @@
 import sys
 
 from os import path
-from random import choice, randint, sample
+from random import choice, randint, sample, random
 from string import letters
 from sys import path as pythonpath
 from time import time
@@ -161,6 +161,8 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def online(self):
+        yield random() * 5.0
+
         DispersyExperimentScriptClient.online(self)
 
         # disable msimilarity requests
@@ -170,8 +172,6 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
     @call_on_dispersy_thread
     def connect_to_taste_buddies(self):
         self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
-
-
 
         if int(self.my_id) > self.late_join:
             nr_to_connect = int(10 * self.bootstrap_percentage)
