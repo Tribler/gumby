@@ -93,10 +93,11 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.perform_searches, 'perform_searches')
         self.scenario_runner.register(self.connect_to_taste_buddies, 'connect_to_taste_buddies')
 
+        self.scenario_runner.register(self.set_community_class, 'set_community_class')
         self.scenario_runner.register(self.set_manual_connect, 'set_manual_connect')
         self.scenario_runner.register(self.set_random_connect, 'set_random_connect')
         self.scenario_runner.register(self.set_bootstrap_percentage, 'set_bootstrap_percentage')
-        self.scenario_runner.register(self.set_late_join, 'set_late_join')
+        self.scenario_runner.register(self.set_latejoin, 'set_latejoin')
         self.scenario_runner.register(self.set_do_search, 'set_do_search')
         self.scenario_runner.register(self.set_search_limit, 'set_search_limit')
         self.scenario_runner.register(self.set_search_spacing, 'set_search_spacing')
@@ -137,13 +138,13 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         from Tribler.community.privatesearch.community import SearchCommunity, PSearchCommunity, HSearchCommunity, PoliSearchCommunity
         from Tribler.community.privatesearch.oneswarm.community import PoliOneSwarmCommunity
 
-        if self.community_type == 'search':
+        if commtype == 'search':
             self.community_class = SearchCommunity
-        elif self.community_type == 'hsearch':
+        elif commtype == 'hsearch':
             self.community_class = HSearchCommunity
-        elif self.community_type == 'polisearch':
+        elif commtype == 'polisearch':
             self.community_class = PoliSearchCommunity
-        elif self.community_type == 'oneswarm':
+        elif commtype == 'oneswarm':
             self.community_class = PoliOneSwarmCommunity
         else:
             self.community_class = PSearchCommunity
@@ -166,7 +167,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: bootstrap_percentage is now", self.bootstrap_percentage
 
-    def set_late_join(self, latejoin):
+    def set_latejoin(self, latejoin):
         self.late_join = int(latejoin)
         if int(self.my_id) <= self.late_join:
             self.peertype('latejoining')
