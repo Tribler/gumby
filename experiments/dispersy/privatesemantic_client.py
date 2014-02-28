@@ -224,4 +224,4 @@ if __name__ == '__main__':
     main(PrivateSemanticClient)
 
 #
-# privatesearch_client.py ends here
+# privatesemantic_client.py ends here
