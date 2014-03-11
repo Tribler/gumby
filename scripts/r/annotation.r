@@ -9,13 +9,13 @@ load_annotations <- function(){
 		df2$linesize <- as.numeric(lapply(df2$linesize, FUN = function(x) {max(x, 1)}))
 		df2$linepos <- df2$minx + df2$linesize
 		df2$show_mean <- show_mean
-		
+
 		if(length(args) > 0){
 			df2$labelpos <- df2$maxx + max((maxX - minX) / 66, 1)
 		} else {
 			df2$labelpos <- df2$linepos
 		}
-		
+
 		return(df2)
 	}
 }
@@ -29,15 +29,15 @@ add_annotations <- function(p, df, df2){
 			}
 		}
 		df3 <- df2[]
-		
+
 		if ('Node' %in% df$type){
 			df3$type <- 'Node'
 		} else {
 			df3$type <- 'Process'
 		}
 		p <- p + geom_text(alpha = 0.4, data=df3, angle = 90, aes(x=labelpos, y=max(df$value), label=annotation, hjust=1, size=6), show_guide = FALSE)
-		return(p)
 	}
+	return(p)
 }
 
 mean_max_min <- function(num_columns, df){
