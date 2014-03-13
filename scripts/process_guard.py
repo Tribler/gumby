@@ -230,7 +230,7 @@ class ProcessMonitor(object):
                 next_wake = timestamp + self._interval
 
                 for line in self._rm.get_raw_stats():
-                    self.monitor_file.write("%f %s\n" % (r_timestamp, line))
+                    self.monitor_file.write("%.1f %s\n" % (r_timestamp, line))
 
                 sleep_time = next_wake - timestamp
                 if sleep_time < 0:
