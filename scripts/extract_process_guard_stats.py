@@ -119,19 +119,19 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
                 rsizes[time].setdefault(nodename, []).append(rsizes[time][pid])
 
                 # delay_io_ticks = long(parts[41])
-                write_bytes = long(parts[49])
-                read_bytes = long(parts[48])
+                write_bytes = long(parts[50])
+                read_bytes = long(parts[49])
 
                 readbytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), read_bytes, prev_readbytes.get(pid, read_bytes)) / 1024.0
                 writebytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), write_bytes, prev_writebytes.get(pid, write_bytes)) / 1024.0
                 readbytes[time].setdefault(nodename, []).append(readbytes[time][pid])
                 writebytes[time].setdefault(nodename, []).append(writebytes[time][pid])
 
-                # syscw = long(parts[47])
-                # syscr = long(parts[46])
+                # syscw = long(parts[48])
+                # syscr = long(parts[47])
 
-                wchar = long(parts[45])
-                rchar = long(parts[44])
+                wchar = long(parts[46])
+                rchar = long(parts[45])
 
                 rchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), rchar, prev_rchar.get(pid, rchar)) / 1024.0
                 wchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), wchar, prev_wchar.get(pid, wchar)) / 1024.0
