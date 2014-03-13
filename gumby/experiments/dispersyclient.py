@@ -342,9 +342,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._dispersy._statistics.reset()
 
     def annotate(self, message):
-        self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, "annotate", message))
+        self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, "annotate", message))
     def peertype(self, peertype):
-        self._stats_file.write('%f %s %s %s\n' % (time(), self.my_id, "peertype", peertype))
+        self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, "peertype", peertype))
 
     #
     # Aux. functions
