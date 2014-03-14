@@ -14,7 +14,7 @@ def main(input_directory, start_timestamp):
             parts = line.split()
             parts[2] = float(parts[2]) - start_timestamp
             if len(parts) == 4:
-                parts[3] = float(float[3]) - start_timestamp
+                parts[3] = float(parts[3]) - start_timestamp
 
             print >> f, parts.join(" ")
 
