@@ -45,17 +45,25 @@ fi
 
 cd $OUTPUT_DIR
 
-extract_process_guard_stats.py . .
+TEMPFILE=$(mktemp)
+extract_process_guard_stats.py . .  > $TEMPFILE
+#Get the XMIN XMAX vars from the extracted data
+source $TEMPFILE
+rm $TEMPFILE
+
 reduce_dispersy_statistics.py . 300
 
-#Create the graphs
-mkdir -p $R_LIBS_USER
-R --no-save --quiet < $R_SCRIPTS_PATH/install.r
-R --no-save --quiet < $R_SCRIPTS_PATH/cputimes.r 2>&1 > /dev/null
-R --no-save --quiet < $R_SCRIPTS_PATH/memtimes.r 2>&1 > /dev/null
-R --no-save --quiet < $R_SCRIPTS_PATH/readbytes.r 2>&1 > /dev/null
-R --no-save --quiet < $R_SCRIPTS_PATH/writebytes.r 2>&1 > /dev/null
 
+# Graph the stuff
+export R_SCRIPTS_TO_RUN="\
+cputimes.r
+memtimes.r
+writebytes.r
+readbytes.r
+"
+export XMIN
+export XMAX
+graph_data.sh
 
 #
 # graph_process_guard_data.sh ends here

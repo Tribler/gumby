@@ -52,6 +52,8 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
             return float(diff) / diff_in_log
         return 0
 
+    max_timestamp = 0
+
     all_pids = set()
     all_nodes = []
 
@@ -96,6 +98,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
 
                 if start_timestamp == None:
                     start_timestamp = float(parts[0])
+                max_timestamp = max(max_timestamp, float(parts[0]))
                 time = float(parts[0]) - start_timestamp
                 pid = nodename + "_" + parts[2][1:-1] + "_" + parts[1]
 
@@ -119,19 +122,19 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
                 rsizes[time].setdefault(nodename, []).append(rsizes[time][pid])
 
                 # delay_io_ticks = long(parts[41])
-                write_bytes = long(parts[49])
-                read_bytes = long(parts[48])
+                write_bytes = long(parts[50])
+                read_bytes = long(parts[49])
 
                 readbytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), read_bytes, prev_readbytes.get(pid, read_bytes)) / 1024.0
                 writebytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), write_bytes, prev_writebytes.get(pid, write_bytes)) / 1024.0
                 readbytes[time].setdefault(nodename, []).append(readbytes[time][pid])
                 writebytes[time].setdefault(nodename, []).append(writebytes[time][pid])
 
-                # syscw = long(parts[47])
-                # syscr = long(parts[46])
+                # syscw = long(parts[48])
+                # syscr = long(parts[47])
 
-                wchar = long(parts[45])
-                rchar = long(parts[44])
+                wchar = long(parts[46])
+                rchar = long(parts[45])
 
                 rchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), rchar, prev_rchar.get(pid, rchar)) / 1024.0
                 wchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), wchar, prev_wchar.get(pid, wchar)) / 1024.0
@@ -187,6 +190,9 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
     write_records(all_nodes, readbytes, output_directory, "readbytes_node.txt")
     write_records(all_nodes, vsizes, output_directory, "vsizes_node.txt")
     write_records(all_nodes, rsizes, output_directory, "rsizes_node.txt")
+
+    print "XMIN=%d" % start_timestamp
+    print "XMAX=%d" % max_timestamp
 
 def main(input_directory, output_directory, start_time=None):
     parse_resource_files(input_directory, output_directory, start_time)

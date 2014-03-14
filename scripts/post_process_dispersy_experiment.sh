@@ -63,7 +63,7 @@ source $TEMPFILE
 rm $TEMPFILE
 
 #Step 3: Extract the resource usage data from the process_guard logs.
-extract_process_guard_stats.py . . $XSTART
+extract_process_guard_stats.py . . $XSTART > /dev/null
 
 #Step 4: Reduce the data
 reduce_dispersy_statistics.py . 300
