@@ -52,6 +52,8 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
             return float(diff) / diff_in_log
         return 0
 
+    max_timestamp = 0
+
     all_pids = set()
     all_nodes = []
 
@@ -96,6 +98,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
 
                 if start_timestamp == None:
                     start_timestamp = float(parts[0])
+                max_timestamp = max(max_timestamp, float(parts[0]))
                 time = float(parts[0]) - start_timestamp
                 pid = nodename + "_" + parts[2][1:-1] + "_" + parts[1]
 
@@ -187,6 +190,9 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
     write_records(all_nodes, readbytes, output_directory, "readbytes_node.txt")
     write_records(all_nodes, vsizes, output_directory, "vsizes_node.txt")
     write_records(all_nodes, rsizes, output_directory, "rsizes_node.txt")
+
+    print "XMIN=%d" % start_timestamp
+    print "XMAX=%d" % max_timestamp
 
 def main(input_directory, output_directory, start_time=None):
     parse_resource_files(input_directory, output_directory, start_time)
