@@ -192,7 +192,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
     write_records(all_nodes, rsizes, output_directory, "rsizes_node.txt")
 
     print "XMIN=%d" % 0
-    print "XMAX=%d" % max_timestamp - start_timestamp
+    print "XMAX=%d" % (max_timestamp - start_timestamp)
     print "XSTART=%d" % start_timestamp
 
 def main(input_directory, output_directory, start_time=None):
