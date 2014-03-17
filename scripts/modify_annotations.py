@@ -6,7 +6,7 @@ def main(input_directory, start_timestamp):
     inputfile = os.path.join(input_directory, 'annotations.txt')
     if os.path.exists(inputfile):
         f = open(inputfile, 'r')
-        lines = f.realdines()
+        lines = f.readlines()
         f.close()
 
         header = False
