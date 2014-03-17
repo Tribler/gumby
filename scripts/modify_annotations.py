@@ -9,8 +9,14 @@ def main(input_directory, start_timestamp):
         lines = f.realdines()
         f.close()
 
+        header = False
         f = open(inputfile, 'w')
         for line in lines:
+            if not header:
+                print >> f, line
+                header = True
+                continue
+
             parts = line.split()
             parts[2] = float(parts[2]) - start_timestamp
             if len(parts) == 4:
