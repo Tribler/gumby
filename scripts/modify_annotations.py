@@ -21,7 +21,7 @@ def main(input_directory, start_timestamp):
             for i in range(1, len(parts)):
                 parts[i] = float(parts[i]) - start_timestamp
 
-            print >> f, " ".join(parts)
+            print >> f, " ".join(map(str, parts))
 
         f.close()
 
