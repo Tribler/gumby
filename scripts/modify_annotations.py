@@ -9,12 +9,17 @@ def main(input_directory, start_timestamp):
         lines = f.readlines()
         f.close()
 
+        header = False
         f = open(inputfile, 'w')
         for line in lines:
+            if not header:
+                print >> f, line
+                header = True
+                continue
+
             parts = line.split()
-            parts[2] = float(parts[2]) - start_timestamp
-            if len(parts) == 4:
-                parts[3] = float(parts[3]) - start_timestamp
+            for i in range(1, len(parts)):
+                parts[i] = float(parts[i]) - start_timestamp
 
             print >> f, parts.join(" ")
 
