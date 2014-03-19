@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=9
+SCRIPT_VERSION=10
 
 # Code:
 set -e
@@ -66,7 +66,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
     For WX:
       sudo apt-get build-dep wxwidgets2.8
       sudo apt-get install libpangox-1.0-dev
-      
+
 "
     mkdir -p $VENV/src
     pushd $VENV/src
@@ -113,8 +113,8 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
 
         # Build systemtap
         # remove old versions of systemtap
-        rm -fR systemtap-2.2*       	 
-            
+        rm -fR systemtap-2.2*
+
         if [ ! -d systemtap-*/ ]; then
         	if [ ! -e systemtap-*.gz ]; then
                 wget http://sourceware.org/systemtap/ftp/releases/systemtap-2.4.tar.gz
@@ -359,7 +359,7 @@ fi
 rm -f $VENV/bin/pil*
 rm -rf $VENV/lib/python2.7/site-packages/PIL
 
-pip install pillow --upgrade --force-reinstall
+pip install pip --upgrade
 
 echo "
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
@@ -386,7 +386,7 @@ sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
 pip install numpy
 
 # install netifaces separately because it requires some params now
-pip install netifaces --allow-external netifaces --allow-unverified netifaces 
+pip install netifaces --allow-external netifaces --allow-unverified netifaces
 
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~/requirements.txt
 
