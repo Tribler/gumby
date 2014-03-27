@@ -285,7 +285,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 self._community = self.community_class.load_community(self._dispersy, self._master_member, *self.community_args, **self.community_kwargs)
             else:
                 msg("join community %s as %s", self._master_member.mid.encode("HEX"), self._my_member.mid.encode("HEX"))
-                self._community = self.community_class.join_community(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
+                self._community = self.community_class.join_community(self._dispersy, self._master_member, self._my_member, self._my_member, *self.community_args, **self.community_kwargs)
                 self._community.auto_load = False
                 self._is_joined = True
 
