@@ -36,13 +36,12 @@
 #
 
 # Code:
-import sys
 from os import path, environ
 from sys import path as pythonpath
 from hashlib import sha1
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main, \
-    buffer_online
+from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, \
+    call_on_dispersy_thread, main
 
 from twisted.python.log import msg
 
@@ -63,6 +62,7 @@ class MetadataClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def online(self):
+        self.community_args = (self._my_member, )
         DispersyExperimentScriptClient.online(self)
 
         self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
