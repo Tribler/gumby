@@ -92,7 +92,7 @@ class MetadataClient(DispersyExperimentScriptClient):
 
 
 if __name__ == '__main__':
-    MetadataClient.scenario_file = environ.get('SCENARIO_FILE', 'metadata.scenario')
+    MetadataClient.scenario_file = environ.get('SCENARIO_FILE', 'metadata_msg30.scenario')
     main(MetadataClient)
 
 #
