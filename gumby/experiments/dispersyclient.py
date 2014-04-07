@@ -244,13 +244,18 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._dispersy.start()
 
-        self._master_member = self._dispersy.callback.call(self._dispersy.get_member, (self.master_key, self.master_private_key))
-        self._my_member = self._dispersy.callback.call(self._dispersy.get_member, (self.my_member_key, self.my_member_private_key))
+        if self.master_private_key:
+            kargs = {'private_key': self.master_private_key}
+        else:
+            kargs = {'public_key': self.master_key}
+        self._master_member = self._dispersy.callback.call(self._dispersy.get_member, kargs=kargs)
+
+        self._my_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'private_key': self.my_member_private_key})
 
         self._dispersy.callback.register(self._do_log)
 
         self.print_on_change('community-kwargs', {}, self.community_kwargs)
-        self.print_on_change('community-env', {}, {'pid':getpid()})
+        self.print_on_change('community-env', {}, {'pid': getpid()})
 
         msg("Finished starting dispersy")
 
