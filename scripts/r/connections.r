@@ -62,6 +62,7 @@ while(file.exists(paste("sum_incomming_connections_", toString(i), "_reduced.txt
 	df <- read.table(paste("sum_incomming_connections_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE, na.strings = "?")
 	df <- subset(df, df$time == max(df$time))
 	df <- melt(df, id="time")
+	df <- na.omit(df)
 	
 	p <- ggplot(df) + theme_bw()
 	p <- p + geom_density(aes(x=value))
