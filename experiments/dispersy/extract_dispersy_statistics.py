@@ -180,9 +180,15 @@ class ExtractStatistics:
                 parts = line.split()
                 if len(parts) > columnindex:
                     timestamp = float(parts[1])
-                    record = float(parts[columnindex])
+                    record = parts[columnindex]
+
+                    if record == "?":
+                        continue
+
+                    record = float(record)
                     if record == 0 and len(sum_records) == 0:
                         continue
+
                     sum_records[timestamp][node_nr] = record
             h_records.close()
 
@@ -208,11 +214,11 @@ class ExtractStatistics:
 
                 nodes = sum_records[timestamp]
                 for node in all_nodes:
-                    value = nodes.get(node, prev_records.get(node, 0))
+                    value = nodes.get(node, prev_records.get(node, "?"))
                     print >> fp, value,
 
                     if fp2:
-                        diff = value - prev_records.get(node, 0)
+                        diff = (value - prev_records.get(node, 0)) if value != "?" else 0
                         print >> fp2, diff,
 
                     prev_records[node] = value
@@ -310,8 +316,8 @@ class BasicExtractor(AbstractHandler):
 
     def new_file(self, node_nr, filename, outputdir):
         self.c_dropped_record = 0
-        self.c_communities = defaultdict(lambda: [0, 0, 0, 0, 0])
-        self.c_blstats = defaultdict(lambda: [0, 0, 0])
+        self.c_communities = defaultdict(lambda: ["?", "?", "?", "?", "?"])
+        self.c_blstats = defaultdict(lambda: ["?", "?", "?"])
 
         self.h_stat = open(os.path.join(outputdir, "stat.txt"), "w+")
         print >> self.h_stat, "# timestamp timeoffset total-send total-received"

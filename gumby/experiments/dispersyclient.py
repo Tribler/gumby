@@ -472,11 +472,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
             for cid, c in prev_statistics.get('communities', {}).iteritems():
                 if cid not in cur_cids:
                     _c = c.copy()
-                    _c['nr_candidates'] = 0
-                    _c['nr_walked'] = 0
-                    _c['nr_stumbled'] = 0
-                    _c['nr_intro'] = 0
-                    _c['total_stumbled_candidates'] = 0
+                    _c['nr_candidates'] = "?"
+                    _c['nr_walked'] = "?"
+                    _c['nr_stumbled'] = "?"
+                    _c['nr_intro'] = "?"
                     communities_dict[cid] = _c
 
             statistics_dict = {'conn_type': self._dispersy.statistics.connection_type,
