@@ -333,12 +333,10 @@ class BasicExtractor(AbstractHandler):
         self.h_total_connections = open(os.path.join(outputdir, "total_connections.txt"), "w+")
         print >> self.h_total_connections, "# timestamp timeoffset (num-connections +) (num-walked + ) (num-stumbled + ) (num-intro + ) (sum-incoming-connections+)"
         print >> self.h_total_connections, "#", " ".join(self.communities)
-        print >> self.h_total_connections, "0 0" + (" 0 0" * len(self.communities))
 
         self.h_blstats = open(os.path.join(outputdir, "bl_stat.txt"), "w+")
         print >> self.h_blstats, "# timestamp timeoffset (bl-skip +) (bl-reuse +) (bl-new +)"
         print >> self.h_blstats, "#", " ".join(self.communities)
-        print >> self.h_blstats, "0 0" + (" 0 0 0" * len(self.communities))
 
     def end_file(self, node_nr, timestamp, timeoffset):
         print >> self.h_drop, timestamp, timeoffset, self.c_dropped_record
