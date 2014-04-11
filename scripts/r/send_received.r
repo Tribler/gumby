@@ -8,10 +8,10 @@ source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 df2 <- load_annotations()
 
 if(file.exists("send_reduced.txt")){
-	df <- read.table("send_reduced.txt", header = TRUE, check.names = FALSE)
+	df <- read.table("send_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	
-	subdf <- df[,3:ncol(df)]
+	subdf <- df[,2:ncol(df)]
 	subdf[] <- lapply(subdf, function(x) x/1024.0)
 	df <- cbind(df['time'], subdf)
 	df <- mean_max_min(num_columns, df)
@@ -33,10 +33,10 @@ if(file.exists("send_reduced.txt")){
 }
 
 if(file.exists("received_reduced.txt")){
-	df <- read.table("received_reduced.txt", header = TRUE, check.names = FALSE)
+	df <- read.table("received_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	
-	subdf <- df[,3:ncol(df)]
+	subdf <- df[,2:ncol(df)]
 	subdf[] <- lapply(subdf, function(x) x/1024.0)
 	df <- cbind(df['time'], subdf)
 	df <- mean_max_min(num_columns, df)
