@@ -9,7 +9,7 @@ df2 <- load_annotations()
 
 i = 1
 while(file.exists(paste("bl_skip_", toString(i), "_reduced.txt", sep = ''))){
-	df <- read.table(paste("bl_skip_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
+	df <- read.table(paste("bl_skip_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	df <- mean_max_min(num_columns, df)
 	
@@ -33,7 +33,7 @@ while(file.exists(paste("bl_skip_", toString(i), "_reduced.txt", sep = ''))){
 
 i = 1
 while(file.exists(paste("bl_reuse_", toString(i), "_reduced.txt", sep = ''))){
-	df <- read.table(paste("bl_reuse_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
+	df <- read.table(paste("bl_reuse_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	df <- mean_max_min(num_columns, df)
 	
@@ -57,7 +57,7 @@ while(file.exists(paste("bl_reuse_", toString(i), "_reduced.txt", sep = ''))){
 
 i = 1
 while(file.exists(paste("bl_time_", toString(i), "_reduced.txt", sep = ''))){
-	df <- read.table(paste("bl_time_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
+	df <- read.table(paste("bl_time_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	
 	df <- mean_max_min(num_columns, df)

@@ -46,6 +46,8 @@ mean_max_min <- function(num_columns, df){
 		colnames(tdf) <- c('time', 'min', 'Q1', 'median', 'mean','Q3', 'max')
 		return(tdf)
 	} else {
-		return(melt(df, id="time"))
+		tdf <- melt(df, id="time")
+		tdf <- na.omit(tdf)
+		return(tdf)
 	}
 }
