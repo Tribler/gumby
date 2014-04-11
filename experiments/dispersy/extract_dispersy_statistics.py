@@ -218,7 +218,10 @@ class ExtractStatistics:
                     print >> fp, value,
 
                     if fp2:
-                        diff = (value - prev_records.get(node, 0)) if value != "?" else 0
+                        prev_value = prev_records.get(node, "?")
+                        if prev_value == "?":
+                            prev_value = 0
+                        diff = (value - prev_value) if value != "?" else 0
                         print >> fp2, diff,
 
                     prev_records[node] = value
