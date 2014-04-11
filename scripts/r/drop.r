@@ -38,7 +38,7 @@ if(file.exists("dropped_diff_reduced.txt")){
 }
 
 if(file.exists("dropped_reduced.txt")){
-	df <- read.table("dropped_reduced.txt", header = TRUE)
+	df <- read.table("dropped_reduced.txt", header = TRUE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	df <- mean_max_min(num_columns, df)
 	
