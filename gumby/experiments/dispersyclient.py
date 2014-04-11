@@ -435,23 +435,27 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
             communities_dict = {}
             for c in self._dispersy.statistics.communities:
-                # determine current size of candidates categories
-                nr_walked = nr_intro = nr_stumbled = 0
 
-                # we add all candidates which have a last_stumble > now - CANDIDATE_STUMBLE_LIFETIME
-                now = time()
-                for candidate in c._community.candidates.itervalues():
-                    if candidate.last_stumble > now - CANDIDATE_STUMBLE_LIFETIME:
-                        nr_stumbled += 1
+                if c._community.dispersy_enable_candidate_walker:
+                    # determine current size of candidates categories
+                    nr_walked = nr_intro = nr_stumbled = 0
 
-                        mid = list(candidate.get_members())[0].mid
-                        total_stumbled_candidates[c.hex_cid][candidate.last_stumble].add(mid)
+                    # we add all candidates which have a last_stumble > now - CANDIDATE_STUMBLE_LIFETIME
+                    now = time()
+                    for candidate in c._community.candidates.itervalues():
+                        if candidate.last_stumble > now - CANDIDATE_STUMBLE_LIFETIME:
+                            nr_stumbled += 1
 
-                    if candidate.last_walk > now - CANDIDATE_WALK_LIFETIME:
-                        nr_walked += 1
+                            mid = list(candidate.get_members())[0].mid
+                            total_stumbled_candidates[c.hex_cid][candidate.last_stumble].add(mid)
 
-                    if candidate.last_intro > now - CANDIDATE_INTRO_LIFETIME:
-                        nr_intro += 1
+                        if candidate.last_walk > now - CANDIDATE_WALK_LIFETIME:
+                            nr_walked += 1
+
+                        if candidate.last_intro > now - CANDIDATE_INTRO_LIFETIME:
+                            nr_intro += 1
+                else:
+                    nr_walked = nr_intro = nr_stumbled = "?"
 
                 total_nr_stumbled_candidates = sum(len(members) for members in total_stumbled_candidates[c.hex_cid].values())
 
