@@ -9,13 +9,13 @@ source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 df3 <- load_annotations()
 
 if(file.exists("utimes_reduced.txt")){
-	df <- read.table("utimes_reduced.txt", header = TRUE, check.names = FALSE)
+	df <- read.table("utimes_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	df <- mean_max_min(num_columns, df)
 	df$type <- 'Process'
 
 	if(file.exists("utimes_node_reduced.txt")){
-		df2 <- read.table("utimes_node_reduced.txt", header = TRUE, check.names = FALSE)
+		df2 <- read.table("utimes_node_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 		df2 <- mean_max_min(num_columns, df2)
 		df2$type <- 'Node'
 	
@@ -43,13 +43,13 @@ if(file.exists("utimes_reduced.txt")){
 }
 
 if(file.exists("stimes_reduced.txt")){
-	df <- read.table("stimes_reduced.txt", header = TRUE, check.names = FALSE)
+	df <- read.table("stimes_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	df <- mean_max_min(num_columns, df)
 	df$type <- 'Process'
 	
 	if(file.exists("stimes_node_reduced.txt")){
-		df2 <- read.table("stimes_node_reduced.txt", header = TRUE, check.names = FALSE)
+		df2 <- read.table("stimes_node_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 		df2 <- mean_max_min(num_columns, df2)
 		df2$type <- 'Node'
 	

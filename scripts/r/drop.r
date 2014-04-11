@@ -8,10 +8,10 @@ source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 df2 <- load_annotations()
 
 if(file.exists("dropped_diff_reduced.txt")){
-	df <- read.table("dropped_diff_reduced.txt", header = TRUE)
+	df <- read.table("dropped_diff_reduced.txt", header = TRUE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	
-	subdf <- df[,3:ncol(df)]
+	subdf <- df[,2:ncol(df)]
 	subdf[] <- lapply(subdf, function(x) x/1024.0)
 	df <- cbind(df['time'], subdf)
 	df <- mean_max_min(num_columns, df)
