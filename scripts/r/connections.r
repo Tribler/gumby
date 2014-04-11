@@ -38,7 +38,6 @@ while(file.exists(paste("total_walked_", toString(i), "_reduced.txt", sep = ''))
 		subdf <- read.table(paste("total_",category,"_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE, na.strings = "?")
 		subdf <- mean_max_min(1001, subdf)
 		subdf$category <- category
-		
 		df <- rbind(df, subdf)
 	}
 	
