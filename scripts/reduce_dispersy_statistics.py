@@ -4,6 +4,16 @@ import os
 from math import ceil
 from collections import defaultdict
 
+def float_or_unknown(float_str):
+    return float_str if float_str == "?" else float(float_str)
+
+def float_or_unknown_mean(parts):
+    if all(float_str == "?" for float_str in parts):
+        return "?"
+
+    not_unknowns = sum(float(float_str) for float_str in parts if float_str != "?")
+    return not_unknowns / float(len(parts))
+
 def reduce(base_directory, nrlines, inputfile, outputfile, removeinputfile=True):
     inputfile = os.path.join(base_directory, inputfile)
     outputfile = os.path.join(base_directory, outputfile)
@@ -28,7 +38,7 @@ def reduce(base_directory, nrlines, inputfile, outputfile, removeinputfile=True)
                 parts = line.split()
                 max_time = max(float(parts[0]), max_time)
 
-                parts = map(float, parts[1:])
+                parts = map(float_or_unknown, parts[1:])
                 for j, part in enumerate(parts):
                     to_be_merged_parts[j].append(part)
 
@@ -36,7 +46,7 @@ def reduce(base_directory, nrlines, inputfile, outputfile, removeinputfile=True)
                     print >> ofp, max_time,
 
                     for j, parts in to_be_merged_parts.iteritems():
-                        mean = sum(parts) / float(len(parts))
+                        mean = float_or_unknown_mean(parts)
                         print >> ofp, mean,
 
                         to_be_merged_parts[j] = []

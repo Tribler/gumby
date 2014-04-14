@@ -9,7 +9,7 @@ df2 <- load_annotations()
 
 i = 1
 while(file.exists(paste("total_connections_", toString(i), "_reduced.txt", sep = ''))){
-	df <- read.table(paste("total_connections_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
+	df <- read.table(paste("total_connections_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	df <- mean_max_min(num_columns, df)
 	
@@ -35,10 +35,9 @@ i = 1
 while(file.exists(paste("total_walked_", toString(i), "_reduced.txt", sep = ''))){
 	df <- NULL
 	for(category in c('walked', 'intro', 'stumbled')){
-		subdf <- read.table(paste("total_",category,"_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
+		subdf <- read.table(paste("total_",category,"_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE, na.strings = "?")
 		subdf <- mean_max_min(1001, subdf)
 		subdf$category <- category
-		
 		df <- rbind(df, subdf)
 	}
 	
@@ -59,9 +58,10 @@ while(file.exists(paste("total_walked_", toString(i), "_reduced.txt", sep = ''))
 
 i = 1
 while(file.exists(paste("sum_incomming_connections_", toString(i), "_reduced.txt", sep = ''))){
-	df <- read.table(paste("sum_incomming_connections_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE)
+	df <- read.table(paste("sum_incomming_connections_", toString(i), "_reduced.txt", sep = ''), header = TRUE, check.names = FALSE, na.strings = "?")
 	df <- subset(df, df$time == max(df$time))
 	df <- melt(df, id="time")
+	df <- na.omit(df)
 	
 	p <- ggplot(df) + theme_bw()
 	p <- p + geom_density(aes(x=value))

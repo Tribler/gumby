@@ -8,8 +8,9 @@ source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 df2 <- load_annotations()
 
 if(file.exists("sum_total_records_reduced.txt")){
-	df <- read.table("sum_total_records_reduced.txt", header = TRUE, check.names = FALSE)
+	df <- read.table("sum_total_records_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 	df <- melt(df, id="time")
+	df <- na.omit(df)
 	
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df, df2)

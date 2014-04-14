@@ -9,9 +9,10 @@ source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 df2 <- load_annotations()
 
 if(file.exists("sum_statistics_reduced.txt")){
-	df <- read.table("sum_statistics_reduced.txt", header = TRUE, check.names = FALSE)
+	df <- read.table("sum_statistics_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 	df <- df[,colSums(df) != 0]
 	df <- melt(df, id="time")
+	df <- na.omit(df)
 	df <- subset(df, str_sub(variable, -1) != '_')
 	
 	p <- ggplot(df) + theme_bw()

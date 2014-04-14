@@ -42,10 +42,12 @@ add_annotations <- function(p, df, df2){
 
 mean_max_min <- function(num_columns, df){
 	if (num_columns > 1000){
-		tdf <- cbind(df['time'], t(apply(df[,3:ncol(df)], 1, summary)))
+		tdf <- cbind(df['time'], t(apply(df[,2:ncol(df)], 1, function(x) summary(na.omit(x)))))
 		colnames(tdf) <- c('time', 'min', 'Q1', 'median', 'mean','Q3', 'max')
 		return(tdf)
 	} else {
-		return(melt(df, id="time"))
+		tdf <- melt(df, id="time")
+		tdf <- na.omit(tdf)
+		return(tdf)
 	}
 }

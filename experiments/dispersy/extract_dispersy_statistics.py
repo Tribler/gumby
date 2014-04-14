@@ -180,9 +180,15 @@ class ExtractStatistics:
                 parts = line.split()
                 if len(parts) > columnindex:
                     timestamp = float(parts[1])
-                    record = float(parts[columnindex])
+                    record = parts[columnindex]
+
+                    if record == "?":
+                        continue
+
+                    record = float(record)
                     if record == 0 and len(sum_records) == 0:
                         continue
+
                     sum_records[timestamp][node_nr] = record
             h_records.close()
 
@@ -208,11 +214,14 @@ class ExtractStatistics:
 
                 nodes = sum_records[timestamp]
                 for node in all_nodes:
-                    value = nodes.get(node, prev_records.get(node, 0))
+                    value = nodes.get(node, prev_records.get(node, "?"))
                     print >> fp, value,
 
                     if fp2:
-                        diff = value - prev_records.get(node, 0)
+                        prev_value = prev_records.get(node, "?")
+                        if prev_value == "?":
+                            prev_value = 0
+                        diff = (value - prev_value) if value != "?" else 0
                         print >> fp2, diff,
 
                     prev_records[node] = value
@@ -310,8 +319,8 @@ class BasicExtractor(AbstractHandler):
 
     def new_file(self, node_nr, filename, outputdir):
         self.c_dropped_record = 0
-        self.c_communities = defaultdict(lambda: [0, 0, 0, 0, 0])
-        self.c_blstats = defaultdict(lambda: [0, 0, 0])
+        self.c_communities = defaultdict(lambda: ["?", "?", "?", "?", "?"])
+        self.c_blstats = defaultdict(lambda: ["?", "?", "?"])
 
         self.h_stat = open(os.path.join(outputdir, "stat.txt"), "w+")
         print >> self.h_stat, "# timestamp timeoffset total-send total-received"
@@ -324,12 +333,10 @@ class BasicExtractor(AbstractHandler):
         self.h_total_connections = open(os.path.join(outputdir, "total_connections.txt"), "w+")
         print >> self.h_total_connections, "# timestamp timeoffset (num-connections +) (num-walked + ) (num-stumbled + ) (num-intro + ) (sum-incoming-connections+)"
         print >> self.h_total_connections, "#", " ".join(self.communities)
-        print >> self.h_total_connections, "0 0" + (" 0 0" * len(self.communities))
 
         self.h_blstats = open(os.path.join(outputdir, "bl_stat.txt"), "w+")
         print >> self.h_blstats, "# timestamp timeoffset (bl-skip +) (bl-reuse +) (bl-new +)"
         print >> self.h_blstats, "#", " ".join(self.communities)
-        print >> self.h_blstats, "0 0" + (" 0 0 0" * len(self.communities))
 
     def end_file(self, node_nr, timestamp, timeoffset):
         print >> self.h_drop, timestamp, timeoffset, self.c_dropped_record
