@@ -279,15 +279,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         if self._community is None:
             msg("online")
 
+            msg("join community %s as %s", self._master_member.mid.encode("HEX"), self._my_member.mid.encode("HEX"))
             self._dispersy.on_incoming_packets = self.original_on_incoming_packets
-
-            if self._is_joined:
-                self._community = self.community_class.load_community(self._dispersy, self._master_member, *self.community_args, **self.community_kwargs)
-            else:
-                msg("join community %s as %s", self._master_member.mid.encode("HEX"), self._my_member.mid.encode("HEX"))
-                self._community = self.community_class.join_community(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
-                self._community.auto_load = False
-                self._is_joined = True
+            self._community = self.community_class(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
+            self._community.auto_load = False
 
             assert self.is_online()
             if not dont_empty:

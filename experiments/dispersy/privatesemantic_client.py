@@ -155,10 +155,6 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: community_kwargs are now", self.community_kwargs
 
-    def start_dispersy(self):
-        DispersyExperimentScriptClient.start_dispersy(self)
-        self.community_args = (self._my_member,)
-
     @call_on_dispersy_thread
     def online(self):
         sleep(random() * 5.0)

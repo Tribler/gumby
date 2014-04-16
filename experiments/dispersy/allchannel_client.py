@@ -74,10 +74,8 @@ class AllChannelClient(DispersyExperimentScriptClient):
         from Tribler.community.channel.community import ChannelCommunity
 
         DispersyExperimentScriptClient.start_dispersy(self)
-        self._dispersy.callback.call(self._dispersy.define_auto_load, (ChannelCommunity, (), {"integrate_with_tribler": False}))
-        self._dispersy.callback.call(self._dispersy.define_auto_load, (PreviewChannelCommunity, (), {"integrate_with_tribler": False}))
-
-        self.community_args = (self._my_member,)
+        self._dispersy.callback.call(self._dispersy.define_auto_load, (ChannelCommunity, self._my_member, (), {"integrate_with_tribler": False}))
+        self._dispersy.callback.call(self._dispersy.define_auto_load, (PreviewChannelCommunity, self._my_member, (), {"integrate_with_tribler": False}))
 
     @call_on_dispersy_thread
     def create(self):
