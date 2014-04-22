@@ -226,7 +226,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         if self._strict:
             def exception_handler(exception, fatal):
                 msg("An exception occurred. Quitting because we are running with --strict enabled.")
-                print "Exception was:"
+                print >> sys.stderr, "Exception was:"
 
                 try:
                     raise exception
@@ -244,7 +244,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._dispersy.start()
 
-        self._master_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'private_key': self.master_private_key})
+        if self.master_private_key:
+            self._master_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'private_key': self.master_private_key})
+        else:
+            self._master_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'public_key': self.master_key})
         self._my_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'private_key': self.my_member_private_key})
         assert self._master_member
         assert self._my_member
