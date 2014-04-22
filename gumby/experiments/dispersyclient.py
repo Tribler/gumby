@@ -38,7 +38,7 @@
 # Code:
 
 from os import environ, path, chdir, makedirs, symlink, getpid
-from sys import stdout, exit
+from sys import stdout, exit, stderr
 from collections import defaultdict, Iterable
 import json
 from time import time
@@ -226,7 +226,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         if self._strict:
             def exception_handler(exception, fatal):
                 msg("An exception occurred. Quitting because we are running with --strict enabled.")
-                print >> sys.stderr, "Exception was:"
+                print >> stderr, "Exception was:"
 
                 try:
                     raise exception
