@@ -38,7 +38,7 @@
 # Code:
 
 from os import environ, path, chdir, makedirs, symlink, getpid
-from sys import stdout, exit
+from sys import stdout, exit, stderr
 from collections import defaultdict, Iterable
 import json
 from time import time
@@ -226,7 +226,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         if self._strict:
             def exception_handler(exception, fatal):
                 msg("An exception occurred. Quitting because we are running with --strict enabled.")
-                print "Exception was:"
+                print >> stderr, "Exception was:"
 
                 try:
                     raise exception
@@ -244,8 +244,13 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._dispersy.start()
 
-        self._master_member = self._dispersy.callback.call(self._dispersy.get_member, (self.master_key, self.master_private_key))
-        self._my_member = self._dispersy.callback.call(self._dispersy.get_member, (self.my_member_key, self.my_member_private_key))
+        if self.master_private_key:
+            self._master_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'private_key': self.master_private_key})
+        else:
+            self._master_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'public_key': self.master_key})
+        self._my_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'private_key': self.my_member_private_key})
+        assert self._master_member
+        assert self._my_member
 
         self._dispersy.callback.register(self._do_log)
 
@@ -279,15 +284,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         if self._community is None:
             msg("online")
 
+            msg("join community %s as %s" % (self._master_member.mid.encode("HEX"), self._my_member.mid.encode("HEX")))
             self._dispersy.on_incoming_packets = self.original_on_incoming_packets
-
-            if self._is_joined:
-                self._community = self.community_class.load_community(self._dispersy, self._master_member, *self.community_args, **self.community_kwargs)
-            else:
-                msg("join community %s as %s", self._master_member.mid.encode("HEX"), self._my_member.mid.encode("HEX"))
-                self._community = self.community_class.join_community(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
-                self._community.auto_load = False
-                self._is_joined = True
+            self._community = self.community_class(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
+            self._community.auto_load = False
 
             assert self.is_online()
             if not dont_empty:

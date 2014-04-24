@@ -79,11 +79,6 @@ class SocialClient(DispersyExperimentScriptClient):
         self.set_community_kwarg('use_cardinality', False)
         self.set_community_kwarg('log_text', self.log_text)
 
-    def start_dispersy(self):
-        DispersyExperimentScriptClient.start_dispersy(self)
-
-        self.community_args = (self._my_member,)
-
     def registerCallbacks(self):
         self.scenario_runner.register(self.insert_my_key, 'insert_my_key')
         self.scenario_runner.register(self.add_friend, 'add_friend')

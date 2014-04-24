@@ -62,7 +62,6 @@ class MetadataClient(DispersyExperimentScriptClient):
 
     @call_on_dispersy_thread
     def online(self):
-        self.community_args = (self._my_member, )
         DispersyExperimentScriptClient.online(self)
 
         self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
