@@ -55,6 +55,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
         from Tribler.community.privatesocial.community import PoliSocialCommunity
+        from Tribler.community.privatesemantic.community import PSI_OVERLAP
         DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
         self.community_class = PoliSocialCommunity
 
@@ -76,7 +77,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.set_community_kwarg('encryption', False)
         self.set_community_kwarg('max_prefs', 100)
         self.set_community_kwarg('max_fprefs', 100)
-        self.set_community_kwarg('use_cardinality', False)
+        self.set_community_kwarg('psi_mode', PSI_OVERLAP)
         self.set_community_kwarg('log_text', self.log_text)
 
     def registerCallbacks(self):
