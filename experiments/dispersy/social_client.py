@@ -169,13 +169,14 @@ class SocialClient(DispersyExperimentScriptClient):
 
             if ipport and key:
                 key = key.pub()
-                keyhash = long(sha1(self._crypto.key_to_bin(key)).hexdigest(), 16)
-                self._community._mypref_db.addMyPreference(keyhash, {})
-                self._community._friend_db.add_friend(str(peer_id), key, keyhash)
+                keyhash = sha1(self._crypto.key_to_bin(key)).hexdigest()
+                keyhash_as_long = long(keyhash, 16)
+                self._community._mypref_db.addMyPreference(keyhash_as_long, {})
+                self._community._friend_db.add_friend(str(peer_id), key, keyhash_as_long)
 
                 self.friends.add(keyhash)
-                self.friendhashes[peer_id] = keyhash
-                self.friendiphashes[ipport] = keyhash
+                self.friendhashes[peer_id] = keyhash_as_long
+                self.friendiphashes[ipport] = keyhash_as_long
 
                 self._dispersy.callback.persistent_register(u"monitor_friends", self.monitor_friends)
 
@@ -195,8 +196,7 @@ class SocialClient(DispersyExperimentScriptClient):
 
             if ipport:
                 key = key.pub()
-                keyhash = long(sha1(self._crypto.key_to_bin(key)).hexdigest(), 16)
-
+                keyhash = sha1(self._crypto.key_to_bin(key)).hexdigest()
                 self.foafs.add(keyhash)
                 self.foafiphashes[ipport] = [self.friendhashes[peer_id] for peer_id in his_friends if peer_id in self.friendhashes]
 
@@ -228,7 +228,7 @@ class SocialClient(DispersyExperimentScriptClient):
             self._community._peercache.add_peer(my_hashes + [self.friendiphashes[ipport], ], *ipport)
 
         for ipport in foafsaddresses:
-            self._community._peercache.add_peer(self.foafhashes[ipport], *ipport)
+            self._community._peercache.add_peer(self.foafiphashes[ipport], *ipport)
 
         # use peercache to connect to friends
         self._community.connect_to_peercache(sys.maxint)
