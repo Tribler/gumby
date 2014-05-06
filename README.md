@@ -72,8 +72,8 @@ ssh das4
 cd /var/scratch/$USER
 mkdir my_workspace
 cd my_workspace
-git clone https://github.com/Tribler/gumby
-git clone https://github.com/Tribler/tribler
+git clone https://github.com/Tribler/gumby.git
+git clone https://github.com/Tribler/tribler.git
 gumby/run.py gumby/experiments/dispersy/allchannel.conf
 ls -R output/
 ```
