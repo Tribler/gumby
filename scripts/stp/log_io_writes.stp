@@ -1,4 +1,4 @@
-global backtrace, ioWriteCounter, filehandles, times, doesIO;
+global backtrace, ioWriteCounter, filehandles, times, doesIO, tmp;
 global i;
 
 global filesWritten;
@@ -19,7 +19,6 @@ function getPyBacktrace(currentTid)
 				str = substr(str, 45, strlen(str));
 
 			pyBacktrace = sprintf("%s<-%s (%d)", pyBacktrace, str, doesIO[tid, i2]);
-			//pyBacktrace = sprintf("%s<-%s", pyBacktrace, str);
 			index += 1;
 		}
 	}
@@ -31,7 +30,6 @@ probe python.function.entry
 {
 	i[tid()] += 1
 	backtrace[tid(), i[tid()]] = sprintf("%s:%s", filename, funcname);
-	//times[tid(), funcname] = gettimeofday_us();
 	doesIO[tid(), i[tid()]] = 0;
 	// print IN file_mem lineno
 }
@@ -40,24 +38,29 @@ probe python.function.return
 {
 	if(i[tid()] > 0)
 	{
-		foreach ([tid, i2] in ioWriteCounter)
+		foreach ([tid, fd] in ioWriteCounter)
 		{
-			if(tid == tid() && i2 == i[tid()] && ioWriteCounter[tid, i2] > 0)
+			if(tid == tid() && ioWriteCounter[tid, fd] > 0)
 			{
 				bt = getPyBacktrace(tid());
 				//execTime =  gettimeofday_us()-times[tid(), funcname];
 				// disable execTime as it is not accurate here anyway
 				execTime = 0;
 
-				printf("%d,WRITE,%s,%s,%d,%s,%d\n", gettimeofday_us(), filehandles[tid, filesWritten[tid, i2]], bt, ioWriteCounter[tid(), i2], task_execname(pid2task(pid())), execTime );
+				printf("%d,WRITE,%s,%s,%d,%s,%d\n", gettimeofday_us(), filehandles[tid, fd], bt, ioWriteCounter[tid(), fd], task_execname(pid2task(pid())), execTime );
 
+				tmp[fd] = 1;
 			}
 
 
 		}
 
-
-		delete ioWriteCounter[tid(), i[tid()]];
+		foreach([fd] in tmp)
+		{
+			delete ioWriteCounter[tid(), fd];
+		}
+		
+		delete tmp;
 		delete backtrace[tid(), i[tid()]];
 		i[tid()] -= 1
 
@@ -69,15 +72,13 @@ probe python.function.return
 probe syscall.open.return
 {
 	fd = $return;
-	//filehandles[tid(), fd] = sprintf("%s (%d)", user_string($filename), tid());
-	filehandles[tid(), fd] = sprintf("%s", user_string($filename));
-	filesWritten[tid(), i[tid()]] = fd;
+	filehandles[tid(), fd] = sprintf("%s", user_string($filename));	
 }
 
 probe syscall.write.return {
 	if ($return>0) {
 		doesIO[tid(), i[tid()]] = 1;
-		ioWriteCounter[tid(), i[tid()]] += $return;
+		ioWriteCounter[tid(), $fd] += $return;
 
 	}
 }

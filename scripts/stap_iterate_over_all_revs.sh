@@ -100,7 +100,7 @@ for REV in $(git log $GIT_LOG_CMD | grep ^"commit " | cut -f2 -d" "); do
         pycompile $([ -z "$PYTHONOPTIMIZE" ] || echo -n "-O" ) .
         cd ..
         [ ! -z "$PRE_PROBE_CMD" ] && $PRE_PROBE_CMD
-        run_stap_probe.sh "$TEST_COMMAND" $OUTPUT_DIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv ||:
+        process_guard.py -t $PROCESS_GUARD_TIMEOUT -c 'run_stap_probe.sh "$TEST_COMMAND" $OUTPUT_DIR/${TESTNAME}_${COUNT}_${ITERATION}_${REVISION}.csv' ||:
         [ ! -z "$POST_PROBE_CMD" ] && $POST_PROBE_CMD
         cd -
         echo $? $ITERATION $REV >> $ITERATION_RESULTS_FILE
