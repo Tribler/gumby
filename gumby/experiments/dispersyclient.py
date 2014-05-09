@@ -156,7 +156,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         pass
 
     def initializeCrypto(self):
-        from Tribler.dispersy.crypto import ECCrypto, NoCrypto
+        try:
+            from Tribler.dispersy.crypto import ECCrypto, NoCrypto
+        except:
+            from dispersy.crypto import ECCrypto, NoCrypto
 
         if environ.get('TRACKER_CRYPTO', 'ECCrypto') == 'ECCrypto':
             msg('Turning on ECCrypto')
@@ -214,11 +217,14 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def start_dispersy(self):
         msg("Starting dispersy")
         # We need to import the stuff _AFTER_ configuring the logging stuff.
-        from Tribler.dispersy.callback import Callback
-        from Tribler.dispersy.dispersy import Dispersy
-        from Tribler.dispersy.endpoint import StandaloneEndpoint
+        try:
+            from Tribler.dispersy.dispersy import Dispersy
+            from Tribler.dispersy.endpoint import StandaloneEndpoint
+        except:
+            from dispersy.dispersy import Dispersy
+            from dispersy.endpoint import StandaloneEndpoint
 
-        self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
+        self._dispersy = Dispersy(StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
         self._dispersy.statistics.enable_debug_statistics(True)
 
         self.original_on_incoming_packets = self._dispersy.on_incoming_packets
@@ -416,7 +422,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         return prev_dict
 
     def _do_log(self):
-        from Tribler.dispersy.candidate import CANDIDATE_STUMBLE_LIFETIME, CANDIDATE_WALK_LIFETIME, CANDIDATE_INTRO_LIFETIME
+        try:
+            from Tribler.dispersy.candidate import CANDIDATE_STUMBLE_LIFETIME, CANDIDATE_WALK_LIFETIME, CANDIDATE_INTRO_LIFETIME
+        except:
+            from dispersy.candidate import CANDIDATE_STUMBLE_LIFETIME, CANDIDATE_WALK_LIFETIME, CANDIDATE_INTRO_LIFETIME
         total_stumbled_candidates = defaultdict(lambda:defaultdict(set))
 
         prev_statistics = {}
