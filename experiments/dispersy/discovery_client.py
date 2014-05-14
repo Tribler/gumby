@@ -59,6 +59,9 @@ class DiscoveryClient(DispersyExperimentScriptClient):
         else:
             raise RuntimeError("undefined class type, %s" % commtype)
 
+    def start_dispersy(self, autoload_discovery=True):
+        DispersyExperimentScriptClient.start_dispersy(self, autoload_discovery=False)
+
     def online(self):
         DispersyExperimentScriptClient.online(self)
         self._community.my_preferences = self.get_preferences

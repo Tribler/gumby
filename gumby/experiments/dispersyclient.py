@@ -200,7 +200,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def set_ignore_exceptions(self, boolean):
         self._strict = not self.str2bool(boolean)
 
-    def start_dispersy(self):
+    def start_dispersy(self, autoload_discovery=True):
         msg("Starting dispersy")
         # We need to import the stuff _AFTER_ configuring the logging stuff.
         try:
@@ -234,7 +234,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 return True
             #self._dispersy.callback.attach_exception_handler(exception_handler)
 
-        self._dispersy.start()
+        self._dispersy.start(autoload_discovery=autoload_discovery)
 
         if self.master_private_key:
             self._master_member = self._dispersy.get_member(private_key=self.master_private_key)
