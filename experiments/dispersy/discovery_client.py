@@ -33,7 +33,7 @@ class DiscoveryClient(DispersyExperimentScriptClient):
 
         self.preferences = set()
 
-        self.set_community_kwarg('max_prefs', 10)
+        self.set_community_kwarg('max_prefs', 25)
         self.set_community_kwarg('max_tbs', 25)
 
         self.monitor_friends_lc = None
