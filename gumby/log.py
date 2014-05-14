@@ -59,6 +59,8 @@ class ColoredFileLogObserver(FileLogObserver):
         else:
             FileLogObserver.__init__(self, f)
 
+        self.timeFormat = "%H:%M:%S"
+
     def _colorize(self, text, color=GREY_NORMAL):
         return color + text + ColoredFileLogObserver.CANCEL_COLOR
 
