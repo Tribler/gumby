@@ -27,13 +27,8 @@ class DiscoveryClient(DispersyExperimentScriptClient):
         self.community_class = DiscoveryCommunity
 
         self.friends = set()
-        self.friendhashes = {}
-        self.friendiphashes = {}
-        self.not_connected_friends = set()
 
-        self.preferences = set()
-
-        self.set_community_kwarg('max_prefs', 25)
+        self.set_community_kwarg('max_prefs', sys.maxint)
         self.set_community_kwarg('max_tbs', 25)
 
         self.monitor_friends_lc = None
@@ -67,7 +62,7 @@ class DiscoveryClient(DispersyExperimentScriptClient):
         self._community.my_preferences = self.get_preferences
 
     def get_preferences(self):
-        return list(self.preferences)
+        return list(self.friends) + [self._my_member.mid]
 
     @buffer_online
     def insert_my_key(self):
@@ -82,20 +77,13 @@ class DiscoveryClient(DispersyExperimentScriptClient):
                 ipport = self.get_peer_ip_port_by_id(peer_id)
                 key = self.get_private_keypair_by_id(peer_id)
 
-                print >> sys.stderr, "add_friend", peer_id, ipport, bool(key)
-
                 if ipport and key:
                     key = key.pub()
                     keyhash = self._crypto.key_to_hash(key)
-                    keyhash_as_long = long(sha1(self._crypto.key_to_bin(key)).hexdigest(), 16)
-
-                    self.preferences.add(sha1(str(peer_id)).digest())
 
                     self.friends.add(keyhash)
-                    self.friendhashes[peer_id] = keyhash_as_long
-                    self.friendiphashes[ipport] = keyhash_as_long
 
-                    print >> sys.stderr, "friend added", len(self.friends)
+                    print >> sys.stderr, "friend added", peer_id, keyhash.encode('HEX'), "now have %d friends" % len(self.friends)
 
                     if not self.monitor_friends_lc:
                         self.monitor_friends_lc = lc = LoopingCall(self.monitor_friends)
@@ -109,12 +97,13 @@ class DiscoveryClient(DispersyExperimentScriptClient):
             from traceback import print_exc
             print_exc()
 
-    @buffer_online
     def add_foaf(self, peer_id, his_friends):
         pass
 
-    @buffer_online
     def send_post(self, peer_id, nr_messages=1):
+        pass
+
+    def peertype(self, peertype):
         pass
 
     def connect_to_friends(self):
