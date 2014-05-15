@@ -132,7 +132,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         # TODO(emilon): Fix me or kill me
         try:
-            symlink(path.join(environ['PROJECT_DIR'], 'tribler', 'bootstraptribler.txt'), 'bootstraptribler.txt')
+            bootstrap_fn = path.join(environ['PROJECT_DIR'], 'tribler', 'bootstraptribler.txt')
+            if not path.exists(bootstrap_fn):
+                bootstrap_fn = path.join(environ['PROJECT_DIR'], 'bootstraptribler.txt')
+            symlink(bootstrap_fn, 'bootstraptribler.txt')
         except OSError:
             pass
 
