@@ -27,6 +27,7 @@ class DiscoveryClient(DispersyExperimentScriptClient):
         self.community_class = DiscoveryCommunity
 
         self.friends = set()
+        self.preferences = set()
 
         self.set_community_kwarg('max_prefs', sys.maxint)
         self.set_community_kwarg('max_tbs', 25)
@@ -36,39 +37,47 @@ class DiscoveryClient(DispersyExperimentScriptClient):
         self._prev_scenario_debug = {}
 
     def registerCallbacks(self):
-        self.scenario_runner.register(self.insert_my_key, 'insert_my_key')
         self.scenario_runner.register(self.add_friend, 'add_friend')
-        self.scenario_runner.register(self.add_foaf, 'add_foaf')
-        self.scenario_runner.register(self.connect_to_friends, 'connect_to_friends')
-        self.scenario_runner.register(self.set_community_class, 'set_community_class')
-        self.scenario_runner.register(self.send_post, 'send_post')
-        self.scenario_runner.register(self.set_cache, 'set_cache')
+        self.scenario_runner.register(self.ignore_call, 'add_foaf')
+        self.scenario_runner.register(self.ignore_call, 'connect_to_friends')
+        self.scenario_runner.register(self.ignore_call, 'set_community_class')
+        self.scenario_runner.register(self.ignore_call, 'send_post')
+        self.scenario_runner.register(self.ignore_call, 'set_cache')
+        self.scenario_runner.register(self.ignore_call, 'insert_my_key')
 
-    def set_cache(self, cache):
-        pass
 
-    def set_community_class(self, commtype):
-        from dispersy.discovery.community import DiscoveryCommunity
-        if commtype == "disc":
-            self.community_class = DiscoveryCommunity
-        else:
-            raise RuntimeError("undefined class type, %s" % commtype)
+        #compatibility with privatesemantic scenario
+        self.scenario_runner.register(self.download, 'download')
+        self.scenario_runner.register(self.download, 'testset')
+        self.scenario_runner.register(self.add_friend, 'taste_buddy')
+        self.scenario_runner.register(self.ignore_call, 'connect_to_taste_buddies')
+        self.scenario_runner.register(self.ignore_call, 'set_manual_connect')
+        self.scenario_runner.register(self.ignore_call, 'set_random_connect')
+        self.scenario_runner.register(self.ignore_call, 'set_bootstrap_percentage')
+        self.scenario_runner.register(self.ignore_call, 'set_latejoin')
+        self.scenario_runner.register(self.ignore_call, 'set_search_spacing')
+        self.scenario_runner.register(self.ignore_call, 'set_do_search')
+        self.scenario_runner.register(self.ignore_call, 'set_search_limit')
+        self.scenario_runner.register(self.ignore_call, 'availability')
+        self.scenario_runner.register(self.ignore_call, 'perform_searches')
 
     def start_dispersy(self, autoload_discovery=True):
         DispersyExperimentScriptClient.start_dispersy(self, autoload_discovery=False)
+
+    def set_community_kwarg(self, key, value):
+        pass
 
     def online(self):
         DispersyExperimentScriptClient.online(self)
         self._community.my_preferences = self.get_preferences
 
     def get_preferences(self):
+        if self.preferences:
+            return list(self.preferences)
+
         return list(self.friends) + [self._my_member.mid]
 
-    @buffer_online
-    def insert_my_key(self):
-        pass
-
-    def add_friend(self, peer_id):
+    def add_friend(self, peer_id, similarity=None):
         try:
             if peer_id != self.my_id:
                 peer_id = int(peer_id)
@@ -97,16 +106,10 @@ class DiscoveryClient(DispersyExperimentScriptClient):
             from traceback import print_exc
             print_exc()
 
-    def add_foaf(self, peer_id, his_friends):
-        pass
+    def download(self, infohash):
+        self.preferences.add(sha1(str(infohash)).digest())
 
-    def send_post(self, peer_id, nr_messages=1):
-        pass
-
-    def peertype(self, peertype):
-        pass
-
-    def connect_to_friends(self):
+    def ignore_call(self, *args):
         pass
 
     def monitor_friends(self):
