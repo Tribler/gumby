@@ -11,7 +11,7 @@ from time import time, sleep
 from collections import defaultdict
 from hashlib import sha1
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main
+from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
 from twisted.python.log import msg
 
@@ -36,6 +36,10 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         self.taste_buddies = {}
         self.not_connected_taste_buddies = set()
 
+        self.log_statistics_lc = None
+        self.prev_scenario_statistics = {}
+        self.prev_scenario_debug = {}
+
         self.community_kwargs['integrate_with_tribler'] = False
 
     def registerCallbacks(self):
@@ -50,12 +54,10 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.set_bootstrap_percentage, 'set_bootstrap_percentage')
         self.scenario_runner.register(self.set_latejoin, 'set_latejoin')
 
-    @call_on_dispersy_thread
     def download(self, infohash):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
         self._community._mypref_db.addMyPreference(infohash, {})
 
-    @call_on_dispersy_thread
     def testset(self, infohash):
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
         self._community._mypref_db.addTestPreference(infohash)
@@ -155,7 +157,6 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: community_kwargs are now", self.community_kwargs
 
-    @call_on_dispersy_thread
     def online(self):
         sleep(random() * 5.0)
 
@@ -165,9 +166,10 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
         self._community.create_msimilarity_request = lambda destination: False
 
-    @call_on_dispersy_thread
     def connect_to_taste_buddies(self):
-        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
+        if not self.log_statistics_lc:
+            self.log_statistics_lc = lc = LoopingCall(self.log_statistics)
+            lc.start(5.0, now=True)
 
         if int(self.my_id) > self.late_join:
             nr_to_connect = int(10 * self.bootstrap_percentage)
@@ -188,32 +190,27 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         self._community.create_msimilarity_request = self._orig_create_msimilarity_request
 
     def log_statistics(self):
-        prev_scenario_statistics = {}
-        prev_scenario_debug = {}
+        if DEBUG:
+            tsock_addrs = [candidate.sock_addr for candidate in self._community.yield_taste_buddies()]
+            msock_addrs = self.taste_buddies.keys()
+            print >> sys.stderr, "Comparing", tsock_addrs, msock_addrs
 
-        while True:
-            if DEBUG:
-                tsock_addrs = [candidate.sock_addr for candidate in self._community.yield_taste_buddies()]
-                msock_addrs = self.taste_buddies.keys()
-                print >> sys.stderr, "Comparing", tsock_addrs, msock_addrs
-
-            for sock_addr in self.taste_buddies.keys():
-                if self._community.is_taste_buddy_sock(sock_addr):
-                    if sock_addr in self.not_connected_taste_buddies:
-                        self.not_connected_taste_buddies.remove(sock_addr)
-                else:
-                    self.not_connected_taste_buddies.add(sock_addr)
-
-            connected_friends = min(len(self.taste_buddies) - len(self.not_connected_taste_buddies), 10)
-            max_connected = min(int(10 * self.bootstrap_percentage), len(self.taste_buddies))
-            if max_connected:
-                bootstrapped = connected_friends / float(max_connected)
+        for sock_addr in self.taste_buddies.keys():
+            if self._community.is_taste_buddy_sock(sock_addr):
+                if sock_addr in self.not_connected_taste_buddies:
+                    self.not_connected_taste_buddies.remove(sock_addr)
             else:
-                bootstrapped = 0
+                self.not_connected_taste_buddies.add(sock_addr)
 
-            self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped':bootstrapped})
-            self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_taste_buddies), 'create_time_encryption':self._community.create_time_encryption, 'create_time_decryption':self._community.create_time_decryption, 'receive_time_encryption':self._community.receive_time_encryption, 'send_packet_size':self._community.send_packet_size, 'reply_packet_size':self._community.reply_packet_size, 'forward_packet_size':self._community.forward_packet_size})
-            yield 5.0
+        connected_friends = min(len(self.taste_buddies) - len(self.not_connected_taste_buddies), 10)
+        max_connected = min(int(10 * self.bootstrap_percentage), len(self.taste_buddies))
+        if max_connected:
+            bootstrapped = connected_friends / float(max_connected)
+        else:
+            bootstrapped = 0
+
+        self.print_on_change("scenario-statistics", self.prev_scenario_statistics, {'bootstrapped':bootstrapped})
+        self.print_on_change("scenario-debug", self.prev_scenario_debug, {'not_connected':list(self.not_connected_taste_buddies), 'create_time_encryption':self._community.create_time_encryption, 'create_time_decryption':self._community.create_time_decryption, 'receive_time_encryption':self._community.receive_time_encryption, 'send_packet_size':self._community.send_packet_size, 'reply_packet_size':self._community.reply_packet_size, 'forward_packet_size':self._community.forward_packet_size})
 
 if __name__ == '__main__':
     PrivateSemanticClient.scenario_file = 'privatesemantic_1000.scenario'

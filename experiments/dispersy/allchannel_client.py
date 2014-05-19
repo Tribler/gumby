@@ -43,7 +43,7 @@ from string import letters
 from sys import path as pythonpath
 from time import time
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main
+from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
 from twisted.python.log import msg
 
@@ -61,6 +61,8 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.joined_community = None
         self.torrentindex = 1
 
+        self.join_lc = None
+
         self.set_community_kwarg('integrate_with_tribler', False)
 
     def registerCallbacks(self):
@@ -74,10 +76,9 @@ class AllChannelClient(DispersyExperimentScriptClient):
         from Tribler.community.channel.community import ChannelCommunity
 
         DispersyExperimentScriptClient.start_dispersy(self)
-        self._dispersy.callback.call(self._dispersy.define_auto_load, (ChannelCommunity, self._my_member, (), {"integrate_with_tribler": False}))
-        self._dispersy.callback.call(self._dispersy.define_auto_load, (PreviewChannelCommunity, self._my_member, (), {"integrate_with_tribler": False}))
+        self._dispersy.define_auto_load(ChannelCommunity, self._my_member, (), {"integrate_with_tribler": False})
+        self._dispersy.define_auto_load(PreviewChannelCommunity, self._my_member, (), {"integrate_with_tribler": False})
 
-    @call_on_dispersy_thread
     def create(self):
         msg("creating-community")
         from Tribler.community.channel.community import ChannelCommunity
@@ -86,8 +87,11 @@ class AllChannelClient(DispersyExperimentScriptClient):
         msg("creating-channel-message")
         self.my_channel._disp_create_channel(u'', u'')
 
-    @call_on_dispersy_thread
     def join(self):
+        if not self.join_lc:
+            self.join_lc = lc = LoopingCall(self.join)
+            lc.start(1.0, now=False)
+
         msg("trying-to-join-community")
 
         cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
@@ -100,9 +104,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
                 self.joined_community = community
                 return
 
-        self._dispersy.callback.register(self.join, delay=1.0)
-
-    @call_on_dispersy_thread
     def publish(self, amount=1):
         amount = int(amount)
         torrents = []
@@ -128,7 +129,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
         if torrents:
             self.my_channel._disp_create_torrents(torrents)
 
-    @call_on_dispersy_thread
     def post(self, amount=1):
         amount = int(amount)
         if self.joined_community:
