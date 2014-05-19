@@ -102,6 +102,7 @@ done
     
 # make report
 mkdir -p $SIM_REPORT_NAME
+# @CONF_OPTION TOOLNAME: # Name of project in the tribler repository (for linking to github)
 stap_make_similarity_report.py $CONFFILE $SIM_REPORT_NAME $TOOLNAME $TESTNAME
 
 
