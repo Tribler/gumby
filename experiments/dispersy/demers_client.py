@@ -42,7 +42,7 @@ from random import choice
 from string import letters
 from sys import path as pythonpath
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main
+from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
 from twisted.python.log import msg
 
@@ -60,7 +60,6 @@ class DemersClient(DispersyExperimentScriptClient):
     def registerCallbacks(self):
         self.scenario_runner.register(self.publish, 'publish')
 
-    @call_on_dispersy_thread
     def publish(self, amount=1):
         amount = int(amount)
         for _ in xrange(amount):

@@ -47,7 +47,7 @@ from time import time
 from collections import defaultdict
 from hashlib import sha1
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, call_on_dispersy_thread, main
+from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
 from twisted.python.log import msg
 
@@ -82,6 +82,10 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
 
         self.nr_search = 0
 
+        self.log_statistics_lc = None
+        self.prev_scenario_statistics = {}
+        self.prev_scenario_debug = {}
+
         self.community_kwargs['integrate_with_tribler'] = False
         self.community_kwargs['log_searches'] = self.log_searches
 
@@ -102,7 +106,6 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.set_search_limit, 'set_search_limit')
         self.scenario_runner.register(self.set_search_spacing, 'set_search_spacing')
 
-    @call_on_dispersy_thread
     def download(self, infohash):
         infohash_str = infohash + " "* (20 - len(infohash))
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
@@ -110,7 +113,6 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self._community._mypref_db.addMyPreference(infohash, {})
         self._community._torrent_db.addTorrent(infohash_str, True)
 
-    @call_on_dispersy_thread
     def testset(self, infohash):
         infohash_str = infohash + " "* (20 - len(infohash))
         infohash = long(sha1(str(infohash)).hexdigest(), 16)
@@ -227,7 +229,6 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: community_kwargs are now", self.community_kwargs
 
-    @call_on_dispersy_thread
     def online(self):
         DispersyExperimentScriptClient.online(self)
 
@@ -235,9 +236,11 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
         self._community.create_msimilarity_request = lambda destination: False
 
-    @call_on_dispersy_thread
     def connect_to_taste_buddies(self):
-        self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
+        if not self.log_statistics_lc:
+            self.log_statistics_lc = lc = LoopingCall(self.log_statistics)
+            lc.start(5.0, now=True)
+
         if int(self.my_id) > self.late_join:
             nr_to_connect = int(10 * self.bootstrap_percentage)
             print >> sys.stderr, "will connect to", nr_to_connect
@@ -256,10 +259,11 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         # enable normal discovery of foafs
         self._community.create_msimilarity_request = self._orig_create_msimilarity_request
 
-    @call_on_dispersy_thread
     def perform_searches(self):
         if int(self.my_id) <= self.do_search:
-            self._dispersy.callback.persistent_register(u"log_statistics", self.log_statistics)
+            if not self.log_statistics_lc:
+                self.log_statistics_lc = lc = LoopingCall(self.log_statistics)
+                lc.start(5.0, now=True)
 
             # add small initial delay, to load balance requests
             yield float(int(self.my_id) % self.search_spacing)
@@ -287,45 +291,40 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
                     break
 
     def log_statistics(self):
-        prev_scenario_statistics = {}
-        prev_scenario_debug = {}
+        if DEBUG:
+            tsock_addrs = [candidate.sock_addr for candidate in self._community.yield_taste_buddies()]
+            msock_addrs = self.taste_buddies.keys()
+            print >> sys.stderr, "Comparing", tsock_addrs, msock_addrs
 
-        while True:
-            if DEBUG:
-                tsock_addrs = [candidate.sock_addr for candidate in self._community.yield_taste_buddies()]
-                msock_addrs = self.taste_buddies.keys()
-                print >> sys.stderr, "Comparing", tsock_addrs, msock_addrs
-
-            for sock_addr in self.taste_buddies.keys():
-                if self._community.is_taste_buddy_sock(sock_addr):
-                    if sock_addr in self.not_connected_taste_buddies:
-                        self.not_connected_taste_buddies.remove(sock_addr)
-                else:
-                    self.not_connected_taste_buddies.add(sock_addr)
-
-            connected_friends = len(self.taste_buddies) - len(self.not_connected_taste_buddies)
-            max_connected = min(int(10 * self.bootstrap_percentage), len(self.taste_buddies))
-            if max_connected:
-                bootstrapped = connected_friends / float(max_connected)
+        for sock_addr in self.taste_buddies.keys():
+            if self._community.is_taste_buddy_sock(sock_addr):
+                if sock_addr in self.not_connected_taste_buddies:
+                    self.not_connected_taste_buddies.remove(sock_addr)
             else:
-                bootstrapped = 0
+                self.not_connected_taste_buddies.add(sock_addr)
 
-            recall = len(self.test_reply) / float(len(self.test_set))
+        connected_friends = len(self.taste_buddies) - len(self.not_connected_taste_buddies)
+        max_connected = min(int(10 * self.bootstrap_percentage), len(self.taste_buddies))
+        if max_connected:
+            bootstrapped = connected_friends / float(max_connected)
+        else:
+            bootstrapped = 0
 
-            paths_found = sum(len(paths) for paths in self.test_reply.itervalues())
-            sources_found = 0
-            for infohash, peers in self.test_reply.iteritems():
-                print >> sys.stderr, "Received", infohash, "from", peers
-                sources_found += sum(peer in self.file_availability[infohash] for peer in set(peers))
+        recall = len(self.test_reply) / float(len(self.test_set))
 
-            unique_sources = float(sum([len(self.file_availability[infohash]) for infohash in self.test_reply.iterkeys()]))
-            if unique_sources:
-                sources_found = sources_found / unique_sources
-                paths_found = paths_found / unique_sources
+        paths_found = sum(len(paths) for paths in self.test_reply.itervalues())
+        sources_found = 0
+        for infohash, peers in self.test_reply.iteritems():
+            print >> sys.stderr, "Received", infohash, "from", peers
+            sources_found += sum(peer in self.file_availability[infohash] for peer in set(peers))
 
-            self.print_on_change("scenario-statistics", prev_scenario_statistics, {'bootstrapped':bootstrapped, 'recall':recall, 'nr_search_':self.nr_search, 'paths_found':paths_found, 'sources_found':sources_found})
-            self.print_on_change("scenario-debug", prev_scenario_debug, {'not_connected':list(self.not_connected_taste_buddies), 'search_forward':self._community.search_forward, 'search_forward_success':self._community.search_forward_success, 'search_forward_timeout':self._community.search_forward_timeout, 'search_endpoint':self._community.search_endpoint, 'search_cycle_detected':self._community.search_cycle_detected, 'search_no_candidates_remain':self._community.search_no_candidates_remain, 'search_megacachesize':self._community.search_megacachesize, 'create_time_encryption':self._community.create_time_encryption, 'create_time_decryption':self._community.create_time_decryption, 'receive_time_encryption':self._community.receive_time_encryption, 'search_timeout':self._community.search_timeout, 'send_packet_size':self._community.send_packet_size, 'reply_packet_size':self._community.reply_packet_size, 'forward_packet_size':self._community.forward_packet_size})
-            yield 5.0
+        unique_sources = float(sum([len(self.file_availability[infohash]) for infohash in self.test_reply.iterkeys()]))
+        if unique_sources:
+            sources_found = sources_found / unique_sources
+            paths_found = paths_found / unique_sources
+
+        self.print_on_change("scenario-statistics", self.prev_scenario_statistics, {'bootstrapped':bootstrapped, 'recall':recall, 'nr_search_':self.nr_search, 'paths_found':paths_found, 'sources_found':sources_found})
+        self.print_on_change("scenario-debug", self.prev_scenario_debug, {'not_connected':list(self.not_connected_taste_buddies), 'search_forward':self._community.search_forward, 'search_forward_success':self._community.search_forward_success, 'search_forward_timeout':self._community.search_forward_timeout, 'search_endpoint':self._community.search_endpoint, 'search_cycle_detected':self._community.search_cycle_detected, 'search_no_candidates_remain':self._community.search_no_candidates_remain, 'search_megacachesize':self._community.search_megacachesize, 'create_time_encryption':self._community.create_time_encryption, 'create_time_decryption':self._community.create_time_decryption, 'receive_time_encryption':self._community.receive_time_encryption, 'search_timeout':self._community.search_timeout, 'send_packet_size':self._community.send_packet_size, 'reply_packet_size':self._community.reply_packet_size, 'forward_packet_size':self._community.forward_packet_size})
 
     def log_searches(self, key, **kwargs):
         self.print_on_change(key, {}, kwargs)

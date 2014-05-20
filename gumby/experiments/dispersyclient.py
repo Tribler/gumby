@@ -52,30 +52,16 @@ from twisted.python.log import msg, err
 
 # TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
 # The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
+from twisted.internet.defer import inlineCallbacks
 from twisted.internet import reactor
+from twisted.internet.task import deferLater
 from twisted.internet.threads import deferToThread
 import base64
 from traceback import print_exc
 
-def register_or_call(callback, func, args=(), kargs={}):
-    if not callback.is_current_thread:
-        callback.register(func, args, kargs)
-    else:
-        func(*args, **kargs)
-
-def call_on_dispersy_thread(func):
-    def helper(*args, **kargs):
-        register_or_call(args[0]._dispersy.callback, func, args, kargs)
-
-    helper.__name__ = func.__name__
-    return helper
-
 def buffer_online(func):
     def helper(*args, **kargs):
-        def buffer_call():
-            args[0].buffer_call(func, args, kargs)
-
-        register_or_call(args[0]._dispersy.callback, buffer_call)
+        args[0].buffer_call(func, args, kargs)
 
     helper.__name__ = func.__name__
     return helper
@@ -146,7 +132,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         # TODO(emilon): Fix me or kill me
         try:
-            symlink(path.join(environ['PROJECT_DIR'], 'tribler', 'bootstraptribler.txt'), 'bootstraptribler.txt')
+            bootstrap_fn = path.join(environ['PROJECT_DIR'], 'tribler', 'bootstraptribler.txt')
+            if not path.exists(bootstrap_fn):
+                bootstrap_fn = path.join(environ['PROJECT_DIR'], 'bootstraptribler.txt')
+            symlink(bootstrap_fn, 'bootstraptribler.txt')
         except OSError:
             pass
 
@@ -156,7 +145,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
         pass
 
     def initializeCrypto(self):
-        from Tribler.dispersy.crypto import ECCrypto, NoCrypto
+        try:
+            from Tribler.dispersy.crypto import ECCrypto, NoCrypto
+        except:
+            from dispersy.crypto import ECCrypto, NoCrypto
 
         if environ.get('TRACKER_CRYPTO', 'ECCrypto') == 'ECCrypto':
             msg('Turning on ECCrypto')
@@ -211,14 +203,17 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def set_ignore_exceptions(self, boolean):
         self._strict = not self.str2bool(boolean)
 
-    def start_dispersy(self):
+    def start_dispersy(self, autoload_discovery=True):
         msg("Starting dispersy")
         # We need to import the stuff _AFTER_ configuring the logging stuff.
-        from Tribler.dispersy.callback import Callback
-        from Tribler.dispersy.dispersy import Dispersy
-        from Tribler.dispersy.endpoint import StandaloneEndpoint
+        try:
+            from Tribler.dispersy.dispersy import Dispersy
+            from Tribler.dispersy.endpoint import StandaloneEndpoint
+        except:
+            from dispersy.dispersy import Dispersy
+            from dispersy.endpoint import StandaloneEndpoint
 
-        self._dispersy = Dispersy(Callback("Dispersy"), StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
+        self._dispersy = Dispersy(StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
         self._dispersy.statistics.enable_debug_statistics(True)
 
         self.original_on_incoming_packets = self._dispersy.on_incoming_packets
@@ -240,19 +235,19 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 reactor.callLater(1, self.stop)
 
                 return True
-            self._dispersy.callback.attach_exception_handler(exception_handler)
+            #self._dispersy.callback.attach_exception_handler(exception_handler)
 
-        self._dispersy.start()
+        self._dispersy.start(autoload_discovery=autoload_discovery)
 
         if self.master_private_key:
-            self._master_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'private_key': self.master_private_key})
+            self._master_member = self._dispersy.get_member(private_key=self.master_private_key)
         else:
-            self._master_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'public_key': self.master_key})
-        self._my_member = self._dispersy.callback.call(self._dispersy.get_member, kargs={'private_key': self.my_member_private_key})
+            self._master_member = self._dispersy.get_member(public_key=self.master_key)
+        self._my_member = self._dispersy.get_member(private_key=self.my_member_private_key)
         assert self._master_member
         assert self._my_member
 
-        self._dispersy.callback.register(self._do_log)
+        self._do_log()
 
         self.print_on_change('community-kwargs', {}, self.community_kwargs)
         self.print_on_change('community-env', {}, {'pid':getpid()})
@@ -278,7 +273,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.master_key = pub_key.decode("HEX")
         self.master_private_key = priv_key.decode("HEX")
 
-    @call_on_dispersy_thread
     def online(self, dont_empty=False):
         msg("Trying to go online")
         if self._community is None:
@@ -286,7 +280,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
             msg("join community %s as %s" % (self._master_member.mid.encode("HEX"), self._my_member.mid.encode("HEX")))
             self._dispersy.on_incoming_packets = self.original_on_incoming_packets
-            self._community = self.community_class(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
+            self._community = self.community_class.init_community(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
             self._community.auto_load = False
 
             assert self.is_online()
@@ -295,7 +289,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
         else:
             msg("online (we are already online)")
 
-    @call_on_dispersy_thread
     def offline(self):
         msg("Trying to go offline")
 
@@ -337,7 +330,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._online_buffer = []
 
-    @call_on_dispersy_thread
     def reset_dispersy_statistics(self):
         self._dispersy._statistics.reset()
 
@@ -415,8 +407,12 @@ class DispersyExperimentScriptClient(ExperimentClient):
             return new_values
         return prev_dict
 
+    @inlineCallbacks
     def _do_log(self):
-        from Tribler.dispersy.candidate import CANDIDATE_STUMBLE_LIFETIME, CANDIDATE_WALK_LIFETIME, CANDIDATE_INTRO_LIFETIME
+        try:
+            from Tribler.dispersy.candidate import CANDIDATE_STUMBLE_LIFETIME, CANDIDATE_WALK_LIFETIME, CANDIDATE_INTRO_LIFETIME
+        except:
+            from dispersy.candidate import CANDIDATE_STUMBLE_LIFETIME, CANDIDATE_WALK_LIFETIME, CANDIDATE_INTRO_LIFETIME
         total_stumbled_candidates = defaultdict(lambda:defaultdict(set))
 
         prev_statistics = {}
@@ -446,7 +442,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
                         if candidate.last_stumble > now - CANDIDATE_STUMBLE_LIFETIME:
                             nr_stumbled += 1
 
-                            mid = list(candidate.get_members())[0].mid
+                            mid = candidate.get_member().mid
                             total_stumbled_candidates[c.hex_cid][candidate.last_stumble].add(mid)
 
                         if candidate.last_walk > now - CANDIDATE_WALK_LIFETIME:
@@ -520,7 +516,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
             prev_endpoint_send = self.print_on_change("statistics-endpoint-send", prev_endpoint_send, self._dispersy.statistics.endpoint_send)
             prev_bootstrap_candidates = self.print_on_change("statistics-bootstrap-candidates", prev_bootstrap_candidates, self._dispersy.statistics.bootstrap_candidates)
 
-            yield 5.0
+            yield deferLater(reactor, 5.0, lambda : None)
 
 
 def main(client_class):
