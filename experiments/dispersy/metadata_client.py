@@ -43,6 +43,7 @@ from hashlib import sha1
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
 from twisted.python.log import msg
+from twisted.internet.task import LoopingCall
 
 # TODO(emilon): Fix this crap
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
