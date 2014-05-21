@@ -479,42 +479,34 @@ class DispersyExperimentScriptClient(ExperimentClient):
                     communities_dict[cid] = _c
 
             statistics_dict = {'conn_type': self._dispersy.statistics.connection_type,
-                               'received_count': self._dispersy.statistics.received_count,
-                               'success_count': self._dispersy.statistics.success_count,
-                               'drop_count': self._dispersy.statistics.drop_count,
-                               'delay_count': self._dispersy.statistics.delay_count,
-                               'delay_success': self._dispersy.statistics.delay_success,
-                               'delay_timeout': self._dispersy.statistics.delay_timeout,
-                               'delay_send': self._dispersy.statistics.delay_send,
-                               'created_count': self._dispersy.statistics.created_count,
+                               'received_count': self._dispersy.statistics.total_received,
+                               'success_count': self._dispersy.statistics.msg_statistics.success_count,
+                               'drop_count': self._dispersy.statistics.msg_statistics.drop_count,
+                               'delay_count': self._dispersy.statistics.msg_statistics.delay_received_count,
+                               'delay_success': self._dispersy.statistics.msg_statistics.delay_success_count,
+                               'delay_timeout': self._dispersy.statistics.msg_statistics.delay_timeout_count,
+                               'delay_send': self._dispersy.statistics.msg_statistics.delay_send_count,
+                               'created_count': self._dispersy.statistics.msg_statistics.created_count,
                                'total_up': self._dispersy.statistics.total_up,
                                'total_down': self._dispersy.statistics.total_down,
                                'total_send': self._dispersy.statistics.total_send,
                                'cur_sendqueue': self._dispersy.statistics.cur_sendqueue,
                                'total_candidates_discovered': self._dispersy.statistics.total_candidates_discovered,
-                               'walk_attempt': self._dispersy.statistics.walk_attempt,
-                               'walk_success': self._dispersy.statistics.walk_success,
-                               'walk_bootstrap_attempt': self._dispersy.statistics.walk_bootstrap_attempt,
-                               'walk_bootstrap_success': self._dispersy.statistics.walk_bootstrap_success,
-                               'walk_invalid_response_identifier': self._dispersy.statistics.walk_invalid_response_identifier,
-                               'walk_advice_outgoing_request': self._dispersy.statistics.walk_advice_outgoing_request,
-                               'walk_advice_incoming_response': self._dispersy.statistics.walk_advice_incoming_response,
-                               'walk_advice_incoming_response_new': self._dispersy.statistics.walk_advice_incoming_response_new,
-                               'walk_advice_incoming_request': self._dispersy.statistics.walk_advice_incoming_request,
-                               'walk_advice_outgoing_response': self._dispersy.statistics.walk_advice_outgoing_response,
+                               'walk_attempt': self._dispersy.statistics.walk_attempt_count,
+                               'walk_success': self._dispersy.statistics.walk_success_count,
+                               'walk_invalid_response_identifier': self._dispersy.statistics.invalid_response_identifier_count,
                                'is_online': self.is_online(),
                                'communities': communities_dict}
 
             prev_statistics = self.print_on_change("statistics", prev_statistics, statistics_dict)
-            prev_total_dropped = self.print_on_change("statistics-dropped-messages", prev_total_dropped, self._dispersy.statistics.drop)
-            prev_total_delayed = self.print_on_change("statistics-delayed-messages", prev_total_delayed, self._dispersy.statistics.delay)
-            prev_total_received = self.print_on_change("statistics-successful-messages", prev_total_received, self._dispersy.statistics.success)
-            prev_total_outgoing = self.print_on_change("statistics-outgoing-messages", prev_total_outgoing, self._dispersy.statistics.outgoing)
-            prev_created_messages = self.print_on_change("statistics-created-messages", prev_created_messages, self._dispersy.statistics.created)
-            prev_total_fail = self.print_on_change("statistics-walk-fail", prev_total_fail, self._dispersy.statistics.walk_fail)
+            prev_total_dropped = self.print_on_change("statistics-dropped-messages", prev_total_dropped, self._dispersy.statistics.msg_statistics.drop_dict)
+            prev_total_delayed = self.print_on_change("statistics-delayed-messages", prev_total_delayed, self._dispersy.statistics.msg_statistics.delay_dict)
+            prev_total_received = self.print_on_change("statistics-successful-messages", prev_total_received, self._dispersy.statistics.msg_statistics.success_dict)
+            prev_total_outgoing = self.print_on_change("statistics-outgoing-messages", prev_total_outgoing, self._dispersy.statistics.msg_statistics.outgoing_dict)
+            prev_created_messages = self.print_on_change("statistics-created-messages", prev_created_messages, self._dispersy.statistics.msg_statistics.created_dict)
+            prev_total_fail = self.print_on_change("statistics-walk-fail", prev_total_fail, self._dispersy.statistics.walk_failure_dict)
             prev_endpoint_recv = self.print_on_change("statistics-endpoint-recv", prev_endpoint_recv, self._dispersy.statistics.endpoint_recv)
             prev_endpoint_send = self.print_on_change("statistics-endpoint-send", prev_endpoint_send, self._dispersy.statistics.endpoint_send)
-            prev_bootstrap_candidates = self.print_on_change("statistics-bootstrap-candidates", prev_bootstrap_candidates, self._dispersy.statistics.bootstrap_candidates)
 
             yield deferLater(reactor, 5.0, lambda : None)
 
