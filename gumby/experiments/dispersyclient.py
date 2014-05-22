@@ -255,11 +255,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         msg("Finished starting dispersy")
 
     def stop_dispersy(self):
-        def onDispersyStopped(result):
-            self._dispersy_exit_status = result
-
-        d = deferToThread(self._dispersy.stop)
-        d.addCallback(onDispersyStopped)
+        self._dispersy_exit_status = self._dispersy.stop()
 
     def stop(self, retry=3):
         retry = int(retry)
