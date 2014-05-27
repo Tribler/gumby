@@ -10,7 +10,7 @@ load_annotations <- function(){
 		if(length(args) > 0){
 			df2$labelpos <- df2$maxx + max((maxX - minX) / 66, 1)
 		} else {
-			df2$labelpos <- df2$maxx + 1
+			df2$labelpos <- df2$minx + 1
 		}
 
 		return(df2)
