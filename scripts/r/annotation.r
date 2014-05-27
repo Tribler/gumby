@@ -8,7 +8,7 @@ load_annotations <- function(){
 		df2$show_mean <- show_mean
 
 		if(length(args) > 0){
-			df2$labelpos <- df2$maxx + max((maxX - minX) / 66, 1)
+			df2$labelpos <- df2$minx + max((maxX - minX) / 66, 1)
 		} else {
 			df2$labelpos <- df2$minx + 1
 		}
