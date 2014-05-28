@@ -6,7 +6,7 @@ walk_rtts$label <- factor(paste(walk_rtts$HOST_NAME, "(", walk_rtts$ADDRESS, ")"
 p <- ggplot(walk_rtts, aes(HOST_NAME, RTT))
 p <- p + geom_boxplot(aes(fill=label))
 p <- p + coord_flip()
-p <- p + scale_x_discrete(limits=rev(factor(HOST_NAME)))
+p <- p + scale_x_discrete(limits=rev(factor(walk_rtts$HOST_NAME)))
 p <- p + labs(title="Bootstrap server response time", 
               x="Server address", 
               y="Round-trip time (seconds)",
@@ -20,7 +20,7 @@ p <- ggplot(summary, aes(HOST_NAME, RESPONSES))
 p <- p + geom_bar(aes(fill=label))
 p <- p + coord_flip()
 p <- p + ylim(0, max(summary$REQUESTS))
-p <- p + scale_x_discrete(limits=rev(factor(HOST_NAME)))
+p <- p + scale_x_discrete(limits=rev(factor(summary$HOST_NAME)))
 p <- p + labs(title=paste("Bootstrap server walk request success\nout of", max(summary$REQUESTS), "requests"),
               x="Server address",
               y="Successfull walks",
