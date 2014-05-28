@@ -14,7 +14,7 @@ p
 ggsave("walk_rtts.png", width=10, height=6, dpi=100)
 
 summary <- read.table("summary.txt", header=T, quote="\"")
-summary$label <- factor(paste(walk_rtts$HOST_NAME, "(", walk_rtts$ADDRESS, ")", sep=''))
+summary$label <- factor(paste(summary$HOST_NAME, "(", summary$ADDRESS, ")", sep=''))
 p <- ggplot(summary, aes(label, RESPONSES))
 p <- p + geom_bar(aes(fill=label))
 p <- p + coord_flip()
