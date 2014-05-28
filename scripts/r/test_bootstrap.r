@@ -7,7 +7,7 @@ walk_rtts$Server <- factor(paste(walk_rtts$HOST_NAME, "\n", walk_rtts$ADDRESS, "
 p <- ggplot(walk_rtts, aes(HOST_NAME, RTT))
 p <- p + geom_boxplot(aes(fill=Server))
 p <- p + coord_flip()
-p <- p + scale_x_discrete(limits=rev(sort(summary$HOST_NAME)))
+p <- p + scale_x_discrete(limits=rev(sort(walk_rtts$HOST_NAME)))
 p <- p + labs(title="Bootstrap server response time", 
               x="Server address", 
               y="Round-trip time (seconds)",
