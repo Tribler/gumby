@@ -36,16 +36,17 @@
 #
 
 # Code:
-
 from os import path
 from random import choice
 from string import letters
 from sys import path as pythonpath
 from time import time
 
+from twisted.internet.task import LoopingCall
+from twisted.python.log import msg
+
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
-from twisted.python.log import msg
 
 # TODO(emilon): Fix this crap
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
