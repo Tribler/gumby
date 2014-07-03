@@ -257,12 +257,15 @@ python -c "from M2Crypto import EC"
 # TODO(vladum): If you use this, see TODO about libtorrent's bug.
  if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
      pushd $VENV/src
-    wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.bz2
-    tar xavf boost_*.tar.bz2
+     BOOST_TAR=boost_1_54_0.tar.bz2
+    if [ ! -e $BOOST_TAR ]; then
+        wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.54.0/$BOOST_TAR
+    fi
+    tar xavf $BOOST_TAR
      cd boost*/
      ./bootstrap.sh
      #./b2 -j$(grep process /proc/cpuinfo | wc -l) --prefix=$VENV install
-     ./bjam  threading=multi --prefix=$VENV install
+     ./bjam -j$(grep process /proc/cpuinfo | wc -l) threading=multi -no_single -no_static --without-mpi --prefix=$VENV install
      popd
  fi
 
@@ -270,24 +273,24 @@ python -c "from M2Crypto import EC"
 #
 # Build Libtorrent and its python bindings
 #
-
-# Delete rogue binary installed by an older version of this script (I guess), this should be removed some time in the future
-rm -f $VENV/lib64/python2.7/site-packages/libtorrent.so
 pushd $VENV/src
 if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so ]; then
-    if [ ! -e libtorrent-rasterbar-*gz ]; then
-        wget --no-check-certificate http://downloads.sourceforge.net/project/libtorrent/libtorrent/libtorrent-rasterbar-0.16.15.tar.gz
+    LIBTORRENT_SRC=libtorrent-rasterbar-0.16.15
+    LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
+    if [ ! -e $LIBTORRENT_TAR ]; then
+        wget --no-check-certificate http://downloads.sourceforge.net/project/libtorrent/libtorrent/$LIBTORRENT_TAR
     fi
-    if [ ! -d libtorrent-rasterbar*/ ]; then
-        tar xavf libtorrent-rasterbar-*.tar.gz
+    if [ ! -d $LIBTORRENT_SRC ]; then
+        tar xavf $LIBTORRENT_TAR
     fi
-    cd libtorrent-rasterbar*/
+    cd $LIBTORRENT_SRC
     # TODO(vladum): libtorrent uses boost::system::get_system_category() in a
     # few places, instead of their get_system_category() wrapper. This method
     # has been renamed in version 1.43.0 to boost::system::system_category().
     # Using a newer Boost requires patching libtorrent, so, for now, we will use
     # the system's Boost, which is 1.41.0 on DAS4 and works fine.
-    ./configure --with-boost-python  --prefix=$VENV --enable-python-binding --with-boost-libdir=$VENV/lib --with-boost=$VENV
+    export BOOST_ROOT=$VENV/src/boost_*/
+    ./configure  --with-boost-system=mt --with-boost=$VENV --with-boost-lib=$VENV/lib --enable-python-binding --prefix=$VENV
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
     cd $VENV/lib
@@ -365,14 +368,16 @@ fi
 rm -f $VENV/bin/pil*
 rm -rf $VENV/lib/python2.7/site-packages/PIL
 
-pip install pip --upgrade
+#pip install --upgrade pip
+
+sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/easy_install
+easy_install pip
 
 echo "
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 configobj
 gmpy==1.16
 ipython
-meliae
 nose
 nosexcover
 ntplib
@@ -391,6 +396,9 @@ sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
 
 # numpy # used for report generation scripts from Cor-Paul, installed all by itself as it fails to build if we pass CFLAGS & co.
 pip install numpy
+
+# meliae is not on the official repos
+pip install --allow-external meliae
 
 # install netifaces separately because it requires some params now
 pip install netifaces --allow-external netifaces --allow-unverified netifaces
