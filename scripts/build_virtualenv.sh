@@ -266,9 +266,15 @@ python -c "from M2Crypto import EC"
      popd
  fi
 
+
+#
 # Build Libtorrent and its python bindings
+#
+
+# Delete rogue binary installed by an older version of this script (I guess), this should be removed some time in the future
+rm -f $VENV/lib64/python2.7/site-packages/libtorrent.so
 pushd $VENV/src
-if [ ! -e $VENV/lib*/python*/site-packages/libtorrent.so ]; then
+if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so ]; then
     if [ ! -e libtorrent-rasterbar-*gz ]; then
         wget --no-check-certificate http://downloads.sourceforge.net/project/libtorrent/libtorrent/libtorrent-rasterbar-0.16.15.tar.gz
     fi
