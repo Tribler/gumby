@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=10
+SCRIPT_VERSION=11
 
 # Code:
 set -e
@@ -262,7 +262,7 @@ python -c "from M2Crypto import EC"
      cd boost*/
      ./bootstrap.sh
      #./b2 -j$(grep process /proc/cpuinfo | wc -l) --prefix=$VENV install
-     ./bjam  threading=multi --prefix=$VENV install 
+     ./bjam  threading=multi --prefix=$VENV install
      popd
  fi
 
@@ -366,9 +366,11 @@ Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 configobj
 gmpy==1.16
 ipython
+meliae
 nose
 nosexcover
 ntplib
+pillow
 psutil
 pyasn1 # for twisted
 pycrypto # Twisted needs it
@@ -376,7 +378,6 @@ pysqlite
 pyzmq
 twisted # Used by the config server/clients
 unicodecsv # used for report generation scripts from Cor-Paul
-pillow
 " > ~/requirements.txt
 
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
