@@ -48,7 +48,7 @@ PROFILE_MEMORY = environ.get("PROFILE_MEMORY", "FALSE").upper() == "TRUE"
 # @CONF_OPTION PROFILE_MEMORY_INTERVAL: Memory dump interval. (default: 60)
 PROFILE_MEMORY_INTERVAL = float(environ.get("PROFILE_MEMORY_INTERVAL", 60))
 # @CONF_OPTION PROFILE_MEMORY_PID_MODULO: Only start the memory dumper for (aproximately) one out of N processes. (default: all processes)
-PROFILE_MEMORY_PID_MODULO = int(environ.get("PROFILE_MEMORY_PID_MODULO", 0))
+PROFILE_MEMORY_PID_MODULO = int(environ.get("PROFILE_MEMORY_PID_MODULO", 1))
 
 # @CONF_OPTION MANHOLE_ENABLE: Enable manhole (telnet access to the python processes), for debugging purposes. User: gumby, pass is empty (default: false)
 MANHOLE_ENABLE = environ.get("MANHOLE_ENABLE", "FALSE").upper() == "FALSE"
@@ -85,7 +85,8 @@ def start_memory_dumper():
     LoopingCall(lambda: scanner.dump_all_objects(meliae_out_file % str(time() - start))).start(PROFILE_MEMORY_INTERVAL,
                                                                                                now=True)
     reactor.addSystemEventTrigger("before", "shutdown",
-                                  lambda: scanner.dump_all_objects(meliae_out_file % str(time() - start) + "-shutdown"))
+                                  lambda: scanner.dump_all_objects(path.join(memdump_dir, "memory-%06.2f-%s.out") % (
+                                      time() - start, "-shutdown")))
 
 
 def start_manhole():

@@ -508,6 +508,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
 
 def main(client_class):
+    from gumby.instrumentation import init_instrumentation
+    init_instrumentation()
     setupLogging()
     factory = ExperimentClientFactory({}, client_class)
     msg("Connecting to: %s:%s" % (environ['SYNC_HOST'], int(environ['SYNC_PORT'])))
