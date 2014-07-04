@@ -376,6 +376,7 @@ easy_install pip
 echo "
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 configobj
+cython
 gmpy==1.16
 ipython
 nose
@@ -397,13 +398,14 @@ sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
 # numpy # used for report generation scripts from Cor-Paul, installed all by itself as it fails to build if we pass CFLAGS & co.
 pip install numpy
 
-# meliae is not on the official repos
-pip install --allow-external meliae
-
 # install netifaces separately because it requires some params now
 pip install netifaces --allow-external netifaces --allow-unverified netifaces
 
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~/requirements.txt
+
+# meliae is not on the official repos
+pip install --allow-unverified pyrex --allow-external  pyrex pyrex
+pip install --allow-unverified meliae --allow-external meliae meliae
 
 #$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt\
 rm ~/requirements.txt
