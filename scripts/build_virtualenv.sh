@@ -45,6 +45,19 @@ SCRIPT_VERSION=11
 # Code:
 set -e
 
+# This script can be called from outside gumby to avoid the egg-chicken situation where
+# gumby's dependencies are not available, so let's find the scripts dir and add it to $PATH
+SCRIPTDIR=$( dirname $(readlink -f "$0"))
+if [ ! -d "$SCRIPTDIR" ]; then
+    SCRIPTDIR=$( dirname $(readlink -f $(which "$0")))
+fi
+if [ ! -d "$SCRIPTDIR" ]; then
+    echo "Couldn't find this script path, bailing out."
+    exit 1
+fi
+
+export PATH=$PATH:$SCRIPTDIR
+
 if [ ! -z "$VIRTUALENV_DIR" ]; then
     VENV=$VIRTUALENV_DIR
 else
