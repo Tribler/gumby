@@ -209,9 +209,11 @@ class DispersyExperimentScriptClient(ExperimentClient):
         try:
             from Tribler.dispersy.dispersy import Dispersy
             from Tribler.dispersy.endpoint import StandaloneEndpoint
+            from Tribler.dispersy.util import unhandled_error_observer
         except:
             from dispersy.dispersy import Dispersy
             from dispersy.endpoint import StandaloneEndpoint
+            from dispersy.util import unhandled_error_observer
 
         self._dispersy = Dispersy(StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
         self._dispersy.statistics.enable_debug_statistics(True)
@@ -219,23 +221,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.original_on_incoming_packets = self._dispersy.on_incoming_packets
 
         if self._strict:
-            def exception_handler(exception, fatal):
-                msg("An exception occurred. Quitting because we are running with --strict enabled.")
-                print >> stderr, "Exception was:"
-
-                try:
-                    raise exception
-                except:
-                    from traceback import print_exc
-                    print_exc()
-
-                # Set Dispersy's exit status to error
-                self._dispersy_exit_status = 1
-                # Stop the experiment
-                reactor.callLater(1, self.stop)
-
-                return True
-            #self._dispersy.callback.attach_exception_handler(exception_handler)
+            from twisted.python.log import addObserver
+            addObserver(unhandled_error_observer)
 
         self._dispersy.start(autoload_discovery=autoload_discovery)
 
