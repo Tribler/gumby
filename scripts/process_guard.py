@@ -4,7 +4,7 @@
 
 import subprocess
 from time import sleep, time
-from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path, kill, errno, sysconf, sysconf_names
+from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path, kill, errno, sysconf, sysconf_names, makedirs
 from signal import SIGKILL, SIGTERM, signal
 from glob import iglob
 from math import ceil
@@ -292,6 +292,10 @@ if __name__ == "__main__":
 
     if not commands:
         parser.error("Could not collect a list of commands to run.\nMake sure that the commands file is not empty or has all the lines commented out.")
+
+    if not path.exists(options.output_dir):
+        print "making output directory: %s" % options.output_dir
+        makedirs(options.output_dir)
 
     pm = ProcessMonitor(commands, options.timeout, options.interval, options.output_dir, options.monitor_dir)
     try:

@@ -48,7 +48,7 @@ from gumby.log import ColoredFileLogObserver, msg
 
 from os import setpgrp, kill, getpgid, getppid, getpid
 from signal import signal, SIGTERM, SIGKILL
-from psutil import get_pid_list
+from psutil import get_pid_list, Process, NoSuchProcess
 
 
 def _termTrap(self, *argv):
@@ -58,18 +58,24 @@ def _termTrap(self, *argv):
         exit(-15)
 
 
-def _killGroup(signal = SIGTERM):
+def _killGroup(signal=SIGTERM):
     global _terminating
     _terminating = True
     mypid = getpid()
     pids_found = 0
     for pid in get_pid_list():
         try:
-            if getpgid(pid) == mypid and pid != mypid:
+            # don't forget to close processes that have the current process as ppid
+            p = Process(pid)
+            ppid = p.ppid
+            if (ppid == mypid or getpgid(pid) == mypid) and pid != mypid:
                 kill(pid, signal)
                 pids_found += 1
         except OSError:
             # The process could already be dead by the time we do the getpgid()
+            pass
+        except NoSuchProcess:
+            # may be thrown by Process.ppid() if the process is already dead
             pass
     return pids_found
 
