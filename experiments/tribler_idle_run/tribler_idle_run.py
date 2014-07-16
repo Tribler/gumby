@@ -42,6 +42,8 @@ import unittest
 import sys
 import os
 
+from gumby.instrumentation import init_instrumentation
+
 os.chdir(os.path.abspath('./tribler'))
 sys.path.append('.')
 
@@ -54,6 +56,7 @@ class TestGuiGeneral(TestGuiAsServer):
             self.quit()
 
         def do_page():
+            init_instrumentation()
             if "TRIBLER_EXECUTION_TIME" in os.environ:
                 run_time = int(os.environ["TRIBLER_EXECUTION_TIME"])
             else:
