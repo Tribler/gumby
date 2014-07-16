@@ -50,7 +50,7 @@ PROFILE_MEMORY_INTERVAL = float(environ.get("PROFILE_MEMORY_INTERVAL", 60))
 # @CONF_OPTION PROFILE_MEMORY_PID_MODULO: Only start the memory dumper for (aproximately) one out of N processes. (default: all processes)
 PROFILE_MEMORY_PID_MODULO = int(environ.get("PROFILE_MEMORY_PID_MODULO", 0))
 
-# @CONF_OPTION MANHOLE_ENABLE: Enable manhole (telnet access to the python processes), for debugging purposes. Password is "password" (default: false)
+# @CONF_OPTION MANHOLE_ENABLE: Enable manhole (telnet access to the python processes), for debugging purposes. User: gumby, pass is empty (default: false)
 MANHOLE_ENABLE = environ.get("MANHOLE_ENABLE", "FALSE").upper() == "FALSE"
 # @CONF_OPTION MANHOLE_PORTL Port that manhole should listen to. (default: 2323)
 MANHOLE_PORT = int(environ.get("MANHOLE_PORT", 2323))
@@ -92,12 +92,13 @@ def start_manhole():
     """
     Starts a manhole telnet server listening on MANHOLE_PORT
     """
+    passwd_path = os.path.join(environ['PROJECT_DIR'], 'lib', 'passwd')
     global manhole
     manhole = manhole_tap.makeService({
         'namespace': manhole_namespace,
         'telnetPort': 'tcp:%d:interface:127.0.0.1' % MANHOLE_PORT,
         'sshPort': None,
-        'passwd': 'passwd',
+        'passwd': passwd_path,
     })
 
 
