@@ -156,7 +156,6 @@ class ResourceMonitor(object):
             sleep(0.1)
             self.prune_pid_list()
             if self.pid_dict:
-                    # TODO: Try to kill the child processes one by one first so we don't kill ourselves.
                     print "Some processes survived SIGTERM."
                     print "Nuking the whole thing, have a nice day..."
                     for id, p in self.pid_dict.items():
