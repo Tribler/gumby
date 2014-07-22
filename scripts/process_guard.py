@@ -4,7 +4,7 @@
 
 import subprocess
 from time import sleep, time
-from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path, kill, errno, sysconf, sysconf_names, makedirs
+from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path, kill, errno, sysconf, sysconf_names, setsid, getpgid, makedirs
 from signal import SIGKILL, SIGTERM, signal
 from glob import iglob
 from math import ceil
@@ -22,7 +22,7 @@ class ResourceMonitor(object):
         self.output_dir = output_dir
 
         # TODO: Improve it by using this technique: http://ptspts.blogspot.nl/2012/11/how-to-start-and-kill-unix-process-tree.html
-        setpgrp()  # create new process group and become its leader
+        #setpgrp()  # create new process group and become its leader
 
         self.nr_commands = len(commands)
         for command in commands:
@@ -137,8 +137,10 @@ class ResourceMonitor(object):
             stdout = stderr = None
 
         print >> stdout, "Starting #%05d: %s" % (self.cmd_counter, cmd)
-        p = subprocess.Popen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=None)
-        self.pid_dict[p.pid] = p
+        p = subprocess.Popen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=None, preexec_fn=setsid)
+        #self.pid_dict[p.pid] = p
+        self.pid_dict[getpgid(p.pid)] = p
+        
         self.cmd_counter = self.cmd_counter + 1
 
     def terminate(self):
@@ -150,17 +152,19 @@ class ResourceMonitor(object):
                 pass
 
         self.prune_pid_list()
-        if self.pid_dict:
+        for id, p in self.pid_dict.items():
             print "TERMinating group. Still %i process(es) running." % len(self.pid_dict)
-            killpg(0, SIGTERM)  # kill the entire process group, we are ignoring the SIGTERM.
+            killpg(id, SIGTERM)  # kill the entire process group, we are ignoring the SIGTERM.
+        
+        if self.pid_dict:
+            sleep(0.1)
+            self.prune_pid_list()
             if self.pid_dict:
-                sleep(0.1)
-                self.prune_pid_list()
-                if self.pid_dict:
                     # TODO: Try to kill the child processes one by one first so we don't kill ourselves.
                     print "Some processes survived SIGTERM."
                     print "Nuking the whole thing, have a nice day..."
-                    killpg(0, SIGKILL)  # kill the entire process group
+                    for id, p in self.pid_dict.items():
+                        killpg(id, SIGKILL)  # kill the entire process group
 
     def get_pid_list(self):
         return self.pid_dict.keys()
