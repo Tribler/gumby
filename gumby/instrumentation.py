@@ -119,11 +119,11 @@ def start_manhole():
     """
     Starts a manhole telnet server listening on MANHOLE_PORT
     """
-    passwd_path = os.path.join(environ['PROJECT_DIR'], 'lib', 'passwd')
+    passwd_path = path.join(environ['PROJECT_DIR'], 'lib', 'passwd')
     global manhole
     manhole = manhole_tap.makeService({
         'namespace': manhole_namespace,
-        'telnetPort': 'tcp:%d:interface:127.0.0.1' % MANHOLE_PORT,
+        'telnetPort': 'tcp:%d:interface=127.0.0.1' % MANHOLE_PORT,
         'sshPort': None,
         'passwd': passwd_path,
     })
