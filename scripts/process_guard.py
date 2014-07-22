@@ -21,9 +21,6 @@ class ResourceMonitor(object):
         self.files = []
         self.output_dir = output_dir
 
-        # TODO: Improve it by using this technique: http://ptspts.blogspot.nl/2012/11/how-to-start-and-kill-unix-process-tree.html
-        #setpgrp()  # create new process group and become its leader
-
         self.nr_commands = len(commands)
         for command in commands:
             self.run(command)
@@ -138,7 +135,6 @@ class ResourceMonitor(object):
 
         print >> stdout, "Starting #%05d: %s" % (self.cmd_counter, cmd)
         p = subprocess.Popen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=None, preexec_fn=setsid)
-        #self.pid_dict[p.pid] = p
         self.pid_dict[getpgid(p.pid)] = p
         
         self.cmd_counter = self.cmd_counter + 1
