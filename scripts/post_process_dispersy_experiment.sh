@@ -53,9 +53,10 @@ if [ -z "$DISPERSY_STATISTICS_EXTRACTION_CMD" ]; then
     DISPERSY_STATISTICS_EXTRACTION_CMD=extract_dispersy_statistics.py
 fi
 
-# @CONF LOCAL_OUTPUT_DIR: Output dir for local running experiments (so not on DAS4). 
+# @CONF LOCAL_OUTPUT_DIR: Output dir for local running experiments (so not on DAS4).
 # This is hack to avoid rewriting a bunch of scripts, as the scripts look for the directory structure $LOCAL_OUTPUT_DIR/localhost/localhost
 # For local experiments make sure to also set $OUTPUT_DIR
+# TODO fix this so that we don't need this variable
 if [ -n "$LOCAL_OUTPUT_DIR" ]; then
 	cd $LOCAL_OUTPUT_DIR
 else
