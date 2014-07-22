@@ -58,7 +58,7 @@ def _termTrap(self, *argv):
         exit(-15)
 
 
-def _killGroup(signal = SIGTERM):
+def _killGroup(signal=SIGTERM):
     global _terminating
     _terminating = True
     mypid = getpid()
