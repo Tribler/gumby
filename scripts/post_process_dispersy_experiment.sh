@@ -37,7 +37,7 @@
 
 # Code:
 
-set -xe
+set -e
 
 # Step 1: Look for non-empty stderr files and print its contents
 
