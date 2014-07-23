@@ -18,8 +18,11 @@ class ResourceMonitor(object):
 
         self.cmd_counter = 0
         self.pid_dict = {}
+
         self.files = []
         self.output_dir = output_dir
+
+        self.pgid_list = []
 
         self.nr_commands = len(commands)
         for command in commands:
@@ -29,8 +32,6 @@ class ResourceMonitor(object):
         self.pid_list.extend(self.pid_dict.keys())
         self.ignore_pid_list = []
         self.ignore_pid_list.append(getpid())
-
-        self.process_group_id = getpgrp()
 
         self.last_died = False
 
@@ -115,7 +116,7 @@ class ResourceMonitor(object):
             io_file = path.join(pid_dir, 'io')
             if access(stat_file, R_OK) and access(io_file, R_OK):
                 pgrp = int(open(stat_file, 'r').read().split()[4])  # 4 is PGRP
-                if pgrp == self.process_group_id:
+                if pgrp in self.pgid_list:
                     self.pid_list.append(pid)
                 else:
                     self.ignore_pid_list.append(pid)
@@ -135,7 +136,8 @@ class ResourceMonitor(object):
 
         print >> stdout, "Starting #%05d: %s" % (self.cmd_counter, cmd)
         p = subprocess.Popen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=None, preexec_fn=setsid)
-        self.pid_dict[getpgid(p.pid)] = p
+        self.pid_dict[p.pid] = p
+        self.pgid_list.append(getpgid(p.pid))
 
         self.cmd_counter = self.cmd_counter + 1
 
