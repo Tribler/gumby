@@ -49,8 +49,9 @@ PROFILE_MEMORY = environ.get("PROFILE_MEMORY", "FALSE").upper() == "TRUE"
 PROFILE_MEMORY_INTERVAL = float(environ.get("PROFILE_MEMORY_INTERVAL", 60))
 # @CONF_OPTION PROFILE_MEMORY_PID_MODULO: Only start the memory dumper for (aproximately) one out of N processes. (default: all processes)
 PROFILE_MEMORY_PID_MODULO = int(environ.get("PROFILE_MEMORY_PID_MODULO", 1))
-# @CONF_OPTION PROFILE_MEMORY_GRAPH_MOST_COMMON: Do an objgraph backref chain graph for the top N most common types.
-PROFILE_MEMORY_GRAPH_MOST_COMMON =  int(environ.get("PROFILE_MEMORY_GRAPH_MOST_COMMON", 0))
+# TODO(emilon): Implement this one
+# @__NOT_IMPLEMENTED__CONF_OPTION PROFILE_MEMORY_LOG_MOST_COMMON: Do an objgraph backref chain graph for the top N most common types.
+#PROFILE_MEMORY_LOG_MOST_COMMON =  int(environ.get("PROFILE_MEMORY_LOG_MOST_COMMON", 0))
 # @CONF_OPTION PROFILE_MEMORY_GRAPH_BACKREF_TYPES: Space separated list of object types to generate a backref graph from (default: nothing)
 PROFILE_MEMORY_GRAPH_BACKREF_TYPES = environ.get("PROFILE_MEMORY_GRAPH_BACKREF_TYPES", "")
 # @CONF_OPTION PROFILE_MEMORY_GRAPH_BACKREF_AMOUNT: Amount of randomly selected objects to graph (default: 1)
@@ -101,11 +102,14 @@ def start_memory_dumper():
             for type_ in types:
                 for sample_number in xrange(PROFILE_MEMORY_GRAPH_BACKREF_AMOUNT):
                     objects = objgraph.by_type(type_)
-                    objgraph.show_chain(
-                        objgraph.find_backref_chain(
-                            random.choice(objects),
-                            objgraph.is_proper_module),
-                        filename=objgraph_out_file % (type_, now, sample_number))
+                    if objects:
+                        objgraph.show_chain(
+                            objgraph.find_backref_chain(
+                                random.choice(objects),
+                                objgraph.is_proper_module),
+                            filename=objgraph_out_file % (type_, now, sample_number))
+                    else:
+                        msg("No objects of type %s found!" % type_)
 
         scanner.dump_all_objects(meliae_out_file % now)
 
