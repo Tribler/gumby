@@ -103,6 +103,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
 
                 msg("joining-community")
                 self.joined_community = community
+                self.join_lc.stop()
                 return
 
     def publish(self, amount=1):
