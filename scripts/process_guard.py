@@ -136,7 +136,7 @@ class ResourceMonitor(object):
         print >> stdout, "Starting #%05d: %s" % (self.cmd_counter, cmd)
         p = subprocess.Popen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=None, preexec_fn=setsid)
         self.pid_dict[getpgid(p.pid)] = p
-        
+
         self.cmd_counter = self.cmd_counter + 1
 
     def terminate(self):
@@ -151,7 +151,7 @@ class ResourceMonitor(object):
         for id, p in self.pid_dict.items():
             print "TERMinating group. Still %i process(es) running." % len(self.pid_dict)
             killpg(id, SIGTERM)  # kill the entire process group, we are ignoring the SIGTERM.
-        
+
         if self.pid_dict:
             sleep(0.1)
             self.prune_pid_list()
@@ -257,7 +257,7 @@ if __name__ == "__main__":
     parser.add_option("-o", "--output-dir",
                       metavar='OUTDIR',
                       help="Capture individual process std{out|err} and write the logs in the specified dir.",
-                                            
+
                       )
     parser.add_option("-f", "--commands-file",
                       metavar='COMMANDS_FILE',
@@ -293,7 +293,7 @@ if __name__ == "__main__":
     if not commands:
         parser.error("Could not collect a list of commands to run.\nMake sure that the commands file is not empty or has all the lines commented out.")
 
-    if not path.exists(options.output_dir):
+    if options.output_dir and not path.exists(options.output_dir):
         print "making output directory: %s" % options.output_dir
         makedirs(options.output_dir)
 
