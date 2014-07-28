@@ -367,7 +367,7 @@ class OneShotProcessProtocol(ProcessProtocol):
     def processExited(self, reason):
         # TODO(emilon): Process self._stdout_bytes, _sterr_bytes before exiting, to make sure no output is lost.
         # msg('CMD "%s" Process exited with reason: %s' % (self.command, reason), logLevel=logging.DEBUG)
-        msg('CMD "%s" exit code %s' % (self.command, reason.value.exitCode))
+        msg('[%s] exit code %s' % (self.command, reason.value.exitCode))
         if reason.value.exitCode:
             self._d.errback(reason)
         else:
@@ -379,7 +379,8 @@ class OneShotProcessProtocol(ProcessProtocol):
         remainder = ""
         for line in self._stdout_bytes.splitlines(True):
             if line.endswith('\n'):
-                msg('CMD "%s" OUT: %s' % (self.command, line.rstrip()), logLevel=logging.INFO)
+                msg('[%s] OUT: %s' % (self.command[:20].strip() + "..." if len(self.command) >20 else "", line.rstrip()),
+                    logLevel=logging.INFO)
             else:
                 # It's a partial line (part of the last one), save it to the buffer instead
                 remainder = line
@@ -390,7 +391,8 @@ class OneShotProcessProtocol(ProcessProtocol):
         remainder = ""
         for line in self._stderr_bytes.splitlines(True):
             if line.endswith('\n'):
-                msg('CMD "%s" ERR: %s' % (self.command, line.rstrip()), logLevel=logging.WARNING)
+                msg('[%s] ERR: %s' % (self.command[:20].strip() + "..." if len(self.command) >20 else "", line.rstrip()),
+                    logLevel=logging.WARNING)
             else:
                 # It's a partial line (part of the last one), save it to the buffer instead
                 remainder = line
