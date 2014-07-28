@@ -40,10 +40,23 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=10
+SCRIPT_VERSION=11
 
 # Code:
 set -e
+
+# This script can be called from outside gumby to avoid the egg-chicken situation where
+# gumby's dependencies are not available, so let's find the scripts dir and add it to $PATH
+SCRIPTDIR=$( dirname $(readlink -f "$0"))
+if [ ! -d "$SCRIPTDIR" ]; then
+    SCRIPTDIR=$( dirname $(readlink -f $(which "$0")))
+fi
+if [ ! -d "$SCRIPTDIR" ]; then
+    echo "Couldn't find this script path, bailing out."
+    exit 1
+fi
+
+export PATH=$PATH:$SCRIPTDIR
 
 if [ ! -z "$VIRTUALENV_DIR" ]; then
     VENV=$VIRTUALENV_DIR
@@ -257,31 +270,40 @@ python -c "from M2Crypto import EC"
 # TODO(vladum): If you use this, see TODO about libtorrent's bug.
  if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
      pushd $VENV/src
-    wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.54.0/boost_1_54_0.tar.bz2
-    tar xavf boost_*.tar.bz2
+     BOOST_TAR=boost_1_54_0.tar.bz2
+    if [ ! -e $BOOST_TAR ]; then
+        wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.54.0/$BOOST_TAR
+    fi
+    tar xavf $BOOST_TAR
      cd boost*/
      ./bootstrap.sh
      #./b2 -j$(grep process /proc/cpuinfo | wc -l) --prefix=$VENV install
-     ./bjam  threading=multi --prefix=$VENV install 
+     ./bjam -j$(grep process /proc/cpuinfo | wc -l) threading=multi -no_single -no_static --without-mpi --prefix=$VENV install
      popd
  fi
 
+
+#
 # Build Libtorrent and its python bindings
+#
 pushd $VENV/src
-if [ ! -e $VENV/lib*/python*/site-packages/libtorrent.so ]; then
-    if [ ! -e libtorrent-rasterbar-*gz ]; then
-        wget --no-check-certificate http://downloads.sourceforge.net/project/libtorrent/libtorrent/libtorrent-rasterbar-0.16.15.tar.gz
+if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so ]; then
+    LIBTORRENT_SRC=libtorrent-rasterbar-0.16.15
+    LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
+    if [ ! -e $LIBTORRENT_TAR ]; then
+        wget --no-check-certificate http://downloads.sourceforge.net/project/libtorrent/libtorrent/$LIBTORRENT_TAR
     fi
-    if [ ! -d libtorrent-rasterbar*/ ]; then
-        tar xavf libtorrent-rasterbar-*.tar.gz
+    if [ ! -d $LIBTORRENT_SRC ]; then
+        tar xavf $LIBTORRENT_TAR
     fi
-    cd libtorrent-rasterbar*/
+    cd $LIBTORRENT_SRC
     # TODO(vladum): libtorrent uses boost::system::get_system_category() in a
     # few places, instead of their get_system_category() wrapper. This method
     # has been renamed in version 1.43.0 to boost::system::system_category().
     # Using a newer Boost requires patching libtorrent, so, for now, we will use
     # the system's Boost, which is 1.41.0 on DAS4 and works fine.
-    ./configure --with-boost-python  --prefix=$VENV --enable-python-binding --with-boost-libdir=$VENV/lib --with-boost=$VENV
+    export BOOST_ROOT=$VENV/src/boost_*/
+    ./configure  --with-boost-system=mt --with-boost=$VENV --with-boost-lib=$VENV/lib --enable-python-binding --prefix=$VENV
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
     cd $VENV/lib
@@ -359,16 +381,21 @@ fi
 rm -f $VENV/bin/pil*
 rm -rf $VENV/lib/python2.7/site-packages/PIL
 
-pip install pip --upgrade
+#pip install --upgrade pip
+
+sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/easy_install
+easy_install pip
 
 echo "
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 configobj
+cython
 gmpy==1.16
 ipython
 nose
 nosexcover
 ntplib
+pillow
 psutil
 pyasn1 # for twisted
 pycrypto # Twisted needs it
@@ -376,7 +403,6 @@ pysqlite
 pyzmq
 twisted # Used by the config server/clients
 unicodecsv # used for report generation scripts from Cor-Paul
-pillow
 " > ~/requirements.txt
 
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
@@ -389,6 +415,10 @@ pip install numpy
 pip install netifaces --allow-external netifaces --allow-unverified netifaces
 
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~/requirements.txt
+
+# meliae is not on the official repos
+pip install --allow-unverified pyrex --allow-external  pyrex pyrex
+pip install --allow-unverified meliae --allow-external meliae meliae
 
 #$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt\
 rm ~/requirements.txt
