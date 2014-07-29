@@ -39,25 +39,30 @@
 
 # @CONF_OPTION TRACKER_PORT: Set the port to be used by the tracker. (required)
 # @CONF_OPTION TRACKER_CRYPTO: Set the type of crypto to be used by the tracker. (default is ECCrypto)
+# @CONF_OPTION TRACKER_PROFILE: Enable profiling for the tracker? (default: FALSE)
 
 if [ -z "$TRACKER_PORT" ]; then
     echo "ERROR: you need to specify the TRACKER_PORT when using $0" >&2
     exit 1
 fi
+
 if [ -z "$TRACKER_CRYPTO" ]; then
     echo "TRACKER_CRYPTO not set, using ECCrypto"
     export TRACKER_CRYPTO="ECCrypto"
 fi
 
-
 cd $PROJECT_DIR
 
 if [ -e tribler ]; then
-    cd tribler
-    MODULEPATH=Tribler.dispersy.tool.tracker
-else
-    MODULEPATH=dispersy.tool.tracker
+    cd tribler/Tribler
 fi
+
+if [ ! -e dispersy ]; then
+    echo "Dispersy dir not found at $PWD/dispersy, bailing out."
+    exit 1
+fi
+
+export PYTHONPATH=$PYTHONPATH:$PWD/dispersy
 
 if [ -z "$HEAD_HOST" ]; then
     HEAD_HOST=$(hostname)
@@ -73,11 +78,18 @@ else
     fi
 fi
 
-rm -f bootstraptribler.txt
+rm -f ../bootstraptribler.txt
 
 while [ $EXPECTED_SUBSCRIBERS -gt 0 ]; do
-    echo $HEAD_HOST $TRACKER_PORT >> bootstraptribler.txt
-    python -O -c "from $MODULEPATH import main; main()" --port $TRACKER_PORT --crypto $TRACKER_CRYPTO 2>&1 > "$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" &
+    echo $HEAD_HOST $TRACKER_PORT >> ../bootstraptribler.txt
+
+    if [ "${TRACKER_PROFILE,,}" == "true" ]; then
+        echo "Tracker profiling enabled"
+        EXTRA_ARGS="--profile=$OUTPUT_DIR/tracker_$TRACKER_PORT.cprofile --profiler=cprofile --savestats"
+    fi
+
+    # Do not daemonize the process as we want to wait for all of them to die at the end of this script
+    twistd -n $EXTRA_ARGS --logfile="$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" tracker --port $TRACKER_PORT --crypto $TRACKER_CRYPTO &
     let TRACKER_PORT=$TRACKER_PORT+1
     let EXPECTED_SUBSCRIBERS=$EXPECTED_SUBSCRIBERS-1000
 done
