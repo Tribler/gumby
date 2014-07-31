@@ -41,7 +41,7 @@
 
 build () {
     # @CONF_OPTION DEBUG_SWIFT: Set to any value if you want to enable Swift's debug output. (default is disabled)
-    if [ -z "$DEBUG_SWIFT" ]; then
+    if [ "$DEBUG_SWIFT{,,}" == "false" ]; then
         #Disable debug output
         sed -i "s/DEBUG = True/DEBUG = False/" SConstruct
     fi
@@ -50,7 +50,7 @@ build () {
 
 }
 
-if [ ! -z "$BUILD_SWIFT" ]; then
+if [ "$BUILD_SWIFT{,,}" == "true" ]; then
     if [ -d tribler/Tribler/SwiftEngine ]; then
         cd tribler/Tribler/SwiftEngine
         build
