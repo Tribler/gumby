@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=11
+SCRIPT_VERSION=12
 
 # Code:
 set -e
@@ -383,7 +383,7 @@ rm -rf $VENV/lib/python2.7/site-packages/PIL
 
 #pip install --upgrade pip
 
-sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/easy_install
+sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/*
 easy_install pip
 
 echo "
