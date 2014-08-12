@@ -41,12 +41,17 @@ set -e
 
 # Step 1: Look for non-empty stderr files and print its contents
 
-echo "Looking for execution errors..."
-for FILE in $(find -type f ! -empty -name "*.err"); do
-    echo "Found in: $FILE"
-    cat "$FILE"
-done
-echo "Done"
+# @CONF DISPERSY_LOOK_FOR_ERRORS: Grep the log files for errors. (Default: True)
+if [ "${DISPERSY_LOOK_FOR_ERRORS,,}" != "false" ]; then
+    echo "Looking for execution errors..."
+    for FILE in $(find -type f ! -empty -name "*.err"); do
+        echo "Found in: $FILE"
+        cat "$FILE"
+    done
+    echo "Done"
+else
+    echo "NOT looking for execution errors."
+fi
 
 # @CONF_OPTION DISPERSY_STATISTICS_EXTRACTION_CMD: Override the default statistics extraction script.
 if [ -z "$DISPERSY_STATISTICS_EXTRACTION_CMD" ]; then
