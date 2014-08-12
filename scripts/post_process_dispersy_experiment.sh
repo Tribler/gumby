@@ -41,22 +41,27 @@ set -e
 
 # Step 1: Look for non-empty stderr files and print its contents
 
-echo "Looking for execution errors..."
-for FILE in $(find -type f ! -empty -name "*.err"); do
-    echo "Found in: $FILE"
-    cat "$FILE"
-done
-echo "Done"
+# @CONF DISPERSY_LOOK_FOR_ERRORS: Grep the log files for errors. (Default: True)
+if [ "${DISPERSY_LOOK_FOR_ERRORS,,}" != "false" ]; then
+    echo "Looking for execution errors..."
+    for FILE in $(find -type f ! -empty -name "*.err"); do
+        echo "Found in: $FILE"
+        cat "$FILE"
+    done
+    echo "Done"
+else
+    echo "NOT looking for execution errors."
+fi
 
 # @CONF_OPTION DISPERSY_STATISTICS_EXTRACTION_CMD: Override the default statistics extraction script.
 if [ -z "$DISPERSY_STATISTICS_EXTRACTION_CMD" ]; then
     DISPERSY_STATISTICS_EXTRACTION_CMD=extract_dispersy_statistics.py
 fi
 
-# @CONF LOCAL_OUTPUT_DIR: Output dir for local running experiments (so not on DAS4).
+# @CONF_OPTION LOCAL_OUTPUT_DIR: Output dir for local running experiments (so not on DAS4).
 # This is hack to avoid rewriting a bunch of scripts, as the scripts look for the directory structure $LOCAL_OUTPUT_DIR/localhost/localhost
 # For local experiments make sure to also set $OUTPUT_DIR
-# TODO fix this so that we don't need this variable
+# TODO fix this so that we don't need the variable
 if [ -n "$LOCAL_OUTPUT_DIR" ]; then
 	cd $LOCAL_OUTPUT_DIR
 else
