@@ -95,6 +95,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         msg('Took %.2f to read scenario file' % (time() - t1))
 
     def onIdReceived(self):
+        msg('Got ID %s assigned' % self.my_id)
         self.scenario_runner.set_peernumber(int(self.my_id))
         # TODO(emilon): Auto-register this stuff
         self.scenario_runner.register(self.echo)
