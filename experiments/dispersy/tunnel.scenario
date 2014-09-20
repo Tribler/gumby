@@ -5,4 +5,4 @@
 @0:120 build_circuits
 @0:120 annotate start-experiment
 @0:600 stop_dispersy
-@0:600 stop
+@0:610 stop

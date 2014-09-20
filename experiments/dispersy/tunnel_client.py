@@ -6,8 +6,6 @@ from string import letters
 from sys import path as pythonpath
 from time import time
 
-from threading import Event
-
 from twisted.internet.task import LoopingCall
 from twisted.python.log import msg
 
@@ -26,7 +24,7 @@ class TunnelClient(DispersyExperimentScriptClient):
         self.community_class = TunnelCommunity
 
         tunnel_settings = TunnelSettings()
-        tunnel_settings.max_circuits = 8
+        tunnel_settings.max_circuits = 0
         tunnel_settings.socks_listen_port = -1
         self.set_community_kwarg('settings', tunnel_settings)
 
@@ -83,7 +81,7 @@ class TunnelClient(DispersyExperimentScriptClient):
         DispersyExperimentScriptClient.offline(self)
 
     def monitor_circuits(self):
-        nr_circuits = len(self._community.circuits) if self._community else 0
+        nr_circuits = len(self._community.active_circuits) if self._community else 0
         self._prev_scenario_statistics = self.print_on_change("scenario-statistics", self._prev_scenario_statistics, {'nr_circuits': nr_circuits})
 
 
