@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from os import path, getpid
+from os import path
 from random import choice
 from string import letters
 from sys import path as pythonpath
@@ -34,39 +34,6 @@ class TunnelClient(DispersyExperimentScriptClient):
     def registerCallbacks(self):
         self.scenario_runner.register(self.build_circuits, 'build_circuits')
 
-    def start_dispersy(self, autoload_discovery=True):
-        msg("Starting dispersy")
-        # We need to import the stuff _AFTER_ configuring the logging stuff.
-        from Tribler.dispersy.dispersy import Dispersy
-        from Tribler.community.tunnel.endpoint import TunnelStandaloneEndpoint
-        from Tribler.dispersy.util import unhandled_error_observer
-
-        self._dispersy = Dispersy(TunnelStandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
-        self._dispersy.statistics.enable_debug_statistics(True)
-
-        self.original_on_incoming_packets = self._dispersy.on_incoming_packets
-
-        if self._strict:
-            from twisted.python.log import addObserver
-            addObserver(unhandled_error_observer)
-
-        self._dispersy.start(autoload_discovery=autoload_discovery)
-
-        if self.master_private_key:
-            self._master_member = self._dispersy.get_member(private_key=self.master_private_key)
-        else:
-            self._master_member = self._dispersy.get_member(public_key=self.master_key)
-        self._my_member = self._dispersy.get_member(private_key=self.my_member_private_key)
-        assert self._master_member
-        assert self._my_member
-
-        self._do_log()
-
-        self.print_on_change('community-kwargs', {}, self.community_kwargs)
-        self.print_on_change('community-env', {}, {'pid':getpid()})
-
-        msg("Finished starting dispersy")
-
     def build_circuits(self):
         msg("build_circuits")
         self._community.settings.max_circuits = 8
@@ -79,6 +46,9 @@ class TunnelClient(DispersyExperimentScriptClient):
 
     def offline(self):
         DispersyExperimentScriptClient.offline(self)
+        if self.monitor_circuits_lc:
+            self.monitor_circuits_lc.stop()
+            self.monitor_circuits_lc = None
 
     def monitor_circuits(self):
         nr_circuits = len(self._community.active_circuits) if self._community else 0
