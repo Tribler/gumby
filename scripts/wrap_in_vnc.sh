@@ -38,7 +38,17 @@
 # Code:
 
 export DISPLAY=:$RANDOM
+
+# Looks like $TMPDIR doesn't exist in the DAS4
+mkdir -p $TMPDIR
+
 export HOME=$(mktemp -d)
+
+if [ ! -e $HOME ]; then
+    echo "Something went wrong while creating the temporary execution dir, aborting."
+    exit 3
+fi
+
 mkdir -p $HOME/.vnc # TODO: I think this is no longer needed
 
 chmod -fR og-rwx $HOME/.vnc
@@ -48,6 +58,8 @@ Xvnc $DISPLAY -localhost -SecurityTypes None &
 $* || FAILURE=$?
 
 kill %Xvnc || (sleep 1 ; kill -9 %Xvnc) ||:
+
+rm -fR $HOME
 
 exit $FAILURE
 
