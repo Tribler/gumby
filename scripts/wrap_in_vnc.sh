@@ -40,7 +40,9 @@
 export DISPLAY=:$RANDOM
 
 # Looks like $TMPDIR doesn't exist in the DAS4
-mkdir -p $TMPDIR
+if [ ! -z "$TMPDIR" ]; then
+    mkdir -p "$TMPDIR"
+fi
 
 export HOME=$(mktemp -d)
 
