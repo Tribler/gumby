@@ -227,7 +227,11 @@ class ExperimentRunner(Logger):
         remote_instance_list = []
         # TODO: Allow for other venv dirs to be used by setting the path in the config file.
         # use remote _env_runner
-        args = " ".join(("$HOME/venv/bin/python", path.join(self._remote_workspace_dir, 'gumby', self._env_runner), " ", self._cfg_path, " ", command))
+        if self._cfg["use_remote_venv"]:
+            python = "$HOME/venv/bin/python"
+        else:
+            python = "python"
+        args = " ".join((python, path.join(self._remote_workspace_dir, 'gumby', self._env_runner), " ", self._cfg_path, " ", command))
         for host in self._cfg['head_nodes']:
             msg("Executing command in %s: %s" % (host, args))
             remote_instance_list.append(runRemoteCMD(host, args))

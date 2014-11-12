@@ -66,6 +66,7 @@ remote_instance_cmd = string(default="")
 post_process_cmd = string(default="")
 
 use_local_venv = boolean(default=True)
+use_remote_venv = boolean(default=True)
 use_local_systemtap = boolean(default=False)
 virtualenv_dir = string(default="$HOME/venv")
 
