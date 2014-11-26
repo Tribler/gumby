@@ -37,7 +37,7 @@
 
 # Code:
 
-from os import path, chdir, environ
+from os import path, chdir, environ, makedirs
 from shutil import rmtree
 import logging
 import sys
@@ -62,6 +62,7 @@ class ExperimentRunner(Logger):
         self._remote_workspace_dir = path.join(config['remote_workspace_dir'], "Experiment_" + path.basename(config['experiment_name']))
         # TODO: check if the experiment dir actually exists
         self._workspace_dir = path.abspath(config['workspace_dir'])
+        self._output_dir = path.join(self._workspace_dir, 'output')
         self._env_runner = "scripts/run_in_env.py"
 
     def logPrefix(self):
@@ -103,7 +104,7 @@ class ExperimentRunner(Logger):
     def collectOutputFromHeadNodes(self):
         msg("Syncing output data back from head nodes...")
 
-        def onCopySuccess(ignored):
+        def onCopySuccess(_):
             msg("Great copying success!")
 
         def onCopyFailure(failure):
@@ -115,6 +116,11 @@ class ExperimentRunner(Logger):
             return failure
 
         copy_list = []
+
+        try:
+            makedirs(self._output_dir)
+        except OSError:
+            pass
 
         for host in self._cfg['head_nodes']:
             pp = OneShotProcessProtocol("Rsync from remote %s" % host)
@@ -318,9 +324,8 @@ class ExperimentRunner(Logger):
 
         # Step 2:
         # Clear output dir before starting.
-        output_dir = path.join(self._workspace_dir, 'output')
-        if path.exists(output_dir):
-            rmtree(output_dir)
+        if path.exists(self._output_dir):
+            rmtree(self._output_dir)
 
         # Step 3:
         # Sync the working dir with the head nodes
