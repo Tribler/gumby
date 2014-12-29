@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=12
+SCRIPT_VERSION=13
 
 # Code:
 set -e
@@ -403,6 +403,7 @@ pysqlite
 pyzmq
 twisted # Used by the config server/clients
 unicodecsv # used for report generation scripts from Cor-Paul
+pynacl # New EC crypto stuff for tunnelcommunity
 " > ~/requirements.txt
 
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
