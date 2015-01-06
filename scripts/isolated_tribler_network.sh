@@ -36,7 +36,7 @@
 # Code:
 
 # Start a dedicated tracker (isolated from the network)
-TRACKER_IP=127.0.0.1 run_tracker.sh &
+TRACKER_IP=127.0.0.1 HEAD_HOST=localhost run_tracker.sh &
 TRACKER_PID=$!
 
 # Make sure the tracker didn't fail to start
