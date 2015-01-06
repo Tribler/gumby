@@ -75,8 +75,8 @@ else
     if [ ! -z "$DAS4_INSTANCES_TO_RUN" ]; then
         EXPECTED_SUBSCRIBERS=$DAS4_INSTANCES_TO_RUN
     else
-        echo 'Neither SYNC_SUBSCRIBERS_AMOUNT nor DAS4_INSTANCES_TO_RUN is set! exiting.'
-        exit 2
+        echo 'Neither SYNC_SUBSCRIBERS_AMOUNT nor DAS4_INSTANCES_TO_RUN is set, not balancing.'
+        EXPECTED_SUBSCRIBERS=1
     fi
 fi
 
