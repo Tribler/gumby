@@ -38,6 +38,7 @@
 # Code:
 
 # @CONF_OPTION TRACKER_PORT: Set the port to be used by the tracker. (required)
+# @CONF_OPTION TRACKER_IP: Listen only on the specified IP. (default: dispersy's default 0.0.0.0)
 # @CONF_OPTION TRACKER_CRYPTO: Set the type of crypto to be used by the tracker. (default is ECCrypto)
 # @CONF_OPTION TRACKER_PROFILE: Enable profiling for the tracker? (default: FALSE)
 
@@ -86,6 +87,10 @@ while [ $EXPECTED_SUBSCRIBERS -gt 0 ]; do
     if [ "${TRACKER_PROFILE,,}" == "true" ]; then
         echo "Tracker profiling enabled"
         EXTRA_ARGS="--profile=$OUTPUT_DIR/tracker_$TRACKER_PORT.cprofile --profiler=cprofile --savestats"
+    fi
+
+    if [ ! -z "$TRACKER_IP" ]; then
+        EXTRA_ARGS="$EXTRA_ARGS --ip $TRACKER_IP "
     fi
 
     # Do not daemonize the process as we want to wait for all of them to die at the end of this script
