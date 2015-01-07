@@ -54,7 +54,9 @@ fi
 
 MINIONS=$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN
 
-TMP_PREFIX=$(mktemp -d)
+mkdir -p $HOME/tmp/
+
+TMP_PREFIX=$(mktemp -d -p $HOME/tmp/)
 COMMANDS_FILE=$(mktemp -p $TMP_PREFIX)
 
 export TRIBLER_ALLOW_MULTIPLE=True
