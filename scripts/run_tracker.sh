@@ -82,20 +82,19 @@ fi
 
 rm -f ../bootstraptribler.txt
 
+if [ "${TRACKER_PROFILE,,}" == "true" ]; then
+    echo "Tracker profiling enabled"
+    EXTRA_ARGS="--profile=$OUTPUT_DIR/tracker_$TRACKER_PORT.cprofile --profiler=cprofile --savestats"
+fi
+
+if [ ! -z "$TRACKER_IP" ]; then
+    EXTRA_TRACKER_ARGS="$EXTRA_TRACKER_ARGS --ip $TRACKER_IP "
+fi
+
 while [ $EXPECTED_SUBSCRIBERS -gt 0 ]; do
     echo $HEAD_HOST $TRACKER_PORT >> ../bootstraptribler.txt
-
-    if [ "${TRACKER_PROFILE,,}" == "true" ]; then
-        echo "Tracker profiling enabled"
-        EXTRA_ARGS="--profile=$OUTPUT_DIR/tracker_$TRACKER_PORT.cprofile --profiler=cprofile --savestats"
-    fi
-
-    if [ ! -z "$TRACKER_IP" ]; then
-        EXTRA_ARGS="$EXTRA_ARGS --ip $TRACKER_IP "
-    fi
-
     # Do not daemonize the process as we want to wait for all of them to die at the end of this script
-    twistd -n $EXTRA_ARGS --logfile="$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" tracker --port $TRACKER_PORT --crypto $TRACKER_CRYPTO &
+    twistd -n $EXTRA_ARGS --logfile="$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" tracker --port $TRACKER_PORT --crypto $TRACKER_CRYPTO $EXTRA_TRACKER_ARGS &
     let TRACKER_PORT=$TRACKER_PORT+1
     let EXPECTED_SUBSCRIBERS=$EXPECTED_SUBSCRIBERS-1000
 done
