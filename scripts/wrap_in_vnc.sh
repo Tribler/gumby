@@ -57,6 +57,8 @@ chmod -fR og-rwx $HOME/.vnc
 
 Xvnc $DISPLAY -localhost -SecurityTypes None &
 
+sleep 1
+
 $* || FAILURE=$?
 
 kill %Xvnc || (sleep 1 ; kill -9 %Xvnc) ||:
