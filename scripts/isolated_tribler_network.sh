@@ -62,6 +62,7 @@ COMMANDS_FILE=$(mktemp -p $TMP_PREFIX)
 export TRIBLER_ALLOW_MULTIPLE=True
 export TMPDIR=$TMP_PREFIX
 export TRIBLER_SKIP_OPTIN_DLG=True
+export DISPERSY_BOOTSTRAP_FILE="$PWD/tribler/bootstraptribler.txt"
 
 while [ $MINIONS -gt 0 ]; do
     echo "wrap_in_vnc.sh tribler/tribler.sh" >> $COMMANDS_FILE
