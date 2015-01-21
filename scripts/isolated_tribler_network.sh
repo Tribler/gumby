@@ -36,7 +36,7 @@
 # Code:
 
 # Start a dedicated tracker (isolated from the network)
-TRACKER_IP=127.0.0.1 run_tracker.sh &
+TRACKER_IP=127.0.0.1 HEAD_HOST=localhost run_tracker.sh &
 TRACKER_PID=$!
 
 # Make sure the tracker didn't fail to start
@@ -54,12 +54,15 @@ fi
 
 MINIONS=$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN
 
-TMP_PREFIX=$(mktemp -d)
+mkdir -p $HOME/tmp/
+
+TMP_PREFIX=$(mktemp -d -p $HOME/tmp/)
 COMMANDS_FILE=$(mktemp -p $TMP_PREFIX)
 
 export TRIBLER_ALLOW_MULTIPLE=True
 export TMPDIR=$TMP_PREFIX
 export TRIBLER_SKIP_OPTIN_DLG=True
+export DISPERSY_BOOTSTRAP_FILE="$PWD/tribler/bootstraptribler.txt"
 
 while [ $MINIONS -gt 0 ]; do
     echo "wrap_in_vnc.sh tribler/tribler.sh" >> $COMMANDS_FILE
@@ -70,8 +73,15 @@ echo process_guard.py -m $OUTPUT_DIR/isolated_triblers -o $OUTPUT_DIR/isolated_t
 process_guard.py -m $PWD/output -o $PWD/output  -f $COMMANDS_FILE &
 PROCESS_GUARD_PID=$!
 
-echo "Waiting for a $SLEEP_TIME secs. to make sure the Tribler instances are running..."
+if [ -e ~/tribler_data.tar.gz ]; then
+    export HOME_SEED_FILE=$(readlink -f ~/tribler_data.tar.gz )
+    echo "HOME_SEED_FILE set to $HOME_SEED_FILE"
+else
+    echo "The seed file was not found."
+fi
+
 let SLEEP_TIME=$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN*3
+echo "Waiting for $SLEEP_TIME secs. to make sure the Tribler instances are running..."
 sleep $SLEEP_TIME
 echo "Going forth"
 

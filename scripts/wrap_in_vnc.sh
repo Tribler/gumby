@@ -55,6 +55,16 @@ mkdir -p $HOME/.vnc # TODO: I think this is no longer needed
 
 chmod -fR og-rwx $HOME/.vnc
 
+if [ ! -z "$HOME_SEED_FILE" ]; then
+    echo "Unpacking HOME seed file..."
+    cd $HOME
+    tar xaf $HOME_SEED_FILE
+    cd -
+    echo "Done"
+else
+    echo "HOME_SEED_FILE not set, using a clean fake home"
+fi
+
 Xvnc $DISPLAY -localhost -SecurityTypes None &
 
 sleep 1
