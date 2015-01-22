@@ -375,6 +375,7 @@ if [ ! -e $VENV/include/gmp.h ]; then
     ./configure --prefix=$VENV
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
+    popd
 fi
 
 # remove pil cause its a piece of crap
