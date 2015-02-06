@@ -52,6 +52,13 @@ if [ -z "$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN" ]; then
     exit 2
 fi
 
+if [ -e ~/tribler_data.tar.gz ]; then
+    export HOME_SEED_FILE=$(readlink -f ~/tribler_data.tar.gz )
+    echo "HOME_SEED_FILE set to $HOME_SEED_FILE"
+else
+    echo "The seed file was not found."
+fi
+
 MINIONS=$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN
 
 mkdir -p $HOME/tmp/
@@ -73,12 +80,7 @@ echo process_guard.py -m $OUTPUT_DIR/isolated_triblers -o $OUTPUT_DIR/isolated_t
 process_guard.py -m $PWD/output -o $PWD/output  -f $COMMANDS_FILE &
 PROCESS_GUARD_PID=$!
 
-if [ -e ~/tribler_data.tar.gz ]; then
-    export HOME_SEED_FILE=$(readlink -f ~/tribler_data.tar.gz )
-    echo "HOME_SEED_FILE set to $HOME_SEED_FILE"
-else
-    echo "The seed file was not found."
-fi
+
 
 let SLEEP_TIME=$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN*3
 echo "Waiting for $SLEEP_TIME secs. to make sure the Tribler instances are running..."
@@ -92,7 +94,15 @@ if [ ! -e /proc/$PROCESS_GUARD_PID ]; then
 fi
 
 # Call the callback executable.
-$ISOLATED_CMD
+if [ ! -z "$ISOLATED_CMD" ]; then
+	echo "Executing isolated cmd"
+	$ISOLATED_CMD
+else
+	echo "Waiting for process guard to exit tribler instances"
+	wait $PROCESS_GUARD_PID
+fi
+
+# if this is empty wait for PROCESS_GUARD_PID
 
 # Clean up the mess.
 killing_it_softly () {
