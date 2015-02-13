@@ -65,7 +65,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.torrentindex = 1
 
         self.join_lc = None
-
         self.set_community_kwarg('tribler_session', None)
 
     def registerCallbacks(self):
@@ -73,7 +72,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.join, 'join')
         self.scenario_runner.register(self.publish, 'publish')
         self.scenario_runner.register(self.post, 'post')
-        self.scenario_runner.register(self.close, 'close')
 
     def start_dispersy(self):
         from Tribler.community.channel.preview import PreviewChannelCommunity
@@ -147,15 +145,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
             for _ in xrange(amount):
                 text = ''.join(choice(letters) for i in xrange(160))
                 self.joined_community._disp_create_comment(text, int(time()), None, None, None, None)
-
-    def close(self):
-        msg('close command received')
-        if self.my_channel:
-            msg('close-channel: %s ' % self.my_channel)
-            self.my_channel.unload_community()
-        if self.joined_community:
-            msg('close-community %s ' % self.joined_community)
-            self.joined_community.unload_community()
 
 if __name__ == '__main__':
     AllChannelClient.scenario_file = 'allchannel_1000.scenario'

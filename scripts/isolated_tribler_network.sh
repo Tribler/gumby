@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # isolated_tribler_network.sh ---
 #
 # Filename: isolated_tribler_network.sh
@@ -52,11 +52,17 @@ if [ -z "$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN" ]; then
     exit 2
 fi
 
-if [ -e ~/tribler_data.tar.gz ]; then
-    export HOME_SEED_FILE=$(readlink -f ~/tribler_data.tar.gz )
-    echo "HOME_SEED_FILE set to $HOME_SEED_FILE"
+# use the following tar command to tar your Tribler home dir to use this:
+# tar --exclude="*.txt" --exclude="*.conf" --exclude="*.pem" -cvjpf tribler_data.tar.gz .Tribler
+if [ ! -z "$HOME_FILE" ]; then
+	if [ -e $HOME_FILE ]; then
+	    export HOME_SEED_FILE=$(readlink -f $HOME_FILE )
+	    echo "HOME_SEED_FILE set to $HOME_SEED_FILE"
+	else
+		echo "The seed file was not found."
+	fi
 else
-    echo "The seed file was not found."
+	echo "No seed file set."
 fi
 
 MINIONS=$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN

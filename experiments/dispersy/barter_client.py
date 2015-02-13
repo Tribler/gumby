@@ -42,27 +42,24 @@ from sys import path as pythonpath
 
 from gumby.experiments.dispersyclient import main
 from allchannel_client import AllChannelClient
+from twisted.python.log import msg
 
 # TODO(emilon): Fix this crap
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
 
 from Tribler.dispersy.candidate import Candidate
-from Tribler.dispersy.statistics import BartercastStatisticTypes
+from Tribler.community.bartercast4.statistics import BartercastStatisticTypes
 
 
 class BarterClient(AllChannelClient):
-    def __init__(self, *argv, **kwargs):
-        AllChannelClient.__init__(self, *argv, **kwargs)
 
     def start_dispersy(self, crawl=False):
         from Tribler.community.bartercast4.community import BarterCommunity
         AllChannelClient.start_dispersy(self)
         if crawl:
             from Tribler.community.bartercast4.community import BarterCommunityCrawler
-            # communities = self._dispersy.define_auto_load(BarterCommunityCrawler, self._my_member, (), {"integrate_with_tribler": False}, load=True)
             communities = self._dispersy.define_auto_load(BarterCommunityCrawler, self._my_member, (), load=True)
         else:
-            # communities = self._dispersy.define_auto_load(BarterCommunity, self._my_member, (), {"integrate_with_tribler": False}, load=True)
             communities = self._dispersy.define_auto_load(BarterCommunity, self._my_member, (), load=True)
 
         for c in communities:
@@ -72,20 +69,24 @@ class BarterClient(AllChannelClient):
     def registerCallbacks(self):
         AllChannelClient.registerCallbacks(self)
         self.scenario_runner.register(self.request_stats, 'request-stats')
+        self.scenario_runner.register(self.close, 'close')
 
     def request_stats(self, candidate_id=0):
         if not self._bccommunity:
-            print "problem: barter community not loaded"
-        # candidate = Candidate((str(self.all_vars[candidate_id]['host']), self.all_vars[candidate_id]['port']), False)
-        # self._bccommunity.create_stats_request(candidate, BartercastStatisticTypes.TORRENTS_RECEIVED)
+            msg("problem: barter community not loaded")
         for c in self.all_vars.itervalues():
             candidate = Candidate((str(c['host']), c['port']), False)
             self._bccommunity.create_stats_request(candidate, BartercastStatisticTypes.TORRENTS_RECEIVED)
 
+    def close(self):
+        msg('close command received')
+        if self.my_channel:
+            msg('close-channel: %s ' % self.my_channel)
+            self.my_channel.unload_community()
+        if self.joined_community:
+            msg('close-community %s ' % self.joined_community)
+            self.joined_community.unload_community()
 
 if __name__ == '__main__':
     BarterClient.scenario_file = "barter10.scenario"
     main(BarterClient)
-
-#
-# demers_client.py ends here

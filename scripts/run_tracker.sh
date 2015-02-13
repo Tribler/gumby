@@ -81,8 +81,7 @@ else
 fi
 
 mkdir -p "$OUTPUT_DIR/tracker"
-echo $HEAD_HOST $TRACKER_PORT >> $OUTPUT_DIR/tracker/bootstraptribler.txt
-
+rm -f ../bootstraptribler.txt
 
 if [ "${TRACKER_PROFILE,,}" == "true" ]; then
     echo "Tracker profiling enabled"
