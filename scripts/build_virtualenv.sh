@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=15
+SCRIPT_VERSION=17
 
 # Code:
 set -e
@@ -398,11 +398,33 @@ if [ ! -e $VENV/include/ffi.h ]; then
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
     popd
-
-    # export PKG_CONFIG_PATH to find libffi
-    export PKG_CONFIG_PATH=$VENV/lib/pkgconfig:$PKG_CONFIG_PATH
-    export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
 fi
+
+# install libsodium
+LIBSODIUM_PACKAGE="libsodium-1.0.2.tar.gz"
+if [ ! -e $VENV/src/$LIBSODIUM_PACKAGE ]; then
+    pushd $VENV/src
+    wget "https://download.libsodium.org/libsodium/releases/$LIBSODIUM_PACKAGE"
+    popd
+fi
+
+if [ ! -e $VENV/src/libsodium-*/ ]; then
+    pushd $VENV/src
+    tar axvf $VENV/src/$LIBSODIUM_PACKAGE
+    popd
+fi
+
+if [ ! -e $VENV/include/sodium.h ]; then
+    pushd $VENV/src/libsodium-*/
+    ./configure --prefix=$VENV
+    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make install
+    popd
+fi
+
+# export PKG_CONFIG_PATH to find libffi and libsodium
+export PKG_CONFIG_PATH=$VENV/lib/pkgconfig:$PKG_CONFIG_PATH
+export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
 
 # remove pil cause its a piece of crap
 rm -f $VENV/bin/pil*
@@ -431,6 +453,10 @@ pyzmq
 twisted # Used by the config server/clients
 unicodecsv # used for report generation scripts from Cor-Paul
 pynacl # New EC crypto stuff for tunnelcommunity
+cffi
+pycparser
+six
+cryptography
 " > ~/requirements.txt
 
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
