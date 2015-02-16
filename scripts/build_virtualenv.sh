@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=13
+SCRIPT_VERSION=15
 
 # Code:
 set -e
@@ -375,6 +375,33 @@ if [ ! -e $VENV/include/gmp.h ]; then
     ./configure --prefix=$VENV
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
+    popd
+fi
+
+# libnacl needs libffi
+LIBFFI_PACKAGE="libffi-3.0.11.tar.gz"
+if [ ! -e $VENV/src/$LIBFFI_PACKAGE ]; then
+    pushd $VENV/src
+    wget "ftp://sourceware.org:/pub/libffi/$LIBFFI_PACKAGE"
+    popd
+fi
+
+if [ ! -e $VENV/src/libffi-*/ ]; then
+    pushd $VENV/src
+    tar axvf $VENV/src/$LIBFFI_PACKAGE
+    popd
+fi
+
+if [ ! -e $VENV/include/ffi.h ]; then
+    pushd $VENV/src/libffi-*/
+    ./configure --prefix=$VENV
+    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make install
+    popd
+
+    # export PKG_CONFIG_PATH to find libffi
+    export PKG_CONFIG_PATH=$VENV/lib/pkgconfig:$PKG_CONFIG_PATH
+    export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
 fi
 
 # remove pil cause its a piece of crap
