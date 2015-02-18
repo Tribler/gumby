@@ -11,7 +11,7 @@
 # %*% This script starts a new VNC server and executes the command passed as an argument.
 # %*% When the command finishes, it kills the vnc server before exiting.
 #
-#
+# %*% apt-get install vnc4server  before running this.
 
 # Change Log:
 #

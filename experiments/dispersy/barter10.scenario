@@ -1,0 +1,33 @@
+@0:0 set_master_member 3081a7301006072a8648ce3d020106052b81040027038192000404f10c33b03d2a09943d6d6a4b2cf4fe3129e5dce1df446a27d0ce00d48c845a4eff8102ef3becd6bc07c65953c824d227ebc110016d5ba71163bf6fb83fde7cdccf164bb007e27d07da952c47d30cf9c843034dc7a4603af3a84f8997e5d046e6a5f1ad489add6878898079a4663ade502829577c7d1e27302a3d5ea0ae06e83641a093a87465fdd4a3b43e031a9555
+@0:0 start_dispersy True {1}
+@0:0 start_dispersy {2-10}
+@0:1 online
+@0:10 reset_dispersy_statistics
+@0:10 annotate start-experiment
+@0:20 create {1}
+@0:25 join {2-10}
+@0:30 publish 1 {1}
+@0:142 publish 10 {1}
+@0:144 publish 8 {2}
+@0:144 publish 1 {3}
+@0:144 publish 4 {4}
+@0:144 publish 1 {5}
+@0:144 publish 1 {6}
+@0:144 publish 6 {7}
+@0:144 publish 1 {8}
+@0:144 publish 3 {9}
+@0:194 publish 1 {10}
+@0:190 publish 1 {1}
+@0:192 publish 10 {1}
+@0:194 publish 8 {2}
+@0:194 publish 1 {3}
+@0:194 publish 4 {4}
+@0:194 publish 1 {5}
+@0:194 publish 1 {6}
+@0:264 publish 6 {7}
+@0:264 publish 1 {8}
+@0:264 publish 3 {9}
+@0:264 publish 1 {10}
+@0:340 close
+@0:340 stop_dispersy
+@0:340 stop
