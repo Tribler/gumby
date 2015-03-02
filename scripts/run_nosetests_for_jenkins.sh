@@ -46,7 +46,7 @@ if [ ! -z "$NOSE_RUN_DIR" ]; then
 fi
 
 # Run pylint and sloccount in the background to save time
-nice pylint --output-format=parseable --reports=y  Tribler > $OUTPUT_DIR/pylint.out 2> $OUTPUT_DIR/pylint.log &
+nice pylint --ignore=.git --ignore=dispersy --ignore=pymdht --ignore=libnacl --output-format=parseable --reports=y  Tribler > $OUTPUT_DIR/pylint.out 2> $OUTPUT_DIR/pylint.log &
 PYLINT_PID=$!
 
 mkdir -p $OUTPUT_DIR/slocdata
