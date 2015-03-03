@@ -1,3 +1,4 @@
+library(plyr)
 load_annotations <- function(){
 	if(file.exists("annotations.txt")){
 		df2 <- read.table("annotations.txt", header = TRUE, check.names = FALSE, na.strings = "?")
