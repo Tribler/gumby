@@ -11,6 +11,6 @@ isolated_tribler_network.sh &
 STATEDIR="$OUTPUT_DIR/statsCrawler"
 
 mkdir -p $STATEDIR/sqlite/
-cd tribler/Tribler
+cd tribler/twisted
 twistd --logfile=$STATEDIR/crawler.log --pidfile=$STATEDIR/crawler.pid --nodaemon bartercast_crawler --statedir=$STATEDIR 
 cd ../..
