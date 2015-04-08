@@ -3,9 +3,7 @@
 @0:1 online
 @0:20 reset_dispersy_statistics
 @0:30 annotate start-experiment-1-peer
-@0:10 request_signature {1}
-@0:30 request_signature {2}
-@0:50 request_signature {3}
-@0:70 request_signature {4}
-@0:500 stop_dispersy
-@0:530 stop
+@0:10 request_signature 2 {1}
+@0:100 close
+@0:110 stop_dispersy
+@0:120 stop
