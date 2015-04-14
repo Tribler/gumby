@@ -33,9 +33,14 @@ class DoubleEntryClient(DispersyExperimentScriptClient):
 
     def request_signature(self, candidate_id=0):
         msg("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate_id))
-        target = self.all_vars[candidate_id]
-        candidate = Candidate((str(target['host']), target['port']), False)
-        self._community.publish_signature_request_message(candidate)
+        if candidate_id == 0:
+            for c in self.all_vars.itervalues():
+                candidate = Candidate((str(c['host']), c['port']), False)
+                self._community.publish_signature_request_message(candidate)
+        else:
+            target = self.all_vars[candidate_id]
+            candidate = Candidate((str(target['host']), target['port']), False)
+            self._community.publish_signature_request_message(candidate)
 
     def draw_graph(self):
         from Tribler.community.doubleentry.experiments import GraphDrawer
