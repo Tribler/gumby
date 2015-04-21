@@ -83,7 +83,6 @@ while [ $MINIONS -gt 0 ]; do
 done
 
 process_guard.py -m $OUTPUT_DIR/isolated_triblers -o $OUTPUT_DIR/isolated_triblers  -f $COMMANDS_FILE &
-#process_guard.py -m $PWD/output -o $PWD/output  -f $COMMANDS_FILE &
 PROCESS_GUARD_PID=$!
 
 
@@ -130,7 +129,7 @@ killing_it_softly () {
 killing_it_softly $TRACKER_PID
 killing_it_softly $PROCESS_GUARD_PID
 
-# rm -fR $TMP_PREFIX
+rm -fR $TMP_PREFIX
 
 #
 # isolated_tribler_network.sh ends here
