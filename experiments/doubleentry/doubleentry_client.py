@@ -24,7 +24,6 @@ class DoubleEntryClient(DispersyExperimentScriptClient):
 
     def registerCallbacks(self):
         self.scenario_runner.register(self.request_signature, 'request_signature')
-        self.scenario_runner.register(self.draw_graph, 'draw_graph')
         self.scenario_runner.register(self.close, 'close')
 
     def online(self):
@@ -41,13 +40,6 @@ class DoubleEntryClient(DispersyExperimentScriptClient):
             target = self.all_vars[candidate_id]
             candidate = Candidate((str(target['host']), target['port']), False)
             self._community.publish_signature_request_message(candidate)
-
-    def draw_graph(self):
-        from Tribler.community.doubleentry.experiments import GraphDrawer
-
-        msg("Drawing graph")
-        graph_drawer = GraphDrawer(self.community.persistence)
-        graph_drawer.draw_graph()
 
     def close(self):
         msg("close command received")
