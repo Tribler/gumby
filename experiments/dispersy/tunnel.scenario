@@ -1,6 +1,8 @@
 @0:0 set_master_member 3081a7301006072a8648ce3d020106052b810400270381920004029fcf95d6baf026363a091950aa473196bd058a6d7342f2d77ddb61b8881982477a92e05a5bc81c0eaf40312d68f733f6ff6030b3ff8ae206b737bedefaa03d25c9398b500b0b1905f3982920cf29d17f6c21c1e4e88ad3bed15cdc02f17fe9dba8c0aead1a8ed5ac400769368232924a42e0ad249fe112e44cd3d4af56ce9da6f57e2f2ddf14d714cb4fa99c7556a9
-@0:0 start_dispersy
-@0:1 online
+@0:1 init_community True {1-2}
+@0:1 init_community {3-10}
+@0:2 start_dispersy
+@0:3 online
 @0:120 reset_dispersy_statistics
 @0:120 build_circuits
 @0:120 annotate start-experiment

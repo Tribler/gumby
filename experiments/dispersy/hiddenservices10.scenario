@@ -1,0 +1,20 @@
+@0:0 set_master_member 3081a7301006072a8648ce3d020106052b81040027038192000400f4c94912b25dcbd72f02276590acffe0e2daae6c07be3c32207adf0a8e4668d15568cfe2ebf316f9ceb473516eb7b2b078d541861f9496c9df6bcefbec3384988db368d1f1aaed07d963d804e1e6e444e07db9b1f60121b6a89bcbb1686687a9c5b588ce6a748de647f3f4ab42119df66c70e880dee32714e28e45ab6e115233bc19710dde5d9fd3e5bc58dd07cbb9
+@0:1 start_session
+@0:5 init_community True {1-2}
+@0:5 init_community {3-10}
+@0:10 online
+@0:20 reset_dispersy_statistics
+@0:20 annotate start-experiment
+@0:25 candidates
+@0:30 annotate setup-seeder
+@0:30 setup_seeder {4}
+@0:30 candidates
+@0:50 candidates
+@0:70 candidates
+@0:90 candidates
+@0:110 candidates
+@0:130 candidates
+@0:150 candidates
+@0:150 annotate start-downloading
+@0:150 start_download {5}
+@0:300 stop
