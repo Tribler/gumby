@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 
 from os import path
-from random import choice
-from string import letters
 from sys import path as pythonpath
-from time import time
 
 from twisted.internet.task import LoopingCall
 from twisted.python.log import msg
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
+from posix import environ
 
 
 # TODO(emilon): Fix this crap
@@ -19,13 +17,18 @@ pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..
 class TunnelClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
-        from Tribler.community.tunnel.community import TunnelCommunity, TunnelSettings
+        from Tribler.community.tunnel.hidden_community import HiddenTunnelCommunity
         DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
-        self.community_class = TunnelCommunity
+        self.community_class = HiddenTunnelCommunity
 
+    def init_community(self, become_exitnode=False):
+        from Tribler.community.tunnel.tunnel_community import TunnelSettings
         tunnel_settings = TunnelSettings()
         tunnel_settings.max_circuits = 0
-        tunnel_settings.socks_listen_port = -1
+        tunnel_settings.socks_listen_ports = [23000 + (100 * (self.scenario_runner._peernumber)) + i for i in range(5)]
+        tunnel_settings.do_test = False
+        tunnel_settings.become_exitnode = True if become_exitnode else False
+
         self.set_community_kwarg('settings', tunnel_settings)
 
         self.monitor_circuits_lc = None
@@ -33,6 +36,7 @@ class TunnelClient(DispersyExperimentScriptClient):
 
     def registerCallbacks(self):
         self.scenario_runner.register(self.build_circuits, 'build_circuits')
+        self.scenario_runner.register(self.init_community, 'init_community')
 
     def build_circuits(self):
         msg("build_circuits")
@@ -50,11 +54,15 @@ class TunnelClient(DispersyExperimentScriptClient):
             self.monitor_circuits_lc.stop()
             self.monitor_circuits_lc = None
 
-    def monitor_circuits(self):
-        nr_circuits = len(self._community.active_circuits) if self._community else 0
-        self._prev_scenario_statistics = self.print_on_change("scenario-statistics", self._prev_scenario_statistics, {'nr_circuits': nr_circuits})
+    def get_my_member(self):
+        return self._dispersy.get_new_member(u"curve25519")
 
+    def monitor_circuits(self):
+        nr_circuits = len(self._community.active_data_circuits()) if self._community else 0
+        self._prev_scenario_statistics = self.print_on_change("scenario-statistics",
+                                                              self._prev_scenario_statistics,
+                                                              {'nr_circuits': nr_circuits})
 
 if __name__ == '__main__':
-    TunnelClient.scenario_file = 'tunnel.scenario'
+    TunnelClient.scenario_file = environ.get('SCENARIO_FILE', 'tunnel.scenario')
     main(TunnelClient)

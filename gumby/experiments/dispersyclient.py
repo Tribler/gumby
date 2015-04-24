@@ -231,7 +231,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
             self._master_member = self._dispersy.get_member(private_key=self.master_private_key)
         else:
             self._master_member = self._dispersy.get_member(public_key=self.master_key)
-        self._my_member = self._dispersy.get_member(private_key=self.my_member_private_key)
+        self._my_member = self.get_my_member()
         assert self._master_member
         assert self._my_member
 
@@ -241,6 +241,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.print_on_change('community-env', {}, {'pid':getpid()})
 
         msg("Finished starting dispersy")
+
+    def get_my_member(self):
+        return self._dispersy.get_member(private_key=self.my_member_private_key)
 
     def stop_dispersy(self):
         self._dispersy_exit_status = self._dispersy.stop()
@@ -270,6 +273,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
             assert self.is_online()
             if not dont_empty:
                 self.empty_buffer()
+
+            msg("Dispersy is using port %s" % repr(self._dispersy._endpoint.get_address()))
         else:
             msg("online (we are already online)")
 
