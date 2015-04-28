@@ -35,13 +35,15 @@
 #
 
 # Code:
-from os import environ, makedirs, path, getpid
+import logging
+from os import environ, getpid, makedirs, path
 from time import time
 
+from twisted.conch import manhole_tap
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 from twisted.python.log import msg
-from twisted.conch import manhole_tap
+
 
 # @CONF_OPTION PROFILE_MEMORY: Enable memory profiling for the python processes that call instrumentation.init_instrumentation() (default: false)
 PROFILE_MEMORY = environ.get("PROFILE_MEMORY", "FALSE").upper() == "TRUE"
@@ -67,6 +69,7 @@ manhole_namespace = {}
 
 PID = getpid()
 
+logger = logging.getLogger()
 
 def init_instrumentation():
     """
@@ -83,7 +86,7 @@ def start_memory_dumper():
     """
     Initiates the memory profiler.
     """
-    msg("starting memory dump looping call")
+    logger.info("starting memory dump looping call")
     from meliae import scanner
     # Setup the whole thing
     start = time()
@@ -109,7 +112,7 @@ def start_memory_dumper():
                                 objgraph.is_proper_module),
                             filename=objgraph_out_file % (type_, now, sample_number))
                     else:
-                        msg("No objects of type %s found!" % type_)
+                        logger.error("No objects of type %s found!", type_)
 
         scanner.dump_all_objects(meliae_out_file % now)
 

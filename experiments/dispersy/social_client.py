@@ -105,7 +105,7 @@ class SocialClient(DispersyExperimentScriptClient):
         if environ.get('TRACKER_CRYPTO', 'ECCrypto') == 'ECCrypto':
             return ElgamalCrypto()
 
-        msg('Turning off Crypto')
+        self._logger.info('Turning off Crypto')
         return NoElgamalCrypto()
 
     def set_community_class(self, commtype):

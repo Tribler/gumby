@@ -77,7 +77,7 @@ class BarterClient(AllChannelClient):
         :param candidate_id: The candidate id from the node that the stats will be requested from.
         """
         if not self._bccommunity:
-            msg("problem: barter community not loaded")
+            self._logger.error("barter community not loaded")
         if candidate_id == 0:
             # Send a message to all candidate.
             for c in self.all_vars.itervalues():
@@ -90,12 +90,12 @@ class BarterClient(AllChannelClient):
             self._bccommunity.create_stats_request(candidate, BartercastStatisticTypes.TORRENTS_RECEIVED)
 
     def close(self):
-        msg('close command received')
+        self._logger.info('close command received')
         if self.my_channel:
-            msg('close-channel: %s ' % self.my_channel)
+            self._logger.info('close-channel: %s ', self.my_channel)
             self.my_channel.unload_community()
         if self.joined_community:
-            msg('close-community %s ' % self.joined_community)
+            self._logger.info('close-community %s ', self.joined_community)
             self.joined_community.unload_community()
 
 if __name__ == '__main__':

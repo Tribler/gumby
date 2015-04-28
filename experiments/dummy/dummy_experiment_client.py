@@ -37,25 +37,29 @@
 
 # Code:
 
+import logging
 from os import environ
-from sys import stdout, stderr, exit
+from sys import exit, stderr, stdout
 
-from gumby.sync import ExperimentClient, ExperimentClientFactory
 from gumby.log import setupLogging
+from gumby.sync import ExperimentClient, ExperimentClientFactory
 from twisted.internet import reactor
-from twisted.python.log import msg, err, startLogging
+from twisted.python.log import err, msg, startLogging
+
+logger = logging.getLogger()
 
 class DummyExperimentClient(ExperimentClient):
+
     def startExperiment(self):
-        msg("Starting dummy experiment (exiting in a couple of seconds)")
-        msg("in-experiment DEFAULT_LEVEL")
+        self._logger.info("Starting dummy experiment (exiting in a couple of seconds)")
+        self._logger.info("in-experiment DEFAULT_LEVEL")
         err("in-experiment ERROR_LEVEL")
         reactor.callLater(2, reactor.stop)
 
 
 def main():
     factory = ExperimentClientFactory({"random_key": "random value"}, DummyExperimentClient)
-    msg("Connecting to: %s:%s" % (environ['SYNC_HOST'], int(environ['SYNC_PORT'])))
+    logger.info("Connecting to: %s:%s", environ['SYNC_HOST'], int(environ['SYNC_PORT']))
     reactor.connectTCP(environ['SYNC_HOST'], int(environ['SYNC_PORT']), factory)
 
     reactor.exitCode = 0

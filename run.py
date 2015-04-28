@@ -37,18 +37,20 @@
 
 # Code:
 
+import logging
 import sys
+from os import getpgid, getpid, getppid, kill, setpgrp
 from os.path import dirname, exists
+from signal import SIGKILL, SIGTERM, signal
 from time import sleep, time
 
+logging.basicConfig()
+
+from psutil import get_pid_list
 from twisted.internet import reactor
 
 from gumby.runner import ExperimentRunner
 from gumby.log import ColoredFileLogObserver, msg
-
-from os import setpgrp, kill, getpgid, getppid, getpid
-from signal import signal, SIGTERM, SIGKILL
-from psutil import get_pid_list
 
 
 def _termTrap(self, *argv):
@@ -78,8 +80,6 @@ _terminating = False
 if __name__ == '__main__':
     sys.path.append(dirname(__file__))
     if len(sys.argv) == 2:
-        # startLogging(sys.stdout)
-        # startLogging(open("/tmp/cosa.log",'w'))
         observer = ColoredFileLogObserver()
         observer.start()
         conf_path = sys.argv[1]
@@ -99,20 +99,21 @@ if __name__ == '__main__':
         reactor.run()
 
         # Kill all the subprocesses before exiting
-        msg("Killing leftover local sub processes...")
+        logger = logging.getLogger()
+        logger.info("Killing leftover local sub processes...")
         pids_found = _killGroup()
         wait_start_time = time()
         while pids_found and (time() - wait_start_time) < 30:
             pids_found = _killGroup()
             if pids_found:
-                msg("Waiting for %d subprocess(es) to die..." % pids_found)
+                logger.info("Waiting for %d subprocess(es) to die...", pids_found)
             sleep(5)
 
         if (time() - wait_start_time) >= 30:
-            msg("Time out waiting, sending SIGKILL to remaining processes.")
+            logger.info("Time out waiting, sending SIGKILL to remaining processes.")
             _killGroup(SIGKILL)
 
-        msg("Done.")
+        logger.info("Done.")
 
         exit(reactor.exitCode)
     else:
