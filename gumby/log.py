@@ -182,6 +182,13 @@ def setupLogging():
         stderr_handler.setLevel(logging.WARNING)
         root.addHandler(stderr_handler)
 
+    # Allow to override the root handler log level from an environment variable.
+    # @CONF_OPTION LOG_LEVEL: Override log level (for python that would be the root handler's log level only)
+    log_level_override = environ.get("GUMBY_LOG_LEVEL", None)
+    if log_level_override:
+        level = getattr(logging, log_level_override)
+        logging.getLogger().setLevel(level)
+
     observer = PythonLoggingObserver('root', defaultLogLevel=logging.INFO)
     observer.start()
 
