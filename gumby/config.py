@@ -46,7 +46,9 @@ from twisted.internet.protocol import ClientFactory
 from twisted.protocols.basic import LineReceiver
 from twisted.internet import reactor, defer
 
+
 class _ConfigClientProtocol(LineReceiver):
+
     """
     Protocol messages:
         1) send TIME - current time at this peer, so they all start the
@@ -56,6 +58,11 @@ class _ConfigClientProtocol(LineReceiver):
         3) recv FULLCONFIG - data about all the other peers that reported
         4) send LOGGING - TODO
     """
+
+    def __init__(self):
+        self.state = None
+        self.config = None
+
     def connectionMade(self):
         self.sendLine("TIME " + str(time()))
 
@@ -93,7 +100,9 @@ class _ConfigClientProtocol(LineReceiver):
                 # self.state = 3
         # elif self.state == 3:
 
+
 class ConfigClientFactory(ClientFactory):
+
     def buildProtocol(self, addr):
         p = _ConfigClientProtocol()
         p.factory = self
@@ -103,13 +112,14 @@ class ConfigClientFactory(ClientFactory):
         self.onConfigReceived = defer.Deferred()
         self.onConfigReceived.addCallback(function)
 
+
 def get_config_server_endpoint():
     """
     Get config server's IP/hostname and port from the environment. If specific
     hostname is not given, use the first head node. If port is not given,
     generate one based on the current user.
 
-    TODO: These should always exists. The runner can set them after executing
+    TODO: These should always exist. The runner can set them after executing
           config_server_cmd.
     """
     if "CONFIG_SERVER_HOST" in os.environ:
