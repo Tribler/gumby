@@ -63,10 +63,10 @@ import logging
 from time import time
 
 from twisted.internet import reactor, task
-from twisted.internet.protocol import Factory, ReconnectingClientFactory
+from twisted.internet.defer import Deferred, DeferredSemaphore
+from twisted.internet.protocol import (Factory, ReconnectingClientFactory, connectionDone)
 from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
-from twisted.internet.defer import DeferredSemaphore, Deferred
 
 
 EXPERIMENT_SYNC_TIMEOUT = 30
@@ -87,6 +87,7 @@ class ExperimentServiceProto(LineReceiver):
 
         self.id = id
         self.factory = factory
+        self.ready = False
         self.state = 'init'
         self.vars = {}
         self.ready_d = None
@@ -333,7 +334,7 @@ class ExperimentClient(LineReceiver):
         self.state = "id"
         self.my_id = None
         self.vars = vars
-        self.all_vars = ''
+        self.all_vars = {}
         self.time_offset = None
 
     def connectionMade(self):
