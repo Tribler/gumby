@@ -43,7 +43,6 @@ from sys import path as pythonpath
 from time import time
 
 from twisted.internet.task import LoopingCall
-from twisted.python.log import msg
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
@@ -81,11 +80,11 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self._dispersy.define_auto_load(PreviewChannelCommunity, self._my_member, (), {"tribler_session": None})
 
     def create(self):
-        msg("creating-community")
+        self._logger.info("creating-community")
         self.my_channel = ChannelCommunity.create_community(self._dispersy, self._my_member, tribler_session=None)
         self.my_channel.set_channel_mode(ChannelCommunity.CHANNEL_OPEN)
 
-        msg("Community created with member: %s" % self.my_channel._master_member)
+        self._logger.info("Community created with member: %s", self.my_channel._master_member)
         self.my_channel._disp_create_channel(u'', u'')
 
     def join(self):
@@ -93,7 +92,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
             self.join_lc = lc = LoopingCall(self.join)
             lc.start(1.0, now=False)
 
-        msg("trying-to-join-community")
+        self._logger.info("trying-to-join-community")
 
         cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
         if cid:
@@ -101,13 +100,13 @@ class AllChannelClient(DispersyExperimentScriptClient):
             if community._channel_id:
                 self._community.disp_create_votecast(community.cid, 2, int(time()))
 
-                msg("joining-community")
+                self._logger.info("joining-community")
                 for c in self._dispersy.get_communities():
                     if isinstance(c, ChannelCommunity):
                         self.joined_community = c
                 if self.joined_community is None:
-                    msg("couldn't join community")
-                msg("Joined community with member: %s" % self.joined_community._master_member)
+                    self._logger.info("couldn't join community")
+                self._logger.info("Joined community with member: %s", self.joined_community._master_member)
                 self.join_lc.stop()
                 return
 

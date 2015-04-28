@@ -73,7 +73,7 @@ class MetadataClient(DispersyExperimentScriptClient):
     def insert_metadata(self, infohash_data="", roothash_data="", amount=1):
         amount = int(amount)
         for _ in xrange(amount):
-            msg('creating-metadata')
+            self._logger.debug('creating-metadata')
 
             infohash = sha1(infohash_data).digest()
             roothash = sha1(roothash_data).digest()

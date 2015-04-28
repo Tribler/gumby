@@ -67,6 +67,9 @@ _ERROR_REASONS = (
 class _CommandTransport(SSHClientTransport):
     _secured = False
 
+    def __init__(self):
+        self._logger = logging.getLogger(self.__class__.__name__)
+
     def verifyHostKey(self, hostKey, fingerprint):
         # TODO: we should check the key
         return succeed(True)
@@ -89,7 +92,7 @@ class _CommandTransport(SSHClientTransport):
         if nreason is not None:
             err("Connection lost with reason: %s" % self.connection.reason)
         else:
-            msg("Connection lost with reason:", reason)
+            self._logger.info("Connection lost with reason: %s", reason)
 
         self.factory.finished.callback(nreason)
 
@@ -121,6 +124,9 @@ class _CommandChannel(SSHChannel):
 
     def __init__(self, command, **k):
         SSHChannel.__init__(self, **k)
+
+        self._logger = logging.getLogger(self.__class__.__name__)
+
         self._databytes = ''
         self._extbytes = ''
         self.command = command
@@ -159,7 +165,7 @@ class _CommandChannel(SSHChannel):
         remainder = ""
         for line in self._databytes.splitlines(True):
             if line.endswith('\n'):
-                msg('SSH "%s" STDOUT: %s' % (self.command, line.rstrip()), logLevel=logging.INFO)
+                self._logger.info('SSH "%s" STDOUT: %s', self.command, line.rstrip())
             else:
                 # It's a partial line (part of the last one), save it to the buffer instead
                 remainder = line
@@ -171,14 +177,14 @@ class _CommandChannel(SSHChannel):
         remainder = ""
         for line in self._extbytes.splitlines(True):
             if line.endswith('\n'):
-                msg('SSH "%s" STDERR: %s' % (self.command, line.rstrip()), logLevel=logging.WARNING)
+                self._logger.info('SSH "%s" STDERR: %s', self.command, line.rstrip())
             else:
                 # It's a partial line (part of the last one), save it to the buffer instead
                 remainder = line
         self._extbytes = remainder
 
     def closed(self):
-        msg("SSH command channel closed")
+        self._logger.info("SSH command channel closed")
         if not self.reason:
             # No command failure
             self.reason = ConnectionDone("ssh channel closed")
@@ -212,13 +218,15 @@ class _CommandChannel(SSHChannel):
 class CommandFactory(ClientFactory):
 
     def __init__(self, command, user):
+        self._logger = logging.getLogger(self.__class__.__name__)
+
         self.command = command
         self.user = user
         self.protocol = _CommandTransport
         self.finished = Deferred()
 
     def clientConnectionLost(self, connector, reason):
-        msg("Client connection lost:", connector, reason, reason.type, logLevel=logging.DEBUG)
+        self._logger.info("Client connection lost: %s, %s, %s", connector, reason, reason.type)
         if not self.finished.called:  # TODO: This could be prettier
             if reason.type is ConnectionDone:
                 self.finished.callback(None)

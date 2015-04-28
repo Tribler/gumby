@@ -63,7 +63,7 @@ class DemersClient(DispersyExperimentScriptClient):
     def publish(self, amount=1):
         amount = int(amount)
         for _ in xrange(amount):
-            msg('creating-text')
+            self._logger.debug('creating-text')
             text = u''.join(choice(letters) for _ in xrange(100))
             self._community.create_text(text)
 

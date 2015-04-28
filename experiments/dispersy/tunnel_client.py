@@ -39,7 +39,7 @@ class TunnelClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.init_community, 'init_community')
 
     def build_circuits(self):
-        msg("build_circuits")
+        self._logger.info("build_circuits")
         self._community.settings.max_circuits = 8
 
     def online(self):

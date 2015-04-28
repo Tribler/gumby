@@ -172,7 +172,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
     def seeder_state_callback(self, ds):
         from Tribler.Core.simpledefs import dlstatus_strings
         d = ds.get_download()
-        msg("seeder: %s %s %s", repr(d.get_def().get_name()), dlstatus_strings[ds.get_status()], ds.get_progress())
+        self._logger.info("seeder: %s %s %s", repr(d.get_def().get_name()), dlstatus_strings[ds.get_status()], ds.get_progress())
         return 5.0, False
 
     def registerCallbacks(self):

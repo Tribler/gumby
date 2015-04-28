@@ -45,16 +45,17 @@
 
 """Parses and runs scenarios."""
 
+import logging
+import shlex
+import sys
 from itertools import ifilter
 from os import environ
 from re import compile as re_compile
-from time import time
 from threading import RLock
-import shlex
-import sys
+from time import time
 
 from twisted.internet import reactor
-from twisted.python.log import msg, err
+
 
 class ScenarioParser():
     """
@@ -88,6 +89,7 @@ class ScenarioParser():
     _re_substitution = re_compile("(\$\w+)")
 
     def __init__(self):
+        self._logger = logging.getLogger(self.__class__.__name__)
         self.file_lock = RLock()
         self.file_buffer = None
 
@@ -255,7 +257,7 @@ class ScenarioRunner(ScenarioParser):
     def parse_file(self):
         for (tstmp, _, clb, args) in self._parse_scenario(self.filename):
             if clb not in self._callables:
-                err(clb, "is not registered as an action!")
+                self._logger.error("'%s' is not registered as an action!", clb)
                 continue
 
             self._my_actions.append((tstmp, clb, args))
@@ -266,7 +268,7 @@ class ScenarioRunner(ScenarioParser):
         """
         Schedules calls for each scenario line.
         """
-        msg("Running scenario from file:", self.filename)
+        self._logger.info("Running scenario from file: %s", self.filename)
 
         if not self._is_parsed:
             self.parse_file()

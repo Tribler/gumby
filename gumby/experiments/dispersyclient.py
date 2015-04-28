@@ -37,27 +37,25 @@
 
 # Code:
 
-from os import environ, path, chdir, makedirs, symlink, getpid
-from sys import stdout, exit, stderr
-from collections import defaultdict, Iterable
+import base64
 import json
-from time import time
+import logging
+from collections import Iterable, defaultdict
+from os import chdir, environ, getpid, makedirs, path, symlink
 from random import random
+from sys import exit, stderr, stdout
+from time import time
+from traceback import print_exc
 
-from gumby.sync import ExperimentClient, ExperimentClientFactory
-from gumby.scenario import ScenarioRunner
 from gumby.log import setupLogging
+from gumby.scenario import ScenarioRunner
+from gumby.sync import ExperimentClient, ExperimentClientFactory
 
-from twisted.python.log import msg, err
-
-# TODO(emilon): Make sure that the automatically chosen one is not this one in case we can avoid this.
-# The reactor needs to be imported after the dispersy client, as it is installing an EPOLL based one.
-from twisted.internet.defer import inlineCallbacks
 from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import deferLater
 from twisted.internet.threads import deferToThread
-import base64
-from traceback import print_exc
+
 
 def buffer_online(func):
     def helper(*args, **kargs):
@@ -92,10 +90,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         t1 = time()
         self.scenario_runner._read_scenario(scenario_file_path)
-        msg('Took %.2f to read scenario file' % (time() - t1))
+        self._logger.debug('Took %.2f to read scenario file', time() - t1)
 
     def onIdReceived(self):
-        msg('Got ID %s assigned' % self.my_id)
+        self._logger.debug('Got ID %s assigned', self.my_id)
         self.scenario_runner.set_peernumber(int(self.my_id))
         # TODO(emilon): Auto-register this stuff
         self.scenario_runner.register(self.echo)
@@ -119,10 +117,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         t1 = time()
         self.scenario_runner.parse_file()
-        msg('Took %.2f to parse scenario file' % (time() - t1))
+        self._logger.debug('Took %.2f to parse scenario file' , time() - t1)
 
     def startExperiment(self):
-        msg("Starting dispersy scenario experiment")
+        self._logger.debug("Starting dispersy scenario experiment")
 
         # TODO(emilon): Move this to the right place
         # TODO(emilon): Do we want to have the .dbs in the output dirs or should they be dumped to /tmp?
@@ -152,9 +150,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
             from dispersy.crypto import ECCrypto, NoCrypto
 
         if environ.get('TRACKER_CRYPTO', 'ECCrypto') == 'ECCrypto':
-            msg('Turning on ECCrypto')
+            self._logger.debug('Turning on ECCrypto')
             return ECCrypto()
-        msg('Turning off Crypto')
+        self._logger.debug('Turning off Crypto')
         return NoCrypto()
 
     @property
@@ -175,7 +173,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
     #
 
     def echo(self, *argv):
-        msg("%s ECHO" % self.my_id, ' '.join(argv))
+        self._logger.debug("%s ECHO %s", self.my_id, ' '.join(argv))
 
     def set_community_args(self, args):
         """
@@ -205,7 +203,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._strict = not self.str2bool(boolean)
 
     def start_dispersy(self, autoload_discovery=True):
-        msg("Starting dispersy")
+        self._logger.debug("Starting dispersy")
         # We need to import the stuff _AFTER_ configuring the logging stuff.
         try:
             from Tribler.dispersy.dispersy import Dispersy
@@ -240,7 +238,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.print_on_change('community-kwargs', {}, self.community_kwargs)
         self.print_on_change('community-env', {}, {'pid':getpid()})
 
-        msg("Finished starting dispersy")
+        self._logger.debug("Finished starting dispersy")
 
     def get_my_member(self):
         return self._dispersy.get_member(private_key=self.my_member_private_key)
@@ -253,7 +251,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         if self._dispersy_exit_status is None and retry:
             reactor.callLater(1, self.stop, retry - 1)
         else:
-            msg("Dispersy exit status was:", self._dispersy_exit_status)
+            self._logger.debug("Dispersy exit status was: %s", self._dispersy_exit_status)
             reactor.callLater(0, reactor.stop)
 
     def set_master_member(self, pub_key, priv_key=''):
@@ -261,31 +259,34 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.master_private_key = priv_key.decode("HEX")
 
     def online(self, dont_empty=False):
-        msg("Trying to go online")
+        self._logger.debug("Trying to go online")
         if self._community is None:
-            msg("online")
+            self._logger.debug("online")
 
-            msg("join community %s as %s" % (self._master_member.mid.encode("HEX"), self._my_member.mid.encode("HEX")))
+            self._logger.debug("join community %s as %s",
+                               self._master_member.mid.encode("HEX"),
+                               self._my_member.mid.encode("HEX"))
             self._dispersy.on_incoming_packets = self.original_on_incoming_packets
-            self._community = self.community_class.init_community(self._dispersy, self._master_member, self._my_member, *self.community_args, **self.community_kwargs)
+            self._community = self.community_class.init_community(self._dispersy, self._master_member, self._my_member,
+                                                                  *self.community_args, **self.community_kwargs)
             self._community.auto_load = False
 
             assert self.is_online()
             if not dont_empty:
                 self.empty_buffer()
 
-            msg("Dispersy is using port %s" % repr(self._dispersy._endpoint.get_address()))
+            self._logger.debug("Dispersy is using port %s", repr(self._dispersy._endpoint.get_address()))
         else:
-            msg("online (we are already online)")
+            self._logger.debug("online (we are already online)")
 
     def offline(self):
-        msg("Trying to go offline")
+        self._logger.debug("Trying to go offline")
 
         if self._community is None and self._is_joined:
-            msg("offline (we are already offline)")
+            self._logger.debug("offline (we are already offline)")
 
         else:
-            msg("offline")
+            self._logger.debug("offline")
             for community in self._dispersy.get_communities():
                 community.unload_community()
 
@@ -293,7 +294,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
             self._dispersy.on_incoming_packets = lambda *params: None
 
         if self._database_file == u':memory:':
-            msg("Be careful with memory databases and nodes going offline, you could be losing database because we're closing databases.")
+            self._logger.debug("Be careful with memory databases and nodes going offline, "
+                               "you could be losing database because we're closing databases.")
 
     def is_online(self):
         return self._community != None
@@ -505,7 +507,8 @@ def main(client_class):
     init_instrumentation()
     setupLogging()
     factory = ExperimentClientFactory({}, client_class)
-    msg("Connecting to: %s:%s" % (environ['SYNC_HOST'], int(environ['SYNC_PORT'])))
+    logger = logging.getLogger()
+    logger.debug("Connecting to: %s:%s", environ['SYNC_HOST'], int(environ['SYNC_PORT']))
     # Wait for a random amount of time before connecting to try to not overload the server when we have a lot of connections
     reactor.callLater(random() * 10,
                       lambda: reactor.connectTCP(environ['SYNC_HOST'], int(environ['SYNC_PORT']), factory))

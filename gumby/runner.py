@@ -45,7 +45,7 @@ import sys
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, setDebugging, gatherResults, succeed
 from twisted.internet.protocol import ProcessProtocol
-from twisted.python.log import err, msg, Logger
+from twisted.python.log import Logger
 
 
 from .settings import configToEnv, loadConfig
@@ -53,9 +53,11 @@ from .sshclient import runRemoteCMD
 setDebugging(True)
 
 
-class ExperimentRunner(Logger):
+class ExperimentRunner():
 
     def __init__(self, conf_path):
+        self._logger = logging.getLogger(self.__class__.__name__)
+
         config = loadConfig(conf_path)
         self._cfg_path = conf_path
         self._cfg = config
@@ -69,17 +71,17 @@ class ExperimentRunner(Logger):
         return "ExperimentRunner"
 
     def copyWorkspaceToHeadNodes(self):
-        msg("Syncing workspaces on remote head nodes...")
+        self._logger.info("Syncing workspaces on remote head nodes...")
 
         def onCopySuccess(ignored):
-            msg("Great copying success!")
+            self._logger.info("Great copying success!")
 
         def onCopyFailure(failure):
-            err("Meh, copy fail.")
+            self._logger.error("Meh, copy fail.")
             return failure
 
         def onSingleCopyFailure(failure, host):
-            err("Failed to synchronize the workspace to the remote host: %s.", host)
+            self._logger.error("Failed to synchronize the workspace to the remote host: %s.", host)
             return failure
 
         copy_list = []
@@ -92,7 +94,7 @@ class ExperimentRunner(Logger):
                     "--exclude=.svn", "--exclude=local", "--exclude=output", "--delete-excluded", "--delete-during",
                     workspace_dir + '/', ":".join((host, self._remote_workspace_dir + '/')
                                                   ))
-            msg("Running: %s " % ' '.join(args))
+            self._logger.info("Running: %s ", ' '.join(args))
             reactor.spawnProcess(pp, args[0], args)
 
             copy_list.append(pp.getDeferred().addErrback(onSingleCopyFailure, host))
@@ -102,17 +104,17 @@ class ExperimentRunner(Logger):
         return d
 
     def collectOutputFromHeadNodes(self):
-        msg("Syncing output data back from head nodes...")
+        self._logger.info("Syncing output data back from head nodes...")
 
         def onCopySuccess(_):
-            msg("Great copying success!")
+            self._logger.info("Great copying success!")
 
         def onCopyFailure(failure):
-            err("Failed to collect the ouput data from the remote nodes.")
+            self._logger.error("Failed to collect the ouput data from the remote nodes.")
             return failure
 
         def onSingleCopyFailure(failure, host):
-            err("Failed to collect the ouput data from the remote host: %s.", host)
+            self._logger.error("Failed to collect the ouput data from the remote host: %s.", host)
             return failure
 
         copy_list = []
@@ -129,7 +131,7 @@ class ExperimentRunner(Logger):
                     ":".join((host, self._remote_workspace_dir + '/output/')),
                     path.join(self._workspace_dir, "output", host) + "/"
                     )
-            msg("Running: %s " % ' '.join(args))
+            self._logger.info("Running: %s ", ' '.join(args))
             reactor.spawnProcess(pp, args[0], args)
 
             copy_list.append(pp.getDeferred().addErrback(onSingleCopyFailure, host))
@@ -140,7 +142,7 @@ class ExperimentRunner(Logger):
 
     def spawnTracker(self):
         def onTrackerFailure(failure):
-            err("Tracked died, stopping experiment.")
+            self._logger.error("Tracked died, stopping experiment.")
             return failure
 
         cmd = self._cfg['tracker_cmd']
@@ -148,13 +150,13 @@ class ExperimentRunner(Logger):
         # TODO: optionally stop the experiment if the tracker dies (now it always stops)
         if cmd:
             if self._cfg.as_bool("tracker_run_local"):
-                msg("Spawning local tracker with:", cmd)
+                self._logger.info("Spawning local tracker with: %s", cmd)
                 pp = OneShotProcessProtocol()
                 args = cmd.split(' ', 1)
                 reactor.spawnProcess(pp, args[0], args, env=None)  # Inherit env from parent
                 d = pp.getDeferred()
             else:
-                msg("Spawning remote tracker on head node with:", cmd)
+                self._logger.info("Spawning remote tracker on head node with: %s", cmd)
                 final_cmd = path.join(self._remote_workspace_dir, cmd)
                 host = self._cfg['head_nodes'][0]
                 d = runRemoteCMD(host, final_cmd)
@@ -163,18 +165,18 @@ class ExperimentRunner(Logger):
 
     def spawnConfigServer(self):
         def onConfServerFailure(failure):
-            err("Config server died, stopping experiment.")
+            self._logger.error("Config server died, stopping experiment.")
             return failure
 
         cmd = self._cfg['config_server_cmd']
         if self._cfg.as_bool("tracker_run_local"):
-            msg("Spawning local config server with:", cmd)
+            self._logger.info("Spawning local config server with: %s", cmd)
             pp = OneShotProcessProtocol("LOCAL_CONFIG_SERVER")
             args = cmd.split(' ', 1)
             reactor.spawnProcess(pp, args[0], args, env=None)  # Inherit env from parent
             d = pp.getDeferred()
         else:
-            msg("Spawning config server on head node with:", cmd)
+            self._logger.info("Spawning config server on head node with: %s", cmd)
             final_cmd = path.join(self._remote_workspace_dir, cmd)
             host = self._cfg['head_nodes'][0]
             d = runRemoteCMD(host, final_cmd)
@@ -183,7 +185,7 @@ class ExperimentRunner(Logger):
 
     def runLocalSetup(self):
         def onLocalSetupSuccess(ignored):
-            msg("Local setup script finished.")
+            self._logger.info("Local setup script finished.")
 
         def onLocalSetupFailure(failure):
             return failure
@@ -198,7 +200,7 @@ class ExperimentRunner(Logger):
 
     def runRemoteSetup(self):
         def onSetupSuccess(ignored):
-            msg("Remote setup successful!")
+            self._logger.info("Remote setup successful!")
 
         def onSetupFailure(failure):
             return failure
@@ -210,15 +212,15 @@ class ExperimentRunner(Logger):
             return succeed(None)
 
     def runSetupScripts(self):
-        msg("Running local and remote setup scripts")
+        self._logger.info("Running local and remote setup scripts")
         return gatherResults((self.runRemoteSetup(), self.runLocalSetup()), consumeErrors=True)
 
     def runCommand(self, command, remote=False):
         if remote:
-            msg("Remotely running command", command)
+            self._logger.info("Remotely running command %s", command)
             return self.runCommandOnAllRemotes(command)
         else:
-            msg("Locally running command", command)
+            self._logger.info("Locally running command %s", command)
             return self.runLocalCommand(command)
 
     def runLocalCommand(self, command):
@@ -239,13 +241,13 @@ class ExperimentRunner(Logger):
             python = "python"
         args = " ".join((python, path.join(self._remote_workspace_dir, 'gumby', self._env_runner), " ", self._cfg_path, " ", command))
         for host in self._cfg['head_nodes']:
-            msg("Executing command in %s: %s" % (host, args))
+            self._logger.info("Executing command in %s: %s", host, args)
             remote_instance_list.append(runRemoteCMD(host, args))
         return gatherResults(remote_instance_list, consumeErrors=True)
 
     def startTracker(self):
         def onTrackerFailure(failure):
-            err("Tracker has exited with status:", failure.getErrorMessage())
+            self._logger.error("Tracker has exited with status: %s", failure.getErrorMessage())
             # TODO: Add a config option to not shut down the experiment when the tracker dies
             reactor.exitCode = 1
             reactor.stop()
@@ -261,7 +263,7 @@ class ExperimentRunner(Logger):
 
     def startExperimentServer(self):
         def onConfigServerDied(failure):
-            err("Config server has exited with status:", failure.getErrorMessage())
+            self._logger.error("Config server has exited with status: %s", failure.getErrorMessage())
             # TODO: Add a config option to not shut down the experiment when the config server dies???
             reactor.exitCode = 1
             reactor.stop()
@@ -279,10 +281,10 @@ class ExperimentRunner(Logger):
             return succeed(None)
 
     def startInstances(self):
-        msg("Starting local and remote instances")
+        self._logger.info("Starting local and remote instances")
 
         def onStartInstancesFailed(failure):
-            err("Running the experiment instances failed, collecting data before failing.")
+            self._logger.error("Running the experiment instances failed, collecting data before failing.")
             return self.collectOutputFromHeadNodes().addCallback(lambda _: failure)
 
         if self._cfg['remote_instance_cmd']:
@@ -297,17 +299,17 @@ class ExperimentRunner(Logger):
 
     def runPostProcess(self):
         if self._cfg['post_process_cmd']:
-            msg("Post processing collected data")
+            self._logger.info("Post processing collected data")
             return self.runCommand(self._cfg['post_process_cmd'])
 
     def run(self):
         def onExperimentSucceeded(_):
-            msg("experiment suceeded")
+            self._logger.info("experiment suceeded")
             reactor.stop()
 
         def onExperimentFailed(failure):
-            err("Experiment execution failed, exiting with error.")
-            err(failure)
+            self._logger.error("Experiment execution failed, exiting with error.")
+            self._logger.error(repr(failure))
 
             if reactor.running:
                 reactor.exitCode = 1
@@ -368,6 +370,8 @@ class ExperimentRunner(Logger):
 class OneShotProcessProtocol(ProcessProtocol):
 
     def __init__(self, command, *k, **w):
+        self._logger = logging.getLogger(self.__class__.__name__)
+
         self.command = command
         self._stdout_bytes = ''
         self._stderr_bytes = ''
@@ -375,8 +379,8 @@ class OneShotProcessProtocol(ProcessProtocol):
 
     def processExited(self, reason):
         # TODO(emilon): Process self._stdout_bytes, _sterr_bytes before exiting, to make sure no output is lost.
-        # msg('CMD "%s" Process exited with reason: %s' % (self.command, reason), logLevel=logging.DEBUG)
-        msg('[%s] exit code %s' % (self.command, reason.value.exitCode))
+        # self._logger.info('CMD "%s" Process exited with reason: %s', self.command, reason)
+        self._logger.info('[%s] exit code %s', self.command, reason.value.exitCode)
         if reason.value.exitCode:
             self._d.errback(reason)
         else:
@@ -388,8 +392,8 @@ class OneShotProcessProtocol(ProcessProtocol):
         remainder = ""
         for line in self._stdout_bytes.splitlines(True):
             if line.endswith('\n'):
-                msg('[%s] OUT: %s' % (self.command[:20].strip() + "..." if len(self.command) >20 else "", line.rstrip()),
-                    logLevel=logging.INFO)
+                self._logger.info('[%s] OUT: %s', self.command[:20].strip() + "..." if len(self.command) >20 else "",
+                                  line.rstrip())
             else:
                 # It's a partial line (part of the last one), save it to the buffer instead
                 remainder = line
@@ -400,8 +404,8 @@ class OneShotProcessProtocol(ProcessProtocol):
         remainder = ""
         for line in self._stderr_bytes.splitlines(True):
             if line.endswith('\n'):
-                msg('[%s] ERR: %s' % (self.command[:20].strip() + "..." if len(self.command) >20 else "", line.rstrip()),
-                    logLevel=logging.WARNING)
+                self._logger.info('[%s] ERR: %s', self.command[:20].strip() + "..." if len(self.command) >20 else "",
+                                  line.rstrip())
             else:
                 # It's a partial line (part of the last one), save it to the buffer instead
                 remainder = line
