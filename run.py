@@ -39,18 +39,18 @@
 
 import logging
 import sys
-from os import getpgid, getpid, getppid, kill, setpgrp
+from os import environ, getpgid, getpid, getppid, kill, setpgrp
 from os.path import dirname, exists
 from signal import SIGKILL, SIGTERM, signal
 from time import sleep, time
 
-logging.basicConfig()
+
+logging.basicConfig(level=getattr(logging, environ.get('GUMBY_LOG_LEVEL', 'INFO').upper()))
 
 from psutil import get_pid_list
 from twisted.internet import reactor
 
 from gumby.runner import ExperimentRunner
-from gumby.log import ColoredFileLogObserver, msg
 
 
 def _termTrap(self, *argv):
@@ -80,8 +80,6 @@ _terminating = False
 if __name__ == '__main__':
     sys.path.append(dirname(__file__))
     if len(sys.argv) == 2:
-        observer = ColoredFileLogObserver()
-        observer.start()
         conf_path = sys.argv[1]
         if not exists(conf_path):
             print "Error: The specified configuration file doesn't exist."

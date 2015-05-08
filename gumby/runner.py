@@ -45,7 +45,6 @@ import sys
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, setDebugging, gatherResults, succeed
 from twisted.internet.protocol import ProcessProtocol
-from twisted.python.log import Logger
 
 
 from .settings import configToEnv, loadConfig
