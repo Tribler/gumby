@@ -70,7 +70,7 @@ echo Nose will run from $PWD
 # TODO(emilon): Make the timeout configurable
 
 # @CONF_OPTION NOSE_TESTS_TO_RUN: Specify which tests to run in nose syntax. (default is everything nose can find from within NOSE_RUN_DIR)
-NOSECMD="nosetests -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml  --with-xunit --xunit-file=$OUTPUT_DIR/nosetests.xml --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive $NOSE_TESTS_TO_RUN --logging-format='%(levelname)-7s %(created).2f %(module)15s:%(lineno)-4d  %(message)s'"
+NOSECMD="nosetests -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml  --with-xunit --xunit-file=$OUTPUT_DIR/nosetests.xml --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive $NOSE_TESTS_TO_RUN --logging-format='%(levelname)-7s %(created)d %(module)15s:%(name)s:%(lineno)-4d  %(message)s'"
 process_guard.py -t 3600 -m $OUTPUT_DIR -c "$NOSECMD"
 
 echo Nose finished.
