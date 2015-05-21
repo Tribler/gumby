@@ -45,14 +45,24 @@ if [ ! -z "$NOSE_RUN_DIR" ]; then
     cd $NOSE_RUN_DIR
 fi
 
-# Run pylint and sloccount in the background to save time
-nice pylint --ignore=.git --ignore=dispersy --ignore=pymdht --ignore=libnacl --output-format=parseable --reports=y  Tribler > $OUTPUT_DIR/pylint.out 2> $OUTPUT_DIR/pylint.log &
-PYLINT_PID=$!
+# @CONF_OPTION RUN_PYLINT: Run pylint in parallel with the unit tests (default is TRUE)
+if [ "${RUN_PYLINT,,}" != "false" ]; then
+    ionice -c 3 nice pylint --ignore=.git --ignore=dispersy --ignore=pymdht --ignore=libnacl --output-format=parseable --reports=y  Tribler \
+         > $OUTPUT_DIR/pylint.out 2> $OUTPUT_DIR/pylint.log &
+    PYLINT_PID=$!
+fi
 
-mkdir -p $OUTPUT_DIR/slocdata
+# @CONF_OPTION RUN_SLOCCOUNT: Run sloccount in parallel with the unit tests (default is TRUE)
+if [ "${RUN_SLOCCOUNT,,}" != "false" ]; then
 
-(nice sloccount --datadir $OUTPUT_DIR/slocdata --duplicates --wide --details Tribler | fgrep -v .svn | fgrep -v .git | fgrep -v /dispersy/ | fgrep -v /SwiftEngine/ | fgrep -v debian | fgrep -v test_.Tribler | fgrep -v /pymdht/ > $OUTPUT_DIR/sloccount.out 2> $OUTPUT_DIR/sloccount.log) &
-SLOCCOUNT_PID=$!
+    mkdir -p $OUTPUT_DIR/slocdata
+
+    (ionice -c 3 nice sloccount --datadir $OUTPUT_DIR/slocdata --duplicates --wide --details Tribler | \
+            fgrep -v .svn | fgrep -v .git | fgrep -v /dispersy/ | fgrep -v /SwiftEngine/ | \
+            fgrep -v debian | fgrep -v test_.Tribler | fgrep -v /pymdht/ \
+                                                             > $OUTPUT_DIR/sloccount.out 2> $OUTPUT_DIR/sloccount.log) &
+    SLOCCOUNT_PID=$!
+fi
 
 
 echo Nose will run from $PWD
