@@ -1,0 +1,13 @@
+# This experiment just runs 10 processes of relay and exit nodes. It's easy for testing 
+# the tunnel community and to get some candidates from them. This experiment runs for 
+# two hours. 
+# Don't forget to change the community identifier below to match your version. 
+#
+@0:0 set_master_member 3081a7301006072a8648ce3d020106052b8104002703819200040371e6e5ce138960fe5aa3b72f93684761865b9badf49214ecd1100d5bf3b938af388ec72a9e817741167773815cce75a928224820058e3709fbe6318b0b25decce90caf1f9aa640063f7e52549d4cfe4237184cac3821555131bef404396af51b83e2c119683d4569fb9e4e44daf416329edc425923fcdf2390b7459eebb89635f9f0e6ed76f61f753217b87ab7de23
+@0:2 start_session
+@0:5 init_community exit {1-2}
+@0:5 init_community no_exit {3-10}
+@0:10 online
+@0:10 reset_dispersy_statistics
+@0:11 introduce_candidates
+@0:7200 stop

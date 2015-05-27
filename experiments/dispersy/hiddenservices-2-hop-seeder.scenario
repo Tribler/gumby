@@ -1,0 +1,15 @@
+# This experiment runs a 2 hop seeder seeding a 100mb file. Other processes will 
+# download from this seeder using respectively 1, 2 and 3 hops. 
+#
+@0:0 set_master_member 3081a7301006072a8648ce3d020106052b81040027038192000402b1fa13943d38ac48aa499d78edb24b59ddf2e798618ab7c9b6569d0c0842f9c83c0e6024284277d0556b29cc195942e783dbd8a7ba8b3aa0d7f0b9ab7af90926a31ce5ffcb1190059df49c58d1c0b395f28d1d90d711608a05d1cfbd79901648e11dbc8c3158aa6111005dbbd48f51d835693d55a6757654069c70e4386fb58de118c7f1a5ba4b5579128502238cff
+@0:2 start_session
+@0:5 init_community exit crypto {1-2}
+@0:6 init_community no_exit crypto {3-20}
+@0:10 online
+@0:11 introduce_candidates
+@0:20 reset_dispersy_statistics
+@0:20 setup_seeder 2hops100mb 2 {4}
+@0:100 start_download 2hops100mb 1 {5}
+@0:250 start_download 2hops100mb 2 {6}
+@0:400 start_download 2hops100mb 3 {7}
+@0:600 stop

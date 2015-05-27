@@ -150,6 +150,9 @@ class ScenarioParser():
         if self._parse_for_this_peer(peerspec):
             line = self._preprocess_line(line)
             try:
+                if line.startswith('#'):
+                    # Just a comment line, ignore. 
+                    return None
                 parts = line.split(' ', 2)
                 if len(parts) == 3:
                     timespec, callable, args = parts

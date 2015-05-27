@@ -4,7 +4,6 @@ from os import path
 from sys import path as pythonpath
 
 from twisted.internet.task import LoopingCall
-from twisted.python.log import msg
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 from posix import environ
@@ -26,7 +25,6 @@ class TunnelClient(DispersyExperimentScriptClient):
         tunnel_settings = TunnelSettings()
         tunnel_settings.max_circuits = 0
         tunnel_settings.socks_listen_ports = [23000 + (100 * (self.scenario_runner._peernumber)) + i for i in range(5)]
-        tunnel_settings.do_test = False
         tunnel_settings.become_exitnode = True if become_exitnode else False
 
         self.set_community_kwarg('settings', tunnel_settings)
