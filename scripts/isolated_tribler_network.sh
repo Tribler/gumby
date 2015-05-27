@@ -87,11 +87,13 @@ fi
 
 # Call the callback executable.
 if [ ! -z "$ISOLATED_CMD" ]; then
-	echo "Executing isolated cmd"
-	$ISOLATED_CMD
+    echo "Unsetting HOME_SEED_FILE"
+    unset HOME_SEED_FILE
+    echo "Executing isolated cmd"
+    $ISOLATED_CMD
 else
-	echo "Waiting for process guard to exit tribler instances"
-	wait $PROCESS_GUARD_PID
+    echo "Waiting for process guard to exit tribler instances"
+    wait $PROCESS_GUARD_PID
 fi
 
 # if this is empty wait for PROCESS_GUARD_PID
