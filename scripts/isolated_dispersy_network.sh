@@ -35,6 +35,11 @@
 
 # Code:
 
+# @CONF_OPTION ISOLATED_CMD: Command to be executed and waited for on the isolated dispersy network (no default)
+# @CONF_OPTION ISOLATED_INSTANCES_TO_SPAWN: Amount of copies of ISOLATED_INSTANCES_CMD to spawn.
+# @CONF_OPTION ISOLATED_INSTANCES_CMD: Command to be executed repeatedly, if ISOLATED_CMD these are the processes we
+# will wait for before finishing (no default)
+
 # Start a dedicated tracker (isolated from the network)
 TRACKER_IP=127.0.0.1 HEAD_HOST=localhost run_tracker.sh &
 TRACKER_PID=$!
@@ -47,12 +52,12 @@ if [ ! -e /proc/$TRACKER_PID ]; then
 fi
 
 # Start N instances of Tribler that will only contact the isolated tracker.
-if [ -z "$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN" ]; then
-    echo 'ISOLATED_TRIBLER_COPIES_TO_SPAWN not defined, bailing out.'
+if [ -z "$ISOLATED_INSTANCES_TO_SPAWN" ]; then
+    echo 'ISOLATED_INSTANCES_TO_SPAWN not defined, bailing out.'
     exit 2
 fi
 
-MINIONS=$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN
+MINIONS=$ISOLATED_INSTANCES_TO_SPAWN
 
 mkdir -p $HOME/tmp/
 
@@ -65,16 +70,16 @@ export TRIBLER_SKIP_OPTIN_DLG=True
 export DISPERSY_BOOTSTRAP_FILE="$PWD/tribler/bootstraptribler.txt"
 
 while [ $MINIONS -gt 0 ]; do
-    echo "wrap_in_vnc.sh tribler/tribler.sh" >> $COMMANDS_FILE
+    echo $ISOLATED_INSTANCES_CMD >> $COMMANDS_FILE
     let MINIONS=$MINIONS-1
 done
 
-process_guard.py -m $OUTPUT_DIR/isolated_triblers -o $OUTPUT_DIR/isolated_triblers  -f $COMMANDS_FILE &
+process_guard.py -m $OUTPUT_DIR/isolated_instances -o $OUTPUT_DIR/isolated_instances  -f $COMMANDS_FILE &
 PROCESS_GUARD_PID=$!
 
 
 
-let SLEEP_TIME=$ISOLATED_TRIBLER_INSTANCES_TO_SPAWN*3
+let SLEEP_TIME=$ISOLATED_INSTANCES_TO_SPAWN*3
 echo "Waiting for $SLEEP_TIME secs. to make sure the Tribler instances are running..."
 sleep $SLEEP_TIME
 echo "Going forth"
@@ -86,14 +91,14 @@ if [ ! -e /proc/$PROCESS_GUARD_PID ]; then
 fi
 
 # Call the callback executable.
-if [ ! -z "$ISOLATED_CMD" ]; then
+if [ -z "$ISOLATED_CMD" ]; then
+    echo "Waiting for the isolated instances to finish"
+    wait $PROCESS_GUARD_PID
+else
     echo "Unsetting HOME_SEED_FILE"
     unset HOME_SEED_FILE
     echo "Executing isolated cmd"
     $ISOLATED_CMD
-else
-    echo "Waiting for process guard to exit tribler instances"
-    wait $PROCESS_GUARD_PID
 fi
 
 # if this is empty wait for PROCESS_GUARD_PID
