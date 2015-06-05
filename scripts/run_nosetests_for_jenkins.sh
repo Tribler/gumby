@@ -102,7 +102,7 @@ else
         done
         IFS=$OLD_IFS
         TEST_RUNNER_OUT_DIR=$OUTPUT_DIR/test_runners_output
-        process_guard.py -t 1200 -m $OUTPUT_DIR -o $TEST_RUNNER_OUT_DIR -f $NOSECMD_FILE || PG_EXIT_STATUS=$?
+        process_guard.py -T -t 1200 -m $OUTPUT_DIR -o $TEST_RUNNER_OUT_DIR -f $NOSECMD_FILE || PG_EXIT_STATUS=$?
         if [ ! -z "$PG_EXIT_STATUS" ]; then
             echo "ERROR: Process guard failed with exit code $PG_EXIT_STATUS, aborting and printing logs"
             rm -f $OUTPUT_DIR/*_nosetests.xml
