@@ -140,10 +140,11 @@ for XML in *_nosetests.xml; do
 done
 popd
 
-echo Waiting for pylint
+echo Waiting for pylint at $(date)
 wait $PYLINT_PID ||:
-echo Waiting for sloccount
+echo Waiting for sloccount at $(date)
 wait $SLOCCOUNT_PID
+echo Done waiting at $(date)
 
 
 #
