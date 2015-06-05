@@ -2,13 +2,26 @@
 # Mircea Bardac
 # Rewritten by Elric Milon (Dec. 2012 and Aug. 2013)
 
-import subprocess
-from time import sleep, time
-from os import setpgrp, getpgrp, killpg, getpid, access, R_OK, path, kill, errno, sysconf, sysconf_names, setsid, getpgid, makedirs
-from signal import SIGKILL, SIGTERM, signal
+import exceptions
+import json
 from glob import iglob
 from math import ceil
-import json
+from os import (R_OK, SEEK_END, access, errno, getpgid, getpid, kill, killpg, makedirs, path, setsid, sysconf,
+                sysconf_names)
+from signal import SIGKILL, SIGTERM, signal
+from subprocess import Popen
+from time import sleep, time
+
+
+TIMEOUT_EXIT_CODE = 3
+
+
+class PGPopen(Popen):
+
+    def __init__(self, cmd, *args, **kwargs):
+        self.cmd = cmd
+        super(PGPopen, self).__init__(cmd, *args, **kwargs)
+
 
 class ResourceMonitor(object):
     # adapted after http://stackoverflow.com/questions/276052/how-to-get-current-cpu-and-ram-usage-in-python
@@ -34,6 +47,8 @@ class ResourceMonitor(object):
         self.ignore_pid_list.append(getpid())
 
         self.last_died = False
+
+        self.verbose = True
 
     def prune_pid_list(self):
         """
@@ -61,7 +76,9 @@ class ResourceMonitor(object):
 
         for pid in pids_to_remove:
             if pid in self.pid_dict:
-                del self.pid_dict[pid]
+                p = self.pid_dict.pop(pid)
+                if self.verbose:
+                    print "Command:\n\t %s\n\t exited with status: %d" % (p.cmd, p.poll())
             if pid in self.pid_list:
                 self.pid_list.remove(pid)
 
@@ -137,7 +154,7 @@ class ResourceMonitor(object):
         print >> stdout, "Starting #%05d: %s" % (self.cmd_counter, cmd)
         if stdout:
             stdout.flush()
-        p = subprocess.Popen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=None, preexec_fn=setsid)
+        p = PGPopen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=None, preexec_fn=setsid)
         self.pid_dict[p.pid] = p
         self.pgid_list.append(getpgid(p.pid))
 
@@ -153,7 +170,13 @@ class ResourceMonitor(object):
 
         self.prune_pid_list()
         for id, p in self.pid_dict.items():
-            print "TERMinating group. Still %i process(es) running." % len(self.pid_dict)
+            print "TERMinating group. Still %i process(es) running:" % len(self.pid_dict)
+            for pid in self.get_pid_list():
+                try:
+                    with open("/proc/%d/cmdline" % pid, 'r') as cmd:
+                        print " - %s" % cmd.read()
+                except exceptions.IOError:
+                    pass
             killpg(id, SIGTERM)  # kill the entire process group, we are ignoring the SIGTERM.
 
         if self.pid_dict:
@@ -170,8 +193,10 @@ class ResourceMonitor(object):
 
 
 class ProcessMonitor(object):
+
     def __init__(self, commands, timeout, interval, output_dir=None, monitor_dir=None):
         self.start_time = time()
+        self.timed_out = False
         self.end_time = self.start_time + timeout if timeout else 0  # Do not time out if time_limit is 0.
         self._interval = interval
 
@@ -242,6 +267,7 @@ class ProcessMonitor(object):
 
             if self.end_time and timestamp > self.end_time:  # if self.end_time == 0 the time out is disabled.
                 print "Time out, killing monitored processes."
+                self.timed_out = True
                 return self.stop()
             sleep(sleep_time)
 
@@ -253,6 +279,12 @@ if __name__ == "__main__":
                       default=0,
                       type=int,
                       help="Hard timeout, after this amount of seconds all the child processes will be killed."
+                      )
+    parser.add_option("-T", "--fail-on-timeout",
+                      action="store_true",
+                      default=False,
+                      dest="fail_on_timeout",
+                      help="Exit with status code 3 when a timeout happens."
                       )
     parser.add_option("-m", "--monitor-dir",
                       metavar='OUTDIR',
@@ -309,3 +341,5 @@ if __name__ == "__main__":
         print "Killing monitored processes..."
         pm.stop()
         print "Done."
+    if pm.timed_out and options.fail_on_timeout:
+        exit(TIMEOUT_EXIT_CODE)
