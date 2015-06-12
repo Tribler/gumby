@@ -69,8 +69,10 @@ echo Nose will run from $PWD
 
 # TODO(emilon): Make the timeout configurable
 
-NOSEARGS_COMMON="--with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive"
-NOSECMD="nosetests -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml --xunit-file=$OUTPUT_DIR/nosetests.xml $NOSEARGS_COMMON --logging-format='%(levelname)-7s %(created)d %(module)15s:%(name)s:%(lineno)-4d  %(message)s'"
+NOSEARGS_COMMON="--with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive "
+NOSECMD="nosetests -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml --xunit-file=$OUTPUT_DIR/nosetests.xml $NOSEARGS_COMMON"
+
+export NOSE_LOGFORMAT="%(levelname)-7s\ %(created)d\ %(module)15s:%(name)s:%(lineno)-d4d\ %(message)s"
 
 # @CONF_OPTION TRIBLER_TESTS_PARALLELISATION: Run tests in that many concurrent nose instances. WARNING: if this is set,
 # NOSE_TESTS_TO_RUN becomes mandatory and has to be a single dir where all files that match test_.*.py will be run by
