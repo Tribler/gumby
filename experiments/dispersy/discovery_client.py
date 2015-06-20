@@ -29,8 +29,8 @@ class DiscoveryClient(DispersyExperimentScriptClient):
         self.friends = set()
         self.preferences = set()
 
-        self.set_community_kwarg('max_prefs', sys.maxint)
-        self.set_community_kwarg('max_tbs', 25)
+        super(DiscoveryClient, self).set_community_kwarg('max_prefs', sys.maxint)
+        super(DiscoveryClient, self).set_community_kwarg('max_tbs', 25)
 
         self.monitor_friends_lc = None
         self._prev_scenario_statistics = {}
@@ -65,7 +65,7 @@ class DiscoveryClient(DispersyExperimentScriptClient):
         DispersyExperimentScriptClient.start_dispersy(self, autoload_discovery=False)
 
     def set_community_kwarg(self, key, value):
-        pass
+        self._logger.warning("disabled community kwargs, ignoring %s", key)
 
     def online(self):
         DispersyExperimentScriptClient.online(self)
