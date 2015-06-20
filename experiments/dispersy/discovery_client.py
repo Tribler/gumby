@@ -29,8 +29,8 @@ class DiscoveryClient(DispersyExperimentScriptClient):
         self.friends = set()
         self.preferences = set()
 
-        super(DiscoveryClient, self).set_community_kwarg('max_prefs', sys.maxint)
-        super(DiscoveryClient, self).set_community_kwarg('max_tbs', 25)
+        DispersyExperimentScriptClient.set_community_kwarg(self, 'max_prefs', sys.maxint)
+        DispersyExperimentScriptClient.set_community_kwarg(self, 'max_tbs', 25)
 
         self.monitor_friends_lc = None
         self._prev_scenario_statistics = {}

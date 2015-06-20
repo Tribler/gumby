@@ -83,6 +83,9 @@ fi
 mkdir -p "$OUTPUT_DIR/tracker"
 rm -f ../bootstraptribler.txt
 
+# create a bootstraptribler.txt file for the trackers to prevent them from connecting to our own trackers
+echo "127.0.0.1 0" >> bootstraptribler.txt
+
 if [ "${TRACKER_PROFILE,,}" == "true" ]; then
     echo "Tracker profiling enabled"
     EXTRA_ARGS="--profile=$OUTPUT_DIR/tracker_$TRACKER_PORT.cprofile --profiler=cprofile --savestats"
