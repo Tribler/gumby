@@ -108,8 +108,8 @@ class DiscoveryClient(DispersyExperimentScriptClient):
 
     def download(self, infohash):
         keyhash = sha1(str(infohash)).digest()
-        print >> sys.stderr, "preference added", keyhash.encode('HEX'), "now have %d preferences" % len(self.preferences)
         self.preferences.add(keyhash)
+        print >> sys.stderr, "preference added", keyhash.encode('HEX'), "now have %d preferences" % len(self.preferences)
 
     def ignore_call(self, *args):
         pass
