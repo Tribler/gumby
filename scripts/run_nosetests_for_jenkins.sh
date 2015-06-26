@@ -124,6 +124,7 @@ else
         python-coverage xml -o $OUTPUT_DIR/coverage.xml
     else
         echo "ERROR: NOSE_TESTS_PARALLELISATION is set but NOSE_TESTS_TO_RUN is not a directory, bailing out."
+        echo "NOSE_TESTS_TO_RUN set to: $NOSE_TESTS_TO_RUN which resolves to $(readlink -f $NOSE_TESTS_TO_RUN)"
         exit 1
     fi
 fi
