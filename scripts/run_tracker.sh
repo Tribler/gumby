@@ -96,11 +96,11 @@ if [ ! -z "$TRACKER_IP" ]; then
     EXTRA_TRACKER_ARGS="$EXTRA_TRACKER_ARGS --ip $TRACKER_IP "
 fi
 
-NR_TRACKERS = 0
+NR_TRACKERS=0
 while [ $EXPECTED_SUBSCRIBERS -gt 0 ] || [ $NR_TRACKERS -lt 4 ]; do
     echo $HEAD_HOST $TRACKER_PORT >> ../bootstraptribler.txt
     # Do not daemonize the process as we want to wait for all of them to die at the end of this script
-    twistd -n $EXTRA_ARGS --logfile="$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" tracker --port $TRACKER_PORT --crypto $TRACKER_CRYPTO $EXTRA_TRACKER_ARGS --statedir="$OUTPUT_DIR/tracker" &
+    twistd --pidfile tracker_$TRACKER_PORT.pid -n $EXTRA_ARGS --logfile="$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" tracker --port $TRACKER_PORT --crypto $TRACKER_CRYPTO $EXTRA_TRACKER_ARGS --statedir="$OUTPUT_DIR/tracker/$TRACKER_PORT" &
     let TRACKER_PORT=$TRACKER_PORT+1
     let EXPECTED_SUBSCRIBERS=$EXPECTED_SUBSCRIBERS-1000
     let NR_TRACKERS=$NR_TRACKERS+1
