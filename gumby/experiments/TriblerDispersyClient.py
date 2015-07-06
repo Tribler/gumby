@@ -23,10 +23,15 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
         self.session = None
         self.session_config = None
         self.session_deferred = None
+        self.dispersy_port = None
 
     def registerCallbacks(self):
         DispersyExperimentScriptClient.registerCallbacks(self)
+        self.scenario_runner.register(self.set_dispersy_port, 'set_dispersy_port')
         self.scenario_runner.register(self.start_session, 'start_session')
+
+    def set_dispersy_port(self, port):
+        self.dispersy_port = int(port)
 
     def start_dispersy(self, autoload_discovery=True):
         raise NotImplementedError("Dispersy is started using the tribler session in start_session")
@@ -96,10 +101,15 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
         config.set_enable_torrent_search(False)
         config.set_enable_channel_search(False)
         config.set_videoplayer(False)
-        config.set_listen_port(20000 + 10 * self.scenario_runner._peernumber)
-        config.set_dispersy_port(21000 + 10 * self.scenario_runner._peernumber)
+        config.set_listen_port(20000 + self.scenario_runner._peernumber)
+
+        if self.dispersy_port is None:
+            self.dispersy_port = 21000 + self.scenario_runner._peernumber
+        config.set_dispersy_port(self.dispersy_port)
+        logging.error("Dispersy port set to %d" % self.dispersy_port)
         return config
 
     def stop(self, retry=3):
         logging.error("Defer session stop to thread and stop reactor afterwards")
+        self.annotate('end of experiment')
         return deferToThread(self.session.shutdown, False).addBoth(lambda _: reactor.callLater(10.0, reactor.stop))

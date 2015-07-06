@@ -1,0 +1,16 @@
+# This experiment starts seeding a 1024MB file. Another processes will 
+# download from this seeder using respectively 1 hops. All security limiters 
+# will be active, so every now and then circuits will break down. 
+#
+@0:0 set_master_member 3081a7301006072a8648ce3d020106052b810400270381920004073e6d578d7d9293bc45f00c07104f06b93b2223053e59aaaef1081f46e4b62f32812792bac56cff25edd7427d6e708dd1fe54aa4db767a1ed9bfac9d898ff574ffc7a629d7e811304d9f1bd4d8bb7a1a650a83c2e212ec3d85184f49b8b104ba2312450fcc74311e13285ed54e14a9ab4773c8a65b20e0eab1bc8732f8a3b07bd13659e78753aafd353aa38918817e3
+@0:2 start_session
+@0:3 set_test_file_size 1073741824
+@0:3 set_security_limiters True
+@0:5 init_community exit crypto {1-2}
+@0:6 init_community no_exit crypto {3-20}
+@0:10 online
+@0:11 introduce_candidates
+@0:20 reset_dispersy_statistics
+@0:20 setup_seeder 1hopsgigabyte 1 {4}
+@0:100 start_download 1hopsgigabyte 1 {5}
+@0:1500 stop
