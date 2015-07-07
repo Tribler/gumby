@@ -35,12 +35,15 @@ class DoubleEntryClient(DispersyExperimentScriptClient):
         """
         Sets the community class of this gumby node to a special community.
         """
+        msg("CommunityType: %s" % community_type)
         if community_type == 'DoubleEntryDelayCommunity':
             msg("Starting DoubleEntry client with: " + DoubleEntryDelayCommunity.__name__)
             self.community_class = DoubleEntryDelayCommunity
         elif community_type == 'DoubleEntryNoResponseCommunity':
             msg("Starting DoubleEntry client with: " + DoubleEntryNoResponseCommunity.__name__)
             self.community_class = DoubleEntryNoResponseCommunity
+        else:
+            raise RuntimeError("Tried to set to unknown community.")
 
     def online(self):
         msg("Double Entry Client going online!")
@@ -67,7 +70,7 @@ class DoubleEntryDelayCommunity(DoubleEntryCommunity):
     """
     Test Community that does not respond to signature requests.
     """
-    delay = 5
+    delay = 2
 
     def __init__(self, *args, **kwargs):
         super(DoubleEntryDelayCommunity, self).__init__(*args, **kwargs)
@@ -78,7 +81,8 @@ class DoubleEntryDelayCommunity(DoubleEntryCommunity):
         :param messages: the to be ignored requests
         """
         self._logger.info("Received %s message(s) that will delayed for %s." % (len(messages), self.delay))
-        sleep(5)
+        sleep(self.delay)
+        self._logger.info("Delay over.")
         super(DoubleEntryDelayCommunity, self).on_signature_request(messages)
 
 
