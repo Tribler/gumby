@@ -2,6 +2,7 @@
 from os import path, environ
 from sys import path as pythonpath
 from time import sleep
+from hashlib import sha1
 import base64
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
@@ -27,6 +28,7 @@ class DoubleEntryClient(DispersyExperimentScriptClient):
         self.vars['public_key'] = base64.encodestring(self.my_member_key)
 
     def registerCallbacks(self):
+        self.scenario_runner.register(self.introduce_candidates, 'introduce_candidates')
         self.scenario_runner.register(self.set_community_class, 'set_community_class')
         self.scenario_runner.register(self.request_signature, 'request_signature')
         self.scenario_runner.register(self.close, 'close')
@@ -46,7 +48,6 @@ class DoubleEntryClient(DispersyExperimentScriptClient):
             raise RuntimeError("Tried to set to unknown community.")
 
     def online(self):
-        msg("Double Entry Client going online!")
         DispersyExperimentScriptClient.online(self)
 
     def request_signature(self, candidate_id=0):
@@ -57,9 +58,19 @@ class DoubleEntryClient(DispersyExperimentScriptClient):
                 self._community.publish_signature_request_message(candidate)
         else:
             target = self.all_vars[candidate_id]
-            candidate = Candidate((str(target['host']), target['port']), False)
-            candidate.associate(TestMember(base64.decodestring(target['public_key'])))
+            candidate = self._community.get_candidate((str(target['host']), target['port']))
+            print("Member %s" % candidate.get_member())
+            print("Type %s" % type(candidate.get_member()))
             self._community.publish_signature_request_message(candidate)
+
+    def introduce_candidates(self):
+        """
+        Introduce every candidate to each other so that later the candidates can be retrieved and used as a destination.
+        """
+        msg("Introducing every candidate")
+        for node in self.all_vars.itervalues():
+            candidate = Candidate((str(node['host']), node['port']), False)
+            self._community.add_discovered_candidate(candidate)
 
     def close(self):
         msg("close command received")
@@ -110,11 +121,17 @@ class TestMember(Member):
 
     def __init__(self, public_key):
         self._public_key = public_key
+        self._mid = sha1(public_key).digest()
+        # No db id known.
+        self._database_id = -1
+        # Test length determined and might become incorrect in the future.
+        self._signature_length = 40
+        # A Candidate does not have a private key, because it is a different node.
+        self._private_key = None
 
     def __str__(self):
         return str(self._public_key)
 
-
 if __name__ == '__main__':
-    DoubleEntryClient.scenario_file = environ.get('SCENARIO_FILE', 'doubleentry_timeout.scenario')
+    DoubleEntryClient.scenario_file = environ.get('SCENARIO_FILE', 'doubleentry.scenario')
     main(DoubleEntryClient)
