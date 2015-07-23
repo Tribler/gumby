@@ -4,7 +4,7 @@
 @0:5 reset_dispersy_statistics
 @0:10 annotate start-experiment-1-peer
 @0:15 introduce_candidates
-@0:50 request_signature 2 {1}
-@0:60 close
-@0:61 stop_dispersy
-@0:62 stop
+@0:80 request_signature 2 {1}
+@0:100 close
+@0:101 stop_dispersy
+@0:102 stop

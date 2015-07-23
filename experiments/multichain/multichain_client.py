@@ -2,7 +2,6 @@
 from os import path, environ
 from sys import path as pythonpath
 from time import sleep
-from hashlib import sha1
 import base64
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
@@ -12,19 +11,21 @@ from twisted.python.log import msg
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
 
 from Tribler.dispersy.candidate import Candidate
-from Tribler.dispersy.member import Member
-from Tribler.community.doubleentry.community import DoubleEntryCommunity
+from Tribler.community.multichain.community import MultiChainCommunity
 
 
-class DoubleEntryClient(DispersyExperimentScriptClient):
+class MultiChainClient(DispersyExperimentScriptClient):
+    """
+    Gumby client to start the MultiChain Community
+    """
 
     _SECURITY_LEVEL = u'high'
 
     def __init__(self, *argv, **kwargs):
         DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
-        msg("Starting DoubleEntry client")
-        # Set the default DoubleEntryCommunity as community
-        self.community_class = DoubleEntryCommunity
+        msg("Starting MultiChain client")
+        # Set the default MultiChainCommunity as community
+        self.community_class = MultiChainCommunity
         self.vars['public_key'] = base64.encodestring(self.my_member_key)
 
     def registerCallbacks(self):
@@ -33,17 +34,17 @@ class DoubleEntryClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.request_signature, 'request_signature')
         self.scenario_runner.register(self.close, 'close')
 
-    def set_community_class(self, community_type='DoubleEntryCommunity'):
+    def set_community_class(self, community_type='MultiChainCommunity'):
         """
         Sets the community class of this gumby node to a special community.
         """
         msg("CommunityType: %s" % community_type)
-        if community_type == 'DoubleEntryDelayCommunity':
-            msg("Starting DoubleEntry client with: " + DoubleEntryDelayCommunity.__name__)
-            self.community_class = DoubleEntryDelayCommunity
-        elif community_type == 'DoubleEntryNoResponseCommunity':
-            msg("Starting DoubleEntry client with: " + DoubleEntryNoResponseCommunity.__name__)
-            self.community_class = DoubleEntryNoResponseCommunity
+        if community_type == 'MultiChainDelayCommunity':
+            msg("Starting MultiChain client with: " + MultiChainDelayCommunity.__name__)
+            self.community_class = MultiChainCommunity
+        elif community_type == 'MultiChainNoResponseCommunity':
+            msg("Starting MultiChain client with: " + MultiChainNoResponseCommunity.__name__)
+            self.community_class = MultiChainNoResponseCommunity
         else:
             raise RuntimeError("Tried to set to unknown community.")
 
@@ -54,13 +55,13 @@ class DoubleEntryClient(DispersyExperimentScriptClient):
         msg("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate_id))
         if candidate_id == 0:
             for c in self.all_vars.itervalues():
-                candidate = Candidate((str(c['host']), c['port']), False)
+                candidate = self._community.get_candidate((str(c['host']), c['port']))
+                print("Member: %s" % candidate.get_member())
                 self._community.publish_signature_request_message(candidate)
         else:
             target = self.all_vars[candidate_id]
             candidate = self._community.get_candidate((str(target['host']), target['port']))
-            print("Member %s" % candidate.get_member())
-            print("Type %s" % type(candidate.get_member()))
+            print("Candidate: %s" % candidate.get_member())
             self._community.publish_signature_request_message(candidate)
 
     def introduce_candidates(self):
@@ -77,61 +78,42 @@ class DoubleEntryClient(DispersyExperimentScriptClient):
         self._community.unload_community()
 
 
-class DoubleEntryDelayCommunity(DoubleEntryCommunity):
+class MultiChainDelayCommunity(MultiChainCommunity):
     """
-    Test Community that does not respond to signature requests.
+    Test Community that delays signature requests.
     """
-    delay = 2
+    delay = 3
 
     def __init__(self, *args, **kwargs):
-        super(DoubleEntryDelayCommunity, self).__init__(*args, **kwargs)
+        super(MultiChainCommunity, self).__init__(*args, **kwargs)
 
-    def on_signature_request(self, messages):
+    def allow_signature_request(self, message):
         """
         Ignore the signature requests.
-        :param messages: the to be ignored requests
+        :param message: the to be delayed request
         """
-        self._logger.info("Received %s message(s) that will delayed for %s." % (len(messages), self.delay))
+        self._logger.info("Received signature request that will delayed for %s." % self.delay)
         sleep(self.delay)
         self._logger.info("Delay over.")
-        super(DoubleEntryDelayCommunity, self).on_signature_request(messages)
+        super(MultiChainCommunity, self).allow_signature_request(message)
 
 
-class DoubleEntryNoResponseCommunity(DoubleEntryCommunity):
+class MultiChainNoResponseCommunity(MultiChainCommunity):
     """
     Test Community that does not respond to signature requests.
     """
 
     def __init__(self, *args, **kwargs):
-        super(DoubleEntryNoResponseCommunity, self).__init__(*args, **kwargs)
+        super(MultiChainNoResponseCommunity, self).__init__(*args, **kwargs)
 
-    def on_signature_request(self, messages):
+    def allow_signature_request(self, message):
         """
         Ignore the signature requests.
-        :param messages: the to be ignored requests
+        :param message: the to be ignored request
         """
-        self._logger.info("Received " + str(len(messages)) + " message(s) that will be ignored.")
+        self._logger.info("Received signature request that will be ignored.")
         return
 
-
-class TestMember(Member):
-    """
-    TestMember that is only used to add a Member with a public key to a candidate.
-    """
-
-    def __init__(self, public_key):
-        self._public_key = public_key
-        self._mid = sha1(public_key).digest()
-        # No db id known.
-        self._database_id = -1
-        # Test length determined and might become incorrect in the future.
-        self._signature_length = 40
-        # A Candidate does not have a private key, because it is a different node.
-        self._private_key = None
-
-    def __str__(self):
-        return str(self._public_key)
-
 if __name__ == '__main__':
-    DoubleEntryClient.scenario_file = environ.get('SCENARIO_FILE', 'doubleentry.scenario')
-    main(DoubleEntryClient)
+    MultiChainClient.scenario_file = environ.get('SCENARIO_FILE', 'multichain.scenario')
+    main(MultiChainClient)
