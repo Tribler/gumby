@@ -56,12 +56,12 @@ class MultiChainClient(DispersyExperimentScriptClient):
             for c in self.all_vars.itervalues():
                 candidate = self._community.get_candidate((str(c['host']), c['port']))
                 print("Member: %s" % candidate.get_member())
-                self._community.publish_signature_request_message(candidate)
+                self._community.publish_signature_request_message(candidate, 1, 1)
         else:
             target = self.all_vars[candidate_id]
             candidate = self._community.get_candidate((str(target['host']), target['port']))
-            print("Candidate: %s" % candidate.get_member())
-            self._community.publish_signature_request_message(candidate)
+            print("Candidate known:%s" % candidate is not None)
+            self._community.publish_signature_request_message(candidate, 1, 1)
 
     def request_block(self, candidate_id=0, sequence_number=-1):
         msg("%s: Requesting block: %s For candidate: %s" % (self.my_id, sequence_number, candidate_id))
@@ -131,5 +131,5 @@ class MultiChainNoResponseCommunity(MultiChainCommunity):
         return
 
 if __name__ == '__main__':
-    MultiChainClient.scenario_file = environ.get('SCENARIO_FILE', 'multichain.scenario')
+    MultiChainClient.scenario_file = environ.get('SCENARIO_FILE', 'multichain_standalone.scenario')
     main(MultiChainClient)
