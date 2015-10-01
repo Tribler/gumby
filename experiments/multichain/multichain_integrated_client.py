@@ -47,7 +47,7 @@ class MultiChainIntegratedClient(HiddenServicesClient):
         msg("CommunityType: %s" % multichain_type)
         if multichain_type == 'MultiChainDelayCommunity':
             msg("Starting MultiChain client with: " + MultiChainDelayCommunity.__name__)
-            self._multichain_type = MultiChainCommunity
+            self._multichain_type = MultiChainDelayCommunity
         elif multichain_type == 'MultiChainNoResponseCommunity':
             msg("Starting MultiChain client with: " + MultiChainNoResponseCommunity.__name__)
             self._multichain_type = MultiChainNoResponseCommunity
@@ -76,31 +76,19 @@ class MultiChainIntegratedClient(HiddenServicesClient):
         self._community.multichain_scheduler = scheduler
         self._logger.info("MultiChainScheduler loaded.")
 
-    def request_signature(self, candidate_id=0):
+    def request_signature(self, candidate_id):
         msg("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate_id))
-        if candidate_id == 0:
-            for c in self.all_vars.itervalues():
-                candidate = self._multichain.get_candidate((str(c['host']), c['port']))
-                print("Member: %s" % candidate.get_member())
-                self._multichain.publish_signature_request_message(candidate, 1, 1)
-        else:
-            target = self.all_vars[candidate_id]
-            candidate = self._multichain.get_candidate((str(target['host']), target['port']))
-            print("Candidate: %s" % candidate.get_member())
-            self._multichain.publish_signature_request_message(candidate, 1, 1)
+        target = self.all_vars[candidate_id]
+        candidate = self._multichain.get_candidate((str(target['host']), target['port']))
+        print("Candidate: %s" % candidate.get_member())
+        self._multichain.publish_signature_request_message(candidate, 1, 1)
 
-    def request_block(self, candidate_id=0, sequence_number=-1):
+    def request_block(self, candidate_id, sequence_number):
         msg("%s: Requesting block: %s For candidate: %s" % (self.my_id, sequence_number, candidate_id))
-        if candidate_id == 0:
-            for c in self.all_vars.itervalues():
-                candidate = self._multichain.get_candidate((str(c['host']), c['port']))
-                print("Member: %s" % candidate.get_member())
-                self._multichain.publish_request_block_message(candidate, sequence_number)
-        else:
-            target = self.all_vars[candidate_id]
-            candidate = self._multichain.get_candidate((str(target['host']), target['port']))
-            print("Candidate: %s" % candidate.get_member())
-            self._multichain.publish_request_block_message(candidate, int(sequence_number))
+        target = self.all_vars[candidate_id]
+        candidate = self._multichain.get_candidate((str(target['host']), target['port']))
+        print("Candidate: %s" % candidate.get_member())
+        self._multichain.publish_request_block_message(candidate, int(sequence_number))
 
     def introduce_candidates(self):
         """
