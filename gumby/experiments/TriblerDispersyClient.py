@@ -59,7 +59,7 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
 
             logging.error("Tribler Session started")
             self.annotate("Tribler Session started")
-
+    
             self._dispersy = self.session.lm.dispersy
 
             return self.session

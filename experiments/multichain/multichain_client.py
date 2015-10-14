@@ -28,27 +28,27 @@ class MultiChainClient(DispersyExperimentScriptClient):
 
     def registerCallbacks(self):
         self.scenario_runner.register(self.introduce_candidates, 'introduce_candidates')
-        self.scenario_runner.register(self.set_community_class, 'set_community_class')
+        self.scenario_runner.register(self.set_multichain_type, 'set_multichain_type')
         self.scenario_runner.register(self.request_signature, 'request_signature')
         self.scenario_runner.register(self.request_block, 'request_block')
         self.scenario_runner.register(self.close, 'close')
 
-    def set_community_class(self, community_type='MultiChainCommunity'):
+    def set_multichain_type(self, multichain_type='MultiChainCommunity'):
         """
         Sets the community class of this gumby node to a special community.
         """
-        msg("CommunityType: %s" % community_type)
-        if community_type == 'MultiChainDelayCommunity':
+        msg("CommunityType: %s" % multichain_type)
+        if multichain_type == 'MultiChainDelayCommunity':
             msg("Starting MultiChain client with: " + MultiChainDelayCommunity.__name__)
             self.community_class = MultiChainDelayCommunity
-        elif community_type == 'MultiChainNoResponseCommunity':
+        elif multichain_type == 'MultiChainNoResponseCommunity':
             msg("Starting MultiChain client with: " + MultiChainNoResponseCommunity.__name__)
             self.community_class = MultiChainNoResponseCommunity
-        elif community_type == 'MultiChainCommunityCrawler':
+        elif multichain_type == 'MultiChainCommunityCrawler':
             msg("Starting MultiChain client with: " + MultiChainCommunityCrawler.__name__)
             self.community_class = MultiChainCommunityCrawler
         else:
-            raise RuntimeError("Tried to set to unknown community:%s." % community_type)
+            raise RuntimeError("Tried to set to unknown community:%s." % multichain_type)
 
     def online(self):
        DispersyExperimentScriptClient.online(self)

@@ -34,11 +34,13 @@ class MultiChainIntegratedClient(HiddenServicesClient):
     def registerCallbacks(self):
         HiddenServicesClient.registerCallbacks(self)
         self.scenario_runner.register(self.set_multichain_type, 'set_multichain_type')
-        self.scenario_runner.register(self.start_multichain, 'start_multichain')
-        self.scenario_runner.register(self.start_scheduler, 'start_scheduler')
         self.scenario_runner.register(self.introduce_candidates, 'introduce_candidates')
         self.scenario_runner.register(self.request_signature, 'request_signature')
         self.scenario_runner.register(self.request_block, 'request_block')
+        self.scenario_runner.register(self.close, 'close')
+        """ Integrated callbacks"""
+        self.scenario_runner.register(self.start_multichain, 'start_multichain')
+        self.scenario_runner.register(self.start_scheduler, 'start_scheduler')
 
     def set_multichain_type(self, multichain_type='MultiChainCommunity'):
         """
@@ -98,6 +100,11 @@ class MultiChainIntegratedClient(HiddenServicesClient):
         for node in self.all_vars.itervalues():
             candidate = Candidate((str(node['host']), node['port']), False)
             self._multichain.add_discovered_candidate(candidate)
+
+    def close(self):
+        msg("close command received")
+        self._community.unload_community()
+        self._multichain.unload_community()
 
 if __name__ == '__main__':
     MultiChainIntegratedClient.scenario_file = environ.get('SCENARIO_FILE', 'multichain_integrated.scenario')
