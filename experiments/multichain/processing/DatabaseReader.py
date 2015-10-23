@@ -136,7 +136,7 @@ class DatabaseReader(object):
                 length = len(total_ups)
             if len(total_downs) > length:
                 length = len(total_downs)
-        print("Writing totals to file")
+        print("Writing data totals to file")
         """ Write to file """
         with open(os.path.join(self.working_directory, "mids_data_up.dat"), 'w') as up_file:
             with open(os.path.join(self.working_directory, "mids_data_down.dat"), 'w') as down_file:
@@ -156,7 +156,7 @@ class DatabaseReader(object):
                             down_file.write("\t")
                     up_file.write("\n")
                     down_file.write("\n")
-        
+
     class MockDispersy:
 
         class MockMember:

@@ -18,7 +18,7 @@ if __name__ == '__main__':
     if not os.path.exists(aggregation_path):
         os.makedirs(aggregation_path)
 
-    from gumby.experiments.multichain.processing.DatabaseReader import GumbyDatabaseReader
+    from experiments.multichain.processing.DatabaseReader import GumbyDatabaseReader
 
     data = GumbyDatabaseReader(working_directory)
     data.database.close()
