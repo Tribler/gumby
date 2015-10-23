@@ -1,16 +1,20 @@
 """
 Performs the experimentation processing of a crawler experiment.
 """
-import networkx as nx
 import sys
-from os.path import dirname, abspath
-
+import os
 
 if __name__ == '__main__':
-    sys.path.append(dirname(__file__))
-    sys.path.append(abspath('./tribler'))
+    # Fix the path
+    sys.path.append(os.path.abspath('./tribler'))
+    sys.path.append(os.getcwd())
+
+    working_directory = os.path.abspath("output/")
+    print sys.argv
+    if len(sys.argv) > 1:
+        working_directory = sys.argv[1]
 
     from gumby.experiments.multichain.processing.DatabaseReader import SingleDatabaseReader
-    data = SingleDatabaseReader("/home/norberhuis/workspace/outputbk/")
+    print working_directory
+    data = SingleDatabaseReader(working_directory)
     data.database.close()
-    nx.write_gexf(data.graph, "graph-crawler.gexf", encoding='utf8', prettyprint=False, version="1.2draft")

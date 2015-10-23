@@ -47,9 +47,20 @@ class DatabaseReader(object):
         self.working_directory = working_directory
         self.database = self.get_database(self.working_directory)
         self.graph = nx.DiGraph()
+        """ Mids are retrieved during generate_graph and used in generate_totals"""
+        self.mids = set([])
+
+        self.generate_graph()
+        self.generate_totals()
         return
 
     def get_database(self, db_path):
+        raise NotImplementedError("Abstract method")
+
+    def generate_graph(self):
+        """
+        Generates a gexf file of the graph.
+        """
         raise NotImplementedError("Abstract method")
 
     def add_block_to_graph(self, block_id, block):
@@ -64,6 +75,10 @@ class DatabaseReader(object):
             """ Follow up block"""
             # Color = blue
             self.paint_node(block_id_encoded, 'b')
+
+        # Add mid's to list
+        self.mids.add(block.mid_requester)
+        self.mids.add(block.mid_responder)
 
     def _work_empty_hash(self):
         """
@@ -89,7 +104,8 @@ class DatabaseReader(object):
         nodes = [edge[0] for edge in edges]
         for node in nodes:
             self.paint_node(node, color)
-        self.graph.remove_node(node_id)
+        if self.graph.__contains__(node_id):
+            self.graph.remove_node(node_id)
 
     def paint_node(self, node, color):
         color_data = {'r': 0, 'g': 0, 'b': 0, 'a': 0}
@@ -104,52 +120,6 @@ class DatabaseReader(object):
     def _write_graph(self):
         nx.write_gexf(self.graph, os.path.join(self.working_directory, "graph-gumby.gexf"), encoding='utf8',
                       prettyprint=False, version="1.2draft")
-        
-    class MockDispersy:
-
-        class MockMember:
-
-            def __init__(self, mid):
-                self.public_key = mid
-
-        def __init__(self):
-            return
-
-        def get_member(self, mid=''):
-            return self.MockMember(mid)
-
-
-class SingleDatabaseReader(DatabaseReader):
-
-    def __init__(self, working_directory):
-        super(SingleDatabaseReader, self).__init__(working_directory)
-        """ Mids are retrieved during generate_graph and used in generate_totals"""
-        self.mids = set([])
-        self.generate_graph()
-        self.generate_totals()
-
-    def get_database(self, db_path):
-        return MultiChainExperimentAnalysisDatabase(self.MockDispersy(), db_path)
-
-    def generate_graph(self):
-        """
-        Generates a gexf file of the graph.
-        :return:
-        """
-        # Read all nodes
-        print "Reading Database"
-        ids = self.database.get_ids()
-        for block_id in ids:
-            block = self.database.get_by_block_id(block_id)
-            # Fix the block. The hash is different because the Public Key is not accessible.
-            block.id = block_id
-            self.add_block_to_graph(block_id, block)
-            # Add mid's to list
-            self.mids.add(block.mid_requester)
-            self.mids.add(block.mid_responder)
-        self._work_empty_hash()
-        self._work_genesis_hash()
-        self._write_graph()
 
     def generate_totals(self):
         """
@@ -186,18 +156,55 @@ class SingleDatabaseReader(DatabaseReader):
                             down_file.write("\t")
                     up_file.write("\n")
                     down_file.write("\n")
+        
+    class MockDispersy:
+
+        class MockMember:
+
+            def __init__(self, mid):
+                self.public_key = mid
+
+        def __init__(self):
+            return
+
+        def get_member(self, mid=''):
+            return self.MockMember(mid)
+
+
+class SingleDatabaseReader(DatabaseReader):
+
+    def __init__(self, working_directory):
+        super(SingleDatabaseReader, self).__init__(working_directory)
+
+    def get_database(self, db_path):
+        return MultiChainExperimentAnalysisDatabase(self.MockDispersy(), os.path.join(db_path, "multichain/1/"))
+
+    def generate_graph(self):
+        # Read all nodes
+        print "Reading Database"
+        ids = self.database.get_ids()
+        for block_id in ids:
+            block = self.database.get_by_block_id(block_id)
+            # Fix the block. The hash is different because the Public Key is not accessible.
+            block.id = block_id
+            self.add_block_to_graph(block_id, block)
+        self._work_empty_hash()
+        self._work_genesis_hash()
+        self._write_graph()
 
 
 class GumbyDatabaseReader(DatabaseReader):
 
     def __init__(self, working_directory):
         super(GumbyDatabaseReader, self).__init__(working_directory)
+
+    def generate_graph(self):
         print "Reading databases."
         databases = []
-        for dir_name in os.listdir(working_directory):
+        for dir_name in os.listdir(self.working_directory):
             # Read all nodes
             if 'Tribler' in dir_name:
-                databases.append(MultiChainDB(self.MockDispersy(), path.join(working_directory, dir_name)))
+                databases.append(MultiChainDB(self.MockDispersy(), path.join(self.working_directory, dir_name)))
                 ids = databases[-1].get_ids()
                 for block_id in ids:
                     block = databases[-1].get_by_block_id(block_id)
@@ -206,10 +213,9 @@ class GumbyDatabaseReader(DatabaseReader):
                     self.add_block_to_graph(block_id, block)
                     if not self.database.contains(block.id):
                         self.database.add_block(block)
-        self.position = nx.spring_layout(self.graph)
         self._work_empty_hash()
         self._work_genesis_hash()
         self._write_graph()
 
     def get_database(self, db_path):
-        return MultiChainDB(self.MockDispersy(), db_path)
+        return MultiChainExperimentAnalysisDatabase(self.MockDispersy(), db_path)
