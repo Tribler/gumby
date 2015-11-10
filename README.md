@@ -3,6 +3,13 @@ Gumby
 
 Experiment runner framework for Dispersy and Tribler.
 
+## Dependency Installation ##
+To install the required dependencies for basic tests on Debian/Ubuntu, please run the following command.
+```
+sudo apt-get install python-psutil python-twisted python-configobj r-base
+```
+Please note that more elaborate experiments require additional dependencies.
+
 ## How to use it ##
 
 After setting up the workspace (see below), simply call gumby/run.py passing your experiment's config file path as argument.
