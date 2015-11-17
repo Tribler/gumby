@@ -7,6 +7,7 @@ import networkx as nx
 from Tribler.community.multichain.database import MultiChainDB
 from Tribler.community.multichain.payload import EMPTY_HASH
 from Tribler.community.multichain.community import GENESIS_ID
+from Tribler.community.multichain.conversion import PK_LENGTH
 
 EMPTY_HASH_ENCODED = base64.encodestring(EMPTY_HASH)
 GENESIS_ID_ENCODED = base64.encodestring(GENESIS_ID)
@@ -162,7 +163,9 @@ class DatabaseReader(object):
         class MockMember:
 
             def __init__(self, mid):
-                self.public_key = mid
+                # Return the mid with 0 appended so that the pk has the same length.
+                # The real pk cannot be retrieved.
+                self.public_key = mid + '0'*(PK_LENGTH - len(mid))
 
         def __init__(self):
             return

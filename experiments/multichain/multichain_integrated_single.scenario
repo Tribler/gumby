@@ -1,0 +1,13 @@
+@0:0 set_master_member 3081a7301006072a8648ce3d020106052b81040027038192000406712a1e5381d030ae25697bd6626810af48ed5094e5faae18a8b91e482e60b8681b26bf6aca786ad81b207ffb5a755956b4d6353c9dc487eb1bfdd17b66bd0de444e01a375fcf3401177a7bb102da7c5f50ad9375fe4a1ae1baca9d47870f56c841169fc36c2b113bafbadacab9f2b3c7773b3d82a54cda8fbde41b9e0e571ba631997a8259cc78e7f262e933542b51
+@0:2 start_session
+@0:4 start_multichain
+@0:6 init_community exit crypto {1-4}
+@0:6 init_community no_exit crypto {6-8}
+@0:8 online
+@0:9 start_scheduler
+@0:10 introduce_candidates
+@0:20 reset_dispersy_statistics
+@0:20 setup_seeder 0hops100MB 0 {7}
+@0:100 start_download 0hops100MB 0 {8}
+@0:200 stop
+@0:220 close

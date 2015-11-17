@@ -51,7 +51,7 @@ class MultiChainClient(DispersyExperimentScriptClient):
             raise RuntimeError("Tried to set to unknown community:%s." % multichain_type)
 
     def online(self):
-       DispersyExperimentScriptClient.online(self)
+        DispersyExperimentScriptClient.online(self)
 
     def request_signature(self, candidate_id):
         msg("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate_id))

@@ -2,6 +2,7 @@
 from os import path, environ
 from sys import path as pythonpath
 import base64
+import math
 
 from gumby.experiments.dispersyclient import  main
 from experiments.multichain.multichain_client import MultiChainDelayCommunity, MultiChainNoResponseCommunity
@@ -29,7 +30,8 @@ class MultiChainIntegratedClient(HiddenServicesClient):
         self._multichain = None
         self.vars['public_key'] = base64.encodestring(self.my_member_key)
         """ Override the test files to speed up the test."""
-        self.testfilesize = 10 * 1024 * 1024
+        # 10
+        self.testfilesize = 8 * int(math.pow(10, 8))
 
     def registerCallbacks(self):
         HiddenServicesClient.registerCallbacks(self)
