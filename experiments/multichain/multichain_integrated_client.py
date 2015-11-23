@@ -30,8 +30,10 @@ class MultiChainIntegratedClient(HiddenServicesClient):
         self._multichain = None
         self.vars['public_key'] = base64.encodestring(self.my_member_key)
         """ Override the test files to speed up the test."""
-        # 10
-        self.testfilesize = 8 * int(math.pow(10, 8))
+        # 10 Mb
+        self.testfilesize = 10 * 1024 * 1024
+        self.min_circuits = 1
+        self.max_circuits = 1
 
     def registerCallbacks(self):
         HiddenServicesClient.registerCallbacks(self)
@@ -98,6 +100,7 @@ class MultiChainIntegratedClient(HiddenServicesClient):
         """
         Introduce every candidate to each other so that later the candidates can be retrieved and used as a destination.
         """
+        HiddenServicesClient.introduce_candidates(self)
         msg("Introducing every candidate")
         for node in self.all_vars.itervalues():
             candidate = Candidate((str(node['host']), node['port']), False)

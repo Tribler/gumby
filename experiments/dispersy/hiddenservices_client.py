@@ -61,6 +61,8 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         self.totalpeers = 20
         self.testfilesize = 100 * 1024 * 1024
         self.security_limiters = False
+        self.min_circuits = 3
+        self.max_circuits = 5
 
     def init_community(self, become_exitnode=None, no_crypto=None):
         become_exitnode = become_exitnode == 'exit'
@@ -77,8 +79,8 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         if not self.security_limiters:
             tunnel_settings.max_traffic = 1024 * 1024 * 1024 * 1024
 
-        tunnel_settings.min_circuits = 3
-        tunnel_settings.max_circuits = 5
+        tunnel_settings.min_circuits = self.min_circuits
+        tunnel_settings.max_circuits = self.max_circuits
 
         logging.debug("My wan address is %s" % repr(self._dispersy._wan_address[0]))
 

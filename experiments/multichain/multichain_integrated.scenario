@@ -6,10 +6,29 @@
 @0:6 init_community no_exit crypto {11-20}
 @0:8 online
 @0:9 start_scheduler
-@0:10 introduce_candidates
+@0:10 introduce_candidates {1}
+@0:11 introduce_candidates {2}
+@0:12 introduce_candidates {3}
+@0:13 introduce_candidates {4}
+@0:14 introduce_candidates {5}
+@0:15 introduce_candidates {6}
+@0:16 introduce_candidates {7}
+@0:17 introduce_candidates {8}
+@0:18 introduce_candidates {9}
+@0:19 introduce_candidates {10}
+@0:20 introduce_candidates {11}
+@0:21 introduce_candidates {12}
+@0:22 introduce_candidates {13}
+@0:23 introduce_candidates {14}
+@0:24 introduce_candidates {15}
+@0:25 introduce_candidates {16}
+@0:26 introduce_candidates {17}
+@0:27 introduce_candidates {18}
+@0:28 introduce_candidates {19}
+@0:29 introduce_candidates {20}
+@0:30 introduce_candidates {21}
 @0:20 reset_dispersy_statistics
-@0:20 setup_seeder 1hops100mb 1 {12}
-@0:100 start_download 1hops100mb 1 {13}
-@0:350 request_block 13 -1 {20}
-@0:400 stop
-@0:420 close
+@0:40 setup_seeder 1hops10mb 1 {12}
+@0:100 start_download 1hops10mb 1 {13}
+@0:300 stop
+@0:310 close
