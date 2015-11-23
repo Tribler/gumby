@@ -11,7 +11,7 @@ from twisted.python.log import msg
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
 
 from Tribler.dispersy.candidate import Candidate
-from Tribler.community.multichain.community import MultiChainCommunity, MultiChainCommunityCrawler
+from Tribler.community.multichain.community import MultiChainCommunity, MultiChainCommunityCrawler, MultiChainScheduler
 
 
 class MultiChainClient(DispersyExperimentScriptClient):
@@ -24,6 +24,7 @@ class MultiChainClient(DispersyExperimentScriptClient):
         msg("Starting MultiChain client")
         # Set the default MultiChainCommunity as community
         self.community_class = MultiChainCommunity
+        self.scheduler = None
         self.vars['public_key'] = base64.encodestring(self.my_member_key)
 
     def registerCallbacks(self):
@@ -31,6 +32,9 @@ class MultiChainClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.set_multichain_type, 'set_multichain_type')
         self.scenario_runner.register(self.request_signature, 'request_signature')
         self.scenario_runner.register(self.request_block, 'request_block')
+        self.scenario_runner.register(self.increase_kbytes_sent, 'increase_kbytes_sent')
+        self.scenario_runner.register(self.increase_kbytes_received, 'increase_kbytes_received')
+        self.scenario_runner.register(self.schedule_block, 'schedule_block')
         self.scenario_runner.register(self.close, 'close')
 
     def set_multichain_type(self, multichain_type='MultiChainCommunity'):
@@ -52,6 +56,7 @@ class MultiChainClient(DispersyExperimentScriptClient):
 
     def online(self):
         DispersyExperimentScriptClient.online(self)
+        self.scheduler = MultiChainScheduler(self._community)
 
     def request_signature(self, candidate_id):
         msg("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate_id))
@@ -66,6 +71,34 @@ class MultiChainClient(DispersyExperimentScriptClient):
         candidate = self._community.get_candidate((str(target['host']), target['port']))
         print("Candidate: %s" % candidate.get_member())
         self._community.publish_request_block_message(candidate, int(sequence_number))
+
+    def increase_kbytes_sent(self, candidate_id, amount_sent):
+        """
+        Increase the Kbytes received from a particular node in the MultiChainScheduler.
+        """
+        msg("%s: Increasing bytes sent: %s For candidate: %s" % (self.my_id, amount_sent, candidate_id))
+        target = self.all_vars[candidate_id]
+        peer = (str(target['host']), target['port'])
+        self.scheduler.update_amount_send(peer, int(amount_sent) * 1000)
+
+    def increase_kbytes_received(self, candidate_id, amount_received):
+        """
+        Increase the Kbytes received from a particular node in the MultiChainScheduler.
+        """
+        msg("%s: Increasing bytes received: %s For candidate: %s" % (self.my_id, amount_received, candidate_id))
+        target = self.all_vars[candidate_id]
+        peer = (str(target['host']), target['port'])
+        self.scheduler.update_amount_received(peer, int(amount_received)*1000)
+
+    def schedule_block(self, candidate_id):
+        """
+        Finish up the download.
+        :param candidate_id:
+        """
+        msg("%s: Scheduling block for candidate: %s" % (self.my_id, candidate_id))
+        target = self.all_vars[candidate_id]
+        peer = (str(target['host']), target['port'])
+        self.scheduler.schedule_block(peer)
 
     def introduce_candidates(self):
         """

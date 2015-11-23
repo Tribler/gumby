@@ -196,10 +196,10 @@ class SingleDatabaseReader(DatabaseReader):
         self._write_graph()
 
 
-class GumbyDatabaseReader(DatabaseReader):
+class GumbyIntegratedDatabaseReader(DatabaseReader):
 
     def __init__(self, working_directory):
-        super(GumbyDatabaseReader, self).__init__(working_directory)
+        super(GumbyIntegratedDatabaseReader, self).__init__(working_directory)
 
     def generate_graph(self):
         print "Reading databases."
@@ -222,3 +222,39 @@ class GumbyDatabaseReader(DatabaseReader):
 
     def get_database(self, db_path):
         return MultiChainExperimentAnalysisDatabase(self.MockDispersy(), db_path)
+
+
+class GumbyStandaloneDatabaseReader(DatabaseReader):
+
+    def __init__(self, working_directory):
+        super(GumbyStandaloneDatabaseReader, self).__init__(working_directory)
+
+    def generate_graph(self):
+        print "Reading databases."
+        databases = []
+        for dir_name in os.listdir(self.working_directory):
+            # Read all nodes
+            if string_is_int(dir_name):
+                databases.append(MultiChainDB(self.MockDispersy(), path.join(self.working_directory, dir_name)))
+                ids = databases[-1].get_ids()
+                for block_id in ids:
+                    block = databases[-1].get_by_block_id(block_id)
+                    # Fix the block. The hash is different because the Public Key is not accessible.
+                    block.id = block_id
+                    self.add_block_to_graph(block_id, block)
+                    if not self.database.contains(block.id):
+                        self.database.add_block(block)
+        self._work_empty_hash()
+        self._work_genesis_hash()
+        self._write_graph()
+
+    def get_database(self, db_path):
+        return MultiChainExperimentAnalysisDatabase(self.MockDispersy(), db_path)
+
+
+def string_is_int(string):
+    try:
+        int(string)
+        return True
+    except ValueError:
+        return False
