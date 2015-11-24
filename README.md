@@ -4,11 +4,18 @@ Gumby
 Experiment runner framework for Dispersy and Tribler.
 
 ## Dependency Installation ##
-To install the required dependencies for basic tests on Debian/Ubuntu, please run the following command.
+To install the required dependencies for basic tests on Ubuntu 15.10, please run the following command.
 ```
 sudo apt-get install python-psutil python-twisted python-configobj r-base
 ```
-Please note that more elaborate experiments require additional dependencies.
+For different versions of Linux or Ubuntu, additional dependencies may be required.
+
+For Ubuntu < 15, ggplot2 is also required separately.
+```
+sudo apt-get install ggplot2
+```
+
+Please note that more elaborate experiments require additional dependencies, which are specified in the config file.
 
 ## How to use it ##
 
@@ -17,7 +24,7 @@ After setting up the workspace (see below), simply call gumby/run.py passing you
 Example:
 
 ```
-gumby/run.py gumby/experiments/dummy/local_prun.conf
+gumby/run.py gumby/experiments/dummy/local_processguard.conf
 ```
 
 ### Generating a new config file ###
