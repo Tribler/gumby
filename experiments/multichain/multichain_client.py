@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 from os import path, environ
 from sys import path as pythonpath
-from time import sleep
 import base64
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
 from twisted.python.log import msg
+from twisted.internet import reactor
 
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
 
@@ -132,10 +132,11 @@ class MultiChainDelayCommunity(MultiChainCommunity):
         Ignore the signature requests.
         :param message: the to be delayed request
         """
+        def continue_after_delay():
+            self.logger.info("Delay over.")
+            super(MultiChainDelayCommunity, self).allow_signature_request(message)
         self.logger.info("Received signature request that will delayed for %s." % self.delay)
-        sleep(self.delay)
-        self.logger.info("Delay over.")
-        super(MultiChainDelayCommunity, self).allow_signature_request(message)
+        reactor.callLater(self.delay, continue_after_delay)
 
 
 class MultiChainNoResponseCommunity(MultiChainCommunity):
