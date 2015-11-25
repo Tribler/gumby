@@ -15,7 +15,7 @@ GENESIS_ID_ENCODED = base64.encodestring(GENESIS_ID)
 
 class MultiChainExperimentAnalysisDatabase(MultiChainDB):
     """
-    Extended MultiChain experiments that provides additional analysis functionality to analysis a experiment.
+    Extended MultiChainDB that provides additional functionality to analyze an experiment.
     """
 
     def __init__(self, dispersy, working_directory):

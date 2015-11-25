@@ -28,7 +28,7 @@
 @0:29 introduce_candidates {20}
 @0:30 introduce_candidates {21}
 @0:20 reset_dispersy_statistics
-@0:40 setup_seeder 1hops10mb 1 {12}
-@0:100 start_download 1hops10mb 1 {13}
+@0:40 setup_seeder 1hops10mb1 1 {12}
+@0:100 start_download 1hops10mb1 1 {13}
 @0:300 stop
 @0:310 close

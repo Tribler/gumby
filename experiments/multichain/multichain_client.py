@@ -19,8 +19,8 @@ class MultiChainClient(DispersyExperimentScriptClient):
     Gumby client to start the MultiChain Community
     """
 
-    def __init__(self, *argv, **kwargs):
-        DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
+    def __init__(self, *args, **kwargs):
+        DispersyExperimentScriptClient.__init__(self, *args, **kwargs)
         msg("Starting MultiChain client")
         # Set the default MultiChainCommunity as community
         self.community_class = MultiChainCommunity
@@ -54,8 +54,8 @@ class MultiChainClient(DispersyExperimentScriptClient):
         else:
             raise RuntimeError("Tried to set to unknown community:%s." % multichain_type)
 
-    def online(self):
-        DispersyExperimentScriptClient.online(self)
+    def online(self, dont_empty=False):
+        DispersyExperimentScriptClient.online(self, dont_empty)
         self.scheduler = MultiChainScheduler(self._community)
 
     def request_signature(self, candidate_id):

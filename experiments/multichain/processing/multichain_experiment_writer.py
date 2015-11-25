@@ -28,9 +28,9 @@ class MultiChainSyntheticExperiment:
         print "@0:%s increase_kbytes_sent %s %s {%s}" % tuple(map(str, (time, leecher, speed, seed)))
 
 
-MultiChainSyntheticExperiment().start_download(1, 2, 100000, 1000)
+MultiChainSyntheticExperiment().start_download(1, 2, 10000000, 1000)
+#print ""
+#MultiChainSyntheticExperiment().start_download(2, 3, 100000, 1000)
 print ""
-MultiChainSyntheticExperiment().start_download(2, 3, 100000, 1000)
-print ""
-MultiChainSyntheticExperiment().start_download(3, 4, 100000, 1000)
+#MultiChainSyntheticExperiment().start_download(3, 4, 100000, 1000)
 print ""

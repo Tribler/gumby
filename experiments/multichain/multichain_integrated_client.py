@@ -2,9 +2,8 @@
 from os import path, environ
 from sys import path as pythonpath
 import base64
-import math
 
-from gumby.experiments.dispersyclient import  main
+from gumby.experiments.dispersyclient import main
 from experiments.multichain.multichain_client import MultiChainDelayCommunity, MultiChainNoResponseCommunity
 from experiments.dispersy.hiddenservices_client import HiddenServicesClient
 
@@ -21,8 +20,8 @@ class MultiChainIntegratedClient(HiddenServicesClient):
     Gumby client to start the MultiChain Community in conjunction with the HiddenServicesClient.
     """
 
-    def __init__(self, *argv, **kwargs):
-        HiddenServicesClient.__init__(self, *argv, **kwargs)
+    def __init__(self, *args, **kwargs):
+        HiddenServicesClient.__init__(self, *args, **kwargs)
         msg("Starting MultiChain client")
         """ Set the default MultiChainCommunity as community """
         self._multichain_type = MultiChainCommunity
@@ -31,7 +30,7 @@ class MultiChainIntegratedClient(HiddenServicesClient):
         self.vars['public_key'] = base64.encodestring(self.my_member_key)
         """ Override the test files to speed up the test."""
         # 10 Mb
-        self.testfilesize = 10 * 1024 * 1024
+        self.test_file_size = 100 * 1024 * 1024
         self.min_circuits = 1
         self.max_circuits = 1
 

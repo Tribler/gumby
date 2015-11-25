@@ -59,7 +59,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         self.speed_upload = {'upload': 0}
         self.progress = {'progress': 0}
         self.totalpeers = 20
-        self.testfilesize = 100 * 1024 * 1024
+        self.test_file_size = 100 * 1024 * 1024
         self.security_limiters = False
         self.min_circuits = 3
         self.max_circuits = 5
@@ -150,9 +150,9 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
             download.set_state_callback(cb, delay=1)
 
             # Force lookup
-            # sleep(10)
-            # msg("Do a manual dht lookup call to bootstrap it a bit")
-            # self._community.do_dht_lookup(tdef.get_infohash())
+            sleep(10)
+            msg("Do a manual dht lookup call to bootstrap it a bit")
+            self._community.do_dht_lookup(tdef.get_infohash())
 
         self.session.lm.threadpool.call_in_thread(0, cb_start_download)
 
@@ -178,7 +178,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         filename = path.join(BASE_DIR, "tribler", str(self.scenario_file) + str(filename))
         msg("Creating torrent..")
         with open(filename, 'wb') as fp:
-            fp.write("0" * self.testfilesize)
+            fp.write("0" * self.test_file_size)
 
         msg("Create a torrent")
         from Tribler.Core.TorrentDef import TorrentDef
@@ -196,7 +196,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         :param filesize: (int) amount of bytes to the test file.
         :return: None
         """
-        self.testfilesize = int(filesize)
+        self.test_file_size = int(filesize)
 
     def set_security_limiters(self, value):
         self.security_limiters = value == 'True'
