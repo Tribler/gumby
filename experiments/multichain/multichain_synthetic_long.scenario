@@ -20010,6 +20010,7 @@
 @0:10200 increase_kbytes_sent 2 1000 {1}
 @0:10201 increase_kbytes_received 1 0 {2}
 @0:10201 increase_kbytes_sent 2 0 {1}
+@0:10220 schedule_block 2 {1}
 
 @0:10300 close
 @0:10300 stop_dispersy

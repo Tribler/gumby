@@ -23,7 +23,7 @@ class MultiChainClient(DispersyExperimentScriptClient):
         DispersyExperimentScriptClient.__init__(self, *args, **kwargs)
         msg("Starting MultiChain client")
         # Set the default MultiChainCommunity as community
-        self.community_class = MultiChainCommunity
+        self.community_class = MultiChainGumbyCommunity
         self.scheduler = None
         self.vars['public_key'] = base64.encodestring(self.my_member_key)
 
@@ -37,7 +37,7 @@ class MultiChainClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.schedule_block, 'schedule_block')
         self.scenario_runner.register(self.close, 'close')
 
-    def set_multichain_type(self, multichain_type='MultiChainCommunity'):
+    def set_multichain_type(self, multichain_type='MultiChainGumbyCommunity'):
         """
         Sets the community class of this gumby node to a special community.
         """
@@ -57,6 +57,7 @@ class MultiChainClient(DispersyExperimentScriptClient):
     def online(self, dont_empty=False):
         DispersyExperimentScriptClient.online(self, dont_empty)
         self.scheduler = MultiChainScheduler(self._community)
+        msg("%s: MID: %s" % (self.my_id, self._community.my_member.mid))
 
     def request_signature(self, candidate_id):
         msg("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate_id))
@@ -118,7 +119,16 @@ class MultiChainClient(DispersyExperimentScriptClient):
         self._community.unload_community()
 
 
-class MultiChainDelayCommunity(MultiChainCommunity):
+class MultiChainGumbyCommunity(MultiChainCommunity):
+    """
+    Test community that does not remove candidates.
+    """
+
+    def cleanup_candidates(self):
+        return 0
+
+
+class MultiChainDelayCommunity(MultiChainGumbyCommunity):
     """
     Test Community that delays signature requests.
     """
@@ -139,7 +149,7 @@ class MultiChainDelayCommunity(MultiChainCommunity):
         reactor.callLater(self.delay, continue_after_delay)
 
 
-class MultiChainNoResponseCommunity(MultiChainCommunity):
+class MultiChainNoResponseCommunity(MultiChainGumbyCommunity):
     """
     Test Community that does not respond to signature requests.
     """
