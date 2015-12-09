@@ -44,6 +44,7 @@ from gumby.experiments.TriblerDispersyClient import TriblerDispersyExperimentScr
 from gumby.experiments.dispersyclient import main
 import logging
 from twisted.internet import reactor
+from twisted.python.log import msg
 from posix import environ
 from time import sleep
 
@@ -58,8 +59,10 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         self.speed_upload = {'upload': 0}
         self.progress = {'progress': 0}
         self.totalpeers = 20
-        self.testfilesize = 100 * 1024 * 1024
+        self.test_file_size = 100 * 1024 * 1024
         self.security_limiters = False
+        self.min_circuits = 3
+        self.max_circuits = 5
 
     def init_community(self, become_exitnode=None, no_crypto=None):
         become_exitnode = become_exitnode == 'exit'
@@ -69,19 +72,19 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         tunnel_settings = TunnelSettings()
 
         tunnel_settings.become_exitnode = become_exitnode
-        logging.error("This peer is exit node: %s" % ('Yes' if become_exitnode else 'No'))
+        msg("This peer is exit node: %s" % ('Yes' if become_exitnode else 'No'))
 
         tunnel_settings.socks_listen_ports = [23000 + (10 * self.scenario_runner._peernumber) + i for i in range(5)]
 
         if not self.security_limiters:
             tunnel_settings.max_traffic = 1024 * 1024 * 1024 * 1024
 
-        tunnel_settings.min_circuits = 3
-        tunnel_settings.max_circuits = 5
+        tunnel_settings.min_circuits = self.min_circuits
+        tunnel_settings.max_circuits = self.max_circuits
 
-        logging.error("My wan address is %s" % repr(self._dispersy._wan_address[0]))
+        logging.debug("My wan address is %s" % repr(self._dispersy._wan_address[0]))
 
-        logging.error("Crypto on tunnels: %s" % ('Disabled' if no_crypto else 'Enabled'))
+        msg("Crypto on tunnels: %s" % ('Disabled' if no_crypto else 'Enabled'))
         if no_crypto:
             from Tribler.community.tunnel.crypto.tunnelcrypto import NoTunnelCrypto
             tunnel_settings.crypto = NoTunnelCrypto()
@@ -109,7 +112,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
                                                  new_speed_upload)
 
     def fake_create_introduction_point(self, info_hash):
-        logging.error("Fake creating introduction points, to prevent this download from messing other experiments")
+        msg("Fake creating introduction points, to prevent this download from messing other experiments")
         pass
 
     def start_download(self, filename, hops=1):
@@ -129,7 +132,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
             tdef = self.create_test_torrent(filename)
 
             def cb(ds):
-                logging.error('Download infohash=%s, hops=%d, down=%s, up=%d, progress=%s, status=%s, peers=%s, cand=%d' %
+                msg('Download infohash=%s, hops=%d, down=%s, up=%d, progress=%s, status=%s, peers=%s, cand=%d' %
                               (tdef.get_infohash().encode('hex')[:5],
                                hops,
                                ds.get_current_speed('down'),
@@ -148,7 +151,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
 
             # Force lookup
             sleep(10)
-            logging.error("Do a manual dht lookup call to bootstrap it a bit")
+            msg("Do a manual dht lookup call to bootstrap it a bit")
             self._community.do_dht_lookup(tdef.get_infohash())
 
         self.session.lm.threadpool.call_in_thread(0, cb_start_download)
@@ -171,13 +174,13 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
                                                                    tunnel=False))
 
     def create_test_torrent(self, filename=''):
-        logging.error("Create %s download" % filename)
+        msg("Create %s download" % filename)
         filename = path.join(BASE_DIR, "tribler", str(self.scenario_file) + str(filename))
-        logging.info("Creating torrent..")
+        msg("Creating torrent..")
         with open(filename, 'wb') as fp:
-            fp.write("0" * self.testfilesize)
+            fp.write("0" * self.test_file_size)
 
-        logging.error("Create a torrent")
+        msg("Create a torrent")
         from Tribler.Core.TorrentDef import TorrentDef
         tdef = TorrentDef()
         tdef.add_content(filename)
@@ -188,7 +191,12 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         return tdef
 
     def set_test_file_size(self, filesize):
-        self.testfilesize = int(filesize)
+        """
+        Set the test file size in bytes.
+        :param filesize: (int) amount of bytes to the test file.
+        :return: None
+        """
+        self.test_file_size = int(filesize)
 
     def set_security_limiters(self, value):
         self.security_limiters = value == 'True'
@@ -200,7 +208,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         def cb_seeder_download():
             tdef = self.create_test_torrent(filename)
 
-            logging.error("Start seeding")
+            msg("Start seeding")
 
             from Tribler.Main.globals import DefaultDownloadStartupConfig
             defaultDLConfig = DefaultDownloadStartupConfig.getInstance()
@@ -210,7 +218,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
 
             def cb(ds):
                 from Tribler.Core.simpledefs import dlstatus_strings
-                logging.error('Seed infohash=%s, hops=%d, down=%d, up=%d, progress=%s, status=%s, peers=%s, cand=%d' %
+                msg('Seed infohash=%s, hops=%d, down=%d, up=%d, progress=%s, status=%s, peers=%s, cand=%d' %
                               (tdef.get_infohash().encode('hex')[:5],
                                hops,
                                ds.get_current_speed('down'),
@@ -227,7 +235,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
             download = self.session.start_download(tdef, dscfg)
             download.set_state_callback(cb, delay=1)
 
-        logging.error("Call to cb_seeder_download")
+        msg("Call to cb_seeder_download")
         reactor.callInThread(cb_seeder_download)
 
     def registerCallbacks(self):
