@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # extract_social_statistics.py ---
 #
 # Filename: extract_social_statistics.py

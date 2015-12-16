@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # bartercast_client.py ---
 #
 # Filename: hiddenservices_client.py

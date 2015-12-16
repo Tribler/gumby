@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # extract_demers_statistics.py ---
 #
 # Filename: extract_demers_statistics.py
