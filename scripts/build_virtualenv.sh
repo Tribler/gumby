@@ -432,7 +432,7 @@ rm -rf $VENV/lib/python2.7/site-packages/PIL
 
 #pip install --upgrade pip
 
-sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/*
+sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python2~' $VENV/bin/*
 easy_install pip
 
 echo "
@@ -460,7 +460,7 @@ cryptography
 " > ~/requirements.txt
 
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
-sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python~' $VENV/bin/pip*
+sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python2~' $VENV/bin/pip*
 
 # numpy # used for report generation scripts from Cor-Paul, installed all by itself as it fails to build if we pass CFLAGS & co.
 pip install numpy

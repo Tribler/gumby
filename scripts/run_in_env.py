@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # run_in_env.py ---
 #
 # Filename: run_in_env.py

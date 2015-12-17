@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # dummy_scenario_experiment_client.py ---
 #
 # Filename: allchannel_client.py

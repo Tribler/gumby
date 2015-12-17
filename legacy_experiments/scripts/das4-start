@@ -42,13 +42,13 @@ svnversion | sed 's/.*:\([0-9]*\)*[A-Z]*$/\1/g' > "$PEERS_DIRECTORY/output/svn_v
 echo "* Cleaning up *.pyc files..."
 find . -iregex '.*\(dispersy\|Community\).*\.py[co]' -delete
 echo "* Recompiling python classes..."
-(/usr/bin/env python | grep -v Listing ) <<END
+(/usr/bin/env python2 | grep -v Listing ) <<END
 from compileall import compile_dir
 import re
 compile_dir('.', rx=re.compile('/[.]svn'), force=False)
 END
 
-(/usr/bin/env python -O | grep -v Listing ) <<END
+(/usr/bin/env python2 -O | grep -v Listing ) <<END
 from compileall import compile_dir
 import re
 compile_dir('.', rx=re.compile('/[.]svn'), force=False)

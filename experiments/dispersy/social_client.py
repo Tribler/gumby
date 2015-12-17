@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # social_client.py ---
 #
 # Filename: social_client.py
