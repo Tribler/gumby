@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # privatesearch_client.py ---
 #
 # Filename: privatesearch_client.py

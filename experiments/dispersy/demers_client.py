@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # demers_client.py ---
 #
 # Filename: demers_client.py
