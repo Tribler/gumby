@@ -39,7 +39,7 @@ class MultiChainIntegratedClient(HiddenServicesClient):
         self.scenario_runner.register(self.set_multichain_type, 'set_multichain_type')
         self.scenario_runner.register(self.introduce_candidates, 'introduce_candidates')
         self.scenario_runner.register(self.request_signature, 'request_signature')
-        self.scenario_runner.register(self.request_block, 'request_block')
+        self.scenario_runner.register(self.request_crawl, 'request_crawl')
         self.scenario_runner.register(self.close, 'close')
         """ Integrated callbacks"""
         self.scenario_runner.register(self.start_multichain, 'start_multichain')
@@ -74,6 +74,12 @@ class MultiChainIntegratedClient(HiddenServicesClient):
                 self._multichain = community
                 self._logger.info("MultiChain community loaded.")
                 break
+        # Same as the standalone client, the multichain community needs to keep it's candidates around. The original is
+        # used here instead of a derived class. So to 'override' the candidate cleanup, monkeypatch the original object
+        # with a bound instance function, obtained through the __get__ descriptor of the function object.
+        def cleanup_candidates(self):
+            return 0
+        self._multichain.cleanup_candidates = cleanup_candidates.__get__(self._multichain, self._multichain_type)
 
     def start_scheduler(self):
         """ Wire the MultiChainScheduler into the Tunnel Community. """
@@ -85,15 +91,13 @@ class MultiChainIntegratedClient(HiddenServicesClient):
         msg("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate_id))
         target = self.all_vars[candidate_id]
         candidate = self._multichain.get_candidate((str(target['host']), target['port']))
-        print("Candidate: %s" % candidate.get_member())
         self._multichain.publish_signature_request_message(candidate, 1, 1)
 
-    def request_block(self, candidate_id, sequence_number):
+    def request_crawl(self, candidate_id, sequence_number):
         msg("%s: Requesting block: %s For candidate: %s" % (self.my_id, sequence_number, candidate_id))
         target = self.all_vars[candidate_id]
         candidate = self._multichain.get_candidate((str(target['host']), target['port']))
-        print("Candidate: %s" % candidate.get_member())
-        self._multichain.publish_request_block_message(candidate, int(sequence_number))
+        self._multichain.send_crawl_request(candidate, int(sequence_number))
 
     def introduce_candidates(self):
         """
@@ -104,6 +108,10 @@ class MultiChainIntegratedClient(HiddenServicesClient):
         for node in self.all_vars.itervalues():
             candidate = Candidate((str(node['host']), node['port']), False)
             self._multichain.add_discovered_candidate(candidate)
+            candidate = self._multichain.get_candidate((str(node['host']), node['port']))
+            member = self._multichain.get_member(public_key=base64.decodestring(str(node['public_key'])))
+            member.add_identity(self._multichain)
+            candidate.associate(member)
 
     def close(self):
         msg("close command received")

@@ -31,7 +31,7 @@ class MultiChainClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.introduce_candidates, 'introduce_candidates')
         self.scenario_runner.register(self.set_multichain_type, 'set_multichain_type')
         self.scenario_runner.register(self.request_signature, 'request_signature')
-        self.scenario_runner.register(self.request_block, 'request_block')
+        self.scenario_runner.register(self.request_crawl, 'request_crawl')
         self.scenario_runner.register(self.increase_kbytes_sent, 'increase_kbytes_sent')
         self.scenario_runner.register(self.increase_kbytes_received, 'increase_kbytes_received')
         self.scenario_runner.register(self.schedule_block, 'schedule_block')
@@ -49,29 +49,27 @@ class MultiChainClient(DispersyExperimentScriptClient):
             msg("Starting MultiChain client with: " + MultiChainNoResponseCommunity.__name__)
             self.community_class = MultiChainNoResponseCommunity
         elif multichain_type == 'MultiChainCommunityCrawler':
-            msg("Starting MultiChain client with: " + MultiChainCommunityCrawler.__name__)
-            self.community_class = MultiChainCommunityCrawler
+            msg("Starting MultiChain client with: " + MultiChainGumbyCommunityCrawler.__name__)
+            self.community_class = MultiChainGumbyCommunityCrawler
         else:
             raise RuntimeError("Tried to set to unknown community:%s." % multichain_type)
 
     def online(self, dont_empty=False):
         DispersyExperimentScriptClient.online(self, dont_empty)
         self.scheduler = MultiChainScheduler(self._community)
-        msg("%s: MID: %s" % (self.my_id, self._community.my_member.mid))
+        msg("%s: MID: %s" % (self.my_id, base64.encodestring(self._community.my_member.mid).strip()))
 
     def request_signature(self, candidate_id):
-        msg("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate_id))
         target = self.all_vars[candidate_id]
+        msg("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate_id))
         candidate = self._community.get_candidate((str(target['host']), target['port']))
-        print("Candidate known:%s" % candidate.get_member())
         self._community.publish_signature_request_message(candidate, 1, 1)
 
-    def request_block(self, candidate_id, sequence_number):
-        msg("%s: Requesting block: %s For candidate: %s" % (self.my_id, sequence_number, candidate_id))
+    def request_crawl(self, candidate_id, sequence_number):
         target = self.all_vars[candidate_id]
+        msg("%s: Requesting block: %s For candidate: %s" % (self.my_id, sequence_number, candidate_id))
         candidate = self._community.get_candidate((str(target['host']), target['port']))
-        print("Candidate: %s" % candidate.get_member())
-        self._community.publish_request_block_message(candidate, int(sequence_number))
+        self._community.send_crawl_request(candidate, int(sequence_number))
 
     def increase_kbytes_sent(self, candidate_id, amount_sent):
         """
@@ -109,7 +107,11 @@ class MultiChainClient(DispersyExperimentScriptClient):
         for node in self.all_vars.itervalues():
             candidate = Candidate((str(node['host']), node['port']), False)
             self._community.add_discovered_candidate(candidate)
-
+            candidate = self._community.get_candidate((str(node['host']), node['port']))
+            member = self._community.get_member(public_key=base64.decodestring(str(node['public_key'])))
+            member.add_identity(self._community)
+            candidate.associate(member)
+ 
     @property
     def my_member_key_curve(self):
         return u"curve25519"
@@ -123,10 +125,15 @@ class MultiChainGumbyCommunity(MultiChainCommunity):
     """
     Test community that does not remove candidates.
     """
-
     def cleanup_candidates(self):
         return 0
 
+class MultiChainGumbyCommunityCrawler(MultiChainCommunityCrawler):
+    """
+    Test community crawler that does not remove candidates.
+    """
+    def cleanup_candidates(self):
+        return 0
 
 class MultiChainDelayCommunity(MultiChainGumbyCommunity):
     """

@@ -3,11 +3,7 @@
 @0:1 online
 @0:5 reset_dispersy_statistics
 @0:10 annotate start-experiment-1-peer
-@0:15 introduce_candidates {1}
-@0:25 introduce_candidates {2}
-@0:35 introduce_candidates {3}
-@0:45 introduce_candidates {4}
-
+@0:15 introduce_candidates
 @0:201 increase_kbytes_received 1 1000 {2}
 @0:201 increase_kbytes_sent 2 1000 {1}
 @0:202 increase_kbytes_received 1 1000 {2}
@@ -210,7 +206,6 @@
 @0:300 increase_kbytes_sent 2 1000 {1}
 @0:301 increase_kbytes_received 1 0 {2}
 @0:301 increase_kbytes_sent 2 0 {1}
-
 @0:201 increase_kbytes_received 2 1000 {3}
 @0:201 increase_kbytes_sent 3 1000 {2}
 @0:202 increase_kbytes_received 2 1000 {3}
@@ -413,7 +408,6 @@
 @0:300 increase_kbytes_sent 3 1000 {2}
 @0:301 increase_kbytes_received 2 0 {3}
 @0:301 increase_kbytes_sent 3 0 {2}
-
 @0:201 increase_kbytes_received 3 1000 {4}
 @0:201 increase_kbytes_sent 4 1000 {3}
 @0:202 increase_kbytes_received 3 1000 {4}
@@ -616,7 +610,6 @@
 @0:300 increase_kbytes_sent 4 1000 {3}
 @0:301 increase_kbytes_received 3 0 {4}
 @0:301 increase_kbytes_sent 4 0 {3}
-
 @0:420 close
 @0:421 stop_dispersy
 @0:422 stop
