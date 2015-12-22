@@ -149,7 +149,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
     if [ ! -e $VENV/inst/bin/python ]; then
         pushd cpython-2011
         hg checkout dtrace-issue13405_2.7
-        LDFLAGS="-Wl,-rpath=$VENV/inst/lib" ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared
+        LDFLAGS="-Wl,-rpath=$VENV/inst/lib" ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared --enable-unicode=ucs4
         cp Modules/Setup.dist Modules/Setup
         make -j$(grep process /proc/cpuinfo | wc -l)
         make install
