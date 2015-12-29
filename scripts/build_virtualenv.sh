@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=17
+SCRIPT_VERSION=18
 
 # Code:
 set -e
@@ -149,6 +149,9 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
     if [ ! -e $VENV/inst/bin/python ]; then
         pushd cpython-2011
         hg checkout dtrace-issue13405_2.7
+        if ! ( python -c 'import sys; print(sys.maxunicode)' | grep -q '65535' ); then
+            EXTRA_CONFIG_OPTS="$EXTRA_CONFIG_OPTS --enable-unicode=ucs4"
+        fi
         LDFLAGS="-Wl,-rpath=$VENV/inst/lib" ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared
         cp Modules/Setup.dist Modules/Setup
         make -j$(grep process /proc/cpuinfo | wc -l)
