@@ -39,6 +39,7 @@
 
 
 set -e
+shopt -s nocasematch
 
 # @CONF_OPTION NOSE_RUN_DIR: Specify from which directory nose should run (default is $PWD)
 if [ ! -z "$NOSE_RUN_DIR" ]; then
@@ -46,14 +47,14 @@ if [ ! -z "$NOSE_RUN_DIR" ]; then
 fi
 
 # @CONF_OPTION RUN_PYLINT: Run pylint in parallel with the unit tests (default is TRUE)
-if [ "${RUN_PYLINT,,}" != "false" ]; then
+if [ "${RUN_PYLINT}" != "false" ]; then
     ionice -c 3 nice pylint --ignore=.git --ignore=dispersy --ignore=pymdht --ignore=libnacl --output-format=parseable --reports=y  Tribler \
          > $OUTPUT_DIR/pylint.out 2> $OUTPUT_DIR/pylint.log &
     PYLINT_PID=$!
 fi
 
 # @CONF_OPTION RUN_SLOCCOUNT: Run sloccount in parallel with the unit tests (default is TRUE)
-if [ "${RUN_SLOCCOUNT,,}" != "false" ]; then
+if [ "${RUN_SLOCCOUNT}" != "false" ]; then
 
     mkdir -p $OUTPUT_DIR/slocdata
 
@@ -64,6 +65,7 @@ if [ "${RUN_SLOCCOUNT,,}" != "false" ]; then
     SLOCCOUNT_PID=$!
 fi
 
+shopt -u nocasematch
 
 echo Nose will run from $PWD
 
