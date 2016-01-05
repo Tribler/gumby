@@ -61,7 +61,7 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
     def __init__(self, *argv, **kwargs):
         from Tribler.community.privatesearch.community import PoliSearchCommunity
 
-        DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
+        super(PrivateSearchClient, self).__init__(*argv, **kwargs)
         self.community_class = PoliSearchCommunity
 
         self.manual_connect = False
@@ -224,13 +224,13 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         else:
             return
 
-        DispersyExperimentScriptClient.set_community_kwarg(self, key, value)
+        super(PrivateSearchClient, self).set_community_kwarg(key, value)
 
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: community_kwargs are now", self.community_kwargs
 
     def online(self):
-        DispersyExperimentScriptClient.online(self)
+        super(PrivateSearchClient, self).online()
 
         # disable msimilarity requests
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request

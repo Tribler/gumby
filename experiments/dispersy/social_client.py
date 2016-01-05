@@ -55,7 +55,8 @@ class SocialClient(DispersyExperimentScriptClient):
     def __init__(self, *argv, **kwargs):
         from Tribler.community.privatesocial.community import PoliSocialCommunity
         from Tribler.community.privatesemantic.community import PSI_OVERLAP
-        DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
+        super(SocialClient, self).__init__(*argv, **kwargs)
+
         self.community_class = PoliSocialCommunity
 
         self.friends = set()
@@ -93,7 +94,7 @@ class SocialClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.set_cache, 'set_cache')
 
     def peertype(self, peertype):
-        DispersyExperimentScriptClient.peertype(self, peertype)
+        super(SocialClient, self).peertype(peertype)
         if peertype == "peercache":
             self.peercache = True
 
@@ -128,7 +129,7 @@ class SocialClient(DispersyExperimentScriptClient):
         # if we're peercache -> enable send_simi_reveal, else disable
         self.set_community_kwarg('send_simi_reveal', self.peercache)
 
-        DispersyExperimentScriptClient.online(self, dont_empty=True)
+        super(SocialClient, self).online(dont_empty=True)
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
 
         if self._mypref_db:
@@ -149,7 +150,7 @@ class SocialClient(DispersyExperimentScriptClient):
         if self._community:
             self._mypref_db = self._community._mypref_db
 
-        DispersyExperimentScriptClient.offline(self)
+        super(SocialClient, self).offline()
 
     @buffer_online
     def insert_my_key(self):

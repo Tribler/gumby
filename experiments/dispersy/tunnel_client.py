@@ -17,7 +17,7 @@ class TunnelClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
         from Tribler.community.tunnel.hidden_community import HiddenTunnelCommunity
-        DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
+        super(TunnelClient, self).__init__(*argv, **kwargs)
         self.community_class = HiddenTunnelCommunity
 
     def init_community(self, become_exitnode=False):
@@ -41,13 +41,13 @@ class TunnelClient(DispersyExperimentScriptClient):
         self._community.settings.max_circuits = 8
 
     def online(self):
-        DispersyExperimentScriptClient.online(self)
+        super(TunnelClient, self).online()
         if not self.monitor_circuits_lc:
             self.monitor_circuits_lc = lc = LoopingCall(self.monitor_circuits)
             lc.start(5.0, now=True)
 
     def offline(self):
-        DispersyExperimentScriptClient.offline(self)
+        super(TunnelClient, self).offline()
         if self.monitor_circuits_lc:
             self.monitor_circuits_lc.stop()
             self.monitor_circuits_lc = None
