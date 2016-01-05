@@ -324,11 +324,12 @@ class ExperimentServiceFactory(Factory):
 #
 
 
-class ExperimentClient(LineReceiver):
+class ExperimentClient(object, LineReceiver):
     # Allow for 4MB long lines (for the json stuff)
     MAX_LENGTH = 2 ** 22
 
     def __init__(self, vars):
+        super(ExperimentClient, self).__init__()
         self._logger = logging.getLogger(self.__class__.__name__)
 
         self.state = "id"
