@@ -52,7 +52,7 @@ class MetadataClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
         from Tribler.community.metadata.community import MetadataCommunity
-        DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
+        super(MetadataClient, self).__init__(*argv, **kwargs)
         self.community_class = MetadataCommunity
 
         self.log_statistics_lc = None
@@ -64,7 +64,7 @@ class MetadataClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.insert_metadata, 'insert_metadata')
 
     def online(self):
-        DispersyExperimentScriptClient.online(self)
+        super(MetadataClient, self).online()
 
         if not self.log_statistics_lc:
             self.log_statistics_lc = lc = LoopingCall(self.log_statistics)

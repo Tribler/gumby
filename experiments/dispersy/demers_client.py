@@ -54,7 +54,7 @@ class DemersClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
         from Tribler.community.demers.community import DemersTest
-        DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
+        super(DemersClient, self).__init__(*argv, **kwargs)
         self.community_class = DemersTest
 
     def registerCallbacks(self):

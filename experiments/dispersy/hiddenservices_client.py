@@ -52,7 +52,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
         from Tribler.community.tunnel.hidden_community import HiddenTunnelCommunity
-        TriblerDispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
+        super(HiddenServicesClient, self).__init__(*argv, **kwargs)
         self.community_class = HiddenTunnelCommunity
         self.speed_download = {'download': 0}
         self.speed_upload = {'upload': 0}
@@ -154,7 +154,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         self.session.lm.threadpool.call_in_thread(0, cb_start_download)
 
     def online(self, dont_empty=False):
-        TriblerDispersyExperimentScriptClient.online(self, dont_empty)
+        super(HiddenServicesClient, self).online(dont_empty)
         self.session.set_anon_proxy_settings(2, ("127.0.0.1", self.session.get_tunnel_community_socks5_listen_ports()))
 
         def monitor_downloads(dslist):
@@ -231,7 +231,7 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
         reactor.callInThread(cb_seeder_download)
 
     def registerCallbacks(self):
-        TriblerDispersyExperimentScriptClient.registerCallbacks(self)
+        super(HiddenServicesClient, self).registerCallbacks()
         self.scenario_runner.register(self.setup_seeder, 'setup_seeder')
         self.scenario_runner.register(self.start_download, 'start_download')
         self.scenario_runner.register(self.init_community, 'init_community')

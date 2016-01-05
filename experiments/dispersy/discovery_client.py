@@ -23,7 +23,7 @@ class DiscoveryClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
         from dispersy.discovery.community import DiscoveryCommunity
-        DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
+        super(DiscoveryClient, self).__init__(*argv, **kwargs)
         self.community_class = DiscoveryCommunity
 
         self.friends = set()
@@ -61,14 +61,14 @@ class DiscoveryClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.ignore_call, 'availability')
         self.scenario_runner.register(self.ignore_call, 'perform_searches')
 
-    def start_dispersy(self, autoload_discovery=True):
-        DispersyExperimentScriptClient.start_dispersy(self, autoload_discovery=False)
+    def start_dispersy(self, autoload_discovery=False):
+        super(DiscoveryClient, self).start_dispersy(autoload_discovery)
 
     def set_community_kwarg(self, key, value):
         self._logger.warning("disabled community kwargs, ignoring %s", key)
 
     def online(self):
-        DispersyExperimentScriptClient.online(self)
+        super(DiscoveryClient, self).online()
         self._community.my_preferences = self.get_preferences
 
     def get_preferences(self):

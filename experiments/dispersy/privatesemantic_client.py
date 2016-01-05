@@ -25,7 +25,7 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
     def __init__(self, *argv, **kwargs):
         from Tribler.community.privatesemantic.test import PoliFSemanticCommunity
 
-        DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
+        super(PrivateSemanticClient, self).__init__()
         self.community_class = PoliFSemanticCommunity
 
         self.manual_connect = False
@@ -152,7 +152,7 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         else:
             return
 
-        DispersyExperimentScriptClient.set_community_kwarg(self, key, value)
+        super(PrivateSemanticClient, self).set_community_kwarg(key, value)
 
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: community_kwargs are now", self.community_kwargs
@@ -160,7 +160,7 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
     def online(self):
         sleep(random() * 5.0)
 
-        DispersyExperimentScriptClient.online(self)
+        super(PrivateSemanticClient, self).online()
 
         # disable msimilarity requests
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request

@@ -57,7 +57,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
         from Tribler.community.allchannel.community import AllChannelCommunity
-        DispersyExperimentScriptClient.__init__(self, *argv, **kwargs)
+        super(AllChannelClient, self).__init__(*argv, **kwargs)
         self.community_class = AllChannelCommunity
         self.my_channel = None
         self.joined_community = None
@@ -75,7 +75,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
     def start_dispersy(self):
         from Tribler.community.channel.preview import PreviewChannelCommunity
 
-        DispersyExperimentScriptClient.start_dispersy(self)
+        super(AllChannelClient, self).start_dispersy()
         self._dispersy.define_auto_load(ChannelCommunity, self._my_member, (), {"tribler_session": None})
         self._dispersy.define_auto_load(PreviewChannelCommunity, self._my_member, (), {"tribler_session": None})
 
