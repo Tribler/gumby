@@ -19,14 +19,14 @@ from Tribler.Core.Session import Session
 class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
 
     def __init__(self, params):
-        DispersyExperimentScriptClient.__init__(self, params)
+        super(TriblerDispersyExperimentScriptClient, self).__init__(params)
         self.session = None
         self.session_config = None
         self.session_deferred = None
         self.dispersy_port = None
 
     def registerCallbacks(self):
-        DispersyExperimentScriptClient.registerCallbacks(self)
+        super(TriblerDispersyExperimentScriptClient, self).registerCallbacks()
         self.scenario_runner.register(self.set_dispersy_port, 'set_dispersy_port')
         self.scenario_runner.register(self.start_session, 'start_session')
 

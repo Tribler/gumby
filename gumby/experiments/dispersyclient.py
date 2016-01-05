@@ -68,7 +68,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
     scenario_file = None
 
     def __init__(self, vars):
-        ExperimentClient.__init__(self, vars)
+        super(DispersyExperimentScriptClient, self).__init__(vars)
         self._dispersy = None
         self._community = None
         self._database_file = u"dispersy.db"
