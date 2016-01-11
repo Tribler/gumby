@@ -96,8 +96,16 @@ else
         COUNT=0
         OLD_IFS=$IFS
         IFS=$'\n'
+
+        SORT_CMD="sort"
+        if [ $(uname) == "Darwin" ]; then
+            SORT_CMD="gsort"
+        fi
+
+        LINES=$(find ${NOSE_TESTS_TO_RUN} -type f -iname "test_*.py" | ${SORT_CMD} -R --random-source=/dev/zero | xargs -n${BUCKET_SIZE})
+
         # This weird sort call sorts randomly with a fixed salt so the test sorting is always the same, but not alphabetical
-        for LINE in $(find ${NOSE_TESTS_TO_RUN} -type f -iname "test_*.py" | sort -R --random-source=/dev/zero | xargs -r -n${BUCKET_SIZE}); do
+        for LINE in $LINES; do
             echo -n "COVERAGE_FILE=.coverage.$COUNT wrap_in_vnc.sh 'nosetests -v --with-coverage  " >> $NOSECMD_FILE
             echo -n "--xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part " >> $NOSECMD_FILE
             echo -n "$NOSEARGS_COMMON '" >> $NOSECMD_FILE
