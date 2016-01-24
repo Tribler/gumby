@@ -39,7 +39,7 @@
 
 import logging
 import sys
-from os import environ, getpgid, getpid, getppid, kill, setpgrp
+from os import environ, getpgid, getpid, kill, setpgrp
 from os.path import dirname, exists
 from signal import SIGKILL, SIGTERM, signal
 from time import sleep, time
@@ -47,7 +47,12 @@ from time import sleep, time
 
 logging.basicConfig(level=getattr(logging, environ.get('GUMBY_LOG_LEVEL', 'INFO').upper()))
 
-from psutil import get_pid_list
+# This conditional import is added to support older versions of psutil
+try:
+    from psutil import get_pid_list as pids
+except ImportError:
+    from psutil import pids
+
 from twisted.internet import reactor
 
 from gumby.runner import ExperimentRunner
@@ -65,7 +70,7 @@ def _killGroup(signal=SIGTERM):
     _terminating = True
     mypid = getpid()
     pids_found = 0
-    for pid in get_pid_list():
+    for pid in pids():
         try:
             if getpgid(pid) == mypid and pid != mypid:
                 kill(pid, signal)
