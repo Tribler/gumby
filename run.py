@@ -90,6 +90,10 @@ if __name__ == '__main__':
             print "Error: The specified configuration file doesn't exist."
             exit(1)
 
+        if not exists('/proc'):
+            print "Error: procfs not available on this system."
+            exit(5)
+
         # Create a process group so we can clean up after ourselves when
         setpgrp()  # create new process group and become its leader
         # Catch SIGTERM to attempt to clean after ourselves
