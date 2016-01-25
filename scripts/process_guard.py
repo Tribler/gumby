@@ -6,7 +6,7 @@ import exceptions
 import json
 from glob import iglob
 from math import ceil
-from os import (R_OK, SEEK_END, access, errno, getpgid, getpid, kill, killpg, makedirs, path, setsid, sysconf,
+from os import (R_OK, access, errno, getpgid, getpid, kill, killpg, makedirs, path, setsid, sysconf,
                 sysconf_names)
 from signal import SIGKILL, SIGTERM, signal
 from subprocess import Popen
