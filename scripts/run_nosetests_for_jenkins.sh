@@ -76,12 +76,12 @@ NOSECMD="nosetests -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml
 
 export NOSE_LOGFORMAT="%(levelname)-7s %(created)d %(module)15s:%(name)s:%(lineno)-4d %(message)s"
 
-# @CONF_OPTION TRIBLER_TESTS_PARALLELISATION: Run tests in that many concurrent nose instances. WARNING: if this is set,
+# @CONF_OPTION NOSE_TESTS_PARALLELISATION: Run tests in that many concurrent nose instances. WARNING: if this is set,
 # NOSE_TESTS_TO_RUN becomes mandatory and has to be a single dir where all files that match test_.*.py will be run by
 # nose.
 
 # @CONF_OPTION NOSE_TESTS_TO_RUN: Specify which tests to run in nose syntax. (default is everything nose can find from within NOSE_RUN_DIR)
-if [ -z ${NOSE_TESTS_PARALLELISATION} ]; then
+if [ -z ${NOSE_TESTS_PARALLELISATION} ] || [ ${NOSE_TESTS_PARALLELISATION} -eq 0 ]; then
     process_guard.py -t 3600 -m $OUTPUT_DIR -c "$NOSECMD $NOSE_TESTS_TO_RUN"
 else
     if [ -d ${NOSE_TESTS_TO_RUN} ]; then
