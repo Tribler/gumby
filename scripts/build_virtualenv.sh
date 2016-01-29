@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=18
+SCRIPT_VERSION=19
 
 # Code:
 set -e
@@ -440,7 +440,9 @@ easy_install pip
 
 echo "
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
+cffi
 configobj
+cryptography
 cython
 gmpy==1.16
 ipython
@@ -450,16 +452,15 @@ ntplib
 pillow
 psutil
 pyasn1 # for twisted
+pycparser
 pycrypto # Twisted needs it
+pynacl # New EC crypto stuff for tunnelcommunity
 pysqlite
 pyzmq
+six
 twisted # Used by the config server/clients
 unicodecsv # used for report generation scripts from Cor-Paul
-pynacl # New EC crypto stuff for tunnelcommunity
-cffi
-pycparser
-six
-cryptography
+validate
 " > ~/requirements.txt
 
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
