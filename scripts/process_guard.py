@@ -13,7 +13,9 @@ from subprocess import Popen
 from time import sleep, time
 
 
+OK_EXIT_CODE = 0
 TIMEOUT_EXIT_CODE = 3
+COMMANDS_FAILED_EXIT_CODE = 5
 
 
 class PGPopen(Popen):
@@ -31,6 +33,8 @@ class ResourceMonitor(object):
 
         self.cmd_counter = 0
         self.pid_dict = {}
+
+        self.failed_commands = {}
 
         self.files = []
         self.output_dir = output_dir
@@ -77,8 +81,11 @@ class ResourceMonitor(object):
         for pid in pids_to_remove:
             if pid in self.pid_dict:
                 p = self.pid_dict.pop(pid)
+                status = p.poll()
                 if self.verbose:
-                    print "Command:\n\t %s\n\t exited with status: %d" % (p.cmd, p.poll())
+                    print "Command:\n\t %s\n\t exited with status: %d" % (p.cmd, status)
+                if status:
+                    self.failed_commands[pid] = (p.cmd, status)
             if pid in self.pid_list:
                 self.pid_list.remove(pid)
 
@@ -191,6 +198,9 @@ class ResourceMonitor(object):
     def get_pid_list(self):
         return self.pid_dict.keys()
 
+    def get_failed_commands(self):
+        return self.failed_commands.copy()
+
 
 class ProcessMonitor(object):
 
@@ -227,7 +237,18 @@ class ProcessMonitor(object):
         self.stopping = True
         if self.monitor_file:
             self.monitor_file.close()
+
+        # Check if any process exited with an error code before killing the remaining ones
+        failed = self._rm.get_failed_commands()
         self._rm.terminate()
+        if failed:
+            print "Some processes failed:"
+            for pid, (command, exit_code) in failed.iteritems():
+                print "  %s (%d) exited value: %d" % (command, pid, exit_code)
+            print "Process guard exiting with error"
+            return COMMANDS_FAILED_EXIT_CODE
+        else:
+            return OK_EXIT_CODE
 
     def _termTrap(self, *argv):
         print "Captured TERM signal"
@@ -263,7 +284,7 @@ class ProcessMonitor(object):
                 sleep_time = next_wake - timestamp
                 if sleep_time < 0:
                     print "Can't keep up with this interval, try a higher value!", sleep_time
-                    self.stop()
+                    return self.stop()
 
             if self.end_time and timestamp > self.end_time:  # if self.end_time == 0 the time out is disabled.
                 print "Time out, killing monitored processes."
@@ -335,7 +356,7 @@ if __name__ == "__main__":
 
     pm = ProcessMonitor(commands, options.timeout, options.interval, options.output_dir, options.monitor_dir)
     try:
-        pm.monitoring_loop()
+        exit(pm.monitoring_loop())
 
     except KeyboardInterrupt as RuntimeError:
         print "Killing monitored processes..."
