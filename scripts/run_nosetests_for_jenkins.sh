@@ -127,7 +127,6 @@ else
                 echo "## End of $LOG"
                 echo "################################################"
             done
-            exit 1
         fi
 
         python-coverage combine
@@ -161,6 +160,6 @@ echo Waiting for sloccount at $(date)
 wait $SLOCCOUNT_PID
 echo Done waiting at $(date)
 
-
+exit $PG_EXIT_STATUS
 #
 # run_nosetests_for_jenkins.sh ends here
