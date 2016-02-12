@@ -122,8 +122,8 @@ else
             [ ! -z $SLOCCOUNT_PID ] && kill -3 $SLOCCOUNT_PID ||:
             for LOG in $(ls -1 $TEST_RUNNER_OUT_DIR/* | sort); do
                 echo "################################################"
-                echo "## Start of $LOG"
-                cat $LOG
+                echo "## Last 100 lines of $LOG"
+                tail -100 $LOG
                 echo "## End of $LOG"
                 echo "################################################"
             done
