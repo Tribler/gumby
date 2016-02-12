@@ -118,8 +118,8 @@ else
         if [ ! -z "$PG_EXIT_STATUS" ]; then
             echo "ERROR: Process guard failed with exit code $PG_EXIT_STATUS, aborting and printing logs"
             rm -f $OUTPUT_DIR/*_nosetests.xml
-            [ ! -z $PYLINT_PID ] && kill -3 $PYLINT_PID
-            [ ! -z $SLOCCOUNT_PID ] && kill -3 $SLOCCOUNT_PID
+            [ ! -z $PYLINT_PID ] && kill -3 $PYLINT_PID ||:
+            [ ! -z $SLOCCOUNT_PID ] && kill -3 $SLOCCOUNT_PID ||:
             for LOG in $(ls -1 $TEST_RUNNER_OUT_DIR/* | sort); do
                 echo "################################################"
                 echo "## Start of $LOG"
