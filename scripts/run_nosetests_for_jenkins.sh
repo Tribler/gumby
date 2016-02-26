@@ -82,7 +82,11 @@ export NOSE_LOGFORMAT="%(levelname)-7s %(created)d %(module)15s:%(name)s:%(linen
 
 # @CONF_OPTION NOSE_TESTS_TO_RUN: Specify which tests to run in nose syntax. (default is everything nose can find from within NOSE_RUN_DIR)
 if [ -z ${NOSE_TESTS_PARALLELISATION} ] || [ ${NOSE_TESTS_PARALLELISATION} -eq 0 ]; then
-    process_guard.py -t 3600 -m $OUTPUT_DIR -c "$NOSECMD $NOSE_TESTS_TO_RUN"
+    if [ $(uname) == "Linux" ]; then
+        process_guard.py -t 3600 -m $OUTPUT_DIR -c "$NOSECMD $NOSE_TESTS_TO_RUN"
+    else # not using processguard on OS X/Windows
+        $NOSECMD $NOSE_TESTS_TO_RUN
+    fi
 else
     if [ -d ${NOSE_TESTS_TO_RUN} ]; then
         NOSECMD_FILE="$OUTPUT_DIR/nosecommands"
@@ -102,35 +106,54 @@ else
             SORT_CMD="gsort"
         fi
 
-        LINES=$(find ${NOSE_TESTS_TO_RUN} -type f -iname "test_*.py" | ${SORT_CMD} -R --random-source=/dev/zero | xargs -n${BUCKET_SIZE})
-
         # This weird sort call sorts randomly with a fixed salt so the test sorting is always the same, but not alphabetical
-        for LINE in $LINES; do
-            echo -n "COVERAGE_FILE=.coverage.$COUNT wrap_in_vnc.sh 'nosetests -v --with-coverage  " >> $NOSECMD_FILE
-            echo -n "--xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part " >> $NOSECMD_FILE
-            echo -n "$NOSEARGS_COMMON '" >> $NOSECMD_FILE
-            echo $LINE >> $NOSECMD_FILE
-            let COUNT=1+$COUNT
-        done
-        IFS=$OLD_IFS
-        TEST_RUNNER_OUT_DIR=$OUTPUT_DIR/test_runners_output
-        process_guard.py -T -t 1200 -m $OUTPUT_DIR -o $TEST_RUNNER_OUT_DIR -f $NOSECMD_FILE || PG_EXIT_STATUS=$?
-        if [ ! -z "$PG_EXIT_STATUS" ]; then
-            echo "ERROR: Process guard failed with exit code $PG_EXIT_STATUS, aborting and printing logs"
-            rm -f $OUTPUT_DIR/*_nosetests.xml
-            [ ! -z $PYLINT_PID ] && kill -3 $PYLINT_PID ||:
-            [ ! -z $SLOCCOUNT_PID ] && kill -3 $SLOCCOUNT_PID ||:
-            for LOG in $(ls -1 $TEST_RUNNER_OUT_DIR/* | sort); do
-                echo "################################################"
-                echo "## Last 100 lines of $LOG"
-                tail -100 $LOG
-                echo "## End of $LOG"
-                echo "################################################"
-            done
+        if [[ $(uname) == MSYS* ]]; then
+            NOSE_TESTS_UNIX_PATH=$(cygpath -u $NOSE_TESTS_TO_RUN)
+            LINES=$(find ${NOSE_TESTS_UNIX_PATH} -type f -iname "test_*.py" | ${SORT_CMD} -R --random-source=/dev/zero | xargs -n${BUCKET_SIZE})
+        else
+            LINES=$(find ${NOSE_TESTS_TO_RUN} -type f -iname "test_*.py" | ${SORT_CMD} -R --random-source=/dev/zero | xargs -n${BUCKET_SIZE})
         fi
 
-        python-coverage combine
-        python-coverage xml -o $OUTPUT_DIR/coverage.xml
+        TEST_RUNNER_OUT_DIR=$OUTPUT_DIR/test_runners_output
+        if [ $(uname) == "Linux" ]; then
+            for LINE in $LINES; do
+                echo -n "COVERAGE_FILE=.coverage.$COUNT wrap_in_vnc.sh 'nosetests -v --with-xcoverage  " >> $NOSECMD_FILE
+                echo -n "--xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part " >> $NOSECMD_FILE
+                echo -n "$NOSEARGS_COMMON '" >> $NOSECMD_FILE
+                echo $LINE >> $NOSECMD_FILE
+                let COUNT=1+$COUNT
+            done
+            IFS=$OLD_IFS
+            process_guard.py -T -t 1200 -m $OUTPUT_DIR -o $TEST_RUNNER_OUT_DIR -f $NOSECMD_FILE || PG_EXIT_STATUS=$?
+            if [ ! -z "$PG_EXIT_STATUS" ]; then
+                echo "ERROR: Process guard failed with exit code $PG_EXIT_STATUS, aborting and printing logs"
+                rm -f $OUTPUT_DIR/*_nosetests.xml
+                [ ! -z $PYLINT_PID ] && kill -3 $PYLINT_PID ||:
+                [ ! -z $SLOCCOUNT_PID ] && kill -3 $SLOCCOUNT_PID ||:
+                for LOG in $(ls -1 $TEST_RUNNER_OUT_DIR/* | sort); do
+                    echo "################################################"
+                    echo "## Last 100 lines of $LOG"
+                    tail -100 $LOG
+                    echo "## End of $LOG"
+                    echo "################################################"
+                done
+            exit 1
+            fi
+        else
+            mkdir $TEST_RUNNER_OUT_DIR
+            for LINE in $LINES; do
+                echo "Starting $LINE"
+                TIMEOUT_CMD="timeout"
+                if [ $(uname) == "Darwin" ]; then
+                    TIMEOUT_CMD="gtimeout"
+                fi
+                COVERAGE_FILE=.coverage.$COUNT
+                ${TIMEOUT_CMD} 600 $WORKSPACE/gumby/scripts/wrap_in_temp_home.sh nosetests -v --with-xcoverage --xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part $NOSEARGS_COMMON $LINE \
+                > $TEST_RUNNER_OUT_DIR/${COUNT}.out 2> $TEST_RUNNER_OUT_DIR/${COUNT}.err &
+                let COUNT=1+$COUNT
+            done
+            wait
+        fi
     else
         echo "ERROR: NOSE_TESTS_PARALLELISATION is set but NOSE_TESTS_TO_RUN is not a directory, bailing out."
         echo "NOSE_TESTS_TO_RUN set to: $NOSE_TESTS_TO_RUN which resolves to $(readlink -f $NOSE_TESTS_TO_RUN)"
@@ -138,11 +161,25 @@ else
     fi
 fi
 
+python-coverage combine
+python-coverage xml -o $OUTPUT_DIR/coverage.xml
+
+chmod 644 $OUTPUT_DIR/coverage.xml
+
 echo Nose finished.
 
 # This is a hack to convince Jenkins' Xcover plugin to parse the coverage file generated by nosexcover.
 ESCAPED_PATH=$(echo $PWD| sed 's~/~\\/~g')
-sed -i 's/<!-- Generated by coverage.py: http:\/\/nedbatchelder.com\/code\/coverage -->/<sources><source>'$ESCAPED_PATH'<\/source><\/sources>/g' $OUTPUT_DIR/*coverage.xml
+
+if [ $(uname) == "Darwin" ]; then
+    # On OS X, the -i option to sed expects the extension of the backup file first.
+    sed -i '' 's/<!-- Generated by coverage.py: http:\/\/nedbatchelder.com\/code\/coverage -->/<sources><source>'$ESCAPED_PATH'<\/source><\/sources>/g' $OUTPUT_DIR/*coverage.xml
+elif [[ $(uname) == MSYS* ]]; then
+    UNIX_OUTPUT_DIR=$(cygpath -u $OUTPUT_DIR)
+    sed -i 's/<!-- Generated by coverage.py: http:\/\/nedbatchelder.com\/code\/coverage -->/<sources><source>'$ESCAPED_PATH'<\/source><\/sources>/g' $UNIX_OUTPUT_DIR/*coverage.xml
+else
+    sed -i 's/<!-- Generated by coverage.py: http:\/\/nedbatchelder.com\/code\/coverage -->/<sources><source>'$ESCAPED_PATH'<\/source><\/sources>/g' $OUTPUT_DIR/*coverage.xml
+fi
 
 # Fix nose's xml output so the logs of failed tests don't get printed twice on the report.
 pushd $OUTPUT_DIR
