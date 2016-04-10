@@ -71,7 +71,7 @@ echo Nose will run from $PWD
 
 # TODO(emilon): Make the timeout configurable
 
-NOSEARGS_COMMON="--with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-inclusive "
+NOSEARGS_COMMON="--with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-tests --cover-inclusive "
 NOSECMD="nosetests -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml --xunit-file=$OUTPUT_DIR/nosetests.xml.part $NOSEARGS_COMMON"
 
 export NOSE_LOGFORMAT="%(levelname)-7s %(created)d %(module)15s:%(name)s:%(lineno)-4d %(message)s"
