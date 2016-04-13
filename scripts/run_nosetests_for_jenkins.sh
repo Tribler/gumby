@@ -125,19 +125,23 @@ else
             done
             IFS=$OLD_IFS
             process_guard.py -T -t 1200 -m $OUTPUT_DIR -o $TEST_RUNNER_OUT_DIR -f $NOSECMD_FILE || PG_EXIT_STATUS=$?
+            rm -f $OUTPUT_DIR/*_nosetests.xml
             if [ ! -z "$PG_EXIT_STATUS" ]; then
-                echo "ERROR: Process guard failed with exit code $PG_EXIT_STATUS, aborting and printing logs"
-                rm -f $OUTPUT_DIR/*_nosetests.xml
-                [ ! -z $PYLINT_PID ] && kill -3 $PYLINT_PID ||:
-                [ ! -z $SLOCCOUNT_PID ] && kill -3 $SLOCCOUNT_PID ||:
-                for LOG in $(ls -1 $TEST_RUNNER_OUT_DIR/* | sort); do
-                    echo "################################################"
-                    echo "## Last 100 lines of $LOG"
-                    tail -100 $LOG
-                    echo "## End of $LOG"
-                    echo "################################################"
-                done
-            exit 1
+                if [  "$PG_EXIT_STATUS" -eq 5 ]; then
+                    echo "WARNING: At least one test run failed, proceeding"
+                else
+                    echo "ERROR: Process guard failed with exit code $PG_EXIT_STATUS, aborting and printing logs"
+                    [ ! -z $PYLINT_PID ] && kill -3 $PYLINT_PID ||:
+                    [ ! -z $SLOCCOUNT_PID ] && kill -3 $SLOCCOUNT_PID ||:
+                    for LOG in $(ls -1 $TEST_RUNNER_OUT_DIR/* | sort); do
+                        echo "##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv##"
+                        echo "## Last 20 lines of $LOG"
+                        tail -20 $LOG
+                        echo "## End of $LOG"
+                        echo "##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^##"
+                    done
+                    exit 1
+                fi
             fi
         else
             mkdir $TEST_RUNNER_OUT_DIR
