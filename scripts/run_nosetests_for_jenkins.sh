@@ -151,8 +151,7 @@ else
                 if [ $(uname) == "Darwin" ]; then
                     TIMEOUT_CMD="gtimeout"
                 fi
-                COVERAGE_FILE=.coverage.$COUNT
-                ${TIMEOUT_CMD} 600 $WORKSPACE/gumby/scripts/wrap_in_temp_home.sh nosetests -v --with-xcoverage --xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part $NOSEARGS_COMMON $LINE \
+                COVERAGE_FILE=.coverage.$COUNT ${TIMEOUT_CMD} 600 $WORKSPACE/gumby/scripts/wrap_in_temp_home.sh nosetests -v --with-xcoverage --xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part $NOSEARGS_COMMON $LINE \
                 > $TEST_RUNNER_OUT_DIR/${COUNT}.out 2> $TEST_RUNNER_OUT_DIR/${COUNT}.err &
                 let COUNT=1+$COUNT
             done
