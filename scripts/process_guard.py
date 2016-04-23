@@ -126,6 +126,18 @@ class ResourceMonitor(object):
                 if not self.pid_list:
                     self.last_died = True
 
+    def get_network_stats(self):
+        stats = []
+        # Skip first two lines.
+        network = open('/proc/net/dev').readlines()[2:]
+        for line in network:
+            # Remove unnecessary whitespace within line.
+            shortline = ' '.join(line.split())
+            # Strip to remove leading space and trailing newline.
+            # and remove ':' after network device name.
+            stats.append(shortline.replace(':', '').strip())
+        return ' '.join(stats)
+
     def is_everyone_dead(self):
         return self.last_died or not self.pid_list
 
@@ -204,7 +216,7 @@ class ResourceMonitor(object):
 
 class ProcessMonitor(object):
 
-    def __init__(self, commands, timeout, interval, output_dir=None, monitor_dir=None):
+    def __init__(self, commands, timeout, interval, output_dir=None, monitor_dir=None, network=False):
         self.start_time = time()
         self.timed_out = False
         self.end_time = self.start_time + timeout if timeout else 0  # Do not time out if time_limit is 0.
@@ -227,6 +239,12 @@ class ProcessMonitor(object):
                 pagesize = 4 * 1024
 
             self.monitor_file.write(json.dumps({"sc_clk_tck": sc_clk_tck, 'pagesize': pagesize}) + "\n")
+
+            # If monitoring network, open a separate file.
+            if network:
+                self.network_monitor_file = open(monitor_dir + "/network_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
+            else:
+                self.network_monitor_file = None
         else:
             self.monitor_file = None
         # Capture SIGTERM to kill all the child processes before dying
@@ -286,6 +304,10 @@ class ProcessMonitor(object):
                     print "Can't keep up with this interval, try a higher value!", sleep_time
                     return self.stop()
 
+            if self.network_monitor_file:
+                network_stats = self._rm.get_network_stats()
+                self.network_monitor_file.write("%.1f %s\n" % (r_timestamp, network_stats))
+
             if self.end_time and timestamp > self.end_time:  # if self.end_time == 0 the time out is disabled.
                 print "Time out, killing monitored processes."
                 self.timed_out = True
@@ -333,6 +355,11 @@ if __name__ == "__main__":
                       action="store",
                       help="Sample monitoring stats and check processes/threads every FLOAT seconds"
                       )
+    parser.add_option("-n", "--network",
+                      action="store_true",
+                      default=False,
+                      help="Monitor network devices."
+                      )
     (options, args) = parser.parse_args()
     if not (options.commands_file or options.commands):
         parser.error("Please specify at least one of --command or --commands-file (run with -h to see command usage).")
@@ -354,7 +381,7 @@ if __name__ == "__main__":
         print "making output directory: %s" % options.output_dir
         makedirs(options.output_dir)
 
-    pm = ProcessMonitor(commands, options.timeout, options.interval, options.output_dir, options.monitor_dir)
+    pm = ProcessMonitor(commands, options.timeout, options.interval, options.output_dir, options.monitor_dir, options.network)
     try:
         exit(pm.monitoring_loop())
 
