@@ -61,6 +61,7 @@ cputimes.r
 memtimes.r
 writebytes.r
 readbytes.r
+network.r
 "
 export XMIN
 export XMAX
