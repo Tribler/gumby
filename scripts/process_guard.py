@@ -127,16 +127,14 @@ class ResourceMonitor(object):
                     self.last_died = True
 
     def get_network_stats(self):
-        stats = []
         # Skip first two lines.
         network = open('/proc/net/dev').readlines()[2:]
         for line in network:
             # Remove unnecessary whitespace within line.
             shortline = ' '.join(line.split())
-            # Strip to remove leading space and trailing newline.
+            # Strip to remove leading space.
             # and remove ':' after network device name.
-            stats.append(shortline.replace(':', '').strip())
-        return ' '.join(stats)
+            yield shortline.replace(':', '').strip()
 
     def is_everyone_dead(self):
         return self.last_died or not self.pid_list
@@ -305,8 +303,8 @@ class ProcessMonitor(object):
                     return self.stop()
 
             if self.network_monitor_file:
-                network_stats = self._rm.get_network_stats()
-                self.network_monitor_file.write("%.1f %s\n" % (r_timestamp, network_stats))
+                for line in self._rm.get_network_stats():
+                    self.network_monitor_file.write("%.1f %s\n" % (r_timestamp, line))
 
             if self.end_time and timestamp > self.end_time:  # if self.end_time == 0 the time out is disabled.
                 print "Time out, killing monitored processes."
