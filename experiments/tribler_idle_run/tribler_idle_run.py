@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # tribler_idle_run.py ---
 #
-# Filename: test_30m_run.py
+# Filename: tribler_idle_run.py
 # Description:
 # Author: Elric Milon
 # Maintainer:
@@ -14,7 +14,7 @@
 #
 
 # Change Log:
-#
+# 19th of May 2016: Now uses the Twistd tribler plugin to start Tribler.
 #
 #
 #
@@ -37,36 +37,43 @@
 
 # Code:
 
-import unittest
-
 import sys
 import os
+from twisted.internet import reactor
 
 from gumby.instrumentation import init_instrumentation
 
-os.chdir(os.path.abspath('./tribler'))
-sys.path.append('.')
 
-from Tribler.Test.test_as_server import TestGuiAsServer
+sys.path.append(os.path.abspath('./tribler'))
+sys.path.append(os.path.abspath('./tribler/twisted/twisted/plugins'))
 
-class TestGuiGeneral(TestGuiAsServer):
+from tribler_plugin import TriblerServiceMaker
 
-    def test_debugpanel(self):
-        def end():
-            self.quit()
+class IdleTribleRunner():
+    def __init__(self):
+        init_instrumentation()
+        self.service = None
 
-        def do_page():
-            init_instrumentation()
-            if "TRIBLER_EXECUTION_TIME" in os.environ:
-                run_time = int(os.environ["TRIBLER_EXECUTION_TIME"])
-            else:
-                run_time = 60*10 # Run for 10 minutes by default
-            self.Call(run_time, end)
 
-        self.startTest(do_page)
+    def start(self):
+        self.service = TriblerServiceMaker()
+
+        if "TRIBLER_EXECUTION_TIME" in os.environ:
+            run_time = int(os.environ["TRIBLER_EXECUTION_TIME"])
+        else:
+            run_time = 60*10 # Run for 10 minutes by default
+
+        reactor.callLater(run_time, self.stop)
+
+    def stop(self):
+        # TODO(Laurens): Current the plugin does not offer a function to shutdown it nicely
+        # so once this is added, make sure it is not violently killed.
+        self.service.shutdown_process()
 
 if __name__ == "__main__":
-    unittest.main()
+    runner = IdleTribleRunner()
+    reactor.callWhenRunning(runner.start)
+    reactor.run()
 
 #
 # tribler_idle_run.py ends here
