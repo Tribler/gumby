@@ -424,21 +424,22 @@ if [ ! -e $VENV/lib/libffi-$LIBFFI_VERSION/include/ffi.h -o ! -e $LIBFFI_MARKER 
 fi
 
 # install libsodium
-LIBSODIUM_PACKAGE="libsodium-1.0.2.tar.gz"
-if [ ! -e $VENV/src/$LIBSODIUM_PACKAGE ]; then
-    pushd $VENV/src
-    wget "https://download.libsodium.org/libsodium/releases/$LIBSODIUM_PACKAGE"
-    popd
-fi
-
-if [ ! -e $VENV/src/libsodium-*/ ]; then
-    pushd $VENV/src
-    tar axvf $VENV/src/$LIBSODIUM_PACKAGE
-    popd
-fi
-
 if [ ! -e $VENV/include/sodium.h ]; then
-    pushd $VENV/src/libsodium-*/
+    LIBSODIUM_VERSION=1.0.10
+    LIBSODIUM_PACKAGE="libsodium-$LIBSODIUM_VERSION.tar.gz"
+    if [ ! -e $VENV/src/$LIBSODIUM_PACKAGE ]; then
+        pushd $VENV/src
+        wget "https://download.libsodium.org/libsodium/releases/$LIBSODIUM_PACKAGE"
+        popd
+    fi
+
+    if [ ! -e $VENV/src/libsodium-$LIBSODIUM_VERSION*/ ]; then
+        pushd $VENV/src
+        tar axvf $VENV/src/$LIBSODIUM_PACKAGE
+        popd
+    fi
+
+    pushd $VENV/src/libsodium-$LIBSODIUM_VERSION*/
     ./configure --prefix=$VENV
     make -j$CONCURRENCY_LEVEL || make
     make install
