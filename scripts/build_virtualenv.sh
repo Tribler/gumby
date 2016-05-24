@@ -450,7 +450,7 @@ fi
 export PKG_CONFIG_PATH=$VENV/lib/pkgconfig:$PKG_CONFIG_PATH
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
 
-# remove pil cause its a piece of crap
+# remove pil as it doesn't work (pillow will be installed shortly)
 rm -f $VENV/bin/pil*
 rm -rf $VENV/lib/python2.7/site-packages/PIL
 
@@ -496,7 +496,6 @@ pip install netifaces --allow-external netifaces --allow-unverified netifaces
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~/requirements.txt
 
 # meliae is not on the official repos
-pip install --allow-unverified pyrex --allow-external  pyrex pyrex
 pip install --allow-unverified meliae --allow-external meliae meliae
 
 #$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt\
