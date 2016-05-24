@@ -384,20 +384,23 @@ fi
 # popd
 
 # recent libgmp needed by pycrypto
-if [ ! -e $VENV/src/gmp-5.1.3.tar.bz2 ]; then
-    pushd $VENV/src
-    wget "ftp://ftp.gmplib.org/pub/gmp-5.1.3/gmp-5.1.3.tar.bz2"
-    popd
-fi
-
-if [ ! -e $VENV/src/gmp-*/ ]; then
-    pushd $VENV/src
-    tar axvf $VENV/src/gmp-5.1.3.tar.bz2
-    popd
-fi
 
 if [ ! -e $VENV/include/gmp.h ]; then
-    pushd $VENV/src/gmp-*/
+    GMP_VERSION=6.1.0
+
+    if [ ! -e $VENV/src/gmp-$GMP_VERSION.tar.bz2 ]; then
+        pushd $VENV/src
+        wget "ftp://ftp.gmplib.org/pub/gmp-$GMP_VERSION/gmp-$GMP_VERSION.tar.bz2"
+        popd
+    fi
+
+    if [ ! -e $VENV/src/gmp-$GMP_VERSION*/ ]; then
+        pushd $VENV/src
+        tar axvf $VENV/src/gmp-$GMP_VERSION.tar.bz2
+        popd
+    fi
+
+    pushd $VENV/src/gmp-$GMP_VERSION*/
     ./configure --prefix=$VENV
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
