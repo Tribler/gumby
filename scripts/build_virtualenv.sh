@@ -45,6 +45,8 @@ SCRIPT_VERSION=20
 # Code:
 set -e
 
+export CONCURRENCY_LEVEL=$(grep process /proc/cpuinfo | wc -l)
+
 # This script can be called from outside gumby to avoid the egg-chicken situation where
 # gumby's dependencies are not available, so let's find the scripts dir and add it to $PATH
 SCRIPTDIR=$( dirname $(readlink -f "$0"))
@@ -103,7 +105,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
         if [ ! -e $VENV/inst/lib/libdwarf.so ]; then
             pushd dwarf-*/libdwarf/
             ./configure --prefix=$VENV/inst  --enable-shared
-            make -j$(grep process /proc/cpuinfo | wc -l)
+            make -j$CONCURRENCY_LEVEL
             mkdir -p $VENV/inst/lib $VENV/inst/include
             cp libdwarf.h dwarf.h $VENV/inst/include/
             cp libdwarf.so $VENV/inst/lib/
@@ -119,7 +121,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
         fi
         pushd DyninstAPI-*/
         ./configure --prefix=$VENV/inst -with-libdwarf-incdir=$VENV/inst/include --with-libdwarf-libdir=$VENV/inst/lib
-        make -j$(grep process /proc/cpuinfo | wc -l) || make
+        make -j$CONCURRENCY_LEVEL || make
         make install
         popd
 
@@ -136,7 +138,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
 
         pushd systemtap-*/
         ./configure --prefix=$VENV/inst --with-dyninst=$VENV/inst/
-        make -j$(grep process /proc/cpuinfo | wc -l)
+        make -j$CONCURRENCY_LEVEL
         make install
         popd
 
@@ -152,7 +154,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
             fi
             LDFLAGS="-Wl,-rpath=$VENV/inst/lib" ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared
             cp Modules/Setup.dist Modules/Setup
-            make -j$(grep process /proc/cpuinfo | wc -l)
+            make -j$CONCURRENCY_LEVEL
             make install
             popd
         fi
@@ -178,7 +180,7 @@ fi
 #     fi
 #     cd libevent-*/
 #     ./configure --prefix=$VENV/inst
-#     make -j$(grep process /proc/cpuinfo | wc -l)
+#     make -j$CONCURRENCY_LEVEL
 #     make install
 #     popd
 # fi
@@ -365,10 +367,10 @@ fi
 #         --without-opengl \
 #         --with-expat=sys
 #     # TODO(emilon): Are those CFLAGS needed?
-#     CFLAGS="-Iinclude" make -j$(grep process /proc/cpuinfo | wc -l) || CFLAGS="-Iinclude" make
+#     CFLAGS="-Iinclude" make -j$CONCURRENCY_LEVEL || CFLAGS="-Iinclude" make
 #     make install
 #     pushd contrib
-#     make -j$(grep process /proc/cpuinfo | wc -l) || make
+#     make -j$CONCURRENCY_LEVEL || make
 #     make install
 #     popd
 # fi
@@ -401,7 +403,7 @@ if [ ! -e $VENV/include/gmp.h ]; then
 
     pushd $VENV/src/gmp-$GMP_VERSION*/
     ./configure --prefix=$VENV
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make -j$CONCURRENCY_LEVEL || make
     make install
     popd
 fi
@@ -425,7 +427,7 @@ if [ ! -e $VENV/lib/libffi-$LIBFFI_VERSION/include/ffi.h -o ! -e $LIBFFI_MARKER 
 
     pushd $VENV/src/libffi-$LIBFFI_VERSION*/
     ./configure --prefix=$VENV
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make -j$CONCURRENCY_LEVEL || make
     make install
     popd
 fi
@@ -447,7 +449,7 @@ fi
 if [ ! -e $VENV/include/sodium.h ]; then
     pushd $VENV/src/libsodium-*/
     ./configure --prefix=$VENV
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make -j$CONCURRENCY_LEVEL || make
     make install
     popd
 fi
