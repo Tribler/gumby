@@ -337,50 +337,51 @@ if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so ]; then
     touch $LIBTORRENT_MARKER
 fi
 
-# wxpython
-pushd $VENV/src
-if [ ! -e wxPython-*.tar.bz2 ]; then
-    wget http://garr.dl.sourceforge.net/project/wxpython/wxPython/2.8.12.1/wxPython-src-2.8.12.1.tar.bz2
-fi
-if [ ! -d wxPython*/ ]; then
-    tar xavf wxPython-*.tar.bz2
-fi
-pushd wxPython*/
-if [ ! -e $VENV/lib/libwx_gtk2u_gizmos_xrc-*.so ]; then
-    make uninstall ||:
-    make clean ||:
-    ./configure --prefix=$VENV \
-        --enable-display \
-        --enable-geometry \
-        --enable-graphics_ctx \
-        --enable-sound \
-        --enable-unicode \
-        --with-gtk \
-        --with-libjpeg=sys \
-        --with-libpng=sys \
-        --with-libtiff=builtin \
-        --with-sdl \
-        --with-zlib=sys \
-        --without-gnomeprint \
-        --without-opengl \
-        --with-expat=sys
-    # TODO(emilon): Are those CFLAGS needed?
-    CFLAGS="-Iinclude" make -j$(grep process /proc/cpuinfo | wc -l) || CFLAGS="-Iinclude" make
-    make install
-    pushd contrib
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
-    make install
-    popd
-fi
-pwd
+# We don't use it anymore
+# # wxpython
+# pushd $VENV/src
+# if [ ! -e wxPython-*.tar.bz2 ]; then
+#     wget http://garr.dl.sourceforge.net/project/wxpython/wxPython/2.8.12.1/wxPython-src-2.8.12.1.tar.bz2
+# fi
+# if [ ! -d wxPython*/ ]; then
+#     tar xavf wxPython-*.tar.bz2
+# fi
+# pushd wxPython*/
+# if [ ! -e $VENV/lib/libwx_gtk2u_gizmos_xrc-*.so ]; then
+#     make uninstall ||:
+#     make clean ||:
+#     ./configure --prefix=$VENV \
+#         --enable-display \
+#         --enable-geometry \
+#         --enable-graphics_ctx \
+#         --enable-sound \
+#         --enable-unicode \
+#         --with-gtk \
+#         --with-libjpeg=sys \
+#         --with-libpng=sys \
+#         --with-libtiff=builtin \
+#         --with-sdl \
+#         --with-zlib=sys \
+#         --without-gnomeprint \
+#         --without-opengl \
+#         --with-expat=sys
+#     # TODO(emilon): Are those CFLAGS needed?
+#     CFLAGS="-Iinclude" make -j$(grep process /proc/cpuinfo | wc -l) || CFLAGS="-Iinclude" make
+#     make install
+#     pushd contrib
+#     make -j$(grep process /proc/cpuinfo | wc -l) || make
+#     make install
+#     popd
+# fi
+# pwd
 
-if [ ! -e $VENV/lib/python*/site-packages/wx-*/wxPython/_wx.py ]; then
-    pushd wxPython
-    python setup.py build BUILD_GLCANVAS=0 #BUILD_STC=0
-    python setup.py install BUILD_GLCANVAS=0 #BUILD_STC=0
-    popd
-fi
-popd
+# if [ ! -e $VENV/lib/python*/site-packages/wx-*/wxPython/_wx.py ]; then
+#     pushd wxPython
+#     python setup.py build BUILD_GLCANVAS=0 #BUILD_STC=0
+#     python setup.py install BUILD_GLCANVAS=0 #BUILD_STC=0
+#     popd
+# fi
+# popd
 
 # recent libgmp needed by pycrypto
 if [ ! -e $VENV/src/gmp-5.1.3.tar.bz2 ]; then
