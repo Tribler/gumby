@@ -222,8 +222,10 @@ fi
 # affecting the system's ssh binary.
 M2CDEPS=$VENV/m2cdeps
 mkdir -p $M2CDEPS
-if [ ! -e $M2CDEPS/lib/libcrypto.a ]; then
-    OPENSSL_VERSION=1.0.1h
+
+OPENSSL_VERSION=1.0.1h
+OPENSSL_MARKER=`build_marker openssl $OPENSSL_VERSION`
+if [ ! -e $M2CDEPS/lib/libcrypto.so.1.0.0  -o ! -e $OPENSSL_MARKER ]; then
     pushd $VENV/src
     if [ ! -e openssl-$OPENSSL_VERSION*.tar.gz ]; then
         wget --no-check-certificate https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz
@@ -234,29 +236,32 @@ if [ ! -e $M2CDEPS/lib/libcrypto.a ]; then
     fi
     pushd openssl-$OPENSSL_VERSION*/
 
-    ./config -fPIC --prefix=$M2CDEPS threads --openssldir=$M2CDEPS/share/openssl
-    make -j2 || make #Fails when building in multithreaded mode (at least with -j24)
+    ./config -fPIC --prefix=$M2CDEPS threads shared no-static --openssldir=$M2CDEPS/share/openssl
+    make -j${CONCURRENCY_LEVEL} depend
+    make -j${CONCURRENCY_LEVEL} || make -j2 || make #Fails when building in multithreaded mode (at least with -j24)
     make install_sw
-    # Proper names for M2Crypto
-    #ln -sf $M2CDEPS/lib/libssl.so.1.0.0 $M2CDEPS/lib/libssl.so.10
-    #ln -sf $M2CDEPS/lib/libcrypto.so.1.0.0 $M2CDEPS/lib/libcrypto.so.10
+    # Proper names for M2Crypto (m2crypto will be linked against this soname and and will have the RPATH set to M2CDEPS/libs)
+    ln -sf $M2CDEPS/lib/libssl.so.1.0.0 $M2CDEPS/lib/libssl.so.10
+    ln -sf $M2CDEPS/lib/libcrypto.so.1.0.0 $M2CDEPS/lib/libcrypto.so.10
     echo "Done"
     popd
     popd
 fi
 
-if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
-    M2CRYPTO_VERSION=0.24.0
+M2CRYPTO_VERSION=0.24.0
+M2CRYPTO_MARKER=`build_marker m2crypto $M2CRYPTO_VERSION`
+if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg  -o ! -e $M2CRYPTO_MARKER ]; then
     pushd $VENV/src
-    if [ ! -e M2Crypto-*gz ]; then
-        wget --no-check-certificate http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
+    if [ ! -e M2Crypto-$M2CRYPTO_VERSION*gz ]; then
+        wget --no-check-certificate http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-$M2CRYPTO_VERSION.tar.gz
     fi
-    if [ ! -d M2Crypto-*/ ]; then
-        tar xvapf M2Crypto-*.tar.gz
+    if [ ! -d M2Crypto-$M2CRYPTO_VERSION*/ ]; then
+        rm -fR M2Crypto-*/
+        tar xvapf M2Crypto-$M2CRYPTO_VERSION*gz
     fi
-    pushd M2Crypto-*/
+    pushd M2Crypto-$M2CRYPTO_VERSION*/
     # python setup.py clean # This does nothing
-    #rm -fR build # this does :D
+    rm -fR build # this does :D
     #python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
     python setup.py build_py
     # This should use our custom libcrypto (explicit RPATH)
