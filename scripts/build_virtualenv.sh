@@ -119,8 +119,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
         fi
         pushd DyninstAPI-*/
         ./configure --prefix=$VENV/inst -with-libdwarf-incdir=$VENV/inst/include --with-libdwarf-libdir=$VENV/inst/lib
-        #make -j$(grep process /proc/cpuinfo | wc -l)
-        make
+        make -j$(grep process /proc/cpuinfo | wc -l) || make
         make install
         popd
 
