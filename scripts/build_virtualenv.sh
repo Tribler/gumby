@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=19
+SCRIPT_VERSION=20
 
 # Code:
 set -e
@@ -83,7 +83,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
 "
     mkdir -p $VENV/src
     pushd $VENV/src
-    if [ -e /usr/bin/dtrace -a "$WITH_SYSTEMTAP" != false ]; then
+    if [ -e /usr/bin/dtrace -a "${WITH_SYSTEMTAP,,}" != false ]; then
         WITH_SYSTEMTAP=yes
         EXTRA_CONFIG_OPTS=--with-dtrace
     else
@@ -140,26 +140,26 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
         make -j$(grep process /proc/cpuinfo | wc -l)
         make install
         popd
-    fi
 
-    if [ ! -e $VENV/src/cpython-2011 ]; then
-        hg clone http://hg.jcea.es/cpython-2011
-    fi
-
-    if [ ! -e $VENV/inst/bin/python ]; then
-        pushd cpython-2011
-        hg checkout dtrace-issue13405_2.7
-        if ! ( python -c 'import sys; print(sys.maxunicode)' | grep -q '65535' ); then
-            EXTRA_CONFIG_OPTS="$EXTRA_CONFIG_OPTS --enable-unicode=ucs4"
+        if [ ! -e $VENV/src/cpython-2011 ]; then
+            hg clone http://hg.jcea.es/cpython-2011
         fi
-        LDFLAGS="-Wl,-rpath=$VENV/inst/lib" ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared
-        cp Modules/Setup.dist Modules/Setup
-        make -j$(grep process /proc/cpuinfo | wc -l)
-        make install
+
+        if [ ! -e $VENV/inst/bin/python ]; then
+            pushd cpython-2011
+            hg checkout dtrace-issue13405_2.7
+            if ! ( python -c 'import sys; print(sys.maxunicode)' | grep -q '65535' ); then
+                EXTRA_CONFIG_OPTS="$EXTRA_CONFIG_OPTS --enable-unicode=ucs4"
+            fi
+            LDFLAGS="-Wl,-rpath=$VENV/inst/lib" ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared
+            cp Modules/Setup.dist Modules/Setup
+            make -j$(grep process /proc/cpuinfo | wc -l)
+            make install
+            popd
+        fi
+        touch $VENV/inst/.completed.$SCRIPT_VERSION
         popd
     fi
-    touch $VENV/inst/.completed.$SCRIPT_VERSION
-    popd
 fi
 
 if [ -e $VENV/.completed.$SCRIPT_VERSION ]; then
@@ -185,7 +185,13 @@ fi
 
 if [ ! -e $VENV/bin/python ]; then
     #virtualenv   --no-site-packages --clear $VENV
-    virtualenv -p $VENV/inst/bin/python --no-site-packages --system-site-packages --clear $VENV
+    if [ "$WITH_SYSTEMTAP" == "true" ]; then
+        PYTHON_BIN=$VENV/inst/bin/python
+    else
+        PYTHON_BIN=/usr/bin/python
+    fi
+
+    virtualenv -p $PYTHON_BIN --no-site-packages --system-site-packages --clear $VENV
     $VENV/bin/easy_install --upgrade pip
 fi
 
@@ -216,15 +222,16 @@ fi
 M2CDEPS=$VENV/m2cdeps
 mkdir -p $M2CDEPS
 if [ ! -e $M2CDEPS/lib/libcrypto.a ]; then
+    OPENSSL_VERSION=1.0.1h
     pushd $VENV/src
-    if [ ! -e openssl-*.tar.gz ]; then
-        #wget --no-check-certificate https://www.openssl.org/source/openssl-1.0.1e.tar.gz
-        wget --no-check-certificate https://www.openssl.org/source/openssl-1.0.1f.tar.gz
+    if [ ! -e openssl-$OPENSSL_VERSION*.tar.gz ]; then
+        wget --no-check-certificate https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz
     fi
-    if [ ! -d openssl-*/ ]; then
-        tar xvzpf openssl*tar.gz
+    if [ ! -d openssl-$OPENSSL_VERSION*/ ]; then
+        rm -fR openssl-*/
+        tar xvzpf openssl-$OPENSSL_VERSION*tar.gz
     fi
-    pushd openssl-*/
+    pushd openssl-$OPENSSL_VERSION*/
 
     ./config -fPIC --prefix=$M2CDEPS threads --openssldir=$M2CDEPS/share/openssl
     make -j2 || make #Fails when building in multithreaded mode (at least with -j24)
@@ -238,6 +245,7 @@ if [ ! -e $M2CDEPS/lib/libcrypto.a ]; then
 fi
 
 if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
+    M2CRYPTO_VERSION=0.24.0
     pushd $VENV/src
     if [ ! -e M2Crypto-*gz ]; then
         wget --no-check-certificate http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
