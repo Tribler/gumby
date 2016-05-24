@@ -282,22 +282,28 @@ python -c "from M2Crypto import EC"
 #make -j$(grep processor /proc/cpuinfo | wc -l)
 #popd
 
-
 # Build libboost
-# TODO(vladum): If you use this, see TODO about libtorrent's bug.
- if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
-     pushd $VENV/src
-     BOOST_TAR=boost_1_54_0.tar.bz2
+BOOST_VERSION=1.58.0
+BOOST_MARKER=`build_marker boost $BOOST_VERSION`
+BOOST_PATHV=`echo $BOOST_VERSION | sed 's/\./_/g'`
+if [ ! -e $VENV/src/boost_$BOOST_PATHV/bjam -o ! -e $VENV/lib/libboost_python.so -o ! -e $BOOST_MARKER ]; then
+    pushd $VENV/src
+    BOOST_TAR=boost_$BOOST_PATHV.tar.bz2
     if [ ! -e $BOOST_TAR ]; then
-        wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.54.0/$BOOST_TAR
+        wget http://netcologne.dl.sourceforge.net/project/boost/boost/$BOOST_VERSION/$BOOST_TAR
     fi
-    tar xavf $BOOST_TAR
-     cd boost*/
-     ./bootstrap.sh
-     #./b2 -j$(grep process /proc/cpuinfo | wc -l) --prefix=$VENV install
-     ./bjam -j$(grep process /proc/cpuinfo | wc -l) threading=multi -no_single -no_static --without-mpi --prefix=$VENV install
-     popd
- fi
+    if [ ! -e boost_$BOOST_PATHV ]; then
+        tar xavf $BOOST_TAR
+    fi
+
+    cd boost_$BOOST_PATHV/
+
+    ./bootstrap.sh
+    ./b2 -j$CONCURRENCY_LEVEL --prefix=$VENV install
+    # ./bjam -j$CONCURRENCY_LEVEL threading=multi -no_single -no_static --without-mpi --prefix=$VENV install
+    popd
+fi
+
 
 
 #
@@ -305,28 +311,30 @@ python -c "from M2Crypto import EC"
 #
 pushd $VENV/src
 if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so ]; then
-    LIBTORRENT_SRC=libtorrent-rasterbar-0.16.15
+    LIBTORRENT_VERSION=1.1.0
+    LIBTORRENT_SRC=libtorrent-rasterbar-$LIBTORRENT_VERSION
     LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
     if [ ! -e $LIBTORRENT_TAR ]; then
-        wget --no-check-certificate http://downloads.sourceforge.net/project/libtorrent/libtorrent/$LIBTORRENT_TAR
+        wget https://github.com/arvidn/libtorrent/releases/download/libtorrent-1_1/$LIBTORRENT_TAR
     fi
     if [ ! -d $LIBTORRENT_SRC ]; then
         tar xavf $LIBTORRENT_TAR
     fi
-    cd $LIBTORRENT_SRC
-    # TODO(vladum): libtorrent uses boost::system::get_system_category() in a
-    # few places, instead of their get_system_category() wrapper. This method
-    # has been renamed in version 1.43.0 to boost::system::system_category().
-    # Using a newer Boost requires patching libtorrent, so, for now, we will use
-    # the system's Boost, which is 1.41.0 on DAS4 and works fine.
-    export BOOST_ROOT=$VENV/src/boost_*/
-    ./configure  --with-boost-system=mt --with-boost=$VENV --with-boost-lib=$VENV/lib --enable-python-binding --prefix=$VENV
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
-    make install
-    cd $VENV/lib
-    # TODO(vladum): Uncomment for custom Boost, but see upper comment.
-    ln -fs libboost_python.so libboost_python-py27.so.1.54.0
-    cd ../..
+    pushd $LIBTORRENT_SRC
+    export BOOST_ROOT=$VENV/src/boost_$BOOST_PATHV
+    $BOOST_ROOT/bjam -j$CONCURRENCY_LEVEL --prefix=$VENV install
+    pushd bindings/python
+    $BOOST_ROOT/bjam -j$CONCURRENCY_LEVEL --prefix=$VENV
+    popd
+    pushd $VENV/lib
+    ln -fs libboost_python.so libboost_python-py27.so.$LIBTORRENT_VERSION
+    # mkdir -p $VENV/lib/python2.7/site-packages/
+    cp $VENV/src/libtorrent-rasterbar-$LIBTORRENT_VERSION/bindings/python/bin/*/*/libtorrent-python-*/*/libtorrent.so $VENV/lib/python2.7/site-packages/
+    popd
+    popd
+    # Check that the modules work
+    python -c "import libtorrent"
+    touch $LIBTORRENT_MARKER
 fi
 
 # wxpython
