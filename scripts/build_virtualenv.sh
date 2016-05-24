@@ -274,15 +274,6 @@ fi
 echo "Testing if the EC stuff is working..."
 python -c "from M2Crypto import EC"
 
-#Not sure if we need this:
-#pushd build-tmp
-#wget http://download.zeromq.org/zeromq-3.2.3.tar.gz
-#tar xvzpf zeromq*tar.gz
-#cd zeromq*/
-#./configure --prefix=$VIRTUAL_ENV
-#make -j$(grep processor /proc/cpuinfo | wc -l)
-#popd
-
 # Build libboost
 BOOST_VERSION=1.58.0
 BOOST_MARKER=`build_marker boost $BOOST_VERSION`
