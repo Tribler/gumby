@@ -407,21 +407,23 @@ if [ ! -e $VENV/include/gmp.h ]; then
 fi
 
 # libnacl needs libffi
-LIBFFI_PACKAGE="libffi-3.0.11.tar.gz"
-if [ ! -e $VENV/src/$LIBFFI_PACKAGE ]; then
-    pushd $VENV/src
-    wget "ftp://sourceware.org:/pub/libffi/$LIBFFI_PACKAGE"
-    popd
-fi
+LIBFFI_VERSION=3.2.1
+LIBFFI_MARKER=`build_marker libffi $LIBFFI_VERSION`
+if [ ! -e $VENV/lib/libffi-$LIBFFI_VERSION/include/ffi.h -o ! -e $LIBFFI_MARKER ]; then
+    LIBFFI_PACKAGE="libffi-$LIBFFI_VERSION.tar.gz"
+    if [ ! -e $VENV/src/$LIBFFI_PACKAGE ]; then
+        pushd $VENV/src
+        wget "ftp://sourceware.org:/pub/libffi/$LIBFFI_PACKAGE"
+        popd
+    fi
 
-if [ ! -e $VENV/src/libffi-*/ ]; then
-    pushd $VENV/src
-    tar axvf $VENV/src/$LIBFFI_PACKAGE
-    popd
-fi
+    if [ ! -e $VENV/src/libffi-$LIBFFI_VERSION*/ ]; then
+        pushd $VENV/src
+        tar axvf $VENV/src/$LIBFFI_PACKAGE
+        popd
+    fi
 
-if [ ! -e $VENV/include/ffi.h ]; then
-    pushd $VENV/src/libffi-*/
+    pushd $VENV/src/libffi-$LIBFFI_VERSION*/
     ./configure --prefix=$VENV
     make -j$(grep process /proc/cpuinfo | wc -l) || make
     make install
