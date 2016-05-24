@@ -83,7 +83,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
 "
     mkdir -p $VENV/src
     pushd $VENV/src
-    if [ -e /usr/bin/dtrace ]; then
+    if [ -e /usr/bin/dtrace -a "$WITH_SYSTEMTAP" != false ]; then
         WITH_SYSTEMTAP=yes
         EXTRA_CONFIG_OPTS=--with-dtrace
     else
