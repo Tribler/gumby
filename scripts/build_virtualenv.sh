@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=20
+SCRIPT_VERSION=21
 
 # Code:
 set -e
