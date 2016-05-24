@@ -47,6 +47,12 @@ set -e
 
 export CONCURRENCY_LEVEL=$(grep process /proc/cpuinfo | wc -l)
 
+function build_marker() {
+    NAME=$1
+    VERSION=$2
+    echo $VENV/src/.completed_${NAME}_${VERSION}__${SCRIPT_VERSION}
+}
+
 # This script can be called from outside gumby to avoid the egg-chicken situation where
 # gumby's dependencies are not available, so let's find the scripts dir and add it to $PATH
 SCRIPTDIR=$( dirname $(readlink -f "$0"))
@@ -202,8 +208,10 @@ mkdir -p $VENV/src
 source $VENV/bin/activate
 
 
-# Install apsw manually as it is not available trough pip.
-if [ ! -e $VENV/lib/python2.*/site-packages/apsw.so ]; then
+# Install apsw manually as it is not available trough pip (well, it is but it's not the official will :)
+APSW_VERSION=3.12.2-r1
+APSW_MARKER=`build_marker apsw $APSW_VERSION`
+if [ ! -e $VENV/lib/python2.*/site-packages/apsw.so -o ! -e $APSW_MARKER ]; then
     pushd $VENV/src
     if [ ! -e apsw-*zip ]; then
         wget https://apsw.googlecode.com/files/apsw-3.7.16.2-r1.zip
@@ -216,6 +224,7 @@ if [ ! -e $VENV/lib/python2.*/site-packages/apsw.so ]; then
     sed -i "s/part=part.split('=', 1)/part=tuple(part.split('=', 1))/" setup.py
     python setup.py fetch --missing-checksum-ok --all --version=3.7.17 build --enable-all-extensions install # test # running the tests makes it segfault...
     popd
+    touch $APSW_MARKER
 fi
 
 # M2Crypto needs OpenSSL with EC support, but RH/Fedora doesn't provide it.
@@ -247,6 +256,7 @@ if [ ! -e $M2CDEPS/lib/libcrypto.so.1.0.0  -o ! -e $OPENSSL_MARKER ]; then
     echo "Done"
     popd
     popd
+    touch $OPENSSL_MARKER
 fi
 
 M2CRYPTO_VERSION=0.24.0
@@ -269,6 +279,7 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg  -o ! -e $M2CRYPTO_MARKE
     CFLAGS="$M2CDEPS/lib/libcrypto.a -fPIC" python setup.py --verbose build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib --include-dirs=$M2CDEPS/include
     python setup.py install
     popd
+    touch $M2CRYPTO_MARKER
 fi
 
 echo "Testing if the EC stuff is working..."
@@ -294,6 +305,7 @@ if [ ! -e $VENV/src/boost_$BOOST_PATHV/bjam -o ! -e $VENV/lib/libboost_python.so
     ./b2 -j$CONCURRENCY_LEVEL --prefix=$VENV install
     # ./bjam -j$CONCURRENCY_LEVEL threading=multi -no_single -no_static --without-mpi --prefix=$VENV install
     popd
+    touch $BOOST_MARKER
 fi
 
 
@@ -302,8 +314,9 @@ fi
 # Build Libtorrent and its python bindings
 #
 pushd $VENV/src
-if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so ]; then
-    LIBTORRENT_VERSION=1.1.0
+LIBTORRENT_VERSION=1.1.0
+LIBTORRENT_MARKER=`build_marker libtorrent $LIBTORRENT_VERSION`
+if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so  -o ! -e $LIBTORRENT_MARKER ]; then
     LIBTORRENT_SRC=libtorrent-rasterbar-$LIBTORRENT_VERSION
     LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
     if [ ! -e $LIBTORRENT_TAR ]; then
@@ -376,9 +389,9 @@ fi
 # popd
 
 # recent libgmp needed by pycrypto
-
-if [ ! -e $VENV/include/gmp.h ]; then
-    GMP_VERSION=6.1.0
+GMP_VERSION=6.1.0
+GMP_MARKER=`build_marker gmp $GMP_VERSION`
+if [ ! -e $VENV/include/gmp.h  -o ! -e $GMP_MARKER ]; then
 
     if [ ! -e $VENV/src/gmp-$GMP_VERSION.tar.bz2 ]; then
         pushd $VENV/src
@@ -397,6 +410,7 @@ if [ ! -e $VENV/include/gmp.h ]; then
     make -j$CONCURRENCY_LEVEL || make
     make install
     popd
+    touch $GMP_MARKER
 fi
 
 # libnacl needs libffi
@@ -421,11 +435,13 @@ if [ ! -e $VENV/lib/libffi-$LIBFFI_VERSION/include/ffi.h -o ! -e $LIBFFI_MARKER 
     make -j$CONCURRENCY_LEVEL || make
     make install
     popd
+    touch $LIBFFI_MARKER
 fi
 
 # install libsodium
-if [ ! -e $VENV/include/sodium.h ]; then
-    LIBSODIUM_VERSION=1.0.10
+LIBSODIUM_VERSION=1.0.10
+LIBSODIUM_MARKER=`build_marker libsodium $LIBSODIUM_VERSION`
+if [ ! -e $VENV/include/sodium.h  -o ! -e $LIBSODIUM_MARKER ]; then
     LIBSODIUM_PACKAGE="libsodium-$LIBSODIUM_VERSION.tar.gz"
     if [ ! -e $VENV/src/$LIBSODIUM_PACKAGE ]; then
         pushd $VENV/src
@@ -444,6 +460,7 @@ if [ ! -e $VENV/include/sodium.h ]; then
     make -j$CONCURRENCY_LEVEL || make
     make install
     popd
+    touch $LIBSODIUM_MARKER
 fi
 
 # export PKG_CONFIG_PATH to find libffi and libsodium
