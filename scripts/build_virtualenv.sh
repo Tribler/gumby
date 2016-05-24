@@ -166,22 +166,23 @@ if [ -e $VENV/.completed.$SCRIPT_VERSION ]; then
     exit
 fi
 
+# DISABLED: We don't use swift anymore
 # Build libevent, not really needed for anything python related, but swift
 # needs a newer version than the one installed on the DAS4
-if [ ! -e $VENV/inst/lib/libevent.so ]; then
-    pushd $VENV/src
-    if [ ! -e libevent-*tar.gz ]; then
-        wget https://github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz
-    fi
-    if [ ! -e libevent-*/ ]; then
-        tar xapf libevent-*.tar.gz
-    fi
-    cd libevent-*/
-    ./configure --prefix=$VENV/inst
-    make -j$(grep process /proc/cpuinfo | wc -l)
-    make install
-    popd
-fi
+# if [ ! -e $VENV/inst/lib/libevent.so ]; then
+#     pushd $VENV/src
+#     if [ ! -e libevent-*tar.gz ]; then
+#         wget https://github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz
+#     fi
+#     if [ ! -e libevent-*/ ]; then
+#         tar xapf libevent-*.tar.gz
+#     fi
+#     cd libevent-*/
+#     ./configure --prefix=$VENV/inst
+#     make -j$(grep process /proc/cpuinfo | wc -l)
+#     make install
+#     popd
+# fi
 
 if [ ! -e $VENV/bin/python ]; then
     #virtualenv   --no-site-packages --clear $VENV
