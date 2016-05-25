@@ -89,6 +89,8 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
       sudo apt-get install libpangox-1.0-dev
 
 "
+    # @CONF_OPTION WITH_SYSTEMTAP: Build a python interpreter and needed tools with systemtap support, "true" force
+    # @CONF_OPTION WITH_SYSTEMTAP: enables, "false" force disables. (default is to build it wether there's the dtrace binary available on the system)
     mkdir -p $VENV/src
     pushd $VENV/src
     if [ -e /usr/bin/dtrace -a "${WITH_SYSTEMTAP,,}" != false ]; then
