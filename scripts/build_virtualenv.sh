@@ -491,7 +491,6 @@ nosexcover
 ntplib
 pillow
 psutil
-psutil
 pyasn1 # for twisted
 pycparser
 pycrypto # Twisted needs it
@@ -514,7 +513,7 @@ pip install numpy
 # install netifaces separately because it requires some params now
 pip install netifaces --allow-external netifaces --allow-unverified netifaces
 
-CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~/requirements.txt
+CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade -r ~/requirements.txt
 
 # meliae is not on the official repos
 pip install --allow-unverified meliae --allow-external meliae meliae
