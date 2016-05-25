@@ -491,6 +491,7 @@ nosexcover
 ntplib
 pillow
 psutil
+psutil
 pyasn1 # for twisted
 pycparser
 pycrypto # Twisted needs it
