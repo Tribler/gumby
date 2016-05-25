@@ -478,9 +478,11 @@ rm -rf $VENV/lib/python2.7/site-packages/PIL
 sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python2~' $VENV/bin/*
 easy_install pip
 
+# CFFI needs to be installed before pynacl or pip will find the older system version and faild to build it...
+CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade cffi
+
 echo "
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
-cffi
 configobj
 cryptography
 cython
