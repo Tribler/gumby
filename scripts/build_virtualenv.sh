@@ -498,6 +498,7 @@ pycrypto # Twisted needs it
 pynacl # New EC crypto stuff for tunnelcommunity
 pysqlite
 pyzmq
+service_identity
 six
 twisted # Used by the config server/clients
 unicodecsv # used for report generation scripts from Cor-Paul
