@@ -67,8 +67,11 @@ for INSTANCE in $(seq 1 1 $PROCESSES_IN_THIS_NODE); do
     echo "$DAS4_NODE_COMMAND" >> $CMDFILE
 done
 
+# The LD_PRELOAD blanking is needed to let python/m2crypto use the right openssl libraries. It removes the forced load
+# of the system libs so ssh (executed by prun on the head node) works .It's a long story, look at build_virtualenv.sh if curious.
+
 # @CONF_OPTION DAS4_NODE_TIMEOUT: Time in seconds to wait for the sub-processes to run before killing them. (required)
-(process_guard.py -f $CMDFILE -t $DAS4_NODE_TIMEOUT -o $OUTPUT_DIR -m $OUTPUT_DIR  -i 5 2>&1 | tee process_guard.log) ||:
+(LD_PRELOAD="" process_guard.py -f $CMDFILE -t $DAS4_NODE_TIMEOUT -o $OUTPUT_DIR -m $OUTPUT_DIR  -i 5 2>&1 | tee process_guard.log) ||:
 
 rm $CMDFILE
 

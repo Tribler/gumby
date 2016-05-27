@@ -23,7 +23,7 @@ add_annotations <- function(p, df, df2){
 		p <- p + geom_rect(alpha = 0.2, data=df2, aes(xmin=minx, xmax=maxx, ymin=-Inf, ymax=Inf, fill=annotation), show_guide = FALSE)
 		for (i in 1:nrow(df2)){
 			if (df2$show_mean[i]) {
-				p <- p + stat_vline(alpha = 0.6, data=df2, xintercept = df2$meanx[i], size = 1, colour = toString(i+1))
+				p <- p + geom_vline(alpha = 0.6, data=df2, xintercept = df2$meanx[i], size = 1, colour = toString(i+1))
 			}
 		}
 		df3 <- df2[]

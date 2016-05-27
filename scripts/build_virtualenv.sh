@@ -40,10 +40,18 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=19
+SCRIPT_VERSION=21
 
 # Code:
 set -e
+
+export CONCURRENCY_LEVEL=$(grep process /proc/cpuinfo | wc -l)
+
+function build_marker() {
+    NAME=$1
+    VERSION=$2
+    echo $VENV/src/.completed_${NAME}_${VERSION}__${SCRIPT_VERSION}
+}
 
 # This script can be called from outside gumby to avoid the egg-chicken situation where
 # gumby's dependencies are not available, so let's find the scripts dir and add it to $PATH
@@ -81,9 +89,11 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
       sudo apt-get install libpangox-1.0-dev
 
 "
+    # @CONF_OPTION WITH_SYSTEMTAP: Build a python interpreter and needed tools with systemtap support, "true" force
+    # @CONF_OPTION WITH_SYSTEMTAP: enables, "false" force disables. (default is to build it wether there's the dtrace binary available on the system)
     mkdir -p $VENV/src
     pushd $VENV/src
-    if [ -e /usr/bin/dtrace ]; then
+    if [ -e /usr/bin/dtrace -a "${WITH_SYSTEMTAP,,}" != false ]; then
         WITH_SYSTEMTAP=yes
         EXTRA_CONFIG_OPTS=--with-dtrace
     else
@@ -103,7 +113,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
         if [ ! -e $VENV/inst/lib/libdwarf.so ]; then
             pushd dwarf-*/libdwarf/
             ./configure --prefix=$VENV/inst  --enable-shared
-            make -j$(grep process /proc/cpuinfo | wc -l)
+            make -j$CONCURRENCY_LEVEL
             mkdir -p $VENV/inst/lib $VENV/inst/include
             cp libdwarf.h dwarf.h $VENV/inst/include/
             cp libdwarf.so $VENV/inst/lib/
@@ -119,8 +129,7 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
         fi
         pushd DyninstAPI-*/
         ./configure --prefix=$VENV/inst -with-libdwarf-incdir=$VENV/inst/include --with-libdwarf-libdir=$VENV/inst/lib
-        #make -j$(grep process /proc/cpuinfo | wc -l)
-        make
+        make -j$CONCURRENCY_LEVEL || make
         make install
         popd
 
@@ -137,55 +146,62 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
 
         pushd systemtap-*/
         ./configure --prefix=$VENV/inst --with-dyninst=$VENV/inst/
-        make -j$(grep process /proc/cpuinfo | wc -l)
+        make -j$CONCURRENCY_LEVEL
         make install
         popd
-    fi
 
-    if [ ! -e $VENV/src/cpython-2011 ]; then
-        hg clone http://hg.jcea.es/cpython-2011
-    fi
-
-    if [ ! -e $VENV/inst/bin/python ]; then
-        pushd cpython-2011
-        hg checkout dtrace-issue13405_2.7
-        if ! ( python -c 'import sys; print(sys.maxunicode)' | grep -q '65535' ); then
-            EXTRA_CONFIG_OPTS="$EXTRA_CONFIG_OPTS --enable-unicode=ucs4"
+        if [ ! -e $VENV/src/cpython-2011 ]; then
+            hg clone http://hg.jcea.es/cpython-2011
         fi
-        LDFLAGS="-Wl,-rpath=$VENV/inst/lib" ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared
-        cp Modules/Setup.dist Modules/Setup
-        make -j$(grep process /proc/cpuinfo | wc -l)
-        make install
+
+        if [ ! -e $VENV/inst/bin/python ]; then
+            pushd cpython-2011
+            hg checkout dtrace-issue13405_2.7
+            if ! ( python -c 'import sys; print(sys.maxunicode)' | grep -q '65535' ); then
+                EXTRA_CONFIG_OPTS="$EXTRA_CONFIG_OPTS --enable-unicode=ucs4"
+            fi
+            LDFLAGS="-Wl,-rpath=$VENV/inst/lib" ./configure $EXTRA_CONFIG_OPTS --prefix=$VENV/inst --enable-shared
+            cp Modules/Setup.dist Modules/Setup
+            make -j$CONCURRENCY_LEVEL
+            make install
+            popd
+        fi
+        touch $VENV/inst/.completed.$SCRIPT_VERSION
         popd
     fi
-    touch $VENV/inst/.completed.$SCRIPT_VERSION
-    popd
 fi
 
 if [ -e $VENV/.completed.$SCRIPT_VERSION ]; then
     exit
 fi
 
+# DISABLED: We don't use swift anymore
 # Build libevent, not really needed for anything python related, but swift
 # needs a newer version than the one installed on the DAS4
-if [ ! -e $VENV/inst/lib/libevent.so ]; then
-    pushd $VENV/src
-    if [ ! -e libevent-*tar.gz ]; then
-        wget https://github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz
-    fi
-    if [ ! -e libevent-*/ ]; then
-        tar xapf libevent-*.tar.gz
-    fi
-    cd libevent-*/
-    ./configure --prefix=$VENV/inst
-    make -j$(grep process /proc/cpuinfo | wc -l)
-    make install
-    popd
-fi
+# if [ ! -e $VENV/inst/lib/libevent.so ]; then
+#     pushd $VENV/src
+#     if [ ! -e libevent-*tar.gz ]; then
+#         wget https://github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz
+#     fi
+#     if [ ! -e libevent-*/ ]; then
+#         tar xapf libevent-*.tar.gz
+#     fi
+#     cd libevent-*/
+#     ./configure --prefix=$VENV/inst
+#     make -j$CONCURRENCY_LEVEL
+#     make install
+#     popd
+# fi
 
 if [ ! -e $VENV/bin/python ]; then
     #virtualenv   --no-site-packages --clear $VENV
-    virtualenv -p $VENV/inst/bin/python --no-site-packages --system-site-packages --clear $VENV
+    if [ "$WITH_SYSTEMTAP" == "true" ]; then
+        PYTHON_BIN=$VENV/inst/bin/python
+    else
+        PYTHON_BIN=/usr/bin/python
+    fi
+
+    virtualenv -p $PYTHON_BIN --no-site-packages --system-site-packages --clear $VENV
     $VENV/bin/easy_install --upgrade pip
 fi
 
@@ -194,8 +210,10 @@ mkdir -p $VENV/src
 source $VENV/bin/activate
 
 
-# Install apsw manually as it is not available trough pip.
-if [ ! -e $VENV/lib/python2.*/site-packages/apsw.so ]; then
+# Install apsw manually as it is not available trough pip (well, it is but it's not the official will :)
+APSW_VERSION=3.12.2-r1
+APSW_MARKER=`build_marker apsw $APSW_VERSION`
+if [ ! -e $VENV/lib/python2.*/site-packages/apsw.so -o ! -e $APSW_MARKER ]; then
     pushd $VENV/src
     if [ ! -e apsw-*zip ]; then
         wget https://apsw.googlecode.com/files/apsw-3.7.16.2-r1.zip
@@ -208,6 +226,7 @@ if [ ! -e $VENV/lib/python2.*/site-packages/apsw.so ]; then
     sed -i "s/part=part.split('=', 1)/part=tuple(part.split('=', 1))/" setup.py
     python setup.py fetch --missing-checksum-ok --all --version=3.7.17 build --enable-all-extensions install # test # running the tests makes it segfault...
     popd
+    touch $APSW_MARKER
 fi
 
 # M2Crypto needs OpenSSL with EC support, but RH/Fedora doesn't provide it.
@@ -215,221 +234,242 @@ fi
 # affecting the system's ssh binary.
 M2CDEPS=$VENV/m2cdeps
 mkdir -p $M2CDEPS
-if [ ! -e $M2CDEPS/lib/libcrypto.a ]; then
-    pushd $VENV/src
-    if [ ! -e openssl-*.tar.gz ]; then
-        #wget --no-check-certificate https://www.openssl.org/source/openssl-1.0.1e.tar.gz
-        wget --no-check-certificate https://www.openssl.org/source/openssl-1.0.1f.tar.gz
-    fi
-    if [ ! -d openssl-*/ ]; then
-        tar xvzpf openssl*tar.gz
-    fi
-    pushd openssl-*/
 
-    ./config -fPIC --prefix=$M2CDEPS threads --openssldir=$M2CDEPS/share/openssl
-    make -j2 || make #Fails when building in multithreaded mode (at least with -j24)
+OPENSSL_VERSION=1.0.1h
+OPENSSL_MARKER=`build_marker openssl $OPENSSL_VERSION`
+if [ ! -e $M2CDEPS/lib/libcrypto.so.1.0.0  -o ! -e $OPENSSL_MARKER ]; then
+    pushd $VENV/src
+    if [ ! -e openssl-$OPENSSL_VERSION*.tar.gz ]; then
+        wget --no-check-certificate https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz
+    fi
+    if [ ! -d openssl-$OPENSSL_VERSION*/ ]; then
+        rm -fR openssl-*/
+        tar xvzpf openssl-$OPENSSL_VERSION*tar.gz
+    fi
+    pushd openssl-$OPENSSL_VERSION*/
+
+    ./config -fPIC --prefix=$M2CDEPS threads shared no-static --openssldir=$M2CDEPS/share/openssl
+    make -j${CONCURRENCY_LEVEL} depend
+    make -j${CONCURRENCY_LEVEL} || make -j2 || make #Fails when building in multithreaded mode (at least with -j24)
     make install_sw
-    # Proper names for M2Crypto
-    #ln -sf $M2CDEPS/lib/libssl.so.1.0.0 $M2CDEPS/lib/libssl.so.10
-    #ln -sf $M2CDEPS/lib/libcrypto.so.1.0.0 $M2CDEPS/lib/libcrypto.so.10
+    # Proper names for M2Crypto (m2crypto will be linked against this soname and and will have the RPATH set to M2CDEPS/libs)
+    ln -sf $M2CDEPS/lib/libssl.so.1.0.0 $M2CDEPS/lib/libssl.so.10
+    ln -sf $M2CDEPS/lib/libcrypto.so.1.0.0 $M2CDEPS/lib/libcrypto.so.10
     echo "Done"
     popd
     popd
+    touch $OPENSSL_MARKER
 fi
 
-if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg ]; then
+M2CRYPTO_VERSION=0.24.0
+M2CRYPTO_MARKER=`build_marker m2crypto $M2CRYPTO_VERSION`
+if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg  -o ! -e $M2CRYPTO_MARKER ]; then
     pushd $VENV/src
-    if [ ! -e M2Crypto-*gz ]; then
-        wget --no-check-certificate http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-0.21.1.tar.gz
+    if [ ! -e M2Crypto-$M2CRYPTO_VERSION*gz ]; then
+        wget --no-check-certificate http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-$M2CRYPTO_VERSION.tar.gz
     fi
-    if [ ! -d M2Crypto-*/ ]; then
-        tar xvapf M2Crypto-*.tar.gz
+    if [ ! -d M2Crypto-$M2CRYPTO_VERSION*/ ]; then
+        rm -fR M2Crypto-*/
+        tar xvapf M2Crypto-$M2CRYPTO_VERSION*gz
     fi
-    pushd M2Crypto-*/
+    pushd M2Crypto-$M2CRYPTO_VERSION*/
     # python setup.py clean # This does nothing
-    #rm -fR build # this does :D
+    rm -fR build # this does :D
     #python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
     python setup.py build_py
     # This should use our custom libcrypto (explicit RPATH)
     CFLAGS="$M2CDEPS/lib/libcrypto.a -fPIC" python setup.py --verbose build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib --include-dirs=$M2CDEPS/include
     python setup.py install
     popd
+    touch $M2CRYPTO_MARKER
 fi
 
 echo "Testing if the EC stuff is working..."
 python -c "from M2Crypto import EC"
 
-#Not sure if we need this:
-#pushd build-tmp
-#wget http://download.zeromq.org/zeromq-3.2.3.tar.gz
-#tar xvzpf zeromq*tar.gz
-#cd zeromq*/
-#./configure --prefix=$VIRTUAL_ENV
-#make -j$(grep processor /proc/cpuinfo | wc -l)
-#popd
-
-
 # Build libboost
-# TODO(vladum): If you use this, see TODO about libtorrent's bug.
- if [ ! -e $VENV/lib/libboost_wserialization.so ]; then
-     pushd $VENV/src
-     BOOST_TAR=boost_1_54_0.tar.bz2
+BOOST_VERSION=1.58.0
+BOOST_MARKER=`build_marker boost $BOOST_VERSION`
+BOOST_PATHV=`echo $BOOST_VERSION | sed 's/\./_/g'`
+if [ ! -e $VENV/src/boost_$BOOST_PATHV/bjam -o ! -e $VENV/lib/libboost_python.so -o ! -e $BOOST_MARKER ]; then
+    pushd $VENV/src
+    BOOST_TAR=boost_$BOOST_PATHV.tar.bz2
     if [ ! -e $BOOST_TAR ]; then
-        wget http://netcologne.dl.sourceforge.net/project/boost/boost/1.54.0/$BOOST_TAR
+        wget http://netcologne.dl.sourceforge.net/project/boost/boost/$BOOST_VERSION/$BOOST_TAR
     fi
-    tar xavf $BOOST_TAR
-     cd boost*/
-     ./bootstrap.sh
-     #./b2 -j$(grep process /proc/cpuinfo | wc -l) --prefix=$VENV install
-     ./bjam -j$(grep process /proc/cpuinfo | wc -l) threading=multi -no_single -no_static --without-mpi --prefix=$VENV install
-     popd
- fi
+    if [ ! -e boost_$BOOST_PATHV ]; then
+        tar xavf $BOOST_TAR
+    fi
+
+    cd boost_$BOOST_PATHV/
+
+    ./bootstrap.sh
+    ./b2 -j$CONCURRENCY_LEVEL --prefix=$VENV install
+    # ./bjam -j$CONCURRENCY_LEVEL threading=multi -no_single -no_static --without-mpi --prefix=$VENV install
+    popd
+    touch $BOOST_MARKER
+fi
+
 
 
 #
 # Build Libtorrent and its python bindings
 #
 pushd $VENV/src
-if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so ]; then
-    LIBTORRENT_SRC=libtorrent-rasterbar-0.16.15
+LIBTORRENT_VERSION=1.1.0
+LIBTORRENT_MARKER=`build_marker libtorrent $LIBTORRENT_VERSION`
+if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so  -o ! -e $LIBTORRENT_MARKER ]; then
+    LIBTORRENT_SRC=libtorrent-rasterbar-$LIBTORRENT_VERSION
     LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
     if [ ! -e $LIBTORRENT_TAR ]; then
-        wget --no-check-certificate http://downloads.sourceforge.net/project/libtorrent/libtorrent/$LIBTORRENT_TAR
+        wget https://github.com/arvidn/libtorrent/releases/download/libtorrent-1_1/$LIBTORRENT_TAR
     fi
     if [ ! -d $LIBTORRENT_SRC ]; then
         tar xavf $LIBTORRENT_TAR
     fi
-    cd $LIBTORRENT_SRC
-    # TODO(vladum): libtorrent uses boost::system::get_system_category() in a
-    # few places, instead of their get_system_category() wrapper. This method
-    # has been renamed in version 1.43.0 to boost::system::system_category().
-    # Using a newer Boost requires patching libtorrent, so, for now, we will use
-    # the system's Boost, which is 1.41.0 on DAS4 and works fine.
-    export BOOST_ROOT=$VENV/src/boost_*/
-    ./configure  --with-boost-system=mt --with-boost=$VENV --with-boost-lib=$VENV/lib --enable-python-binding --prefix=$VENV
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
-    make install
-    cd $VENV/lib
-    # TODO(vladum): Uncomment for custom Boost, but see upper comment.
-    ln -fs libboost_python.so libboost_python-py27.so.1.54.0
-    cd ../..
+    pushd $LIBTORRENT_SRC
+    export BOOST_ROOT=$VENV/src/boost_$BOOST_PATHV
+    $BOOST_ROOT/bjam -j$CONCURRENCY_LEVEL --prefix=$VENV install
+    pushd bindings/python
+    $BOOST_ROOT/bjam -j$CONCURRENCY_LEVEL --prefix=$VENV
+    popd
+    pushd $VENV/lib
+    ln -fs libboost_python.so libboost_python-py27.so.$LIBTORRENT_VERSION
+    # mkdir -p $VENV/lib/python2.7/site-packages/
+    cp $VENV/src/libtorrent-rasterbar-$LIBTORRENT_VERSION/bindings/python/bin/*/*/libtorrent-python-*/*/libtorrent.so $VENV/lib/python2.7/site-packages/
+    popd
+    popd
+    # Check that the modules work
+    python -c "import libtorrent"
+    touch $LIBTORRENT_MARKER
 fi
 
-# wxpython
-pushd $VENV/src
-if [ ! -e wxPython-*.tar.bz2 ]; then
-    wget http://garr.dl.sourceforge.net/project/wxpython/wxPython/2.8.12.1/wxPython-src-2.8.12.1.tar.bz2
-fi
-if [ ! -d wxPython*/ ]; then
-    tar xavf wxPython-*.tar.bz2
-fi
-pushd wxPython*/
-if [ ! -e $VENV/lib/libwx_gtk2u_gizmos_xrc-*.so ]; then
-    make uninstall ||:
-    make clean ||:
-    ./configure --prefix=$VENV \
-        --enable-display \
-        --enable-geometry \
-        --enable-graphics_ctx \
-        --enable-sound \
-        --enable-unicode \
-        --with-gtk \
-        --with-libjpeg=sys \
-        --with-libpng=sys \
-        --with-libtiff=builtin \
-        --with-sdl \
-        --with-zlib=sys \
-        --without-gnomeprint \
-        --without-opengl \
-        --with-expat=sys
-    # TODO(emilon): Are those CFLAGS needed?
-    CFLAGS="-Iinclude" make -j$(grep process /proc/cpuinfo | wc -l) || CFLAGS="-Iinclude" make
-    make install
-    pushd contrib
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
-    make install
-    popd
-fi
-pwd
+# We don't use it anymore
+# # wxpython
+# pushd $VENV/src
+# if [ ! -e wxPython-*.tar.bz2 ]; then
+#     wget http://garr.dl.sourceforge.net/project/wxpython/wxPython/2.8.12.1/wxPython-src-2.8.12.1.tar.bz2
+# fi
+# if [ ! -d wxPython*/ ]; then
+#     tar xavf wxPython-*.tar.bz2
+# fi
+# pushd wxPython*/
+# if [ ! -e $VENV/lib/libwx_gtk2u_gizmos_xrc-*.so ]; then
+#     make uninstall ||:
+#     make clean ||:
+#     ./configure --prefix=$VENV \
+#         --enable-display \
+#         --enable-geometry \
+#         --enable-graphics_ctx \
+#         --enable-sound \
+#         --enable-unicode \
+#         --with-gtk \
+#         --with-libjpeg=sys \
+#         --with-libpng=sys \
+#         --with-libtiff=builtin \
+#         --with-sdl \
+#         --with-zlib=sys \
+#         --without-gnomeprint \
+#         --without-opengl \
+#         --with-expat=sys
+#     # TODO(emilon): Are those CFLAGS needed?
+#     CFLAGS="-Iinclude" make -j$CONCURRENCY_LEVEL || CFLAGS="-Iinclude" make
+#     make install
+#     pushd contrib
+#     make -j$CONCURRENCY_LEVEL || make
+#     make install
+#     popd
+# fi
+# pwd
 
-if [ ! -e $VENV/lib/python*/site-packages/wx-*/wxPython/_wx.py ]; then
-    pushd wxPython
-    python setup.py build BUILD_GLCANVAS=0 #BUILD_STC=0
-    python setup.py install BUILD_GLCANVAS=0 #BUILD_STC=0
-    popd
-fi
-popd
+# if [ ! -e $VENV/lib/python*/site-packages/wx-*/wxPython/_wx.py ]; then
+#     pushd wxPython
+#     python setup.py build BUILD_GLCANVAS=0 #BUILD_STC=0
+#     python setup.py install BUILD_GLCANVAS=0 #BUILD_STC=0
+#     popd
+# fi
+# popd
 
 # recent libgmp needed by pycrypto
-if [ ! -e $VENV/src/gmp-5.1.3.tar.bz2 ]; then
-    pushd $VENV/src
-    wget "ftp://ftp.gmplib.org/pub/gmp-5.1.3/gmp-5.1.3.tar.bz2"
-    popd
-fi
+GMP_VERSION=6.1.0
+GMP_MARKER=`build_marker gmp $GMP_VERSION`
+if [ ! -e $VENV/include/gmp.h  -o ! -e $GMP_MARKER ]; then
 
-if [ ! -e $VENV/src/gmp-*/ ]; then
-    pushd $VENV/src
-    tar axvf $VENV/src/gmp-5.1.3.tar.bz2
-    popd
-fi
+    if [ ! -e $VENV/src/gmp-$GMP_VERSION.tar.bz2 ]; then
+        pushd $VENV/src
+        wget "ftp://ftp.gmplib.org/pub/gmp-$GMP_VERSION/gmp-$GMP_VERSION.tar.bz2"
+        popd
+    fi
 
-if [ ! -e $VENV/include/gmp.h ]; then
-    pushd $VENV/src/gmp-*/
+    if [ ! -e $VENV/src/gmp-$GMP_VERSION*/ ]; then
+        pushd $VENV/src
+        tar axvf $VENV/src/gmp-$GMP_VERSION.tar.bz2
+        popd
+    fi
+
+    pushd $VENV/src/gmp-$GMP_VERSION*/
     ./configure --prefix=$VENV
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make -j$CONCURRENCY_LEVEL || make
     make install
     popd
+    touch $GMP_MARKER
 fi
 
 # libnacl needs libffi
-LIBFFI_PACKAGE="libffi-3.0.11.tar.gz"
-if [ ! -e $VENV/src/$LIBFFI_PACKAGE ]; then
-    pushd $VENV/src
-    wget "ftp://sourceware.org:/pub/libffi/$LIBFFI_PACKAGE"
-    popd
-fi
+LIBFFI_VERSION=3.2.1
+LIBFFI_MARKER=`build_marker libffi $LIBFFI_VERSION`
+if [ ! -e $VENV/lib/libffi-$LIBFFI_VERSION/include/ffi.h -o ! -e $LIBFFI_MARKER ]; then
+    LIBFFI_PACKAGE="libffi-$LIBFFI_VERSION.tar.gz"
+    if [ ! -e $VENV/src/$LIBFFI_PACKAGE ]; then
+        pushd $VENV/src
+        wget "ftp://sourceware.org:/pub/libffi/$LIBFFI_PACKAGE"
+        popd
+    fi
 
-if [ ! -e $VENV/src/libffi-*/ ]; then
-    pushd $VENV/src
-    tar axvf $VENV/src/$LIBFFI_PACKAGE
-    popd
-fi
+    if [ ! -e $VENV/src/libffi-$LIBFFI_VERSION*/ ]; then
+        pushd $VENV/src
+        tar axvf $VENV/src/$LIBFFI_PACKAGE
+        popd
+    fi
 
-if [ ! -e $VENV/include/ffi.h ]; then
-    pushd $VENV/src/libffi-*/
+    pushd $VENV/src/libffi-$LIBFFI_VERSION*/
     ./configure --prefix=$VENV
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make -j$CONCURRENCY_LEVEL || make
     make install
     popd
+    touch $LIBFFI_MARKER
 fi
 
 # install libsodium
-LIBSODIUM_PACKAGE="libsodium-1.0.2.tar.gz"
-if [ ! -e $VENV/src/$LIBSODIUM_PACKAGE ]; then
-    pushd $VENV/src
-    wget "https://download.libsodium.org/libsodium/releases/$LIBSODIUM_PACKAGE"
-    popd
-fi
+LIBSODIUM_VERSION=1.0.10
+LIBSODIUM_MARKER=`build_marker libsodium $LIBSODIUM_VERSION`
+if [ ! -e $VENV/include/sodium.h  -o ! -e $LIBSODIUM_MARKER ]; then
+    LIBSODIUM_PACKAGE="libsodium-$LIBSODIUM_VERSION.tar.gz"
+    if [ ! -e $VENV/src/$LIBSODIUM_PACKAGE ]; then
+        pushd $VENV/src
+        wget "https://download.libsodium.org/libsodium/releases/$LIBSODIUM_PACKAGE"
+        popd
+    fi
 
-if [ ! -e $VENV/src/libsodium-*/ ]; then
-    pushd $VENV/src
-    tar axvf $VENV/src/$LIBSODIUM_PACKAGE
-    popd
-fi
+    if [ ! -e $VENV/src/libsodium-$LIBSODIUM_VERSION*/ ]; then
+        pushd $VENV/src
+        tar axvf $VENV/src/$LIBSODIUM_PACKAGE
+        popd
+    fi
 
-if [ ! -e $VENV/include/sodium.h ]; then
-    pushd $VENV/src/libsodium-*/
+    pushd $VENV/src/libsodium-$LIBSODIUM_VERSION*/
     ./configure --prefix=$VENV
-    make -j$(grep process /proc/cpuinfo | wc -l) || make
+    make -j$CONCURRENCY_LEVEL || make
     make install
     popd
+    touch $LIBSODIUM_MARKER
 fi
 
 # export PKG_CONFIG_PATH to find libffi and libsodium
 export PKG_CONFIG_PATH=$VENV/lib/pkgconfig:$PKG_CONFIG_PATH
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
 
-# remove pil cause its a piece of crap
+# remove pil as it doesn't work (pillow will be installed shortly)
 rm -f $VENV/bin/pil*
 rm -rf $VENV/lib/python2.7/site-packages/PIL
 
@@ -438,9 +478,11 @@ rm -rf $VENV/lib/python2.7/site-packages/PIL
 sed -i 's~#!/usr/bin/env python2.6~#!/usr/bin/env python2~' $VENV/bin/*
 easy_install pip
 
+# CFFI needs to be installed before pynacl or pip will find the older system version and faild to build it...
+CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade cffi
+
 echo "
 Jinja2 # Used for systemtap report generation scripts from Cor-Paul
-cffi
 configobj
 cryptography
 cython
@@ -457,6 +499,7 @@ pycrypto # Twisted needs it
 pynacl # New EC crypto stuff for tunnelcommunity
 pysqlite
 pyzmq
+service_identity
 six
 twisted # Used by the config server/clients
 unicodecsv # used for report generation scripts from Cor-Paul
@@ -472,10 +515,9 @@ pip install numpy
 # install netifaces separately because it requires some params now
 pip install netifaces --allow-external netifaces --allow-unverified netifaces
 
-CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install -r ~/requirements.txt
+CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade -r ~/requirements.txt
 
 # meliae is not on the official repos
-pip install --allow-unverified pyrex --allow-external  pyrex pyrex
 pip install --allow-unverified meliae --allow-external meliae meliae
 
 #$VENV/bin/python $VENV/bin/pip install -r ~/requirements.txt\
