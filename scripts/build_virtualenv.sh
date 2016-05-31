@@ -253,8 +253,8 @@ if [ ! -e $M2CDEPS/lib/libcrypto.so.1.0.0  -o ! -e $OPENSSL_MARKER ]; then
     make -j${CONCURRENCY_LEVEL} || make -j2 || make #Fails when building in multithreaded mode (at least with -j24)
     make install_sw
     # Proper names for M2Crypto (m2crypto will be linked against this soname and and will have the RPATH set to M2CDEPS/libs)
-    ln -sf $M2CDEPS/lib/libssl.so.1.0.0 $M2CDEPS/lib/libssl.so.10
-    ln -sf $M2CDEPS/lib/libcrypto.so.1.0.0 $M2CDEPS/lib/libcrypto.so.10
+    ln -sf $M2CDEPS/lib/libssl.so.$OPENSSL_VERSION $M2CDEPS/lib/libssl.so.10
+    ln -sf $M2CDEPS/lib/libcrypto.so.$OPENSSL_VERSION $M2CDEPS/lib/libcrypto.so.10
     echo "Done"
     popd
     popd
