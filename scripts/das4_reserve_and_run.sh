@@ -93,10 +93,7 @@ WORKING_DIR=$PWD
 cd ~
 
 echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
-# The following LD_PRELOAD is to force ssh (executed by prun) to use the system's openssl instead of our custom built
-# one (It's a long story, look at build_virtualenv.sh if curious)
-LD_PRELOAD="/lib64/libcrypto.so.10:/lib64/libssl.so.10" \
-          prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh &
+prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh &
 PID=$!
 
 sleep 1
