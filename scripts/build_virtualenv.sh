@@ -89,19 +89,19 @@ if [ ! -e $VENV/inst/.completed.$SCRIPT_VERSION ]; then
       sudo apt-get install libpangox-1.0-dev
 
 "
-    # @CONF_OPTION WITH_SYSTEMTAP: Build a python interpreter and needed tools with systemtap support, "true" force
-    # @CONF_OPTION WITH_SYSTEMTAP: enables, "false" force disables. (default is to build it wether there's the dtrace binary available on the system)
+    # @CONF_OPTION WITH_SYSTEMTAP: Build a python interpreter and needed tools with systemtap support, "true"
+    # @CONF_OPTION WITH_SYSTEMTAP: enables if /usr/bin/dtrace is available (default: false)
     mkdir -p $VENV/src
     pushd $VENV/src
-    if [ -e /usr/bin/dtrace -a "${WITH_SYSTEMTAP,,}" != false ]; then
-        WITH_SYSTEMTAP=yes
+    if [ -e /usr/bin/dtrace -a "${WITH_SYSTEMTAP,,}" == true ]; then
+        WITH_SYSTEMTAP=true
         EXTRA_CONFIG_OPTS=--with-dtrace
     else
         EXTRA_CONFIG_OPTS=--without-dtrace
     fi
 
 
-    if [ "$WITH_SYSTEMTAP" == yes ]; then
+    if [ "$WITH_SYSTEMTAP" == "true" ]; then
         if [ ! -e libdwarf-*gz ]; then
             wget http://pkgs.fedoraproject.org/repo/pkgs/libdwarf/libdwarf-20130207.tar.gz/64b42692e947d5180e162e46c689dfbf/libdwarf-20130207.tar.gz
         fi
