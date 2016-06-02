@@ -193,6 +193,7 @@ fi
 #     popd
 # fi
 
+
 if [ ! -e $VENV/bin/python ]; then
     #virtualenv   --no-site-packages --clear $VENV
     if [ "$WITH_SYSTEMTAP" == "true" ]; then
@@ -248,13 +249,18 @@ if [ ! -e $M2CDEPS/lib/libcrypto.so.1.0.0  -o ! -e $OPENSSL_MARKER ]; then
     fi
     pushd openssl-$OPENSSL_VERSION*/
 
-    ./config -fPIC --prefix=$M2CDEPS threads shared no-static --openssldir=$M2CDEPS/share/openssl
-    make -j${CONCURRENCY_LEVEL} depend
+    ./config -fPIC -DOPENSSL_PIC --prefix=$M2CDEPS threads no-shared --openssldir=$M2CDEPS/share/openssl
     make -j${CONCURRENCY_LEVEL} || make -j2 || make #Fails when building in multithreaded mode (at least with -j24)
+    make depend
     make install_sw
+    # Disabled as we are statically linking now to avoid breaking openssl and requiring M2Crypto to be imported before
+    # anything using openssl to work around the fact that, as m2crypto is the only module linking against the custom
+    # build openssl. If some other module imports the system openssl, m2crypto's dependency will be satisfied and will
+    # break when trying to use one of de disabled curves.
+
     # Proper names for M2Crypto (m2crypto will be linked against this soname and and will have the RPATH set to M2CDEPS/libs)
-    ln -sf $M2CDEPS/lib/libssl.so.$OPENSSL_VERSION $M2CDEPS/lib/libssl.so.10
-    ln -sf $M2CDEPS/lib/libcrypto.so.$OPENSSL_VERSION $M2CDEPS/lib/libcrypto.so.10
+    # ln -sf $M2CDEPS/lib/libssl.so.$OPENSSL_VERSION $M2CDEPS/lib/libssl.so.10
+    # ln -sf $M2CDEPS/lib/libcrypto.so.$OPENSSL_VERSION $M2CDEPS/lib/libcrypto.so.10
     echo "Done"
     popd
     popd
@@ -273,19 +279,46 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg  -o ! -e $M2CRYPTO_MARKE
         tar xvapf M2Crypto-$M2CRYPTO_VERSION*gz
     fi
     pushd M2Crypto-$M2CRYPTO_VERSION*/
-    # python setup.py clean # This does nothing
-    rm -fR build # this does :D
+
+    # disable linking against libssl and libcrypto as we are statically linking against it. See openssl build section
+    # and the end of this section for a convoluted explanation.
+    sed -i 's/self.libraries.*ssl.*crypto.*/self.libraries = []/g' setup.py
+
+    # Add openssl's .a's at THE END of the compile command. Using LDFLAGS won't work as it would end up in the middle.
+    EXTRA_LINK_ARGS="-fPIC $M2CDEPS/lib/libssl.a $M2CDEPS/lib/libcrypto.a"
+    sed -i 's~\( extra_compile_args=\[.*,$\)~\1 extra_link_args='"'$EXTRA_LINK_ARGS'.split()"',~' setup.py
+
+    # python setup.py clean # This doesn't clean everything
+    rm -fR build # this does
     #python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
     python setup.py build_py
-    # This should use our custom libcrypto (explicit RPATH)
-    CFLAGS="$M2CDEPS/lib/libcrypto.a -fPIC" python setup.py --verbose build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib --include-dirs=$M2CDEPS/include
+    # This should use our custom libcrypto (explicit RPATH) (It doesn't matter anymore as we are statically linking)
+    python setup.py --verbose build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib --include-dirs=$M2CDEPS/include
+    # How the gcc command should look when building m2crypto:
+    # gcc -pthread -shared -Wl,-z,relro -fPIC build/temp.linux-x86_64-2.7/SWIG/_m2crypto_wrap.o -L/usr/lib64
+    # -L/home/pouwelse/venv/m2cdeps/lib -Wl,-R/home/pouwelse/venv/m2cdeps/lib -lpython2.7 -o
+    # build/lib.linux-x86_64-2.7/M2Crypto/__m2crypto.so /home/pouwelse/venv/m2cdeps/lib/libssl.a
+    # /home/pouwelse/venv/m2cdeps/lib/libcrypto.a
+    #
+    # Note that -lssl -lcrypto are gone and that bith libssl.a and libcrypto.a are AT THE END of the command. Otherwise
+    # symbols will be missing: undefined symbol: i2d_X509
+    #
+    # Also note that the .a ordering is important, putting libcrypto first will produce missing symbols.
+    #
+    # For instance, this will fail:
+    # gcc -pthread -shared -Wl,-z,relro -fPIC /home/pouwelse/venv/m2cdeps/lib/libssl.a
+    # /home/pouwelse/venv/m2cdeps/lib/libcrypto.a build/temp.linux-x86_64-2.7/SWIG/_m2crypto_wrap.o -L/usr/lib64
+    # -L/home/pouwelse/venv/m2cdeps/lib -Wl,-R/home/pouwelse/venv/m2cdeps/lib -lpython2.7 -o
+    # build/lib.linux-x86_64-2.7/M2Crypto/__m2crypto.so
+
     python setup.py install
     popd
+
+    echo "Testing if the EC stuff is working..."
+    python -c 'import M2Crypto as m; m.EC.gen_params(m.m2.NID_sect409k1)'
+
     touch $M2CRYPTO_MARKER
 fi
-
-echo "Testing if the EC stuff is working..."
-python -c "from M2Crypto import EC"
 
 # Build libboost
 BOOST_VERSION=1.58.0
