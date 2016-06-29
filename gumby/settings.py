@@ -38,7 +38,7 @@
 
 from getpass import getuser
 from hashlib import md5
-from os import path, environ
+from os import path, environ, curdir
 from validate import Validator
 
 from configobj import ConfigObj
@@ -74,21 +74,22 @@ spectraperf_db_path = string(default="")
 '''
 
 
-def loadConfig(path):
+def loadConfig(file_path):
     spec = conf_spec.splitlines()
-    config = ConfigObj(path, configspec=spec)
+    config = ConfigObj(file_path, configspec=spec)
     validator = Validator()
     config.validate(validator)
     # TODO: Find a better way to do this (If the default value for a list is an empty list, it just doesn't set the value at all)
     if 'head_nodes' not in config:
         config["head_nodes"] = []
     for key, value in config.iteritems():
-        # If any config option has the special value __unique_port__, compute a unique port for it by hashing the user running
-        # the experiment, the experiment name and the config option name.
+        # If any config option has the special value __unique_port__, compute a unique port for it by hashing the user
+        # ID, the experiment name, the experiment execution dir and the config option name.
         if value == '__unique_port__':
             md5sum = md5()
             md5sum.update(getuser())
             md5sum.update(config['experiment_name'])
+            md5sum.update(path.abspath(curdir))
             md5sum.update(key)
             config[key] = int(md5sum.hexdigest()[-16:], 16) % 20000 + 20000
 
