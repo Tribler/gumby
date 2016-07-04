@@ -64,20 +64,25 @@ def runOnFreeCluster(experimentConf){
   stage "Run ${experimentName}"
 
   node(clusterName) {
-    unstash "experiment_workdir"
+    try {
 
-    // stage 'Check out Gumby'
-    // checkoutGumby()
+      unstash "experiment_workdir"
 
-    // stage 'Check out Tribler'
-    // gitCheckout('https://github.com/Tribler/tribler.git', '*/devel')
+      // stage 'Check out Gumby'
+      // checkoutGumby()
 
-    sh """
+      // stage 'Check out Tribler'
+      // gitCheckout('https://github.com/Tribler/tribler.git', '*/devel')
+
+      sh """
 gumby/scripts/build_virtualenv.sh
 source ~/venv/bin/activate
 
 ./gumby/run.py ${experimentConf}
 """
+    } finally {
+      stash includes: 'output/**' name: 'experiment_results'
+    }
   }
 }
 
