@@ -81,7 +81,7 @@ source ~/venv/bin/activate
 ./gumby/run.py ${experimentConf}
 """
     } finally {
-      stash includes: 'output/**' name: 'experiment_results'
+      stash includes: 'output/**', name: 'experiment_results'
     }
   }
 }
