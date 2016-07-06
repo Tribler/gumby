@@ -2,6 +2,7 @@
 
 from os import path
 from sys import path as pythonpath
+from twisted.internet.defer import inlineCallbacks
 
 from twisted.internet.task import LoopingCall
 
@@ -40,8 +41,9 @@ class TunnelClient(DispersyExperimentScriptClient):
         self._logger.info("build_circuits")
         self._community.settings.max_circuits = 8
 
+    @inlineCallbacks
     def online(self):
-        super(TunnelClient, self).online()
+        yield super(TunnelClient, self).online()
         if not self.monitor_circuits_lc:
             self.monitor_circuits_lc = lc = LoopingCall(self.monitor_circuits)
             lc.start(5.0, now=True)

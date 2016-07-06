@@ -39,6 +39,7 @@
 
 from os import path
 from sys import path as pythonpath
+from twisted.internet.defer import inlineCallbacks
 
 from gumby.experiments.dispersyclient import main
 from allchannel_client import AllChannelClient
@@ -53,9 +54,10 @@ from Tribler.community.bartercast4.statistics import BartercastStatisticTypes
 
 class BarterClient(AllChannelClient):
 
+    @inlineCallbacks
     def start_dispersy(self, crawl=False):
         from Tribler.community.bartercast4.community import BarterCommunity
-        AllChannelClient.start_dispersy(self)
+        yield AllChannelClient.start_dispersy(self)
         if crawl:
             from Tribler.community.bartercast4.community import BarterCommunityCrawler
             communities = self._dispersy.define_auto_load(BarterCommunityCrawler, self._my_member, (), load=True)

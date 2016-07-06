@@ -61,14 +61,16 @@ class DiscoveryClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.ignore_call, 'availability')
         self.scenario_runner.register(self.ignore_call, 'perform_searches')
 
+    @inlineCallbacks
     def start_dispersy(self, autoload_discovery=False):
-        super(DiscoveryClient, self).start_dispersy(autoload_discovery)
+        yield super(DiscoveryClient, self).start_dispersy(autoload_discovery)
 
     def set_community_kwarg(self, key, value):
         self._logger.warning("disabled community kwargs, ignoring %s", key)
 
+    @inlineCallbacks
     def online(self):
-        super(DiscoveryClient, self).online()
+        yield super(DiscoveryClient, self).online()
         self._community.my_preferences = self.get_preferences
 
     def get_preferences(self):

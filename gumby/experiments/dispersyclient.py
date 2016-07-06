@@ -52,7 +52,7 @@ from gumby.scenario import ScenarioRunner
 from gumby.sync import ExperimentClient, ExperimentClientFactory
 
 from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import deferLater
 from twisted.internet.threads import deferToThread
 
@@ -202,6 +202,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def set_ignore_exceptions(self, boolean):
         self._strict = not self.str2bool(boolean)
 
+    @inlineCallbacks
     def start_dispersy(self, autoload_discovery=True):
         self._logger.debug("Starting dispersy")
         # We need to import the stuff _AFTER_ configuring the logging stuff.
@@ -215,6 +216,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
             from dispersy.util import unhandled_error_observer
 
         self._dispersy = Dispersy(StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
+        yield self._dispersy.initialize_statistics()
         self._dispersy.statistics.enable_debug_statistics(True)
 
         self.original_on_incoming_packets = self._dispersy.on_incoming_packets
@@ -223,13 +225,13 @@ class DispersyExperimentScriptClient(ExperimentClient):
             from twisted.python.log import addObserver
             addObserver(unhandled_error_observer)
 
-        self._dispersy.start(autoload_discovery=autoload_discovery)
+        yield self._dispersy.start(autoload_discovery=autoload_discovery)
 
         if self.master_private_key:
-            self._master_member = self._dispersy.get_member(private_key=self.master_private_key)
+            self._master_member = yield self._dispersy.get_member(private_key=self.master_private_key)
         else:
-            self._master_member = self._dispersy.get_member(public_key=self.master_key)
-        self._my_member = self.get_my_member()
+            self._master_member = yield self._dispersy.get_member(public_key=self.master_key)
+        self._my_member = yield self.get_my_member()
         assert self._master_member
         assert self._my_member
 
@@ -240,8 +242,10 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
         self._logger.debug("Finished starting dispersy")
 
+    @inlineCallbacks
     def get_my_member(self):
-        return self._dispersy.get_member(private_key=self.my_member_private_key)
+        member = yield self._dispersy.get_member(private_key=self.my_member_private_key)
+        returnValue(member)
 
     def stop_dispersy(self):
         self._dispersy_exit_status = self._dispersy.stop()
@@ -258,6 +262,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.master_key = pub_key.decode("HEX")
         self.master_private_key = priv_key.decode("HEX")
 
+    @inlineCallbacks
     def online(self, dont_empty=False):
         self._logger.debug("Trying to go online")
         if self._community is None:
@@ -267,7 +272,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
                                self._master_member.mid.encode("HEX"),
                                self._my_member.mid.encode("HEX"))
             self._dispersy.on_incoming_packets = self.original_on_incoming_packets
-            self._community = self.community_class.init_community(self._dispersy, self._master_member, self._my_member,
+            self._community = yield self.community_class.init_community(self._dispersy, self._master_member, self._my_member,
                                                                   *self.community_args, **self.community_kwargs)
             self._community.auto_load = False
 
