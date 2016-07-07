@@ -286,6 +286,7 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg  -o ! -e $M2CRYPTO_MARKE
 
     # Add openssl's .a's at THE END of the compile command. Using LDFLAGS won't work as it would end up in the middle.
     EXTRA_LINK_ARGS="-fPIC $M2CDEPS/lib/libssl.a $M2CDEPS/lib/libcrypto.a"
+    echo $EXTRA_LINK_ARGS
     sed -i 's~\( extra_compile_args=\[.*,$\)~\1 extra_link_args='"'$EXTRA_LINK_ARGS'.split()"',~' setup.py
 
     # python setup.py clean # This doesn't clean everything
