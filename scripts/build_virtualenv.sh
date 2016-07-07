@@ -274,7 +274,7 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg  -o ! -e $M2CRYPTO_MARKE
     if [ ! -e M2Crypto-$M2CRYPTO_VERSION*gz ]; then
         wget --no-check-certificate http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-$M2CRYPTO_VERSION.tar.gz
     fi
-    if [ ! -d M2Crypto-$M2CRYPTO_VERSION*/ ]; then
+    if [ ! -d M2Crypto-$M2CRYPTO_VERSION*/ -o ! -e $M2CRYPTO_MARKER ]; then
         rm -fR M2Crypto-*/
         tar xvapf M2Crypto-$M2CRYPTO_VERSION*gz
     fi
