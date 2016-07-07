@@ -1,4 +1,3 @@
-
 def gitCheckout(url, branch, targetDir=''){
   if (targetDir == '') {
     targetDir = (url =~ '.*/(.+).git')[0][1]
@@ -33,7 +32,7 @@ def gitCheckout(url, branch, targetDir=''){
 }
 
 def checkoutGumby() {
-  gitCheckout('https://github.com/lfdversluis/gumby.git', '*/async-dispersy')
+  gitCheckout('https://github.com/whirm/gumby.git', '*/devel')
 }
 
 def runOnFreeCluster(experimentConf){
@@ -46,9 +45,7 @@ def runOnFreeCluster(experimentConf){
   def experimentName
   def clusterName
   node('master') {  def confFile = readFile(experimentConf).replaceAll(/#.*/,"")
-    println "here1"
     def configObject = new ConfigSlurper().parse(confFile)
-    println "here2"
     def neededNodes = configObject.das4_node_amount
     experimentName = configObject.experiment_name
     configObject = null
@@ -70,26 +67,15 @@ def runOnFreeCluster(experimentConf){
 
       unstash "experiment_workdir"
 
-      stage 'Check out Gumby'
-      checkoutGumby()
+      // stage 'Check out Gumby'
+      // checkoutGumby()
 
-      stage 'Check out Tribler'
-      gitCheckout('https://github.com/lfdversluis/tribler.git', '*/fix-dispersy-deferreds')
-
-// Check out the right dispersy submodule + branch
-      sh """
-cd tribler/Tribler/dispersy
-git remote add laurens https://github.com/lfdversluis/dispersy.git
-git fetch laurens
-git checkout laurens/storm-db-manager
-cd ../../../
-"""
-
+      // stage 'Check out Tribler'
+      // gitCheckout('https://github.com/Tribler/tribler.git', '*/devel')
 
       sh """
 gumby/scripts/build_virtualenv.sh
 source ~/venv/bin/activate
-
 ./gumby/run.py ${experimentConf}
 """
     } finally {
