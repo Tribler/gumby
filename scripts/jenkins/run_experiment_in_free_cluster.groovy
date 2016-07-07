@@ -38,8 +38,8 @@ def checkoutGumby() {
 
 def runOnFreeCluster(experimentConf){
   //def experimentConf = env.EXPERIMENT_CONF
-  stage 'Checkout gumby'
-  checkoutGumby()
+  // stage 'Checkout gumby'
+  // checkoutGumby()
 
   stage 'Find a free cluster'
 
@@ -68,8 +68,8 @@ def runOnFreeCluster(experimentConf){
 
       unstash "experiment_workdir"
 
-      // stage 'Check out Gumby'
-      // checkoutGumby()
+      stage 'Check out Gumby'
+      checkoutGumby()
 
       stage 'Check out Tribler'
       gitCheckout('https://github.com/lfdversluis/tribler.git', '*/fix-dispersy-deferreds')
