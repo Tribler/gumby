@@ -33,7 +33,7 @@ def gitCheckout(url, branch, targetDir=''){
 }
 
 def checkoutGumby() {
-  gitCheckout('https://github.com/whirm/gumby.git', '*/devel')
+  gitCheckout('https://github.com/lfdversluis/gumby.git', '*/async-dispersy')
 }
 
 def runOnFreeCluster(experimentConf){
@@ -71,8 +71,8 @@ def runOnFreeCluster(experimentConf){
       // stage 'Check out Gumby'
       // checkoutGumby()
 
-      // stage 'Check out Tribler'
-      // gitCheckout('https://github.com/Tribler/tribler.git', '*/devel')
+      stage 'Check out Tribler'
+      gitCheckout('https://github.com/lfdversluis/tribler.git', '*/fix-dispersy-deferreds')
 
       sh """
 gumby/scripts/build_virtualenv.sh
