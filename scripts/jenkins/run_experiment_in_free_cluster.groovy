@@ -46,7 +46,9 @@ def runOnFreeCluster(experimentConf){
   def experimentName
   def clusterName
   node('master') {  def confFile = readFile(experimentConf).replaceAll(/#.*/,"")
+    println "here1"
     def configObject = new ConfigSlurper().parse(confFile)
+    println "here2"
     def neededNodes = configObject.das4_node_amount
     experimentName = configObject.experiment_name
     configObject = null
