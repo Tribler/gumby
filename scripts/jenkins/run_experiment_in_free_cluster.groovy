@@ -74,6 +74,15 @@ def runOnFreeCluster(experimentConf){
       stage 'Check out Tribler'
       gitCheckout('https://github.com/lfdversluis/tribler.git', '*/fix-dispersy-deferreds')
 
+// Check out the right dispersy submodule + branch
+      sh """
+cd tribler/Tribler/dispersy
+git remote add laurens https://github.com/lfdversluis/dispersy.git
+git fetch laurens
+git checkout laurens/storm-db-manager
+"""
+
+
       sh """
 gumby/scripts/build_virtualenv.sh
 source ~/venv/bin/activate
