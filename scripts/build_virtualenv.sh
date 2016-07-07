@@ -236,7 +236,7 @@ fi
 M2CDEPS=$VENV/m2cdeps
 mkdir -p $M2CDEPS
 
-OPENSSL_VERSION=1.0.1h
+OPENSSL_VERSION=1.0.2h
 OPENSSL_MARKER=`build_marker openssl $OPENSSL_VERSION`
 if [ ! -e $M2CDEPS/lib/libcrypto.so.1.0.0  -o ! -e $OPENSSL_MARKER ]; then
     pushd $VENV/src
