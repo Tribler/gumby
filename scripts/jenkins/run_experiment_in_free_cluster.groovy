@@ -80,6 +80,7 @@ cd tribler/Tribler/dispersy
 git remote add laurens https://github.com/lfdversluis/dispersy.git
 git fetch laurens
 git checkout laurens/storm-db-manager
+cd ../../../
 """
 
 
