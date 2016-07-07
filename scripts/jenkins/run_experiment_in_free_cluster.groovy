@@ -38,8 +38,8 @@ def checkoutGumby() {
 
 def runOnFreeCluster(experimentConf){
   //def experimentConf = env.EXPERIMENT_CONF
-  // stage 'Checkout gumby'
-  // checkoutGumby()
+  stage 'Checkout gumby'
+  checkoutGumby()
 
   stage 'Find a free cluster'
 
