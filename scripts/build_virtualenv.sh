@@ -280,7 +280,7 @@ if [ ! -e $SWIG_MARKER ]; then
     fi
     pushd swig-$SWIG_VERSION*/
 
-    ./configure --prefix=$M2CDEPS
+    ./configure
     make 
     make install
     echo "Done installing SWIG"
