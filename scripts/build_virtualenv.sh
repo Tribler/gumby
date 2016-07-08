@@ -267,6 +267,29 @@ if [ ! -e $M2CDEPS/lib/libcrypto.so.1.0.0  -o ! -e $OPENSSL_MARKER ]; then
     touch $OPENSSL_MARKER
 fi
 
+SWIG_VERSION=3.0.10
+SWIG_MARKER=`build_marker swig $SWIG_VERSION`
+if [ ! -e $SWIG_MARKER ]; then
+    pushd $VENV/src
+    if [ ! -e swig-$SWIG_VERSION*.tar.gz ]; then
+        wget --no-check-certificate http://prdownloads.sourceforge.net/swig/swig-$SWIG_VERSION.tar.gz
+    fi
+    if [ ! -d swig-$SWIG_VERSION*/ ]; then
+        rm -fR swig-*/
+        tar xvzpf swig-$SWIG_VERSION*tar.gz
+    fi
+    pushd swig-$SWIG_VERSION*/
+
+    ./configure --prefix=$M2CDEPS
+    make 
+    make install
+    echo "Done installing SWIG"
+    popd
+    popd
+    touch $SWIG_MARKER
+fi
+
+
 M2CRYPTO_VERSION=0.24.0
 M2CRYPTO_MARKER=`build_marker m2crypto $M2CRYPTO_VERSION`
 if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg  -o ! -e $M2CRYPTO_MARKER ]; then
