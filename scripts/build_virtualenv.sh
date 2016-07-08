@@ -289,6 +289,7 @@ if [ ! -e $SWIG_MARKER ]; then
     touch $SWIG_MARKER
 fi
 
+swig -swiglib
 
 M2CRYPTO_VERSION=0.24.0
 M2CRYPTO_MARKER=`build_marker m2crypto $M2CRYPTO_VERSION`
