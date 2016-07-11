@@ -235,7 +235,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
         else:
             self._master_member = yield self._dispersy.get_member(public_key=self.master_key)
 
-        self._logger.error("MASTER_MEMBER: %s". self._master_member)
+        self._logger.error("MASTER_MEMBER: %s", self._master_member)
         self._my_member = yield self.get_my_member()
         assert self._master_member
         assert self._my_member
