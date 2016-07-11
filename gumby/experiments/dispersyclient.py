@@ -204,6 +204,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     @inlineCallbacks
     def start_dispersy(self, autoload_discovery=True):
+        import traceback
+        traceback.print_stack()
         self._logger.debug("Starting dispersy")
         # We need to import the stuff _AFTER_ configuring the logging stuff.
         try:
