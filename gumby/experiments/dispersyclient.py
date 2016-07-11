@@ -204,6 +204,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     @inlineCallbacks
     def start_dispersy(self, autoload_discovery=True):
+        self._logger.error("Startin traceback of dispersyclient, start_dispersy")
         import traceback
         traceback.print_stack()
         self._logger.debug("Starting dispersy")
@@ -233,6 +234,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
             self._master_member = yield self._dispersy.get_member(private_key=self.master_private_key)
         else:
             self._master_member = yield self._dispersy.get_member(public_key=self.master_key)
+
+        self._logger.error("MASTER_MEMBER: %s". self._master_member)
         self._my_member = yield self.get_my_member()
         assert self._master_member
         assert self._my_member
@@ -266,6 +269,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
     @inlineCallbacks
     def online(self, dont_empty=False):
+        self._logger.error("Startin traceback of dispersyclient, online")
+        import traceback
+        traceback.print_stack()
         self._logger.debug("Trying to go online")
         if self._community is None:
             self._logger.debug("online")
