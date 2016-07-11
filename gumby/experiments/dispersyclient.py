@@ -205,9 +205,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def start_dispersy(self, autoload_discovery=True):
         @inlineCallbacks
         def _start_dispersy():
-            self._logger.error("Startin traceback of dispersyclient, start_dispersy")
-            import traceback
-            traceback.print_stack()
             self._logger.debug("Starting dispersy")
             # We need to import the stuff _AFTER_ configuring the logging stuff.
             try:
@@ -274,9 +271,6 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def online(self, dont_empty=False):
         @inlineCallbacks
         def _online(_):
-            self._logger.error("Startin traceback of dispersyclient, online")
-            import traceback
-            traceback.print_stack()
             self._logger.debug("Trying to go online")
             if self._community is None:
                 self._logger.debug("online")
