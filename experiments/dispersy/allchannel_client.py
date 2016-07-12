@@ -88,7 +88,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
         yield self.my_channel.set_channel_mode(ChannelCommunity.CHANNEL_OPEN)
 
         self._logger.info("Community created with member: %s", self.my_channel._master_member)
-        self.my_channel._disp_create_channel(u'', u'')
+        yield self.my_channel._disp_create_channel(u'', u'')
 
     @inlineCallbacks
     def join(self):

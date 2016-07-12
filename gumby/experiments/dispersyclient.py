@@ -205,7 +205,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def start_dispersy(self, autoload_discovery=True):
         @inlineCallbacks
         def _start_dispersy():
-            self._logger.debug("Starting dispersy")
+            self._logger.info("Starting dispersy")
             # We need to import the stuff _AFTER_ configuring the logging stuff.
             try:
                 from Tribler.dispersy.dispersy import Dispersy
@@ -243,7 +243,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
             self.print_on_change('community-kwargs', {}, self.community_kwargs)
             self.print_on_change('community-env', {}, {'pid':getpid()})
 
-            self._logger.debug("Finished starting dispersy")
+            self._logger.info("Finished starting dispersy")
 
         self.start_deferred = _start_dispersy()
         return self.start_deferred
