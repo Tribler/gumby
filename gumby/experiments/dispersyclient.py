@@ -235,6 +235,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
 
             self._logger.error("MASTER_MEMBER: %s", self._master_member)
             self._my_member = yield self.get_my_member()
+            self._logger.error("MY_MEMBER: %s", self._my_member)
             assert self._master_member
             assert self._my_member
 
@@ -271,7 +272,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def online(self, dont_empty=False):
         @inlineCallbacks
         def _online(_):
-            self._logger.debug("Trying to go online")
+            self._logger.error("Trying to go online")
             if self._community is None:
                 self._logger.debug("online")
 
@@ -287,9 +288,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 if not dont_empty:
                     self.empty_buffer()
 
-                self._logger.debug("Dispersy is using port %s", repr(self._dispersy._endpoint.get_address()))
+                self._logger.error("Dispersy is using port %s", repr(self._dispersy._endpoint.get_address()))
             else:
-                self._logger.debug("online (we are already online)")
+                self._logger.error("online (we are already online)")
 
         if self.start_deferred:
             return self.start_deferred.addCallback(_online)
