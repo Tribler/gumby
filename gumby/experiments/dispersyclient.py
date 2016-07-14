@@ -276,7 +276,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
             if self._community is None:
                 self._logger.debug("online")
 
-                self._logger.debug("join community %s as %s",
+                self._logger.error("join community(%s) %s as %s",
+                                   self.community_class,
                                    self._master_member.mid.encode("HEX"),
                                    self._my_member.mid.encode("HEX"))
                 self._dispersy.on_incoming_packets = self.original_on_incoming_packets
