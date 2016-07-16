@@ -99,7 +99,8 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self._logger.info("trying-to-join-community")
 
         cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
-        self._logger.error("CID %s FROM %s", cid, self._community._channelcast_db.getChannelIdFromDispersyCID)
+        self._logger.error("CID %s IN COMMUNITY %s FROM %s", cid, self._community,
+                           self._community._channelcast_db.getChannelIdFromDispersyCID)
         if cid:
             community = yield self._community._get_channel_community(cid)
             self._logger.error("community._channel_id %s", community._channel_id)
