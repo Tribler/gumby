@@ -255,6 +255,7 @@ class ScenarioRunner(ScenarioParser):
         """
         if name is None:
             name = clb.__name__
+        self._logger.error("REGISTERING %s ON %s", name, clb)
         self._callables[name] = clb
 
     def parse_file(self):
@@ -282,6 +283,7 @@ class ScenarioRunner(ScenarioParser):
         for tstmp, clb, args in self._my_actions:
             tstmp = tstmp + self._expstartstamp
             delay = tstmp - time()
+            self._logger.error("INVOKING %s -> %s", clb, self._callables[clb])
             reactor.callLater(
                 delay if delay > 0.0 else 0,
                 self._callables[clb],
