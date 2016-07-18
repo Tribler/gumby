@@ -55,6 +55,7 @@ from threading import RLock
 from time import time
 
 from twisted.internet import reactor
+from twisted.python.threadable import isInIOThread
 
 
 class ScenarioParser():
@@ -272,6 +273,7 @@ class ScenarioRunner(ScenarioParser):
         """
         Schedules calls for each scenario line.
         """
+        assert isInIOThread()
         self._logger.info("Running scenario from file: %s", self.filename)
 
         if not self._is_parsed:
