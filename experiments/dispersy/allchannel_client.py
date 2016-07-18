@@ -41,6 +41,7 @@ from random import choice
 from string import letters
 from sys import path as pythonpath
 from time import time
+from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
 
 from twisted.internet.task import LoopingCall
@@ -63,6 +64,9 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.my_channel = None
         self.joined_community = None
         self.torrentindex = 1
+
+        self.dc_lc = LoopingCall(self.print_delayed_calls)
+        self.dc_lc.start(5.0, now=False)
 
         self.join_lc = None
         self.set_community_kwarg('tribler_session', None)
@@ -89,6 +93,13 @@ class AllChannelClient(DispersyExperimentScriptClient):
 
         self._logger.info("Community created with member: %s", self.my_channel._master_member)
         yield self.my_channel._disp_create_channel(u'', u'')
+
+
+    def print_delayed_calls(self):
+        delayed_calls = reactor.getDelayedCalls()
+        if delayed_calls:
+            for dc in delayed_calls:
+                self._logger.error("DELAYED CALL: %s", dc)
 
     @inlineCallbacks
     def join(self):
