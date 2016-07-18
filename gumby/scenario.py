@@ -274,6 +274,7 @@ class ScenarioRunner(ScenarioParser):
         Schedules calls for each scenario line.
         """
         assert isInIOThread()
+        assert reactor.running
         self._logger.info("Running scenario from file: %s", self.filename)
 
         if not self._is_parsed:
