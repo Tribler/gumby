@@ -133,7 +133,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
     @inlineCallbacks
     def publish(self, amount=1):
         amount = int(amount)
-        k_for_crash = 1/0
         self._logger.error("in publish, 1")
         torrents = []
         if self.my_channel or self.joined_community:
