@@ -68,6 +68,8 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.dc_lc = LoopingCall(self.print_delayed_calls)
         self.dc_lc.start(5.0, now=False)
 
+        reactor.callLater(10, self.publish)
+
         self.join_lc = None
         self.set_community_kwarg('tribler_session', None)
 
