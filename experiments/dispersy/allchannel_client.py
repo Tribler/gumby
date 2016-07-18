@@ -162,6 +162,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
             elif self.joined_community:
                 yield self.joined_community._disp_create_torrents(torrents)
 
+    @inlineCallbacks
     def post(self, amount=1):
         amount = int(amount)
         if self.joined_community:
