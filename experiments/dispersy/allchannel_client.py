@@ -130,6 +130,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
                 self.join_lc.stop()
                 return
 
+    @inlineCallbacks
     def publish(self, amount=1):
         amount = int(amount)
         k_for_crash = 1/0
