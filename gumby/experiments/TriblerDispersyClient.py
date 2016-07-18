@@ -69,13 +69,12 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
         self.session_deferred.addCallback(self.__start_dispersy)
 
     @inlineCallbacks
-    # TODO: check callers
     def __start_dispersy(self, session):
-        self.original_on_incoming_packets = self._dispersy.on_incoming_packets
+        self.original_on_incoming_packets = yield self._dispersy.on_incoming_packets
         if self.master_private_key:
-            self._master_member = self._dispersy.get_member(private_key=self.master_private_key)
+            self._master_member = yield self._dispersy.get_member(private_key=self.master_private_key)
         else:
-            self._master_member = self._dispersy.get_member(public_key=self.master_key)
+            self._master_member = yield self._dispersy.get_member(public_key=self.master_key)
         self._my_member = yield self.get_my_member()
         assert self._master_member
         assert self._my_member
