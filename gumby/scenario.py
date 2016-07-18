@@ -285,9 +285,9 @@ class ScenarioRunner(ScenarioParser):
         for tstmp, clb, args in self._my_actions:
             tstmp = tstmp + self._expstartstamp
             delay = tstmp - time()
-            self._logger.error("INVOKING %s -> %s WITH DELAY %s", clb, self._callables[clb], delay if delay > 0.0 else 0)
+            self._logger.error("INVOKING %s -> %s WITH DELAY %s", clb, self._callables[clb], delay/4 if delay > 0.0 else 0)
             reactor.callLater(
-                delay if delay > 0.0 else 0,
+                delay/4 if delay > 0.0 else 0,
                 self._callables[clb],
                 *args
             )
