@@ -119,6 +119,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
 
     def publish(self, amount=1):
         amount = int(amount)
+        self._logger.error("in publish, 1")
         torrents = []
         if self.my_channel or self.joined_community:
             for _ in xrange(amount):
@@ -138,6 +139,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
                 trackers = tuple(trackers)
 
                 self.torrentindex += 1
+                self._logger.error("in publish, 2")
                 torrents.append((infohash, int(time()), name, files, trackers))
         if torrents:
             if self.my_channel:
