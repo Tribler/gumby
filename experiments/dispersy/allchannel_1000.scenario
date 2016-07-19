@@ -3,7 +3,7 @@
 @0:1 online {1-980,990-1000}
 @0:110 reset_dispersy_statistics
 @0:120 annotate start-experiment
-@0:121 join {2,272,309,310,687,728,922}
+@0:121 join {272,309,310,687,728,922}
 @0:121 create {1}
 @0:121 publish 325 {1}
 @0:122 join {198,254,388,473,530,548,593,852,917}
@@ -2289,3 +2289,4 @@
 @0:2635 publish 2 {1}
 @0:3135 stop_dispersy
 @0:3145 stop
+
