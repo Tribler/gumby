@@ -100,7 +100,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
         delayed_calls = reactor.getDelayedCalls()
         for dc in delayed_calls:
             self._logger.error("Delayed call in join: %s", dc)
-            
+
         self._logger.info("trying-to-join-community")
 
         cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
