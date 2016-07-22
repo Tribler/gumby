@@ -94,21 +94,14 @@ class AllChannelClient(DispersyExperimentScriptClient):
     @inlineCallbacks
     def join(self):
         if not self.join_lc:
-            delayed_calls = reactor.getDelayedCalls()
-            for dc in delayed_calls:
-                self._logger.error("Delayed call in join: %s", dc)
-
             self.join_lc = lc = LoopingCall(self.join)
             lc.start(1.0, now=False)
 
         self._logger.info("trying-to-join-community")
 
         cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
-        self._logger.error("CID %s IN COMMUNITY %s FROM %s", cid, self._community,
-                           self._community._channelcast_db.getChannelIdFromDispersyCID)
         if cid:
             community = yield self._community._get_channel_community(cid)
-            self._logger.error("community._channel_id %s", community._channel_id)
             if community._channel_id:
                 yield self._community.disp_create_votecast(community.cid, 2, int(time()))
 
@@ -147,7 +140,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
                 torrents.append((infohash, int(time()), name, files, trackers))
         if torrents:
             if self.my_channel:
-                self._logger.error("CREATOR: about to send %s meta torrent messages", len(torrents))
                 yield self.my_channel._disp_create_torrents(torrents)
             elif self.joined_community:
                 yield self.joined_community._disp_create_torrents(torrents)

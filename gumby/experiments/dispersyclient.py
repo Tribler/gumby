@@ -233,9 +233,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
             else:
                 self._master_member = yield self._dispersy.get_member(public_key=self.master_key)
 
-            self._logger.error("MASTER_MEMBER: %s", self._master_member)
             self._my_member = yield self.get_my_member()
-            self._logger.error("MY_MEMBER: %s", self._my_member)
             assert self._master_member
             assert self._my_member
 
@@ -244,7 +242,7 @@ class DispersyExperimentScriptClient(ExperimentClient):
             self.print_on_change('community-kwargs', {}, self.community_kwargs)
             self.print_on_change('community-env', {}, {'pid':getpid()})
 
-            self._logger.info("Finished starting dispersy")
+            self._logger.debug("Finished starting dispersy")
 
         self.start_deferred = _start_dispersy()
         return self.start_deferred
@@ -272,11 +270,11 @@ class DispersyExperimentScriptClient(ExperimentClient):
     def online(self, dont_empty=False):
         @inlineCallbacks
         def _online(_):
-            self._logger.error("Trying to go online")
+            self._logger.debug("Trying to go online")
             if self._community is None:
                 self._logger.debug("online")
 
-                self._logger.error("join community(%s) %s as %s",
+                self._logger.debug("join community(%s) %s as %s",
                                    self.community_class,
                                    self._master_member.mid.encode("HEX"),
                                    self._my_member.mid.encode("HEX"))
@@ -289,9 +287,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
                 if not dont_empty:
                     self.empty_buffer()
 
-                self._logger.error("Dispersy is using port %s", repr(self._dispersy._endpoint.get_address()))
+                self._logger.debug("Dispersy is using port %s", repr(self._dispersy._endpoint.get_address()))
             else:
-                self._logger.error("online (we are already online)")
+                self._logger.debug("online (we are already online)")
 
         if self.start_deferred:
             return self.start_deferred.addCallback(_online)
