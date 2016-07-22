@@ -65,7 +65,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.joined_community = None
         self.torrentindex = 1
 
-        self.join_lc = None
         self.set_community_kwarg('tribler_session', None)
 
     def registerCallbacks(self):
@@ -93,10 +92,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
 
     @inlineCallbacks
     def join(self):
-        if not self.join_lc:
-            self.join_lc = lc = LoopingCall(self.join)
-            lc.start(1.0, now=False)
-
         self._logger.info("trying-to-join-community")
 
         cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
@@ -112,8 +107,8 @@ class AllChannelClient(DispersyExperimentScriptClient):
                 if self.joined_community is None:
                     self._logger.info("couldn't join community")
                 self._logger.info("Joined community with member: %s", self.joined_community._master_member)
-                self.join_lc.stop()
                 return
+        reactor.callLater(1, self.join)
 
     @inlineCallbacks
     def publish(self, amount=1):
