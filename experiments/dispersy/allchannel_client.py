@@ -94,20 +94,21 @@ class AllChannelClient(DispersyExperimentScriptClient):
     def join(self):
         self._logger.info("trying-to-join-community")
 
-        cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
-        if cid:
-            community = yield self._community._get_channel_community(cid)
-            if community._channel_id:
-                yield self._community.disp_create_votecast(community.cid, 2, int(time()))
+        if self.is_online:
+            cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
+            if cid:
+                community = yield self._community._get_channel_community(cid)
+                if community._channel_id:
+                    yield self._community.disp_create_votecast(community.cid, 2, int(time()))
 
-                self._logger.info("joining-community")
-                for c in self._dispersy.get_communities():
-                    if isinstance(c, ChannelCommunity):
-                        self.joined_community = c
-                if self.joined_community is None:
-                    self._logger.info("couldn't join community")
-                self._logger.info("Joined community with member: %s", self.joined_community._master_member)
-                return
+                    self._logger.info("joining-community")
+                    for c in self._dispersy.get_communities():
+                        if isinstance(c, ChannelCommunity):
+                            self.joined_community = c
+                    if self.joined_community is None:
+                        self._logger.info("couldn't join community")
+                    self._logger.info("Joined community with member: %s", self.joined_community._master_member)
+                    return
         reactor.callLater(1, self.join)
 
     @inlineCallbacks
