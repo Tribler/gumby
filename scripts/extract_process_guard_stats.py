@@ -179,8 +179,14 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
     write_records(all_pids, readbytes, output_directory, "readbytes.txt")
     write_records(all_pids, vsizes, output_directory, "vsizes.txt")
     write_records(all_pids, rsizes, output_directory, "rsizes.txt")
-    write_records(all_pids, total_read_bytes, output_directory, "total_read_bytes.txt")
-    write_records(all_pids, total_write_bytes, output_directory, "total_write_bytes.txt")
+
+    with open("total_read_bytes.txt", 'wb') as f:
+        for key in total_read_bytes.keys():
+            f.write("%s %s" % (key, total_read_bytes[key]))
+
+    with open("total_write_bytes.txt", 'wb') as f:
+        for key in total_write_bytes.keys():
+            f.write("%s %s" % (key, total_write_bytes[key]))
 
     sum_total_read_bytes = 0
     sum_total_write_bytes = 0
