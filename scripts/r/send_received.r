@@ -37,8 +37,8 @@ generate_send <- function(path, ylim) {
 	return(p)
 }
 
-current_send_path <- "current/send_reduced.txt"
-upstream_send_path <- "upstream/send_reduced.txt"
+current_send_path <- "send_reduced.txt"
+upstream_send_path <- "../upstream/output/send_reduced.txt"
 
 if(file.exists(current_send_path)){
 	# If we have an upstream version, we are going to make a side comparison graph
@@ -94,8 +94,8 @@ generate_received <- function(path, ylim) {
 	return(p)
 }
 
-current_received_path <- "current/received_reduced.txt"
-upstream_received_path <- "upstream/received_reduced.txt"
+current_received_path <- "received_reduced.txt"
+upstream_received_path <- "../upstream/output/received_reduced.txt"
 
 if(file.exists("received_reduced.txt")){
 	# If we have an upstream version, we are going to make a side comparison graph
