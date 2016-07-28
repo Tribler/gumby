@@ -74,6 +74,9 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
     prev_readbytes = {}
     prev_times = {}
 
+    total_read_bytes = dict()
+    total_write_bytes = dict()
+
     filename = 'resource_usage.log'
     for root, dirs, files in os.walk(input_directory):
         if filename in files:
@@ -125,6 +128,9 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
                 write_bytes = long(parts[-2])
                 read_bytes = long(parts[-3])
 
+                total_write_bytes[pid] = write_bytes
+                total_read_bytes[pid] = read_bytes
+
                 readbytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), read_bytes, prev_readbytes.get(pid, read_bytes)) / 1024.0
                 writebytes.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), write_bytes, prev_writebytes.get(pid, write_bytes)) / 1024.0
                 readbytes[time].setdefault(nodename, []).append(readbytes[time][pid])
@@ -173,6 +179,21 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
     write_records(all_pids, readbytes, output_directory, "readbytes.txt")
     write_records(all_pids, vsizes, output_directory, "vsizes.txt")
     write_records(all_pids, rsizes, output_directory, "rsizes.txt")
+    write_records(all_pids, total_read_bytes, output_directory, "total_read_bytes.txt")
+    write_records(all_pids, total_write_bytes, output_directory, "total_write_bytes.txt")
+
+    sum_total_read_bytes = 0
+    sum_total_write_bytes = 0
+    # Sum up all pids read bytes and write bytes
+    for pid in total_read_bytes.keys():
+        sum_total_read_bytes += total_read_bytes[pid]
+        sum_total_write_bytes += total_write_bytes[pid]
+
+    # Write both sums to a file
+    with open(os.path.join(output_directory, "sum_read_write_bytes.txt"), 'wb') as f:
+        f.write("sum_total_read_bytes sum_total_write_bytes")
+        f.write(str(sum_total_read_bytes) + " " + str(sum_total_write_bytes))
+
 
     # calculate sum for all nodes
     for dictionary in [utimes, stimes, wchars, rchars, vsizes, rsizes, writebytes, readbytes]:
