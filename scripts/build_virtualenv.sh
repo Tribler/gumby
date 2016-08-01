@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=22
+SCRIPT_VERSION=23
 
 # Code:
 set -e
@@ -274,7 +274,7 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg  -o ! -e $M2CRYPTO_MARKE
     if [ ! -e M2Crypto-$M2CRYPTO_VERSION*gz ]; then
         wget --no-check-certificate http://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-$M2CRYPTO_VERSION.tar.gz
     fi
-    if [ ! -d M2Crypto-$M2CRYPTO_VERSION*/ ]; then
+    if [ ! -d M2Crypto-$M2CRYPTO_VERSION*/ -o ! -e $M2CRYPTO_MARKER ]; then
         rm -fR M2Crypto-*/
         tar xvapf M2Crypto-$M2CRYPTO_VERSION*gz
     fi
@@ -286,6 +286,7 @@ if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg  -o ! -e $M2CRYPTO_MARKE
 
     # Add openssl's .a's at THE END of the compile command. Using LDFLAGS won't work as it would end up in the middle.
     EXTRA_LINK_ARGS="-fPIC $M2CDEPS/lib/libssl.a $M2CDEPS/lib/libcrypto.a"
+    echo $EXTRA_LINK_ARGS
     sed -i 's~\( extra_compile_args=\[.*,$\)~\1 extra_link_args='"'$EXTRA_LINK_ARGS'.split()"',~' setup.py
 
     # python setup.py clean # This doesn't clean everything
@@ -537,6 +538,9 @@ six
 twisted # Used by the config server/clients
 unicodecsv # used for report generation scripts from Cor-Paul
 validate
+storm
+transaction
+zope.component
 " > ~/requirements.txt
 
 # For some reason the pip scripts get a python 2.6 shebang, fix it.

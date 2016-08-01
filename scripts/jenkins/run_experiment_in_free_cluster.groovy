@@ -1,4 +1,3 @@
-
 def gitCheckout(url, branch, targetDir=''){
   if (targetDir == '') {
     targetDir = (url =~ '.*/(.+).git')[0][1]
@@ -77,7 +76,6 @@ def runOnFreeCluster(experimentConf){
       sh """
 gumby/scripts/build_virtualenv.sh
 source ~/venv/bin/activate
-
 ./gumby/run.py ${experimentConf}
 """
     } finally {

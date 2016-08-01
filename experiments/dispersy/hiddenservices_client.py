@@ -38,6 +38,7 @@
 # Code:
 
 from os import path
+from twisted.internet.defer import inlineCallbacks
 
 from gumby.experiments.TriblerDispersyClient import TriblerDispersyExperimentScriptClient,\
     BASE_DIR
@@ -153,8 +154,9 @@ class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
 
         self.session.lm.threadpool.call_in_thread(0, cb_start_download)
 
+    @inlineCallbacks
     def online(self, dont_empty=False):
-        super(HiddenServicesClient, self).online(dont_empty)
+        yield super(HiddenServicesClient, self).online(dont_empty)
         self.session.set_anon_proxy_settings(2, ("127.0.0.1", self.session.get_tunnel_community_socks5_listen_ports()))
 
         def monitor_downloads(dslist):

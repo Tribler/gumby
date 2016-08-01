@@ -39,6 +39,7 @@
 from os import path, environ
 from sys import path as pythonpath
 from hashlib import sha1
+from twisted.internet.defer import inlineCallbacks
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
@@ -63,8 +64,9 @@ class MetadataClient(DispersyExperimentScriptClient):
     def registerCallbacks(self):
         self.scenario_runner.register(self.insert_metadata, 'insert_metadata')
 
+    @inlineCallbacks
     def online(self):
-        super(MetadataClient, self).online()
+        yield super(MetadataClient, self).online()
 
         if not self.log_statistics_lc:
             self.log_statistics_lc = lc = LoopingCall(self.log_statistics)

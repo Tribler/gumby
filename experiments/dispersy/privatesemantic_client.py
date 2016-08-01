@@ -10,6 +10,8 @@ from sys import path as pythonpath
 from time import time, sleep
 from collections import defaultdict
 from hashlib import sha1
+from twisted.internet.defer import inlineCallbacks
+from twisted.internet.task import LoopingCall
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
@@ -157,10 +159,11 @@ class PrivateSemanticClient(DispersyExperimentScriptClient):
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: community_kwargs are now", self.community_kwargs
 
+    @inlineCallbacks
     def online(self):
         sleep(random() * 5.0)
 
-        super(PrivateSemanticClient, self).online()
+        yield super(PrivateSemanticClient, self).online()
 
         # disable msimilarity requests
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request

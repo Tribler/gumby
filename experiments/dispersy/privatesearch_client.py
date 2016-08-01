@@ -46,6 +46,7 @@ from sys import path as pythonpath
 from time import time
 from collections import defaultdict
 from hashlib import sha1
+from twisted.internet.defer import inlineCallbacks
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
 
@@ -229,8 +230,9 @@ class PrivateSearchClient(DispersyExperimentScriptClient):
         if DEBUG:
             print >> sys.stderr, "PrivateSearchClient: community_kwargs are now", self.community_kwargs
 
+    @inlineCallbacks
     def online(self):
-        super(PrivateSearchClient, self).online()
+        yield super(PrivateSearchClient, self).online()
 
         # disable msimilarity requests
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request

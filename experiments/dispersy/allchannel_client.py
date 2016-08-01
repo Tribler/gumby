@@ -41,6 +41,8 @@ from random import choice
 from string import letters
 from sys import path as pythonpath
 from time import time
+from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks
 
 from twisted.internet.task import LoopingCall
 
@@ -63,7 +65,6 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.joined_community = None
         self.torrentindex = 1
 
-        self.join_lc = None
         self.set_community_kwarg('tribler_session', None)
 
     def registerCallbacks(self):
@@ -72,44 +73,45 @@ class AllChannelClient(DispersyExperimentScriptClient):
         self.scenario_runner.register(self.publish, 'publish')
         self.scenario_runner.register(self.post, 'post')
 
+    @inlineCallbacks
     def start_dispersy(self):
         from Tribler.community.channel.preview import PreviewChannelCommunity
 
-        super(AllChannelClient, self).start_dispersy()
-        self._dispersy.define_auto_load(ChannelCommunity, self._my_member, (), {"tribler_session": None})
-        self._dispersy.define_auto_load(PreviewChannelCommunity, self._my_member, (), {"tribler_session": None})
+        yield super(AllChannelClient, self).start_dispersy()
+        yield self._dispersy.define_auto_load(ChannelCommunity, self._my_member, (), {"tribler_session": None})
+        yield self._dispersy.define_auto_load(PreviewChannelCommunity, self._my_member, (), {"tribler_session": None})
 
+    @inlineCallbacks
     def create(self):
         self._logger.info("creating-community")
-        self.my_channel = ChannelCommunity.create_community(self._dispersy, self._my_member, tribler_session=None)
-        self.my_channel.set_channel_mode(ChannelCommunity.CHANNEL_OPEN)
+        self.my_channel = yield ChannelCommunity.create_community(self._dispersy, self._my_member, tribler_session=None)
+        yield self.my_channel.set_channel_mode(ChannelCommunity.CHANNEL_OPEN)
 
         self._logger.info("Community created with member: %s", self.my_channel._master_member)
-        self.my_channel._disp_create_channel(u'', u'')
+        yield self.my_channel._disp_create_channel(u'', u'')
 
+    @inlineCallbacks
     def join(self):
-        if not self.join_lc:
-            self.join_lc = lc = LoopingCall(self.join)
-            lc.start(1.0, now=False)
-
         self._logger.info("trying-to-join-community")
 
-        cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
-        if cid:
-            community = self._community._get_channel_community(cid)
-            if community._channel_id:
-                self._community.disp_create_votecast(community.cid, 2, int(time()))
+        if self.is_online:
+            cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
+            if cid:
+                community = yield self._community._get_channel_community(cid)
+                if community._channel_id:
+                    yield self._community.disp_create_votecast(community.cid, 2, int(time()))
 
-                self._logger.info("joining-community")
-                for c in self._dispersy.get_communities():
-                    if isinstance(c, ChannelCommunity):
-                        self.joined_community = c
-                if self.joined_community is None:
-                    self._logger.info("couldn't join community")
-                self._logger.info("Joined community with member: %s", self.joined_community._master_member)
-                self.join_lc.stop()
-                return
+                    self._logger.info("joining-community")
+                    for c in self._dispersy.get_communities():
+                        if isinstance(c, ChannelCommunity):
+                            self.joined_community = c
+                    if self.joined_community is None:
+                        self._logger.info("couldn't join community")
+                    self._logger.info("Joined community with member: %s", self.joined_community._master_member)
+                    return
+        reactor.callLater(1, self.join)
 
+    @inlineCallbacks
     def publish(self, amount=1):
         amount = int(amount)
         torrents = []
@@ -134,16 +136,17 @@ class AllChannelClient(DispersyExperimentScriptClient):
                 torrents.append((infohash, int(time()), name, files, trackers))
         if torrents:
             if self.my_channel:
-                self.my_channel._disp_create_torrents(torrents)
+                yield self.my_channel._disp_create_torrents(torrents)
             elif self.joined_community:
-                self.joined_community._disp_create_torrents(torrents)
+                yield self.joined_community._disp_create_torrents(torrents)
 
+    @inlineCallbacks
     def post(self, amount=1):
         amount = int(amount)
         if self.joined_community:
             for _ in xrange(amount):
                 text = ''.join(choice(letters) for i in xrange(160))
-                self.joined_community._disp_create_comment(text, int(time()), None, None, None, None)
+                yield self.joined_community._disp_create_comment(text, int(time()), None, None, None, None)
 
 if __name__ == '__main__':
     AllChannelClient.scenario_file = 'allchannel_1000.scenario'

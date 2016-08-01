@@ -52,7 +52,7 @@ from gumby.scenario import ScenarioRunner
 from gumby.sync import ExperimentClient, ExperimentClientFactory
 
 from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.task import deferLater
 from twisted.internet.threads import deferToThread
 
@@ -203,45 +203,54 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self._strict = not self.str2bool(boolean)
 
     def start_dispersy(self, autoload_discovery=True):
-        self._logger.debug("Starting dispersy")
-        # We need to import the stuff _AFTER_ configuring the logging stuff.
-        try:
-            from Tribler.dispersy.dispersy import Dispersy
-            from Tribler.dispersy.endpoint import StandaloneEndpoint
-            from Tribler.dispersy.util import unhandled_error_observer
-        except:
-            from dispersy.dispersy import Dispersy
-            from dispersy.endpoint import StandaloneEndpoint
-            from dispersy.util import unhandled_error_observer
+        @inlineCallbacks
+        def _start_dispersy():
+            self._logger.info("Starting dispersy")
+            # We need to import the stuff _AFTER_ configuring the logging stuff.
+            try:
+                from Tribler.dispersy.dispersy import Dispersy
+                from Tribler.dispersy.endpoint import StandaloneEndpoint
+                from Tribler.dispersy.util import unhandled_error_observer
+            except:
+                from dispersy.dispersy import Dispersy
+                from dispersy.endpoint import StandaloneEndpoint
+                from dispersy.util import unhandled_error_observer
 
-        self._dispersy = Dispersy(StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
-        self._dispersy.statistics.enable_debug_statistics(True)
+            self._dispersy = Dispersy(StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
+            yield self._dispersy.initialize_statistics()
+            self._dispersy.statistics.enable_debug_statistics(True)
 
-        self.original_on_incoming_packets = self._dispersy.on_incoming_packets
+            self.original_on_incoming_packets = self._dispersy.on_incoming_packets
 
-        if self._strict:
-            from twisted.python.log import addObserver
-            addObserver(unhandled_error_observer)
+            if self._strict:
+                from twisted.python.log import addObserver
+                addObserver(unhandled_error_observer)
 
-        self._dispersy.start(autoload_discovery=autoload_discovery)
+            yield self._dispersy.start(autoload_discovery=autoload_discovery)
 
-        if self.master_private_key:
-            self._master_member = self._dispersy.get_member(private_key=self.master_private_key)
-        else:
-            self._master_member = self._dispersy.get_member(public_key=self.master_key)
-        self._my_member = self.get_my_member()
-        assert self._master_member
-        assert self._my_member
+            if self.master_private_key:
+                self._master_member = yield self._dispersy.get_member(private_key=self.master_private_key)
+            else:
+                self._master_member = yield self._dispersy.get_member(public_key=self.master_key)
 
-        self._do_log()
+            self._my_member = yield self.get_my_member()
+            assert self._master_member
+            assert self._my_member
 
-        self.print_on_change('community-kwargs', {}, self.community_kwargs)
-        self.print_on_change('community-env', {}, {'pid':getpid()})
+            self._do_log()
 
-        self._logger.debug("Finished starting dispersy")
+            self.print_on_change('community-kwargs', {}, self.community_kwargs)
+            self.print_on_change('community-env', {}, {'pid':getpid()})
 
+            self._logger.debug("Finished starting dispersy")
+
+        self.start_deferred = _start_dispersy()
+        return self.start_deferred
+
+    @inlineCallbacks
     def get_my_member(self):
-        return self._dispersy.get_member(private_key=self.my_member_private_key)
+        member = yield self._dispersy.get_member(private_key=self.my_member_private_key)
+        returnValue(member)
 
     def stop_dispersy(self):
         self._dispersy_exit_status = self._dispersy.stop()
@@ -259,25 +268,33 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.master_private_key = priv_key.decode("HEX")
 
     def online(self, dont_empty=False):
-        self._logger.debug("Trying to go online")
-        if self._community is None:
-            self._logger.debug("online")
+        @inlineCallbacks
+        def _online(_):
+            self._logger.debug("Trying to go online")
+            if self._community is None:
+                self._logger.debug("online")
 
-            self._logger.debug("join community %s as %s",
-                               self._master_member.mid.encode("HEX"),
-                               self._my_member.mid.encode("HEX"))
-            self._dispersy.on_incoming_packets = self.original_on_incoming_packets
-            self._community = self.community_class.init_community(self._dispersy, self._master_member, self._my_member,
-                                                                  *self.community_args, **self.community_kwargs)
-            self._community.auto_load = False
+                self._logger.debug("join community(%s) %s as %s",
+                                   self.community_class,
+                                   self._master_member.mid.encode("HEX"),
+                                   self._my_member.mid.encode("HEX"))
+                self._dispersy.on_incoming_packets = self.original_on_incoming_packets
+                self._community = yield self.community_class.init_community(self._dispersy, self._master_member, self._my_member,
+                                                                      *self.community_args, **self.community_kwargs)
+                self._community.auto_load = False
 
-            assert self.is_online()
-            if not dont_empty:
-                self.empty_buffer()
+                assert self.is_online()
+                if not dont_empty:
+                    self.empty_buffer()
 
-            self._logger.debug("Dispersy is using port %s", repr(self._dispersy._endpoint.get_address()))
+                self._logger.debug("Dispersy is using port %s", repr(self._dispersy._endpoint.get_address()))
+            else:
+                self._logger.debug("online (we are already online)")
+
+        if self.start_deferred:
+            return self.start_deferred.addCallback(_online)
         else:
-            self._logger.debug("online (we are already online)")
+            return _online(None)
 
     def offline(self):
         self._logger.debug("Trying to go offline")

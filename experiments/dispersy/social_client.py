@@ -42,6 +42,8 @@ from time import time
 from random import sample
 from sys import path as pythonpath
 from hashlib import sha1
+from twisted.internet.defer import inlineCallbacks
+from twisted.internet.task import LoopingCall
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main, buffer_online
 
@@ -122,6 +124,7 @@ class SocialClient(DispersyExperimentScriptClient):
         else:
             raise RuntimeError("undefined class type, %s" % commtype)
 
+    @inlineCallbacks
     def online(self):
         if self.peercache:
             yield 30.0
@@ -129,7 +132,7 @@ class SocialClient(DispersyExperimentScriptClient):
         # if we're peercache -> enable send_simi_reveal, else disable
         self.set_community_kwarg('send_simi_reveal', self.peercache)
 
-        super(SocialClient, self).online(dont_empty=True)
+        yield super(SocialClient, self).online(dont_empty=True)
         self._orig_create_msimilarity_request = self._community.create_msimilarity_request
 
         if self._mypref_db:
