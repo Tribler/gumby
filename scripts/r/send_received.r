@@ -3,7 +3,7 @@ library(reshape)
 library(grid)
 library(gridExtra)
 
-R.Version()
+print(R.Version())
 
 minX <- as.integer(commandArgs(TRUE)[1])
 maxX <- as.integer(commandArgs(TRUE)[2])
