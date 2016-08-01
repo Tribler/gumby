@@ -9,8 +9,11 @@ maxX <- as.integer(commandArgs(TRUE)[2])
 source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 df2 <- load_annotations()
 
+# Load the comparison function
+source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'side_comparison.r', sep='/'))
+
 # Generates the send.png graph given the send_reduced.txt file
-generate_send <- function(path, ylim) {
+generate_send <- function(path) {
 	df <- read.table(path, header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 
@@ -31,9 +34,6 @@ generate_send <- function(path, ylim) {
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KiBytes total upload)\n")
 	p <- p + xlim(minX, maxX)
-	if(!is.null(ylim)){
-		p <- p + ylim(0, ylim)
-	}
 	return(p)
 }
 
@@ -43,23 +43,10 @@ upstream_send_path <- "../upstream/output/send_reduced.txt"
 if(file.exists(current_send_path)){
 	# If we have an upstream version, we are going to make a side comparison graph
 	if(file.exists(upstream_send_path)){
-		t1 <- read.table(current_send_path, header = TRUE, check.names = FALSE, na.strings = "?")
-		t2 <- read.table(upstream_send_path, header = TRUE, check.names = FALSE, na.strings = "?")
+		current_send <- generate_send(current_send_path)
+		upstream_send <- generate_send(upstream_send_path)
 
-		subdf <- t1[,2:ncol(t1)]
-		subdf[] <- lapply(subdf, function(x) x/1024.0)
-		max1 <- max(subdf)
-
-		subdf <- t2[,2:ncol(t1)]
-		subdf[] <- lapply(subdf, function(x) x/1024.0)
-		max2 <- max(subdf)
-
-		y_max <- max(max1, max2)
-
-		current_send <- generate_send(current_send_path, y_max)
-		upstream_send <- generate_send(upstream_send_path, y_max)
-
-		ggsave(file="send.png", arrangeGrob(upstream_send, current_send, ncol=2), width=18, height=6, dpi=100)
+        create_comparison(upstream_send, current_send, "send.png")
 	} else { # If not, we will just save this graph as-is.
 		current_send <- generate_send(current_send_path, NULL)
 		current_send
@@ -67,8 +54,8 @@ if(file.exists(current_send_path)){
 	}
 }
 
-generate_received <- function(path, ylim) {
-	df <- read.table("received_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
+generate_received <- function(path) {
+	df <- read.table(path, header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 
 	subdf <- df[,2:ncol(df)]
@@ -88,9 +75,6 @@ generate_received <- function(path, ylim) {
 	p <- p + theme(legend.position = "none")
 	p <- p + labs(x = "\nTime into experiment (Seconds)", y = "Bandwidth usage (KiBytes total download)\n")
 	p <- p + xlim(minX, maxX)
-	if(!is.null(ylim)){
-		p <- p + ylim(0, ylim)
-	}
 	return(p)
 }
 
@@ -100,23 +84,10 @@ upstream_received_path <- "../upstream/output/received_reduced.txt"
 if(file.exists(current_received_path)){
 	# If we have an upstream version, we are going to make a side comparison graph
 	if(file.exists(upstream_received_path)){
-		t1 <- read.table(current_received_path, header = TRUE, check.names = FALSE, na.strings = "?")
-		t2 <- read.table(upstream_received_path, header = TRUE, check.names = FALSE, na.strings = "?")
+		current_received <- generate_received(current_received_path)
+		upstream_received <- generate_received(upstream_received_path)
 
-		subdf <- t1[,2:ncol(t1)]
-		subdf[] <- lapply(subdf, function(x) x/1024.0)
-		max1 <- max(subdf)
-
-		subdf <- t2[,2:ncol(t1)]
-		subdf[] <- lapply(subdf, function(x) x/1024.0)
-		max2 <- max(subdf)
-
-		y_max <- max(max1, max2)
-
-		current_received <- generate_received(current_received_path, y_max)
-		upstream_received <- generate_received(upstream_received_path, y_max)
-
-		ggsave(file="received.png", arrangeGrob(upstream_received, current_received, ncol=2), width=18, height=6, dpi=100)
+        create_comparison(upstream_received, current_received, "received.png")
 	} else { # If not, we will just save this graph as-is.
 		current_received <- generate_received(current_received_path, NULL)
 		current_received
