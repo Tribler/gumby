@@ -1,4 +1,4 @@
-create_comparison(before, after, filename){
+create_comparison <- function(before, after, filename){
     # Calculate the maximum of both y scales to make sure they have matching scales
     y_max <- max(layer_scales(before)$y$range$range, layer_scales(before)$y$range$range)
 
