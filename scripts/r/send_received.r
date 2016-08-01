@@ -97,7 +97,7 @@ generate_received <- function(path, ylim) {
 current_received_path <- "received_reduced.txt"
 upstream_received_path <- "../upstream/output/received_reduced.txt"
 
-if(file.exists("received_reduced.txt")){
+if(file.exists(current_received_path)){
 	# If we have an upstream version, we are going to make a side comparison graph
 	if(file.exists(upstream_received_path)){
 		t1 <- read.table(current_received_path, header = TRUE, check.names = FALSE, na.strings = "?")
@@ -113,13 +113,13 @@ if(file.exists("received_reduced.txt")){
 
 		y_max <- max(max1, max2)
 
-		current_received <- generate_send(current_received_path, y_max)
-		upstream_received <- generate_send(upstream_received_path, y_max)
+		current_received <- generate_received(current_received_path, y_max)
+		upstream_received <- generate_received(upstream_received_path, y_max)
 
-		ggsave(file="send.png", arrangeGrob(upstream_received, current_received, ncol=2), width=18, height=6, dpi=100)
+		ggsave(file="received.png", arrangeGrob(upstream_received, current_received, ncol=2), width=18, height=6, dpi=100)
 	} else { # If not, we will just save this graph as-is.
-		current_send <- generate_send(current_received_path, NULL)
-		current_send
-		ggsave(file="send.png", width=8, height=6, dpi=100)
+		current_received <- generate_received(current_received_path, NULL)
+		current_received
+		ggsave(file="received.png", width=8, height=6, dpi=100)
 	}
 }
