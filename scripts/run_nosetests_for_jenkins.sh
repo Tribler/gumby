@@ -117,7 +117,7 @@ else
         TEST_RUNNER_OUT_DIR=$OUTPUT_DIR/test_runners_output
         if [ $(uname) == "Linux" ]; then
             for LINE in $LINES; do
-                echo -n "COVERAGE_FILE=.coverage.$COUNT wrap_in_vnc.sh 'nosetests -v --with-xcoverage  " >> $NOSECMD_FILE
+                echo -n "TEST_BUCKET=$COUNT COVERAGE_FILE=.coverage.$COUNT wrap_in_vnc.sh 'nosetests -v --with-xcoverage  " >> $NOSECMD_FILE
                 echo -n "--xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part " >> $NOSECMD_FILE
                 echo -n "$NOSEARGS_COMMON '" >> $NOSECMD_FILE
                 echo $LINE >> $NOSECMD_FILE
@@ -151,7 +151,7 @@ else
                 if [ $(uname) == "Darwin" ]; then
                     TIMEOUT_CMD="gtimeout"
                 fi
-                COVERAGE_FILE=.coverage.$COUNT ${TIMEOUT_CMD} 600 $WORKSPACE/gumby/scripts/wrap_in_temp_home.sh nosetests -v --with-xcoverage --xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part $NOSEARGS_COMMON $LINE \
+                TEST_BUCKET=$COUNT COVERAGE_FILE=.coverage.$COUNT ${TIMEOUT_CMD} 600 $WORKSPACE/gumby/scripts/wrap_in_temp_home.sh nosetests -v --with-xcoverage --xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part $NOSEARGS_COMMON $LINE \
                 > $TEST_RUNNER_OUT_DIR/${COUNT}.out 2> $TEST_RUNNER_OUT_DIR/${COUNT}.err &
                 let COUNT=1+$COUNT
             done
