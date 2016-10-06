@@ -40,34 +40,26 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
         raise NotImplementedError("Dispersy is stopped using the tribler session in stop")
 
     def start_session(self):
-        from twisted.internet import threads
+        logging.error("Starting Tribler Session")
+        self.session_config = self.setup_session_config()
+        self.session = Session(scfg=self.session_config)
+
+        def on_tribler_started(_):
+            logging.error("Tribler Session started")
+            self.annotate("Tribler Session started")
+            self._dispersy = self.session.lm.dispersy
 
         def _do_start():
-            logging.error("Starting Tribler Session")
-            self.session_config = self.setup_session_config()
-            self.session = Session(scfg=self.session_config)
-
             logging.error("Upgrader")
             upgrader = self.session.prestart()
             while not upgrader.is_done:
                 sleep(0.1)
 
-            self.session.start()
+            return self.session.start().addCallback(on_tribler_started)
 
-            while not self.session.lm.initComplete:
-                time.sleep(0.5)
+        deferToThread(_do_start).addCallback(self.__setup_dispersy_member)
 
-            logging.error("Tribler Session started")
-            self.annotate("Tribler Session started")
-
-            self._dispersy = self.session.lm.dispersy
-
-            return self.session
-
-        self.session_deferred = threads.deferToThread(_do_start)
-        self.session_deferred.addCallback(self.__start_dispersy)
-
-    def __start_dispersy(self, session):
+    def __setup_dispersy_member(self, _):
         self.original_on_incoming_packets = self._dispersy.on_incoming_packets
         if self.master_private_key:
             self._master_member = self._dispersy.get_member(private_key=self.master_private_key)
