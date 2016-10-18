@@ -221,6 +221,9 @@ class ProcessMonitor(object):
         self._interval = interval
 
         self._rm = ResourceMonitor(output_dir, commands)
+        self.monitor_file = None
+        self.network_monitor_file = None
+
         if monitor_dir:
             self.monitor_file = open(monitor_dir + "/resource_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
             # We read the jiffie -> second conversion rate from the os, by dividing the utime
@@ -241,10 +244,6 @@ class ProcessMonitor(object):
             # If monitoring network, open a separate file.
             if network:
                 self.network_monitor_file = open(monitor_dir + "/network_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
-            else:
-                self.network_monitor_file = None
-        else:
-            self.monitor_file = None
         # Capture SIGTERM to kill all the child processes before dying
         self.stopping = False
         signal(SIGTERM, self._termTrap)
