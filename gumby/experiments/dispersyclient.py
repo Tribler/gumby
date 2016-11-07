@@ -84,6 +84,8 @@ class DispersyExperimentScriptClient(ExperimentClient):
         self.generateMyMember()
         self.vars['private_keypair'] = base64.encodestring(self.my_member_private_key)
 
+        self.endpoint = None
+
     def onVarsSend(self):
         scenario_file_path = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
         self.scenario_runner = ScenarioRunner(scenario_file_path)
@@ -214,7 +216,9 @@ class DispersyExperimentScriptClient(ExperimentClient):
             from dispersy.endpoint import StandaloneEndpoint
             from dispersy.util import unhandled_error_observer
 
-        self._dispersy = Dispersy(StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0'), u'.', self._database_file, self._crypto)
+        self.endpoint = StandaloneEndpoint(int(self.my_id) + 12000, '0.0.0.0')
+
+        self._dispersy = Dispersy(self.endpoint, u'.', self._database_file, self._crypto)
         self._dispersy.statistics.enable_debug_statistics(True)
 
         self.original_on_incoming_packets = self._dispersy.on_incoming_packets
