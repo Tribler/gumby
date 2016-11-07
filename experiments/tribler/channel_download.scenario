@@ -1,0 +1,15 @@
+@0:0 set_master_member 3081a7301006072a8648ce3d020106052b81040027038192000403cbbfd2dfb67a7db66c88988df56f93fa6e7f982f9a6a0fa8898492c8b8cae23e10b159ace60b7047012082a5aa4c6e221d7e58107bb550436d57e046c11ab4f51f0ab18fa8f58d0346cc12d1cc2b61fc86fe5ed192309152e11e3f02489e30c7c971dd989e1ce5030ea0fb77d5220a92cceb567cbc94bc39ba246a42e215b55e9315b543ddeff0209e916f77c0d747
+@0:2 start_dispersy {1-5}
+@0:4 start_session {1-5}
+@0:10 online {1-5}
+@0:10 reset_dispersy_statistics
+@0:120 annotate start-experiment
+@0:121 join {2-3}
+@0:125 create {1}
+@0:127 publish file1 1524288000 {1}
+@0:147 publish file2 2524288000 {1}
+@0:167 publish file3 3524288000 {1}
+@0:200 join {4-5}
+@0:250 start_download file1 {2-4}
+@0:3400 reset_dispersy_statistics
+@0:3300 stop
