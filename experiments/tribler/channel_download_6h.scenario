@@ -1,0 +1,43 @@
+@0:0 set_master_member 3081a7301006072a8648ce3d020106052b81040027038192000403cbbfd2dfb67a7db66c88988df56f93fa6e7f982f9a6a0fa8898492c8b8cae23e10b159ace60b7047012082a5aa4c6e221d7e58107bb550436d57e046c11ab4f51f0ab18fa8f58d0346cc12d1cc2b61fc86fe5ed192309152e11e3f02489e30c7c971dd989e1ce5030ea0fb77d5220a92cceb567cbc94bc39ba246a42e215b55e9315b543ddeff0209e916f77c0d747
+@0:2 start_dispersy {1-100}
+@0:20 start_session
+@0:60 online
+@0:60 reset_dispersy_statistics
+@0:60 annotate start-experiment
+# 1 : creator (seeder)
+# 2-20 : dedicated seeder
+# 21-70 : peers
+# 71 - 100 : flashcrowd all scenario
+@0:60 join {2-20}
+@0:60 create {1}
+@0:62 publish file300mb_1 324288002 {1}
+@0:67 publish file5gb_1 5524288002 {1}
+@0:72 publish file1gb_1 1524288002 {1}
+@0:77 publish file1gb_2 1524288222 {1}
+@0:80 join {21-40}
+@0:99 join {41-60}
+@0:105 setup_seeder file300mb_1 324288002 {2-5}
+@0:110 setup_seeder file1gb_1 1524288002 {6-10}
+@0:115 setup_seeder file1gb_2 1524288222 {11-12}
+@0:120 setup_seeder file5gb_1 5524288002 {13-20}
+@0:120 join {61-80}
+@0:125 join {81-100}
+# wave 1
+@2:10 start_download file300mb_1 {21-30}
+@2:20 start_download file1gb_1 {31-35}
+@2:30 start_download file1gb_2 {36-45}
+@2:40 start_download file5gb_1 {46-48}
+# wave 2
+@3:2:0 start_download file300mb_1 {49-52}
+@3:2:20 start_download file1gb_1 {53}
+@3:2:30 start_download file1gb_2 {54-58}
+@3:2:40 start_download file5gb_1 {59-66}
+# wave 3
+@4:0:0 start_download file1gb_1 {67-70}
+#flashcrowd
+@4:2:10 start_download file300mb_1 {71-100}
+@4:2:20 start_download file1gb_1 {71-100}
+@4:2:30 start_download file1gb_2 {71-100}
+@4:2:40 start_download file5gb_1 {71-100}
+@5:58:0 reset_dispersy_statistics
+@5:59:0 stop
