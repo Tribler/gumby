@@ -50,11 +50,6 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
             self._dispersy = self.session.lm.dispersy
 
         def _do_start():
-            logging.error("Upgrader")
-            upgrader = self.session.prestart()
-            while not upgrader.is_done:
-                sleep(0.1)
-
             return self.session.start().addCallback(on_tribler_started)
 
         deferToThread(_do_start).addCallback(self.__setup_dispersy_member)
