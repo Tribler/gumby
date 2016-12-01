@@ -15,6 +15,16 @@ For Ubuntu < 15, ggplot2 is also required separately.
 sudo apt-get install ggplot2
 ```
 
+Dependencies can also be installed using pip.
+```
+# on Ubuntu
+sudo apt install libssl-dev r-base
+# On Fedora
+sudo dnf install openssl-devel R
+
+pip install cryptography psutil twisted configobj
+```
+
 Please note that more elaborate experiments require additional dependencies, which are specified in the config file.
 
 ## How to use it ##
