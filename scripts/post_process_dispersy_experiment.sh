@@ -100,5 +100,8 @@ export XMIN
 export XMAX
 graph_data.sh
 
+#Step 6: Check historical data for large deviation
+post_process_historical_values.py
+
 #
 # post_process_dispersy_experiment.sh ends here
