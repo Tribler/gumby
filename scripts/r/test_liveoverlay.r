@@ -32,6 +32,6 @@ my_graph <- function(name, hash) {
 }
 
 my_graph("All-channel community", "8164f55c2f828738fa779570e4605a81fec95c9d")
-my_graph("Search community", "2782dc9253cef6cc9272ee8ed675c63743c4eb3a")
+my_graph("Search community", "fb04df93369587ec8fd9b74559186fa356cffda8")
 
 q(save="no")
