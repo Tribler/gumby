@@ -44,16 +44,19 @@ from twisted.internet import reactor
 from gumby.instrumentation import init_instrumentation
 
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
 sys.path.append(os.path.abspath('./tribler'))
-sys.path.append(os.path.abspath('./tribler/twisted/twisted/plugins'))
+sys.path.append(os.path.abspath('./tribler/twisted/plugins'))
 
 from tribler_plugin import TriblerServiceMaker
 
+
 class IdleTribleRunner():
+
     def __init__(self):
         init_instrumentation()
         self.service = None
-
 
     def start(self):
         self.service = TriblerServiceMaker()
@@ -61,14 +64,19 @@ class IdleTribleRunner():
         if "TRIBLER_EXECUTION_TIME" in os.environ:
             run_time = int(os.environ["TRIBLER_EXECUTION_TIME"])
         else:
-            run_time = 60*10 # Run for 10 minutes by default
+            run_time = 60*10  # Run for 10 minutes by default
+
+        auto_join_channels = os.environ.get("AUTO_JOIN_CHANNELS", "FALSE").upper() == "TRUE"
 
         reactor.callLater(run_time, self.stop)
+        self.service.start_tribler({'restapi': 0, 'dispersy': 21000,
+                                    'statedir': os.path.abspath(os.path.join(BASE_DIR, "output", "tribler-state")),
+                                    'libtorrent': 21005, 'auto-join-channel': True if auto_join_channels else None})
 
     def stop(self):
         # TODO(Laurens): Current the plugin does not offer a function to shutdown it nicely
         # so once this is added, make sure it is not violently killed.
-        self.service.shutdown_process()
+        self.service.shutdown_process("Stopping Tribler idle run", code=0)
 
 if __name__ == "__main__":
     runner = IdleTribleRunner()
