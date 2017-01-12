@@ -64,10 +64,9 @@ class ChannelDownloadClient(TriblerDispersyExperimentScriptClient):
 
     def __config_dispersy(self, session):
 
-        count_out = 0
-        while self._dispersy is None and count_out < 100:
-            time.sleep(1.0)
-            count_out += 1
+        if self._dispersy is None:
+            reactor.callLater(5.0, self.__config_dispersy, session)
+            return
 
         self.session.lm.dispersy = self._dispersy
         # self.session.lm.init()
