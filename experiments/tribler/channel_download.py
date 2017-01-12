@@ -111,6 +111,8 @@ class ChannelDownloadClient(TriblerDispersyExperimentScriptClient):
                 os.makedirs(self.upload_dir_path)
             except OSError:
                 # race condition of creating shared directory may happen
+                # this particular issue can be found in DAS environment which we can't control where to put a node
+                # usually, the publisher handles the directory creation, in DAS case, this is not entirely the case
                 pass
 
         logging.debug("Do session config locally")
@@ -291,7 +293,7 @@ class ChannelDownloadClient(TriblerDispersyExperimentScriptClient):
     def _connect_peer(self, thandle):
         for cd in self.joined_community.dispersy_yield_verified_candidates():
             ip = cd.lan_address[0]
-            for port in xrange(20000, 20000 + self.num_peers):
+            for port in xrange(20000, 20000 + self.num_peers + 10):
                 if thandle:
                     thandle.connect_peer((ip, port), 0)
 
