@@ -62,7 +62,6 @@ memtimes.r
 writebytes.r
 readbytes.r
 network.r
-file_descriptors.r
 "
 export XMIN
 export XMAX
