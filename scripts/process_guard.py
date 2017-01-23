@@ -12,6 +12,7 @@ from signal import SIGKILL, SIGTERM, signal
 from subprocess import Popen
 from time import sleep, time
 
+from psutil import Process
 
 OK_EXIT_CODE = 0
 TIMEOUT_EXIT_CODE = 3
@@ -223,9 +224,13 @@ class ProcessMonitor(object):
         self._rm = ResourceMonitor(output_dir, commands)
         self.monitor_file = None
         self.network_monitor_file = None
+        self.fd_file = None
+        self.psutil_process = Process()
 
         if monitor_dir:
             self.monitor_file = open(monitor_dir + "/resource_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
+            self.fd_file = open(monitor_dir + "/fd_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
+            self.fd_file.write("time pid num_fds\n")
             # We read the jiffie -> second conversion rate from the os, by dividing the utime
             # and stime values by this conversion rate we will get the actual cpu seconds spend during this second.
             try:
@@ -252,6 +257,8 @@ class ProcessMonitor(object):
         self.stopping = True
         if self.monitor_file:
             self.monitor_file.close()
+        if self.fd_file:
+            self.fd_file.close()
 
         # Check if any process exited with an error code before killing the remaining ones
         failed = self._rm.get_failed_commands()
@@ -304,6 +311,20 @@ class ProcessMonitor(object):
             if self.network_monitor_file:
                 for line in self._rm.get_network_stats():
                     self.network_monitor_file.write("%.1f %s\n" % (r_timestamp, line))
+
+            if hasattr(self.psutil_process, 'children'):
+                p_children = self.psutil_process.children(recursive=True)
+            else:
+                p_children = self.psutil_process.get_children(recursive=True)
+
+            if self.fd_file:
+                for child_process in p_children:
+                    if hasattr(self.psutil_process, 'num_fds'):
+                        self.fd_file.write("%.1f %s %d\n" %
+                                           (r_timestamp, child_process.pid, child_process.num_fds()))
+                    else:
+                        self.fd_file.write("%.1f %s %d\n" %
+                                           (r_timestamp, child_process.pid, child_process.get_num_fds()))
 
             if self.end_time and timestamp > self.end_time:  # if self.end_time == 0 the time out is disabled.
                 print "Time out, killing monitored processes."
