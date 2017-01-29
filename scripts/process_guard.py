@@ -12,7 +12,7 @@ from signal import SIGKILL, SIGTERM, signal
 from subprocess import Popen
 from time import sleep, time
 
-from psutil import Process, AccessDenied
+from psutil import Process, AccessDenied, NoSuchProcess
 
 OK_EXIT_CODE = 0
 TIMEOUT_EXIT_CODE = 3
@@ -326,8 +326,8 @@ class ProcessMonitor(object):
                         else:
                             self.fd_file.write("%.1f %s %d\n" %
                                                (r_timestamp, child_process.pid, child_process.get_num_fds()))
-                    except AccessDenied:
-                        pass  # Just ignore the file descriptors of this forbidden process
+                    except (AccessDenied, NoSuchProcess):
+                        pass  # Just ignore the file descriptors of this invalid process
 
             if self.end_time and timestamp > self.end_time:  # if self.end_time == 0 the time out is disabled.
                 print "Time out, killing monitored processes."
