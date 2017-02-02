@@ -1,0 +1,85 @@
+@0:0 set_master_member 3081a7301006072a8648ce3d020106052b81040027038192000403cbbfd2dfb67a7db66c88988df56f93fa6e7f982f9a6a0fa8898492c8b8cae23e10b159ace60b7047012082a5aa4c6e221d7e58107bb550436d57e046c11ab4f51f0ab18fa8f58d0346cc12d1cc2b61fc86fe5ed192309152e11e3f02489e30c7c971dd989e1ce5030ea0fb77d5220a92cceb567cbc94bc39ba246a42e215b55e9315b543ddeff0209e916f77c0d747
+@0:2 start_dispersy {1-84}
+@0:20 start_session
+@0:60 online
+@0:60 reset_dispersy_statistics
+@0:60 annotate start-experiment
+# 1 : creator (seeder)
+# 2-12 : dedicated seeder
+# 13-81 : peers
+# 81 - 84 : flashcrowd all scenario
+@0:60 join {2-20}
+@0:60 create {1}
+@0:62 publish file1gb_1 1524288001 {1}
+@0:64 publish file1gb_2 1524288002 {1}
+@0:66 publish file1gb_3 1524288003 {1}
+@0:70 publish file5gb_1 5524288007 {1}
+@0:73 publish file5gb_2 5524288006 {1}
+@0:76 publish file5gb_3 5524288005 {1}
+@0:79 publish file5gb_4 5524288004 {1}
+@0:81 publish file5gb_5 5524288003 {1}
+@0:84 publish file5gb_6 5524288002 {1}
+@0:87 publish file5gb_7 5524288001 {1}
+@0:88 join {21-40}
+@0:92 join {41-60}
+@0:105 setup_seeder file1gb_2 1524288002 {2}
+@0:106 setup_seeder file1gb_3 1524288003 {3,4}
+@0:105 setup_seeder file5gb_3 5524288005 {5}
+@0:105 setup_seeder file5gb_4 5524288004 {6}
+@0:105 setup_seeder file5gb_5 5524288003 {7,8}
+@0:105 setup_seeder file5gb_6 5524288002 {9,10}
+@0:105 setup_seeder file5gb_7 5524288001 {11,12}
+@0:110 join {61-80}
+@0:115 join {81-84}
+# wave 1
+@2:6 start_download file1gb_1 {13-15}
+@2:12 start_download file1gb_2 {16-18}
+@2:18 start_download file1gb_3 {19-21}
+@2:24 start_download file5gb_1 {22}
+@2:30 start_download file5gb_2 {23-25}
+@2:36 start_download file5gb_3 {26}
+@2:42 start_download file5gb_4 {27-29}
+@2:48 start_download file5gb_5 {30}
+@2:54 start_download file5gb_6 {33-38}
+@3:1 start_download file5gb_7 {39,40}
+# wave 2
+@1:2:6 start_download file1gb_1 {41}
+@1:2:12 start_download file1gb_2 {42}
+@1:2:18 start_download file1gb_3 {42}
+@1:2:24 start_download file5gb_1 {44}
+@1:2:30 start_download file5gb_2 {45}
+@1:2:36 start_download file5gb_3 {46}
+@1:2:42 start_download file5gb_4 {47}
+@1:2:48 start_download file5gb_5 {48}
+@1:2:54 start_download file5gb_6 {49}
+@1:3:1 start_download file5gb_7 {50}
+# wave 3
+@2:2:6 start_download file1gb_1 {51,52}
+@2:2:12 start_download file1gb_2 {53,54}
+@2:2:18 start_download file1gb_3 {55,56}
+@2:2:24 start_download file5gb_1 {57}
+@2:2:30 start_download file5gb_2 {58-60}
+@2:2:36 start_download file5gb_3 {61}
+@2:2:42 start_download file5gb_4 {62,63}
+@2:3:1 start_download file5gb_7 {64}
+#wave 4
+@3:2:6 start_download file1gb_1 {65,66}
+@3:2:12 start_download file1gb_2 {67,68}
+@3:2:18 start_download file1gb_3 {69,70}
+@3:2:24 start_download file5gb_1 {71-75}
+@3:2:30 start_download file5gb_2 {76}
+@3:2:36 start_download file5gb_3 {77,78}
+@3:2:42 start_download file5gb_4 {79-81}
+#flashcrowd
+@4:2:6 start_download file1gb_1 {81-84}
+@4:2:12 start_download file1gb_2 {81-84}
+@4:2:18 start_download file1gb_3 {81-84}
+@4:2:24 start_download file5gb_1 {81-84}
+@4:2:30 start_download file5gb_2 {81-84}
+@4:2:36 start_download file5gb_3 {81-84}
+@4:2:42 start_download file5gb_4 {81-84}
+@4:2:48 start_download file5gb_5 {81-84}
+@4:2:54 start_download file5gb_6 {81-84}
+@4:3:1 start_download file5gb_7 {81-84}
+@7:58:0 reset_dispersy_statistics
+@7:59:0 stop

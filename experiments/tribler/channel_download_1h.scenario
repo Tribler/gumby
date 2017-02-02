@@ -1,0 +1,21 @@
+@0:0 set_master_member 3081a7301006072a8648ce3d020106052b81040027038192000403cbbfd2dfb67a7db66c88988df56f93fa6e7f982f9a6a0fa8898492c8b8cae23e10b159ace60b7047012082a5aa4c6e221d7e58107bb550436d57e046c11ab4f51f0ab18fa8f58d0346cc12d1cc2b61fc86fe5ed192309152e11e3f02489e30c7c971dd989e1ce5030ea0fb77d5220a92cceb567cbc94bc39ba246a42e215b55e9315b543ddeff0209e916f77c0d747
+@0:2 start_dispersy {1-5}
+@0:10 start_session
+@0:12 online
+@0:12 reset_dispersy_statistics
+@0:12 annotate start-experiment
+# 1 : creator
+# 2-5 : peers
+@0:20 create {1}
+@0:25 publish file300mb_1 324288077 {1}
+@0:30 publish file1gb_1 1524288077 {1}
+@0:60 join {2-5}
+@0:60 setup_seeder file1gb_1 1524288077 {2}
+# ready on minute 1'
+@1:1 start_download file300mb_1 {3}
+@5:1 start_download file300mb_1 {4}
+@20:1 start_download file1gb_1 {5}
+@35:1 start_download file1gb_1 {4}
+@40:1 start_download file300mb_1 {5}
+@58:0 reset_dispersy_statistics
+@59:0 stop

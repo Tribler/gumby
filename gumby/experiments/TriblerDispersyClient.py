@@ -40,21 +40,27 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
         raise NotImplementedError("Dispersy is stopped using the tribler session in stop")
 
     def start_session(self):
+        from twisted.internet import threads
+
+        def _do_ready(_):
+            self.annotate("Tribler Session started")
+
+            if self.session.get_dispersy():
+                self._dispersy = self.session.lm.dispersy
+
+            return self.session
+
         logging.error("Starting Tribler Session")
         self.session_config = self.setup_session_config()
         self.session = Session(scfg=self.session_config)
 
-        def on_tribler_started(_):
-            logging.error("Tribler Session started")
-            self.annotate("Tribler Session started")
-            self._dispersy = self.session.lm.dispersy
+        self.session_deferred = self.session.start()
+        self.session_deferred.addCallback(_do_ready)
 
-        def _do_start():
-            return self.session.start().addCallback(on_tribler_started)
+        if self.session_config.get_dispersy():
+            self.session_deferred.addCallback(self.__start_dispersy)
 
-        deferToThread(_do_start).addCallback(self.__setup_dispersy_member)
-
-    def __setup_dispersy_member(self, _):
+    def __start_dispersy(self, session):
         self.original_on_incoming_packets = self._dispersy.on_incoming_packets
         if self.master_private_key:
             self._master_member = self._dispersy.get_member(private_key=self.master_private_key)
@@ -87,7 +93,7 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
         config.set_dht_torrent_collecting(False)
         config.set_enable_torrent_search(False)
         config.set_enable_channel_search(False)
-        config.set_videoplayer(False)
+        config.set_http_api_enabled(False)
         config.set_listen_port(20000 + self.scenario_runner._peernumber)
 
         if self.dispersy_port is None:
