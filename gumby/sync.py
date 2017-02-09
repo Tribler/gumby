@@ -61,12 +61,17 @@
 import json
 import logging
 from time import time
+from collections import Iterable
+from os import environ, path, makedirs, chdir
 
 from twisted.internet import reactor, task
 from twisted.internet.defer import Deferred, DeferredSemaphore
 from twisted.internet.protocol import (Factory, ReconnectingClientFactory, connectionDone)
 from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
+
+from gumby.scenario import ScenarioRunner
+from gumby.experiments.experiment_module import ExperimentModule
 
 
 EXPERIMENT_SYNC_TIMEOUT = 30
@@ -319,9 +324,17 @@ class ExperimentServiceFactory(Factory):
 
     def lineLengthExceeded(self, line):
         self._logger.error("Line length exceeded, %d bytes remain.", len(line))
+
 #
 # Client side
 #
+
+
+def experiment_callback(name=None):
+    def experiment_callback_wrapper(f):
+        f.register_as_callback = name if name is not None else f.__name__
+        return f
+    return experiment_callback_wrapper
 
 
 class ExperimentClient(object, LineReceiver):
@@ -337,6 +350,25 @@ class ExperimentClient(object, LineReceiver):
         self.vars = vars
         self.all_vars = {}
         self.time_offset = None
+        self.scenario_runner = ScenarioRunner()
+        self.scenario_runner.preprocessor_callbacks["module"] = self._preproc_module
+        self.experiment_module_classes = {}
+        self.experiment_modules = []
+        self._stats_file = None
+        if not hasattr(self, 'scenario_file'):
+            self.scenario_file = environ.get("SCENARIO_FILE", None)
+
+        if self.scenario_file is None:
+            self._logger.error("No Scenario file defined, starting empty experiment")
+        else:
+            if not path.exists(self.scenario_file):
+                self._logger.info("Scenario file %s not found, attempting scenario file in experiment dir",
+                                  self.scenario_file)
+                self.scenario_file = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
+            if path.exists(self.scenario_file):
+                self.scenario_runner.add_scenario(self.scenario_file)
+            else:
+                self._logger.info("Scenario file %s not found", self.scenario_file)
 
     def connectionMade(self):
         self._logger.debug("Connected to the experiment server")
@@ -344,32 +376,38 @@ class ExperimentClient(object, LineReceiver):
         for key, val in self.vars.iteritems():
             self.sendLine("set:%s:%s" % (key, val))
 
-        d = deferToThread(self.onVarsSend)
+        deferToThread(self.on_vars_send)
         self.state = "id"
 
     def lineReceived(self, line):
         try:
             pto = 'proto_' + self.state
-            statehandler = getattr(self, pto)
+            state_handler = getattr(self, pto)
         except AttributeError:
             self._logger.error('Callback %s not found', self.state)
             stopReactor()
         else:
-            self.state = statehandler(line)
+            self.state = state_handler(line)
             if self.state == 'done':
                 self.transport.loseConnection()
 
-    def onVarsSend(self):
-        self._logger.debug("onVarsSend: Call not implemented")
+    def on_vars_send(self):
+        pass
 
-    def onIdReceived(self):
-        self._logger.debug("onIdReceived: Call not implemented")
+    def on_id_received(self):
+        self.scenario_runner.set_peernumber(self.my_id)
+        self.registerCallbacks()
 
-    def onAllVarsReceived(self):
-        self._logger.debug("onAllVarsReceived: Call not implemented")
+        my_dir = path.join(environ['OUTPUT_DIR'], self.my_id)
+        makedirs(my_dir)
+        chdir(my_dir)
+        self._stats_file = open("statistics.log", 'w')
 
-    def startExperiment(self):
-        self._logger.debug("startExperiment: Call not implemented")
+    def on_all_vars_received(self):
+        pass
+
+    def start_experiment(self):
+        self.scenario_runner.run()
 
     def get_peer_id(self, ip, port):
         port = int(port)
@@ -395,9 +433,9 @@ class ExperimentClient(object, LineReceiver):
         # id:SOMETHING
         maybe_id, id = line.strip().split(':', 1)
         if maybe_id == "id":
-            self.my_id = id
-            self._logger.debug('Got id: "%s" assigned', id)
-            d = deferToThread(self.onIdReceived)
+            self.my_id = int(id)
+            self._logger.debug('Got assigned id: %s', id)
+            d = deferToThread(self.on_id_received)
             d.addCallback(lambda _: self.sendLine("ready"))
             return "all_vars"
         else:
@@ -409,7 +447,7 @@ class ExperimentClient(object, LineReceiver):
 
         self.all_vars = json.loads(line)
         self.time_offset = self.all_vars[self.my_id]["time_offset"]
-        self.onAllVarsReceived()
+        self.on_all_vars_received()
 
         self.sendLine("vars_received")
         return "go"
@@ -419,9 +457,104 @@ class ExperimentClient(object, LineReceiver):
         if line.strip().startswith("go:"):
             start_delay = max(0, float(line.strip().split(":")[1]) - time())
             self._logger.info("Starting the experiment in %f secs.", start_delay)
-            reactor.callLater(start_delay, self.startExperiment)
+            reactor.callLater(start_delay, self.start_experiment)
             self.factory.stopTrying()
             self.transport.loseConnection()
+
+    def register_callbacks(self, module):
+        for method in dir(module):
+            if not (callable(method) and hasattr(method, "register_as_callback")):
+                continue
+            else:
+                self.scenario_runner.register(method, method.register_as_callback)
+
+    @experiment_callback
+    def echo(self, *argv):
+        self._logger.debug("%s ECHO %s", self.my_id, ' '.join(argv))
+
+    @experiment_callback
+    def annotate(self, message):
+        self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, "annotate", message))
+
+    @experiment_callback
+    def peertype(self, peer_type):
+        self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, "peertype", peer_type))
+
+    @staticmethod
+    def str2bool(v):
+        return v.lower() in ("yes", "true", "t", "1")
+
+    @staticmethod
+    def str2tuple(v):
+        if len(v) > 1 and v[1] == "t":
+            return (int(v[0]), int(v[2:]))
+        if len(v) > 1 and v[1] == ".":
+            return float(v)
+        return int(v)
+
+    def print_on_change(self, name, prev_dict, cur_dict):
+        def get_changed_values(prev_dict, cur_dict):
+            new_values = {}
+            changed_values = {}
+            if cur_dict:
+                for key, value in cur_dict.iteritems():
+                    # convert key to make it printable
+                    if not isinstance(key, (basestring, int, long, float)):
+                        key = str(key)
+
+                    # if this is a dict, recursively check for changed values
+                    if isinstance(value, dict):
+                        converted_dict, changed_in_dict = get_changed_values(prev_dict.get(key, {}), value)
+
+                        new_values[key] = converted_dict
+                        if changed_in_dict:
+                            changed_values[key] = changed_in_dict
+
+                    # else convert and compare single value
+                    else:
+                        if not isinstance(value, (basestring, int, long, float, Iterable)):
+                            value = str(value)
+
+                        new_values[key] = value
+                        if prev_dict.get(key, None) != value:
+                            changed_values[key] = value
+
+            return new_values, changed_values
+
+        new_values, changed_values = get_changed_values(prev_dict, cur_dict)
+        if changed_values:
+            self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
+            self._stats_file.flush()
+            return new_values
+        return prev_dict
+
+    def _preproc_module(self, filename, line_number, line):
+        (modulename, _, classname) = line.rpartition('.')
+        if modulename is None or modulename == "":
+            try:
+                stuff = __import__(__package__, fromlist=[classname])
+            except:
+                self._logger.debug("Unable to import %s (from %s:%d)", line, filename, line_number, exc_info=True)
+                try:
+                    stuff = __import__(classname)
+                except:
+                    self._logger.error("Unable to import %s (from %s:%d)", line, filename, line_number, exc_info=True)
+                    stuff = None
+        else:
+            try:
+                stuff = __import__(modulename, fromlist=[classname])
+            except:
+                self._logger.error("Unable to import %s (from %s:%d)", line, filename, line_number, exc_info=True)
+                stuff = None
+
+        for item in [getattr(stuff, item_key) for item_key in dir(stuff)]:
+            if not isinstance(item, type) or \
+                    not issubclass(item, ExperimentModule) or \
+                    item.__name__ in self.experiment_module_classes:
+                continue
+            self.experiment_module_classes[item.__name__] = item
+            if hasattr(item, "module_loaded") and callable(item.module_loaded):
+                item.module_loaded(self)
 
 
 class ExperimentClientFactory(ReconnectingClientFactory):
@@ -447,11 +580,10 @@ class ExperimentClientFactory(ReconnectingClientFactory):
         self._logger.info("The connection with the experiment server was lost with reason: %s",
                           reason.getErrorMessage())
 
+
 #
 # Aux stuff
 #
-
-
 def stopReactor():
     if reactor.running:
         logger.debug("Stopping reactor")

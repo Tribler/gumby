@@ -75,7 +75,6 @@ class ColoredFileLogObserver(FileLogObserver):
         fmtDict = {
             'system': eventDict['system'],
             'text': text.replace("\n", "\n\t")}
-        systemStr = ""
         systemStr = self._colorize(
             _safeFormat("[%(system)s]", fmtDict),
             ColoredFileLogObserver.GREY_NORMAL)
