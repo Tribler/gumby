@@ -1,0 +1,16 @@
+&module gumby.modules.dispersy_module.DispersyModule
+&module experiments.dispersy.allchannel_module.AllChannelModule
+
+@0:0 isolate_community AllChannelCommunity
+@0:1 start_session {1-4}
+@0:14 reset_dispersy_statistics {1-4}
+@0:15 annotate start-experiment
+@0:17 create {1}
+@0:20 join {3,4}
+@0:20 publish 2 {1}
+@0:25 start_session {5}
+@0:29 reset_dispersy_statistics {5}
+@0:30 join {5}
+@0:30 publish 2 {1}
+@0:50 stop_session
+@0:55 stop

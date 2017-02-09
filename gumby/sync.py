@@ -62,20 +62,15 @@ import json
 import logging
 from time import time
 
-from twisted.internet import reactor, task
+from twisted.internet import reactor
+from twisted.internet.task import LoopingCall, deferLater, cooperate
 from twisted.internet.defer import Deferred, DeferredSemaphore
-from twisted.internet.protocol import (Factory, ReconnectingClientFactory, connectionDone)
-from twisted.internet.threads import deferToThread
+from twisted.internet.protocol import Factory, ReconnectingClientFactory, connectionDone
 from twisted.protocols.basic import LineReceiver
 
+from gumby.experiment import ExperimentClient
 
 EXPERIMENT_SYNC_TIMEOUT = 30
-
-logger = logging.getLogger()
-
-#
-# Server side
-#
 
 
 class ExperimentServiceProto(LineReceiver):
@@ -102,7 +97,7 @@ class ExperimentServiceProto(LineReceiver):
             statehandler = getattr(self, pto)
         except AttributeError:
             self._logger.error('Callback %s not found', self.state)
-            stopReactor()
+            stop_reactor()
         else:
             self.state = statehandler(line)
             if self.state == 'done':
@@ -200,7 +195,7 @@ class ExperimentServiceFactory(Factory):
             self.pushIdToSubscribers()
         else:
             if not self._made_looping_call:
-                self._made_looping_call = task.LoopingCall(self._print_subscribers_made)
+                self._made_looping_call = LoopingCall(self._print_subscribers_made)
                 self._made_looping_call.start(1.0)
 
     def _print_subscribers_made(self):
@@ -223,7 +218,7 @@ class ExperimentServiceFactory(Factory):
             self.pushInfoToSubscribers()
         else:
             if not self._subscriber_looping_call:
-                self._subscriber_looping_call = task.LoopingCall(self._print_subscribers_ready)
+                self._subscriber_looping_call = LoopingCall(self._print_subscribers_ready)
                 self._subscriber_looping_call.start(1.0)
 
     def _print_subscribers_ready(self):
@@ -235,8 +230,10 @@ class ExperimentServiceFactory(Factory):
         vars = {}
         for subscriber in self.connections_ready:
             subscriber_vars = subscriber.vars.copy()
-            subscriber_vars['port'] = subscriber.id + 12000
-            subscriber_vars['host'] = subscriber.transport.getPeer().host
+            if "port" not in subscriber_vars:
+                subscriber_vars['port'] = subscriber.id + 12000
+            if "host" not in subscriber_vars:
+                subscriber_vars['host'] = subscriber.transport.getPeer().host
             vars[subscriber.id] = subscriber_vars
 
         json_vars = json.dumps(vars)
@@ -244,7 +241,7 @@ class ExperimentServiceFactory(Factory):
         self._logger.info("Pushing a %d bytes long json doc.", len(json_vars))
 
         # Send the json doc to the subscribers
-        task.cooperate(self._sendLineToAllGenerator(json_vars))
+        cooperate(self._sendLineToAllGenerator(json_vars))
 
     def _sendLineToAllGenerator(self, line):
         for subscriber in self.connections_ready:
@@ -261,7 +258,7 @@ class ExperimentServiceFactory(Factory):
             self._timeout_delayed_call.cancel()
         else:
             if not self._subscriber_received_looping_call:
-                self._subscriber_received_looping_call = task.LoopingCall(self._print_subscribers_received)
+                self._subscriber_received_looping_call = LoopingCall(self._print_subscribers_received)
                 self._subscriber_received_looping_call.start(1.0)
 
     def _print_subscribers_received(self):
@@ -280,7 +277,7 @@ class ExperimentServiceFactory(Factory):
             # Sync the experiment start time among instances
             subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
 
-        d = task.deferLater(reactor, 5, lambda: self._logger.info("Done, disconnecting all clients."))
+        d = deferLater(reactor, 5, lambda: self._logger.info("Done, disconnecting all clients."))
         d.addCallback(lambda _: self.disconnectAll())
         d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
 
@@ -290,7 +287,7 @@ class ExperimentServiceFactory(Factory):
         def _disconnectAll():
             for subscriber in self.connections_ready:
                 yield subscriber.transport.loseConnection()
-        task.cooperate(_disconnectAll())
+        cooperate(_disconnectAll())
 
     def unregisterConnection(self, proto):
         if proto in self.connections_ready:
@@ -304,130 +301,33 @@ class ExperimentServiceFactory(Factory):
 
     def onExperimentStarted(self, _):
         self._logger.info("Experiment started, shutting down sync server.")
-        reactor.callLater(0, stopReactor)
+        reactor.callLater(0, stop_reactor)
 
     def onExperimentStartError(self, failure):
         self._logger.error("Failed to start experiment")
         reactor.exitCode = 1
-        reactor.callLater(0, stopReactor)
+        reactor.callLater(0, stop_reactor)
         return failure
 
     def onExperimentSetupTimeout(self):
         self._logger.error("Waiting for all peers timed out, exiting.")
         reactor.exitCode = 1
-        reactor.callLater(0, stopReactor)
+        reactor.callLater(0, stop_reactor)
 
     def lineLengthExceeded(self, line):
         self._logger.error("Line length exceeded, %d bytes remain.", len(line))
-#
-# Client side
-#
 
 
-class ExperimentClient(object, LineReceiver):
-    # Allow for 4MB long lines (for the json stuff)
-    MAX_LENGTH = 2 ** 22
-
-    def __init__(self, vars):
-        super(ExperimentClient, self).__init__()
-        self._logger = logging.getLogger(self.__class__.__name__)
-
-        self.state = "id"
-        self.my_id = None
-        self.vars = vars
-        self.all_vars = {}
-        self.time_offset = None
-
-    def connectionMade(self):
-        self._logger.debug("Connected to the experiment server")
-        self.sendLine("time:%f" % time())
-        for key, val in self.vars.iteritems():
-            self.sendLine("set:%s:%s" % (key, val))
-
-        d = deferToThread(self.onVarsSend)
-        self.state = "id"
-
-    def lineReceived(self, line):
-        try:
-            pto = 'proto_' + self.state
-            statehandler = getattr(self, pto)
-        except AttributeError:
-            self._logger.error('Callback %s not found', self.state)
-            stopReactor()
-        else:
-            self.state = statehandler(line)
-            if self.state == 'done':
-                self.transport.loseConnection()
-
-    def onVarsSend(self):
-        self._logger.debug("onVarsSend: Call not implemented")
-
-    def onIdReceived(self):
-        self._logger.debug("onIdReceived: Call not implemented")
-
-    def onAllVarsReceived(self):
-        self._logger.debug("onAllVarsReceived: Call not implemented")
-
-    def startExperiment(self):
-        self._logger.debug("startExperiment: Call not implemented")
-
-    def get_peer_id(self, ip, port):
-        port = int(port)
-        for peer_id, peer_dict in self.all_vars.iteritems():
-            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
-                return peer_id
-
-        self._logger.error("Could not get_peer_id for %s:%s", ip, port)
-
-    def get_peer_ip_port_by_id(self, peer_id):
-        if str(peer_id) in self.all_vars:
-            return self.all_vars[str(peer_id)]['host'], self.all_vars[str(peer_id)]['port']
-
-    def get_peers(self):
-        return self.all_vars.keys()
-
-    #
-    # Protocol state handlers
-    #
-
-    def proto_id(self, line):
-        # We should get a line such as:
-        # id:SOMETHING
-        maybe_id, id = line.strip().split(':', 1)
-        if maybe_id == "id":
-            self.my_id = id
-            self._logger.debug('Got id: "%s" assigned', id)
-            d = deferToThread(self.onIdReceived)
-            d.addCallback(lambda _: self.sendLine("ready"))
-            return "all_vars"
-        else:
-            self._logger.error("Received an unexpected string from the server, closing connection")
-            return "done"
-
-    def proto_all_vars(self, line):
-        self._logger.debug("Got experiment variables")
-
-        self.all_vars = json.loads(line)
-        self.time_offset = self.all_vars[self.my_id]["time_offset"]
-        self.onAllVarsReceived()
-
-        self.sendLine("vars_received")
-        return "go"
-
-    def proto_go(self, line):
-        self._logger.debug("Got GO signal")
-        if line.strip().startswith("go:"):
-            start_delay = max(0, float(line.strip().split(":")[1]) - time())
-            self._logger.info("Starting the experiment in %f secs.", start_delay)
-            reactor.callLater(start_delay, self.startExperiment)
-            self.factory.stopTrying()
-            self.transport.loseConnection()
+def stop_reactor():
+    if reactor.running:
+        logging.getLogger().info("Stopping reactor")
+        reactor.stop()
 
 
 class ExperimentClientFactory(ReconnectingClientFactory):
     maxDelay = 10
 
-    def __init__(self, vars, protocol=ExperimentClient):
+    def __init__(self, vars={}, protocol=ExperimentClient):
         self._logger = logging.getLogger(self.__class__.__name__)
 
         self.vars = vars
@@ -446,16 +346,3 @@ class ExperimentClientFactory(ReconnectingClientFactory):
     def clientConnectionLost(self, connector, reason):
         self._logger.info("The connection with the experiment server was lost with reason: %s",
                           reason.getErrorMessage())
-
-#
-# Aux stuff
-#
-
-
-def stopReactor():
-    if reactor.running:
-        logger.debug("Stopping reactor")
-        reactor.stop()
-
-#
-# sync.py ends here

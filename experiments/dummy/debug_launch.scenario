@@ -1,0 +1,7 @@
+&include debug_sample_multichain.scenario
+
+@0:0 isolate_community HiddenTunnelCommunityMultichain
+@0:1 start_session
+@0:10 request_crawl 1 0
+@0:20 stop_session
+@0:30 stop
