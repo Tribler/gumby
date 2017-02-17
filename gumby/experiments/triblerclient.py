@@ -1,12 +1,10 @@
 from os import getpid
 from sys import path as pythonpath
 import os
-import time
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient
-from time import sleep
 import logging
 
 # TODO(emilon): Fix this crap
@@ -16,19 +14,20 @@ pythonpath.append(os.path.abspath(os.path.join(BASE_DIR, "./tribler")))
 from Tribler.Core.Session import Session
 
 
-class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
+class TriblerExperimentScriptClient(DispersyExperimentScriptClient):
 
     def __init__(self, params):
-        super(TriblerDispersyExperimentScriptClient, self).__init__(params)
+        super(TriblerExperimentScriptClient, self).__init__(params)
         self.session = None
         self.session_config = None
         self.session_deferred = None
         self.dispersy_port = None
 
     def registerCallbacks(self):
-        super(TriblerDispersyExperimentScriptClient, self).registerCallbacks()
-        self.scenario_runner.register(self.set_dispersy_port, 'set_dispersy_port')
-        self.scenario_runner.register(self.start_session, 'start_session')
+        super(TriblerExperimentScriptClient, self).registerCallbacks()
+        self.scenario_runner.register(self.set_dispersy_port)
+        self.scenario_runner.register(self.start_session)
+        self.scenario_runner.register(self.stop_session)
 
     def set_dispersy_port(self, port):
         self.dispersy_port = int(port)
@@ -41,6 +40,14 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
 
     def start_session(self):
         logging.error("Starting Tribler Session")
+
+        # symlink the bootstrap file so we are only connecting to our own trackers
+        os.makedirs(os.path.abspath(os.path.join(BASE_DIR, "output", ".Tribler-%d" % getpid())))
+        bootstrap_file_path = os.path.join(os.environ['PROJECT_DIR'], 'tribler', 'bootstraptribler.txt')
+        dest_file_path = os.path.abspath(
+            os.path.join(BASE_DIR, "output", ".Tribler-%d" % getpid(), 'bootstraptribler.txt'))
+        os.symlink(bootstrap_file_path, dest_file_path)
+
         self.session_config = self.setup_session_config()
         self.session = Session(scfg=self.session_config)
 
@@ -49,27 +56,11 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
             self.annotate("Tribler Session started")
             self._dispersy = self.session.lm.dispersy
 
-        def _do_start():
-            return self.session.start().addCallback(on_tribler_started)
+        return self.session.start().addCallback(on_tribler_started)
 
-        deferToThread(_do_start).addCallback(self.__setup_dispersy_member)
-
-    def __setup_dispersy_member(self, _):
-        self.original_on_incoming_packets = self._dispersy.on_incoming_packets
-        if self.master_private_key:
-            self._master_member = self._dispersy.get_member(private_key=self.master_private_key)
-        else:
-            self._master_member = self._dispersy.get_member(public_key=self.master_key)
-        self._my_member = self.get_my_member()
-        assert self._master_member
-        assert self._my_member
-
-        self._do_log()
-
-        self.print_on_change('community-kwargs', {}, self.community_kwargs)
-        self.print_on_change('community-env', {}, {'pid': getpid()})
-
-        logging.error("Finished starting dispersy")
+    def stop_session(self):
+        self.annotate('end of experiment')
+        deferToThread(self.session.shutdown)
 
     def setup_session_config(self):
         from Tribler.Core.SessionConfig import SessionStartupConfig
@@ -81,13 +72,15 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
         config.set_multicast_local_peer_discovery(False)
         config.set_megacache(False)
         config.set_dispersy(True)
-        config.set_mainline_dht(True)
+        config.set_mainline_dht(False)
         config.set_torrent_collecting(False)
-        config.set_libtorrent(True)
+        config.set_libtorrent(False)
         config.set_dht_torrent_collecting(False)
         config.set_enable_torrent_search(False)
         config.set_enable_channel_search(False)
-        config.set_videoplayer(False)
+        config.set_videoserver_enabled(False)
+        config.set_http_api_enabled(False)
+        config.set_upgrader_enabled(False)
         config.set_listen_port(20000 + self.scenario_runner._peernumber)
 
         if self.dispersy_port is None:
@@ -97,6 +90,5 @@ class TriblerDispersyExperimentScriptClient(DispersyExperimentScriptClient):
         return config
 
     def stop(self, retry=3):
-        logging.error("Defer session stop to thread and stop reactor afterwards")
-        self.annotate('end of experiment')
-        return deferToThread(self.session.shutdown, False).addBoth(lambda _: reactor.callLater(10.0, reactor.stop))
+        logging.error("Stopping reactor")
+        reactor.stop()

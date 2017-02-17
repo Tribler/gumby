@@ -39,7 +39,7 @@
 
 from os import path
 
-from gumby.experiments.triblerclient import TriblerDispersyExperimentScriptClient,\
+from gumby.experiments.triblerclient import TriblerExperimentScriptClient,\
     BASE_DIR
 from gumby.experiments.dispersyclient import main
 import logging
@@ -48,7 +48,7 @@ from posix import environ
 from time import sleep
 
 
-class HiddenServicesClient(TriblerDispersyExperimentScriptClient):
+class HiddenServicesClient(TriblerExperimentScriptClient):
 
     def __init__(self, *argv, **kwargs):
         from Tribler.community.tunnel.hidden_community import HiddenTunnelCommunity
