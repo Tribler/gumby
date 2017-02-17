@@ -39,7 +39,7 @@
 
 from os import path
 
-from gumby.experiments.TriblerDispersyClient import TriblerDispersyExperimentScriptClient,\
+from gumby.experiments.triblerclient import TriblerDispersyExperimentScriptClient,\
     BASE_DIR
 from gumby.experiments.dispersyclient import main
 import logging
