@@ -92,7 +92,7 @@ class ScenarioParser(object):
         super(ScenarioParser, self).__init__()
         self._logger = logging.getLogger(self.__class__.__name__)
         self.file_lock = RLock()
-        self.line_buffer = None
+        self.line_buffer = []
         self.preprocessor_callbacks = {
             "include": self._preproc_include_file
         }
@@ -119,8 +119,16 @@ class ScenarioParser(object):
                 line_number += 1
 
     def _preproc_include_file(self, filename, line_number, line):
-        include_name = path.join(path.dirname(filename), line)
-        if path.exits(include_name):
+        exline = self._expand_line(line)
+        if not path.isabs(line):
+            include_name = path.join(path.dirname(filename), exline)
+        else:
+            include_name = exline
+        if not path.exists(include_name):
+            include_name = path.join(environ["PROJECT_DIR"], exline)
+        if not path.exists(include_name):
+            include_name = path.join(environ["EXPERIMENT_DIR"], exline)
+        if path.exists(include_name):
             self.add_scenario(include_name)
         else:
             self._logger.error("Error reading scenario %s:%d, include %s does not exist.", filename, line_number, line)
@@ -159,6 +167,8 @@ class ScenarioParser(object):
                 parts = line.split(' ', 2)
                 if len(parts) == 3:
                     timespec, callable, args = parts
+                elif len(parts) == 1 and line.strip() == "":
+                    return None
                 else:
                     timespec, callable = parts
                     args = ''
@@ -263,6 +273,10 @@ class ScenarioRunner(ScenarioParser):
         """
         if name is None:
             name = clb.__name__
+        if name in self._callables:
+            self._logger.warning("Callback method override! Collision for %s from %s and %s",
+                                 name, clb, self._callables[name])
+        self._logger.debug("Registered callback %s target %s", name, clb)
         self._callables[name] = clb
 
     def run(self):
@@ -274,17 +288,17 @@ class ScenarioRunner(ScenarioParser):
         if self._expstartstamp is None:
             self._expstartstamp = time()
 
-        for tstmp, filename, line_number, clb, args, kargs in self.line_buffer:
+        for tstmp, filename, line_number, clb, args, kwargs in self._parse_scenario():
             if clb not in self._callables:
-                self._logger.error("Error running scenario %s:%d, undefined function %s.", filename, line_number, clb)
+                self._logger.error("Error running scenario %s:%d, undefined callback %s.", filename, line_number, clb)
                 continue
             tstmp = tstmp + self._expstartstamp
             delay = tstmp - time()
             reactor.callLater(
                 delay if delay > 0.0 else 0,
                 self._callables[clb],
-                *args
-                **kargs
+                *args,
+                **kwargs
             )
 
     def _parse_for_this_peer(self, peerspec):

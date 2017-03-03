@@ -60,7 +60,7 @@ PROFILE_MEMORY_GRAPH_BACKREF_TYPES = environ.get("PROFILE_MEMORY_GRAPH_BACKREF_T
 PROFILE_MEMORY_GRAPH_BACKREF_AMOUNT =  int(environ.get("PROFILE_MEMORY_GRAPH_BACKREF_AMOUNT", 1))
 
 # @CONF_OPTION MANHOLE_ENABLE: Enable manhole (telnet access to the python processes), for debugging purposes. User: gumby, pass is empty (default: false)
-MANHOLE_ENABLE = environ.get("MANHOLE_ENABLE", "FALSE").upper() == "FALSE"
+MANHOLE_ENABLE = environ.get("MANHOLE_ENABLE", "FALSE").upper() == "TRUE"
 # @CONF_OPTION MANHOLE_PORTL Port that manhole should listen to. (default: 2323)
 MANHOLE_PORT = int(environ.get("MANHOLE_PORT", 2323))
 

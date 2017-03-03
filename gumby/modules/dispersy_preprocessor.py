@@ -6,7 +6,9 @@ from gumby.scenario import ScenarioRunner
 class ScenarioPreProcessor(ScenarioRunner):
 
     def __init__(self, filename, outputfile=sys.stdout, max_tstmp=0):
-        ScenarioRunner.__init__(self, filename)
+        ScenarioRunner.__init__(self)
+
+        self.add_scenario(filename)
 
         self._callables = {}
         self._callables['churn'] = self.churn
@@ -15,15 +17,14 @@ class ScenarioPreProcessor(ScenarioRunner):
         print >> sys.stderr, "Looking for max_timestamp, max_peer... in %s" % filename,
 
         self.max_peer = 0
-        for (tstmp, lineno, clb, args) in self._parse_scenario(filename):
+        for (tstmp, file, lineno, clb, args, kwargs) in self._parse_scenario():
             max_tstmp = max(tstmp, max_tstmp)
 
         print >> sys.stderr, "\tfound %d and %d" % (max_tstmp, self.max_peer)
 
         _max_peer = self.max_peer
         print >> sys.stderr, "Preprocessing file...",
-        for (tstmp, lineno, clb, args) in self._parse_scenario(filename):
-
+        for (tstmp, file, lineno, clb, args, kwargs) in self._parse_scenario():
             print >> outputfile, self.file_buffer[1][lineno - 1][1]
             if clb in self._callables:
                 for peer in self.yes_peers:

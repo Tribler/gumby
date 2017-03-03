@@ -1,5 +1,6 @@
 import logging
 
+<<<<<<< HEAD:gumby/experiments/isolated_community_loader.py
 from os import path
 from sys import path as pythonpath
 
@@ -8,6 +9,10 @@ from gumby.experiments.gumby_session import DefaultCommunityLoader
 
 # TODO(emilon): Fix this crap
 pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
+=======
+from gumby.modules.community_launcher import CommunityLauncher
+from gumby.modules.gumby_session import DefaultCommunityLoader
+>>>>>>> ca5f8bd8... refactored gumby to a module based system:gumby/modules/isolated_community_loader.py
 
 from Tribler.dispersy.crypto import ECCrypto
 
@@ -21,7 +26,11 @@ class IsolatedLauncherWrapper(CommunityLauncher):
 
     def __init__(self, child, session_id):
         """
+<<<<<<< HEAD:gumby/experiments/isolated_community_loader.py
         Wrap a child launcher, given a unique session id.
+=======
+        Wrap a child launcher, given a unique session id
+>>>>>>> ca5f8bd8... refactored gumby to a module based system:gumby/modules/isolated_community_loader.py
 
         :type child: CommunityLauncher
         :type session_id: str

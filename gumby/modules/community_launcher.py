@@ -9,14 +9,13 @@ class CommunityLauncher(object):
 
     __metaclass__ = ABCMeta
 
-    @abstractmethod
     def get_name(self):
         """
         Get the launcher name, for pre-launch organisation.
 
         :rtype: str
         """
-        return "UNKNOWN"
+        return self.get_community_class().__name__
 
     def not_before(self):
         """
@@ -115,9 +114,6 @@ class SearchCommunityLauncher(CommunityLauncher):
 
 class AllChannelCommunityLauncher(CommunityLauncher):
 
-    def get_name(self):
-        return "AllChannelCommunity"
-
     def should_launch(self, session):
         return session.get_enable_channel_search()
 
@@ -128,9 +124,6 @@ class AllChannelCommunityLauncher(CommunityLauncher):
 
 class ChannelCommunityLauncher(CommunityLauncher):
 
-    def get_name(self):
-        return "ChannelCommunity"
-
     def should_launch(self, session):
         return session.get_channel_community_enabled()
 
@@ -140,9 +133,6 @@ class ChannelCommunityLauncher(CommunityLauncher):
 
 
 class PreviewChannelCommunityLauncher(CommunityLauncher):
-
-    def get_name(self):
-        return "PreviewChannelCommunity"
 
     def should_launch(self, session):
         return session.get_preview_channel_community_enabled()
@@ -157,14 +147,34 @@ class PreviewChannelCommunityLauncher(CommunityLauncher):
 
 class HiddenTunnelCommunityLauncher(CommunityLauncher):
 
-    def get_name(self):
-        return "HiddenTunnelCommunity"
-
     def not_before(self):
         return ["MultiChainCommunity",]
 
     def should_launch(self, session):
-        return session.get_tunnel_community_enabled()
+        return session.get_tunnel_community_enabled() and session.get_enable_multichain()
+
+    def get_community_class(self):
+        from Tribler.community.tunnel.hidden_community_multichain import HiddenTunnelCommunityMultichain
+        return HiddenTunnelCommunityMultichain
+
+    def get_my_member(self, dispersy, session):
+        keypair = session.multichain_keypair
+        return dispersy.get_member(private_key=keypair.key_to_bin())
+
+    def get_kwargs(self, session):
+        from Tribler.community.tunnel.tunnel_community import TunnelSettings
+        shared_args = super(HiddenTunnelCommunityMultichainLauncher, self).get_kwargs(session)
+        shared_args['settings'] = TunnelSettings(tribler_session=session)
+        return shared_args
+
+    def finalize(self, dispersy, session, community):
+        session.lm.tunnel_community = community
+
+
+class HiddenTunnelCommunityLauncher(CommunityLauncher):
+
+    def should_launch(self, session):
+        return session.get_tunnel_community_enabled() and not session.get_enable_multichain()
 
     def get_community_class(self):
         from Tribler.community.tunnel.hidden_community import HiddenTunnelCommunity
@@ -189,9 +199,6 @@ class HiddenTunnelCommunityLauncher(CommunityLauncher):
 
 
 class MultiChainCommunityLauncher(CommunityLauncher):
-
-    def get_name(self):
-        return "MultiChainCommunity"
 
     def should_launch(self, session):
         return session.get_enable_multichain()
