@@ -5,6 +5,7 @@ class CommunityExperimentModule(ExperimentModule):
     def __init__(self, experiment, community_class):
         super(CommunityExperimentModule, self).__init__(experiment)
         self.community_class = community_class
+        self.community_launcher.finalize_callback = self._community_finalize
 
     @property
     def dispersy_provider(self):
@@ -13,6 +14,8 @@ class CommunityExperimentModule(ExperimentModule):
         for module in self.experiment.experiment_modules:
             if isinstance(module, BaseDispersyModule):
                 return module
+
+        self._logger.error("No dispersy provider module loaded. Load either DispersyModule or TriblerModule at the start of your scenario")
         return None
 
     @property
@@ -41,6 +44,12 @@ class CommunityExperimentModule(ExperimentModule):
             if isinstance(c, self.community_class):
                 return c
         return None
+
+    def _community_finalize(self, *_):
+        self.on_community_loaded()
+
+    def on_community_loaded(self):
+        pass
 
     def set_community_launcher(self, community_launcher):
         loader = self.community_loader

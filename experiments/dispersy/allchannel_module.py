@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # dummy_scenario_experiment_client.py ---
 #
-# Filename: allchannel_client.py
+# Filename: allchannel_module.py
 # Description:
 # Author: Elric Milon
 # Maintainer:
@@ -36,72 +36,55 @@
 #
 
 # Code:
-from os import path
 from random import choice
 from string import letters
-from sys import path as pythonpath
 from time import time
 
 from twisted.internet.task import LoopingCall
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
+from gumby.sync import experiment_callback
+from gumby.modules.community_experiment_module import CommunityExperimentModule
 
-
-# TODO(emilon): Fix this crap
-pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
-
+from Tribler.community.allchannel.community import AllChannelCommunity
 from Tribler.community.channel.community import ChannelCommunity
 
 
-class AllChannelClient(DispersyExperimentScriptClient):
+class AllChannelModule(CommunityExperimentModule):
 
-    def __init__(self, *argv, **kwargs):
-        from Tribler.community.allchannel.community import AllChannelCommunity
-        super(AllChannelClient, self).__init__(*argv, **kwargs)
-        self.community_class = AllChannelCommunity
+    def __init__(self, experiment):
+        super(AllChannelModule, self).__init__(experiment, AllChannelCommunity)
+        # by default the dispersy providers will not load this one
+        self.session_config.set_enable_channel_search(True)
         self.my_channel = None
         self.joined_community = None
         self.torrentindex = 1
-
         self.join_lc = None
-        self.set_community_kwarg('tribler_session', None)
 
-    def registerCallbacks(self):
-        self.scenario_runner.register(self.create, 'create')
-        self.scenario_runner.register(self.join, 'join')
-        self.scenario_runner.register(self.publish, 'publish')
-        self.scenario_runner.register(self.post, 'post')
-
-    def start_dispersy(self):
-        from Tribler.community.channel.preview import PreviewChannelCommunity
-
-        super(AllChannelClient, self).start_dispersy()
-        self._dispersy.define_auto_load(ChannelCommunity, self._my_member, (), {"tribler_session": None})
-        self._dispersy.define_auto_load(PreviewChannelCommunity, self._my_member, (), {"tribler_session": None})
-
-    def create(self):
+    @experiment_callback
+    def allchannel_create(self):
         self._logger.info("creating-community")
-        self.my_channel = ChannelCommunity.create_community(self._dispersy, self._my_member, tribler_session=None)
+        self.my_channel = ChannelCommunity.create_community(self.dispersy, self.community.my_member,
+                                                            tribler_session=self.session)
         self.my_channel.set_channel_mode(ChannelCommunity.CHANNEL_OPEN)
-
         self._logger.info("Community created with member: %s", self.my_channel._master_member)
         self.my_channel._disp_create_channel(u'', u'')
 
+    @experiment_callback
     def join(self):
         if not self.join_lc:
-            self.join_lc = lc = LoopingCall(self.join)
-            lc.start(1.0, now=False)
+            self.join_lc = LoopingCall(self.join)
+            self.join_lc.start(1.0, now=False)
 
         self._logger.info("trying-to-join-community")
 
-        cid = self._community._channelcast_db.getChannelIdFromDispersyCID(None)
+        cid = self.community._channelcast_db.getChannelIdFromDispersyCID(None)
         if cid:
-            community = self._community._get_channel_community(cid)
+            community = self.community._get_channel_community(cid)
             if community._channel_id:
-                self._community.disp_create_votecast(community.cid, 2, int(time()))
+                self.community.disp_create_votecast(community.cid, 2, int(time()))
 
                 self._logger.info("joining-community")
-                for c in self._dispersy.get_communities():
+                for c in self.dispersy.get_communities():
                     if isinstance(c, ChannelCommunity):
                         self.joined_community = c
                 if self.joined_community is None:
@@ -110,6 +93,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
                 self.join_lc.stop()
                 return
 
+    @experiment_callback
     def publish(self, amount=1):
         amount = int(amount)
         torrents = []
@@ -138,6 +122,7 @@ class AllChannelClient(DispersyExperimentScriptClient):
             elif self.joined_community:
                 self.joined_community._disp_create_torrents(torrents)
 
+    @experiment_callback
     def post(self, amount=1):
         amount = int(amount)
         if self.joined_community:
@@ -145,9 +130,12 @@ class AllChannelClient(DispersyExperimentScriptClient):
                 text = ''.join(choice(letters) for i in xrange(160))
                 self.joined_community._disp_create_comment(text, int(time()), None, None, None, None)
 
-if __name__ == '__main__':
-    AllChannelClient.scenario_file = 'allchannel_1000.scenario'
-    main(AllChannelClient)
-
-#
-# allchannel_client.py ends here
+    @experiment_callback
+    def close(self):
+        self._logger.info('close command received')
+        if self.my_channel:
+            self._logger.info('close-channel: %s ', self.my_channel)
+            self.my_channel.unload_community()
+        if self.joined_community:
+            self._logger.info('close-community %s ', self.joined_community)
+            self.joined_community.unload_community()

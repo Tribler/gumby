@@ -22,15 +22,15 @@ from Tribler.dispersy.candidate import CANDIDATE_STUMBLE_LIFETIME, CANDIDATE_WAL
 
 
 @static_module
-class DispersyExperimentModule(BaseDispersyModule):
+class DispersyModule(BaseDispersyModule):
     def __init__(self, experiment):
-        super(DispersyExperimentModule, self).__init__(experiment)
+        super(DispersyModule, self).__init__(experiment)
         self._crypto = self._initialize_crypto()
         self.session_id = environ['SYNC_HOST'] + environ['SYNC_PORT']
         self.custom_community_loader = self.create_community_loader()
 
     def on_id_received(self):
-        super(DispersyExperimentModule, self).on_id_received()
+        super(DispersyModule, self).on_id_received()
         self.session_config = self.setup_session_config()
         self.session = GumbySession(scfg=self.session_config)
 
@@ -40,7 +40,7 @@ class DispersyExperimentModule(BaseDispersyModule):
         self.dispersy = Dispersy(StandaloneEndpoint(self.session_config.get_dispersy_port(), '0.0.0.0'),
                                   u'.', u"dispersy.db", self._crypto)
         self.dispersy.statistics.enable_debug_statistics(True)
-        self.dispersy.start()
+        self.dispersy.start(autoload_discovery=False)
 
         self.custom_community_loader.load(self.dispersy, self.session)
 
@@ -160,6 +160,7 @@ class DispersyExperimentModule(BaseDispersyModule):
             yield deferLater(reactor, 5.0, lambda : None)
 
     def setup_session_config(self):
-        config = super(DispersyExperimentModule, self).setup_session_config()
+        config = super(DispersyModule, self).setup_session_config()
         config.set_state_dir(path.abspath(path.join(environ["OUTPUT_DIR"], ".Dispersy-%d") % getpid()))
+        config.set_enable_multichain(False)
         return config

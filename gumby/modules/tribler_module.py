@@ -11,6 +11,8 @@ from gumby.modules.base_dispersy_module import BaseDispersyModule
 class TriblerModule(BaseDispersyModule):
     def __init__(self, experiment):
         super(TriblerModule, self).__init__(experiment)
+        # in the case of Tribler dispersy we cannot control the launch of the discovery community. So don't try it.
+        self.custom_community_loader.del_launcher("DiscoveryCommunity")
 
     @experiment_callback
     def start_session(self):

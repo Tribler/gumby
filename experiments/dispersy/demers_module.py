@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
-# demers_client.py ---
+# demers_module.py ---
 #
-# Filename: demers_client.py
+# Filename: demers_module.py
 # Description:
 # Author: Elric Milon
 # Maintainer:
@@ -37,39 +37,32 @@
 
 # Code:
 
-from os import path
 from random import choice
 from string import letters
-from sys import path as pythonpath
 
-from gumby.experiments.dispersyclient import DispersyExperimentScriptClient, main
+from gumby.sync import experiment_callback
+from gumby.modules.community_launcher import CommunityLauncher
+from gumby.modules.community_experiment_module import CommunityExperimentModule
 
-from twisted.python.log import msg
-
-# TODO(emilon): Fix this crap
-pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
+from Tribler.community.demers.community import DemersTest
 
 
-class DemersClient(DispersyExperimentScriptClient):
+class DemersCommunityLauncher(CommunityLauncher):
+    def get_community_class(self):
+        return DemersTest
 
-    def __init__(self, *argv, **kwargs):
-        from Tribler.community.demers.community import DemersTest
-        super(DemersClient, self).__init__(*argv, **kwargs)
-        self.community_class = DemersTest
 
-    def registerCallbacks(self):
-        self.scenario_runner.register(self.publish, 'publish')
+class DemersModule(CommunityExperimentModule):
 
+    def __init__(self, experiment):
+        super(DemersModule, self).__init__(experiment, DemersTest)
+        # this community is not loaded by default, so add a launcher for it
+        self.set_community_launcher(DemersCommunityLauncher())
+
+    @experiment_callback
     def publish(self, amount=1):
         amount = int(amount)
         for _ in xrange(amount):
             self._logger.debug('creating-text')
             text = u''.join(choice(letters) for _ in xrange(100))
-            self._community.create_text(text)
-
-if __name__ == '__main__':
-    DemersClient.scenario_file = "demers.scenario"
-    main(DemersClient)
-
-#
-# demers_client.py ends here
+            self.community.create_text(text)

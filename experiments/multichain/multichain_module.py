@@ -12,13 +12,14 @@ from Tribler.community.multichain.community import MultiChainCommunity
 
 
 @static_module
-class MultichainExperimentModule(CommunityExperimentModule):
+class MultichainModule(CommunityExperimentModule):
     def __init__(self, experiment):
-        super(MultichainExperimentModule, self).__init__(experiment, MultiChainCommunity)
+        super(MultichainModule, self).__init__(experiment, MultiChainCommunity)
+        self.session_config.set_enable_multichain(True)
         self.request_signatures_lc = LoopingCall(self.request_random_signature)
 
     def on_id_received(self):
-        super(MultichainExperimentModule, self).on_id_received()
+        super(MultichainModule, self).on_id_received()
         self.vars['public_key'] = self.session.multichain_keypair.pub().key_to_bin().encode("base64")
 
     def get_candidate(self, candidate_id):

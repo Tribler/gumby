@@ -38,6 +38,17 @@ class CommunityLoader(object):
 
         self.community_launchers[launcher.get_name()] = (launcher, False)
 
+    def del_launcher(self, launcher):
+        """
+        Unregister a launcher
+
+        :type launcher: CommunityLauncher
+        """
+        assert isinstance(launcher, CommunityLauncher)
+
+        if launcher.get_name() in self.community_launchers:
+            del self.community_launchers[launcher.get_name()]
+
     def load(self, dispersy, session):
         """
         Load all of the communities specified by the registered launchers into Dispersy.
@@ -93,6 +104,7 @@ class DefaultCommunityLoader(CommunityLoader):
 
     def __init__(self):
         super(DefaultCommunityLoader, self).__init__()
+        self.set_launcher(DiscoveryCommunityLauncher())
         self.set_launcher(SearchCommunityLauncher())
         self.set_launcher(AllChannelCommunityLauncher())
         self.set_launcher(ChannelCommunityLauncher())

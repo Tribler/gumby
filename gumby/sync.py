@@ -262,8 +262,10 @@ class ExperimentServiceFactory(Factory):
         vars = {}
         for subscriber in self.connections_ready:
             subscriber_vars = subscriber.vars.copy()
-            subscriber_vars['port'] = subscriber.id + 12000
-            subscriber_vars['host'] = subscriber.transport.getPeer().host
+            if "port" not in subscriber_vars:
+                subscriber_vars['port'] = subscriber.id + 12000
+            if "host" not in subscriber_vars:
+                subscriber_vars['host'] = subscriber.transport.getPeer().host
             vars[subscriber.id] = subscriber_vars
 
         json_vars = json.dumps(vars)
@@ -436,7 +438,7 @@ class ExperimentClient(object, LineReceiver):
 
     def get_peer_ip_port_by_id(self, peer_id):
         if str(peer_id) in self.all_vars:
-            return self.all_vars[str(peer_id)]['host'], self.all_vars[str(peer_id)]['port']
+            return str(self.all_vars[str(peer_id)]['host']), self.all_vars[str(peer_id)]['port']
 
     def get_peers(self):
         return self.all_vars.keys()
@@ -501,18 +503,6 @@ class ExperimentClient(object, LineReceiver):
     @experiment_callback
     def stop(self):
         stop_reactor()
-
-    @staticmethod
-    def str2bool(v):
-        return v.lower() in ("yes", "true", "t", "1")
-
-    @staticmethod
-    def str2tuple(v):
-        if len(v) > 1 and v[1] == "t":
-            return (int(v[0]), int(v[2:]))
-        if len(v) > 1 and v[1] == ".":
-            return float(v)
-        return int(v)
 
     def print_on_change(self, name, prev_dict, cur_dict):
         def get_changed_values(prev_dict, cur_dict):

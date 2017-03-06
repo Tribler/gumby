@@ -31,6 +31,18 @@ class ExperimentModule(object):
     def on_id_received(self):
         pass
 
+    @staticmethod
+    def str2bool(v):
+        return v.lower() in ("yes", "true", "t", "1")
+
+    @staticmethod
+    def str2tuple(v):
+        if len(v) > 1 and v[1] == "t":
+            return (int(v[0]), int(v[2:]))
+        if len(v) > 1 and v[1] == ".":
+            return float(v)
+        return int(v)
+
 
 def static_module(cls):
     original_on_module_load = cls.on_module_load

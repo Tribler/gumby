@@ -2,7 +2,7 @@ from logging import debug, error
 from twisted.internet import reactor
 from os import environ, path
 from random import random
-from sys import path as python_path
+from sys import path as python_path, argv
 
 from gumby.instrumentation import init_instrumentation
 from gumby.log import setupLogging
@@ -10,6 +10,20 @@ from gumby.sync import ExperimentClientFactory, ExperimentServiceFactory
 
 
 def main(self_service=False):
+    if len(argv) > 2:
+        print "Launch invoke error, to many command line arguments. Specify 1 scenario file to run."
+        return
+
+    if len(argv) == 2:
+        p = path.abspath(argv[1])
+        if path.exists(p):
+            print "Launch error, command line argument %s does not exist" % p
+        elif "SCENARIO_FILE" in environ:
+            print "Launch invoke error, can't take both a command line scenario file and ean nvironment scenario file."
+            return
+        else:
+            environ["SCENARIO_FILE"] = p
+
     # setup the environment
     if "PROJECT_DIR" not in environ:
         environ["PROJECT_DIR"] = path.abspath(path.join(path.dirname(__file__), ".."))
