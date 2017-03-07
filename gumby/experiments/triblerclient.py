@@ -5,13 +5,13 @@ from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 
 from gumby.experiments.dispersyclient import DispersyExperimentScriptClient
+from gumby.experiments.gumby_session import GumbySession
+from gumby.experiments.isolated_community_loader import IsolatedCommunityLoader
 import logging
 
 # TODO(emilon): Fix this crap
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 pythonpath.append(os.path.abspath(os.path.join(BASE_DIR, "./tribler")))
-
-from Tribler.Core.Session import Session
 
 
 class TriblerExperimentScriptClient(DispersyExperimentScriptClient):
@@ -38,6 +38,11 @@ class TriblerExperimentScriptClient(DispersyExperimentScriptClient):
     def stop_dispersy(self):
         raise NotImplementedError("Dispersy is stopped using the tribler session in stop")
 
+    def create_community_loader(self):
+        from os import environ
+        session_id = environ['SYNC_HOST'] + environ['SYNC_PORT']
+        return IsolatedCommunityLoader(session_id)
+
     def start_session(self):
         logging.error("Starting Tribler Session")
 
@@ -49,7 +54,11 @@ class TriblerExperimentScriptClient(DispersyExperimentScriptClient):
         os.symlink(bootstrap_file_path, dest_file_path)
 
         self.session_config = self.setup_session_config()
-        self.session = Session(scfg=self.session_config)
+        self.session = GumbySession(scfg=self.session_config)
+
+        custom_community_loader = self.create_community_loader()
+        if custom_community_loader:
+            self.session.lm.community_loader = custom_community_loader
 
         def on_tribler_started(_):
             logging.error("Tribler Session started")
