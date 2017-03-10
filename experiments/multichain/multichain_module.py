@@ -1,6 +1,6 @@
 from random import randint, choice
 
-from gumby.sync import experiment_callback
+from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module
 from gumby.modules.community_experiment_module import CommunityExperimentModule
 

@@ -104,7 +104,6 @@ class DefaultCommunityLoader(CommunityLoader):
 
     def __init__(self):
         super(DefaultCommunityLoader, self).__init__()
-        self.set_launcher(DiscoveryCommunityLauncher())
         self.set_launcher(SearchCommunityLauncher())
         self.set_launcher(AllChannelCommunityLauncher())
         self.set_launcher(ChannelCommunityLauncher())

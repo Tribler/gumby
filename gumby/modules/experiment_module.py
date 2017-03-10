@@ -2,19 +2,24 @@ import logging
 
 
 class ExperimentModule(object):
+    """
+    Base class for all loadable modules for gumby scenarios. Scenario import statements that do not refer to a
+    derivative of this class are not recognized as loadable modules.
+    """
+
     def __init__(self, experiment):
         super(ExperimentModule, self).__init__()
         self._logger = logging.getLogger(self.__class__.__name__)
-        self.experiment = experiment
-        experiment.experiment_modules.append(self)
         self._logger.info("Load experiment module %s", self.__class__.__name__)
+        self.experiment = experiment
+        self.experiment.register(self)
 
     @classmethod
     def on_module_load(cls, experiment):
         pass
 
-    def print_on_change(self, name, prev_dict, cur_dict):
-        return self.experiment.print_on_change(name, prev_dict, cur_dict)
+    def print_dict_changes(self, name, prev_dict, cur_dict):
+        return self.experiment.print_dict_changes(name, prev_dict, cur_dict)
 
     @property
     def my_id(self):
@@ -35,22 +40,18 @@ class ExperimentModule(object):
     def str2bool(v):
         return v.lower() in ("yes", "true", "t", "1")
 
-    @staticmethod
-    def str2tuple(v):
-        if len(v) > 1 and v[1] == "t":
-            return (int(v[0]), int(v[2:]))
-        if len(v) > 1 and v[1] == ".":
-            return float(v)
-        return int(v)
-
 
 def static_module(cls):
+    """
+    Experiment module classes that have this decorator applied will have a singleton instance created when the module
+    class is loaded by a scenario file.
+    """
+
     original_on_module_load = cls.on_module_load
 
     def alt_on_module_load(_, experiment):
         original_on_module_load(experiment)
         cls._the_instance = cls(experiment)
-        experiment.register_callbacks(cls._the_instance)
 
     cls.on_module_load = alt_on_module_load.__get__(cls, cls)
     return cls

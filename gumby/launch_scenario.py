@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 from logging import debug, error
 from twisted.internet import reactor
 from os import environ, path
@@ -10,19 +12,32 @@ from gumby.sync import ExperimentClientFactory, ExperimentServiceFactory
 
 
 def main(self_service=False):
+    """
+    This is the main entry point for gumby experiments that run a scenario file.
+    To use it you must either:
+     - Supply a scenario file to run on the commandline (eg: launch_scenario.py some.scenario), or
+     - Set the scenario file to run in the SCENARIO_FILE environment variable.
+
+    The launch_experiment script will start the twisted reactor and run an ExperimentClient on it.
+
+    For debugging a scenario in an IDE, launch_experiment offers the self_service feature. it is activated if the
+    environment variable GUMBY_SELF_SERVICE exists, or if the main() method is invoked with self_service=True. The self-
+    service feature starts an the experiment server on the reactor and uses it to start the experiment in the usual way.
+    The self-service feature overrides the sync_host environment variable to 'localhost' and the sync_port variable if
+    it was not set or set to 0.
+    """
+
     if len(argv) > 2:
-        print "Launch invoke error, to many command line arguments. Specify 1 scenario file to run."
+        print "Launch invoke error, too many command line arguments. Specify 1 scenario file to run."
         return
 
     if len(argv) == 2:
-        p = path.abspath(argv[1])
-        if path.exists(p):
-            print "Launch error, command line argument %s does not exist" % p
-        elif "SCENARIO_FILE" in environ:
-            print "Launch invoke error, can't take both a command line scenario file and ean nvironment scenario file."
+        scenario_argument = path.abspath(argv[1])
+        if "SCENARIO_FILE" in environ:
+            print "Launch invoke error, can't take both a command line scenario file and an environment scenario file."
             return
         else:
-            environ["SCENARIO_FILE"] = p
+            environ["SCENARIO_FILE"] = scenario_argument
 
     # setup the environment
     if "PROJECT_DIR" not in environ:
@@ -45,6 +60,7 @@ def main(self_service=False):
             environ["EXPERIMENT_DIR"], "%s.scenario" % path.basename(path.normpath(environ["EXPERIMENT_DIR"]))))
 
     python_path.append(environ["TRIBLER_DIR"])
+    python_path.append(environ["EXPERIMENT_DIR"])
 
     init_instrumentation()
     setupLogging()
@@ -63,13 +79,15 @@ def main(self_service=False):
         def exp_started(_):
             debug("Experiment started, closing server")
 
-        fact = ExperimentServiceFactory(1, 3)
+        # create experiment service with 1 expected subscriber, and start in 0 seconds
+        fact = ExperimentServiceFactory(1, 0)
+        # need to monkey patch this one or it will kill the reactor.
         fact.onExperimentStarted = exp_started
         reactor.listenTCP(int(environ['SYNC_PORT']), fact)
 
     debug("Connecting to: %s:%s", environ['SYNC_HOST'], int(environ['SYNC_PORT']))
-    reactor.callLater(1 + random() * 10, reactor.connectTCP,
-                      environ['SYNC_HOST'], int(environ['SYNC_PORT']), ExperimentClientFactory({}))
+    reactor.callLater(1, reactor.connectTCP,
+                      environ['SYNC_HOST'], int(environ['SYNC_PORT']), ExperimentClientFactory())
     reactor.run()
     exit(reactor.exitCode)
 

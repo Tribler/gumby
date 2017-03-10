@@ -99,23 +99,22 @@ class ScenarioParser(object):
 
     def add_scenario(self, filename):
         """
-        Read the scenario into this scenario parser
+        Read the scenario into this scenario parser.
         """
         with self.file_lock:
-            f = open(filename, "r")
-            lines = f.readlines()
-            f.close()
+            with open(filename, "r") as scenario_file:
+                lines = scenario_file.readlines()
 
             line_number = 1
             for line in lines:
-                if not line.startswith('#'):
-                    line = line.strip()
-                    self.line_buffer.append((filename, line_number, line))
-                else:
+                if line.startswith("&"):
                     preproc_match = self._re_preprocessor_dir.match(line)
                     if preproc_match and preproc_match.group(1) in self.preprocessor_callbacks:
                         self.preprocessor_callbacks[preproc_match.group(1)](filename, line_number,
                                                                             line[preproc_match.end():].strip())
+                elif not line.startswith('#'):
+                    line = line.strip()
+                    self.line_buffer.append((filename, line_number, line))
                 line_number += 1
 
     def _preproc_include_file(self, filename, line_number, line):
@@ -310,6 +309,3 @@ class ScenarioRunner(ScenarioParser):
                 (no_peers and not self._peernumber in no_peers)
             )
         return True
-
-#
-# scenario.py ends here

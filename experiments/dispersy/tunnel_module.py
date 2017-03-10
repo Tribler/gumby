@@ -4,10 +4,12 @@ from twisted.internet.task import LoopingCall
 
 from Tribler.community.tunnel.hidden_community import HiddenTunnelCommunity
 from Tribler.community.tunnel.tunnel_community import TunnelSettings
-from gumby.sync import experiment_callback
+from gumby.experiment import experiment_callback
+from gumby.modules.experiment_module import static_module
 from gumby.modules.community_experiment_module import CommunityExperimentModule
 
 
+@static_module
 class TunnelModule(CommunityExperimentModule):
 
     def __init__(self, experiment):
@@ -42,6 +44,6 @@ class TunnelModule(CommunityExperimentModule):
 
     def _monitor_circuits(self):
         nr_circuits = len(self.community.active_data_circuits()) if self.community else 0
-        self._prev_scenario_statistics = self.print_on_change("scenario-statistics",
-                                                              self._prev_scenario_statistics,
-                                                              {'nr_circuits': nr_circuits})
+        self._prev_scenario_statistics = self.print_dict_changes("scenario-statistics",
+                                                                 self._prev_scenario_statistics,
+                                                                 {'nr_circuits': nr_circuits})

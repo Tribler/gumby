@@ -42,13 +42,15 @@ from time import time
 
 from twisted.internet.task import LoopingCall
 
-from gumby.sync import experiment_callback
+from gumby.experiment import experiment_callback
+from gumby.modules.experiment_module import static_module
 from gumby.modules.community_experiment_module import CommunityExperimentModule
 
 from Tribler.community.allchannel.community import AllChannelCommunity
 from Tribler.community.channel.community import ChannelCommunity
 
 
+@static_module
 class AllChannelModule(CommunityExperimentModule):
 
     def __init__(self, experiment):
@@ -61,10 +63,10 @@ class AllChannelModule(CommunityExperimentModule):
         self.join_lc = None
 
     @experiment_callback
-    def allchannel_create(self):
+    def create(self):
         self._logger.info("creating-community")
         self.my_channel = ChannelCommunity.create_community(self.dispersy, self.community.my_member,
-                                                            tribler_session=self.session)
+                                                            tribler_session=None)
         self.my_channel.set_channel_mode(ChannelCommunity.CHANNEL_OPEN)
         self._logger.info("Community created with member: %s", self.my_channel._master_member)
         self.my_channel._disp_create_channel(u'', u'')

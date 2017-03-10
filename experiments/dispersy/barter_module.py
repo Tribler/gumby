@@ -38,7 +38,8 @@
 # Code:
 
 
-from gumby.sync import experiment_callback
+from gumby.experiment import experiment_callback
+from gumby.modules.experiment_module import static_module
 from gumby.modules.community_launcher import BarterCommunityLauncher
 from gumby.modules.community_experiment_module import CommunityExperimentModule
 
@@ -52,6 +53,7 @@ class BarterCrawlerCommunityLauncher(BarterCommunityLauncher):
         return BarterCommunityCrawler
 
 
+@static_module
 class BarterModule(CommunityExperimentModule):
 
     def __init__(self, experiment):

@@ -49,10 +49,12 @@ from Tribler.Core.DownloadConfig import DefaultDownloadStartupConfig
 from Tribler.Core.TorrentDef import TorrentDef
 from Tribler.dispersy.candidate import Candidate
 
-from gumby.sync import experiment_callback
+from gumby.experiment import experiment_callback
+from gumby.modules.experiment_module import static_module
 from gumby.modules.community_experiment_module import CommunityExperimentModule
 
 
+@static_module
 class HiddenServicesModule(CommunityExperimentModule):
 
     def __init__(self, experiment):
@@ -182,13 +184,13 @@ class HiddenServicesModule(CommunityExperimentModule):
 
     def log_progress_stats(self, ds):
         new_speed_download = {'download': ds.get_current_speed('down')}
-        self.speed_download = self.print_on_change("speed-download", self.speed_download, new_speed_download)
+        self.speed_download = self.print_dict_changes("speed-download", self.speed_download, new_speed_download)
 
         new_progress = {'progress': ds.get_progress() * 100}
-        self.progress = self.print_on_change("progress-percentage", self.progress, new_progress)
+        self.progress = self.print_dict_changes("progress-percentage", self.progress, new_progress)
 
         new_speed_upload = {'upload': ds.get_current_speed('up')}
-        self.speed_upload = self.print_on_change("speed-upload", self.speed_upload, new_speed_upload)
+        self.speed_upload = self.print_dict_changes("speed-upload", self.speed_upload, new_speed_upload)
 
     def create_test_torrent(self, filename=''):
         self._logger.error("Create %s download" % filename)

@@ -1,18 +1,18 @@
-from os import environ, getpid
+from os import environ
 
-from twisted.python.log import addObserver
-
-from gumby.sync import experiment_callback
+from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import ExperimentModule
 from gumby.modules.gumby_session import GumbySession
 from gumby.modules.isolated_community_loader import IsolatedCommunityLoader
 
-from Tribler.dispersy.util import unhandled_error_observer
 from Tribler.Core.SessionConfig import SessionStartupConfig
 
 
 class BaseDispersyModule(ExperimentModule):
     def __init__(self, experiment):
+        for module in experiment.experiment_modules:
+            if isinstance(module, BaseDispersyModule):
+                raise Exception("Unable to load multiple dispersy providers in a single experiment")
         super(BaseDispersyModule, self).__init__(experiment)
         self.session = None
         self.session_config = None
@@ -40,10 +40,6 @@ class BaseDispersyModule(ExperimentModule):
     @experiment_callback
     def isolate_community(self, name):
         self.custom_community_loader.isolate(name)
-
-    @experiment_callback
-    def observe_exceptions(self):
-        addObserver(unhandled_error_observer)
 
     def setup_session_config(self):
         if self.dispersy_port is None:

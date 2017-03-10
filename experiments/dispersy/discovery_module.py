@@ -6,11 +6,13 @@ from hashlib import sha1
 
 from twisted.internet.task import LoopingCall
 
-from gumby.sync import experiment_callback
+from gumby.experiment import experiment_callback
+from gumby.modules.experiment_module import static_module
 from gumby.modules.community_experiment_module import CommunityExperimentModule
 from Tribler.dispersy.discovery.community import DiscoveryCommunity
 
 
+@static_module
 class DiscoveryModule(CommunityExperimentModule):
 
     def __init__(self, experiment):
@@ -78,6 +80,6 @@ class DiscoveryModule(CommunityExperimentModule):
         else:
             bootstrapped = 0
 
-        self._prev_scenario_statistics = self.print_on_change("scenario-statistics", self._prev_scenario_statistics, {'bootstrapped': bootstrapped})
+        self._prev_scenario_statistics = self.print_dict_changes("scenario-statistics", self._prev_scenario_statistics, {'bootstrapped': bootstrapped})
         if self.community:
-            self._prev_scenario_debug = self.print_on_change("scenario-debug", self._prev_scenario_debug, {'nr_friends':len(self.friends) if self.friends else 0})
+            self._prev_scenario_debug = self.print_dict_changes("scenario-debug", self._prev_scenario_debug, {'nr_friends':len(self.friends) if self.friends else 0})
