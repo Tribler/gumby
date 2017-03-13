@@ -1,5 +1,7 @@
 from os import environ
 
+from twisted.internet.defer import Deferred
+
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import ExperimentModule
 from gumby.modules.gumby_session import GumbySession
@@ -10,9 +12,9 @@ from Tribler.Core.SessionConfig import SessionStartupConfig
 
 class BaseDispersyModule(ExperimentModule):
     def __init__(self, experiment):
-        for module in experiment.experiment_modules:
-            if isinstance(module, BaseDispersyModule):
-                raise Exception("Unable to load multiple dispersy providers in a single experiment")
+        if BaseDispersyModule.get_dispery_provider(experiment) is not None:
+            raise Exception("Unable to load multiple dispersy providers in a single experiment")
+
         super(BaseDispersyModule, self).__init__(experiment)
         self.session = None
         self.session_config = None
@@ -20,14 +22,19 @@ class BaseDispersyModule(ExperimentModule):
         self.dispersy = None
         self.session_id = environ['SYNC_HOST'] + environ['SYNC_PORT']
         self.custom_community_loader = self.create_community_loader()
+        self.dispersy_available = Deferred()
 
     def on_id_received(self):
         super(BaseDispersyModule, self).on_id_received()
         self.session_config = self.setup_session_config()
-        self.session = GumbySession(scfg=self.session_config)
 
     def create_community_loader(self):
         return IsolatedCommunityLoader(self.session_id)
+
+    @experiment_callback
+    def start_session(self):
+        self.session = GumbySession(scfg=self.session_config)
+        self.session_config = None
 
     @experiment_callback
     def set_dispersy_port(self, port):
@@ -64,3 +71,10 @@ class BaseDispersyModule(ExperimentModule):
         config.set_listen_port(20000 + self.experiment.my_id)
         config.set_dispersy_port(self.dispersy_port)
         return config
+
+    @classmethod
+    def get_dispery_provider(cls, experiment):
+        for module in experiment.experiment_modules:
+            if isinstance(module, BaseDispersyModule):
+                return module
+        return None

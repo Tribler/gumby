@@ -10,7 +10,10 @@ class CommunityExperimentModule(ExperimentModule):
     def __init__(self, experiment, community_class):
         super(CommunityExperimentModule, self).__init__(experiment)
         self.community_class = community_class
-        self.community_launcher.finalize_callback = self._community_finalize
+
+        # To be sure that the module loading happens in the right order, this next line serves the dual purpose of
+        # triggering the check for a loaded dispersy provider
+        self.dispersy_provider.dispersy_available.addCallback(self.on_dispersy_available)
 
     @property
     def dispersy_provider(self):
@@ -19,12 +22,12 @@ class CommunityExperimentModule(ExperimentModule):
         used as the source for the dispersy instance, session, session config and custom community loader.
         :return: An instance of BaseDispersyModule that was loaded into the experiment.
         """
-        for module in self.experiment.experiment_modules:
-            if isinstance(module, BaseDispersyModule):
-                return module
+        ret = BaseDispersyModule.get_dispery_provider(self.experiment)
+        if ret:
+            return ret
 
-        raise Exception("No dispersy provider module loaded. Load either DispersyModule or TriblerModule at the "
-                        "start of your scenario")
+        raise Exception("No dispersy provider module loaded. Load an implementation of BaseDispersyModule ("
+                        "DispersyModule or TriblerModule) before loading the %s module", self.__class__.__name__)
 
     @property
     def dispersy(self):
@@ -36,7 +39,14 @@ class CommunityExperimentModule(ExperimentModule):
 
     @property
     def session_config(self):
-        return self.dispersy_provider.session_config
+        # The session config only exists after on_id_received up to session start. The session start copy constructs all
+        # settings so writing to the original session_config after this will not do anything. So on any access to the
+        # session_config after the session has launched, return the session. It acts as a session_config as well and
+        # alerts the user if some setting cannot be changed at runtime.
+        if self.dispersy_provider.session_config is None:
+            return self.session
+        else:
+            return self.dispersy_provider.session_config
 
     @property
     def community_loader(self):
@@ -60,14 +70,5 @@ class CommunityExperimentModule(ExperimentModule):
                 return community
         return None
 
-    def _community_finalize(self, *_):
-        self.on_community_loaded()
-
-    def on_community_loaded(self):
+    def on_dispersy_available(self, dispersy):
         pass
-
-    def set_community_launcher(self, community_launcher):
-        if self.community_loader is None:
-            self._logger.error("Unable to set community launcher, no custom community loader is active")
-        self.community_loader.set_launcher(community_launcher)
-        self.community_launcher.finalize_callback = self._community_finalize

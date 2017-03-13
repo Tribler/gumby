@@ -41,7 +41,7 @@
 # Code:
 
 from glob import glob
-from os import path, chdir, environ, makedirs, execvpe
+from os import path, chdir, environ, makedirs, execvpe, getcwd
 from subprocess import call
 from sys import stdout, stderr
 import shlex
@@ -101,6 +101,9 @@ extend_var(environ, "PATH", scripts_dir)
 
 # Add the experiment dir to PATH so we can call custom scripts from there
 extend_var(environ, "PATH", experiment_dir)
+
+# Add the gumby dir to PATH so we can launch the launch_scenario.py script
+extend_var(environ, "PATH", path.join(project_dir, "gumby", "gumby"))
 
 # Add ~/R to the R search path
 extend_var(environ, "R_LIBS_USER", expand_var("$HOME/R"))

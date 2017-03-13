@@ -4,10 +4,7 @@ import time as timemod
 from os import path
 from sys import path as pythonpath
 
-from gumby.experiments.community_launcher import *
-
-# TODO(emilon): Fix this crap
-pythonpath.append(path.abspath(path.join(path.dirname(__file__), '..', '..', '..', "./tribler")))
+from gumby.modules.community_launcher import *
 
 from Tribler.Core.Session import Session
 from Tribler.Core.APIImplementation.LaunchManyCore import TriblerLaunchMany
@@ -22,6 +19,13 @@ class CommunityLoader(object):
 
     def __init__(self):
         self.community_launchers = {}
+        self._logger = logging.getLogger(self.__class__.__name__)
+
+    def get_launcher(self, name):
+        return self.community_launchers[name][0]
+
+    def has_launched(self, name):
+        return self.community_launchers[name][1]
 
     def set_launcher(self, launcher):
         """
@@ -34,7 +38,10 @@ class CommunityLoader(object):
         assert isinstance(launcher, CommunityLauncher)
 
         if launcher.get_name() in self.community_launchers:
-            logging.warning("Overriding CommunityLauncher %s", launcher.get_name())
+            self._logger.warning("Overriding CommunityLauncher %s", launcher.get_name())
+            if self.has_launched(launcher.get_name()):
+                self._logger.error("Unable to replace launcher for %s, it was already launched", launcher.get_name())
+                return
 
         self.community_launchers[launcher.get_name()] = (launcher, False)
 
@@ -68,8 +75,7 @@ class CommunityLoader(object):
                     # If the dependency is never loaded, don't wait for it
                     if dependency in self.community_launchers and \
                             self.community_launchers[dependency][0].should_launch(session):
-                        _, loaded = self.community_launchers[dependency]
-                        validated = validated and loaded
+                        validated = validated and self.has_launched(dependency)
                 if validated:
                     self._launch(launcher, dispersy, session)
                 else:
@@ -90,7 +96,7 @@ class CommunityLoader(object):
         load_now = launcher.should_load_now(session)
         args = launcher.get_args(session)
         kwargs = launcher.get_kwargs(session)
-        communities = dispersy.define_auto_load(community_class, member, args, kwargs, load_now)
+        communities = dispersy.define_auto_load(community_class, member, tuple(args), kwargs, load_now)
         # Cleanup
         launcher.finalize(dispersy, session, communities[0] if communities else None)
         self.community_launchers[launcher.get_name()] = (launcher, True)

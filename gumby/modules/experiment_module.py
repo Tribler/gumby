@@ -3,7 +3,7 @@ import logging
 
 class ExperimentModule(object):
     """
-    Base class for all loadable modules for gumby scenarios. Scenario import statements that do not refer to a
+    Base class for all loadable modules for gumby scenarios. Scenario module statements that do not refer to a
     derivative of this class are not recognized as loadable modules.
     """
 

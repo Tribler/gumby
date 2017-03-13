@@ -8,7 +8,6 @@ from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
 
-from gumby.sync import stop_reactor
 from gumby.scenario import ScenarioRunner
 from gumby.modules.experiment_module import ExperimentModule
 
@@ -58,23 +57,26 @@ class ExperimentClient(object, LineReceiver):
         self.scenario_runner = ScenarioRunner()
         self.scenario_runner.preprocessor_callbacks["module"] = self._preproc_module
         self.loaded_experiment_module_classes = []
-        self.experiment_modules = []
         self._stats_file = None
         self.scenario_file = environ.get("SCENARIO_FILE", None)
 
-        self.register_callbacks(self)
+        # Beware! The ordering of modules is important, specifically on calling the event handlers.
+        self.experiment_modules = []
+
+        self.register(self)
 
         if self.scenario_file is None:
             self._logger.error("No scenario file defined, starting empty experiment")
         else:
             if not path.exists(self.scenario_file) and not path.isabs(self.scenario_file):
-                self._logger.info("Scenario file %s not found, attempting scenario file in experiment dir",
+                self._logger.warning("Scenario file %s not found, attempting scenario file in experiment dir",
                                   self.scenario_file)
                 self.scenario_file = path.join(environ['EXPERIMENT_DIR'], self.scenario_file)
             if path.exists(self.scenario_file):
+                self._logger.info("Scenario file found, using %s", self.scenario_file)
                 self.scenario_runner.add_scenario(self.scenario_file)
             else:
-                self._logger.info("Scenario file %s not found", self.scenario_file)
+                self._logger.error("Scenario file %s not found", self.scenario_file)
 
     def connectionMade(self):
         self._logger.debug("Connected to the experiment server")
@@ -87,8 +89,8 @@ class ExperimentClient(object, LineReceiver):
             pto = 'proto_' + self.state
             state_handler = getattr(self, pto)
         except AttributeError:
-            self._logger.error('Callback %s not found', self.state)
-            stop_reactor()
+            self._logger.error('Callback %s not found. Stopping reactor.', self.state)
+            reactor.stop()
         else:
             self.state = state_handler(line)
             if self.state == 'done':
@@ -106,7 +108,8 @@ class ExperimentClient(object, LineReceiver):
         self._stats_file = open("statistics.log", 'w')
 
         for module in self.experiment_modules:
-            module.on_id_received()
+            if module is not self:
+                module.on_id_received()
 
         for key, val in self.vars.iteritems():
             self.sendLine("set:%s:%s" % (key, val))
@@ -205,7 +208,8 @@ class ExperimentClient(object, LineReceiver):
 
     @experiment_callback
     def stop(self):
-        stop_reactor()
+        self._logger.info("Stopping reactor")
+        reactor.stop()
 
     def print_dict_changes(self, name, prev_dict, cur_dict):
         """

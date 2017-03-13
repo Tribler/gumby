@@ -3,13 +3,14 @@
 from logging import debug, error
 from twisted.internet import reactor
 from os import environ, path
-from random import random
 from sys import path as python_path, argv
 
 from gumby.instrumentation import init_instrumentation
 from gumby.log import setupLogging
 from gumby.sync import ExperimentClientFactory, ExperimentServiceFactory
 
+
+# @CONF_OPTION SCENARIO_FILE: The scenario to run for this experiment (default: None)
 
 def main(self_service=False):
     """
@@ -18,24 +19,24 @@ def main(self_service=False):
      - Supply a scenario file to run on the commandline (eg: launch_scenario.py some.scenario), or
      - Set the scenario file to run in the SCENARIO_FILE environment variable.
 
-    The launch_experiment script will start the twisted reactor and run an ExperimentClient on it.
+    The launch_scenario script will start the twisted reactor and run an ExperimentClient on it.
 
-    For debugging a scenario in an IDE, launch_experiment offers the self_service feature. it is activated if the
-    environment variable GUMBY_SELF_SERVICE exists, or if the main() method is invoked with self_service=True. The self-
+    For debugging a scenario in an IDE, launch_scenario offers the self_service feature. it is activated if the
+    environment variable SELF_SERVICE exists, or if the main() method is invoked with self_service=True. The self-
     service feature starts an the experiment server on the reactor and uses it to start the experiment in the usual way.
     The self-service feature overrides the sync_host environment variable to 'localhost' and the sync_port variable if
-    it was not set or set to 0.
+    it was not set or if it was set to 0.
     """
 
     if len(argv) > 2:
         print "Launch invoke error, too many command line arguments. Specify 1 scenario file to run."
-        return
+        exit(3)
 
     if len(argv) == 2:
         scenario_argument = path.abspath(argv[1])
         if "SCENARIO_FILE" in environ:
             print "Launch invoke error, can't take both a command line scenario file and an environment scenario file."
-            return
+            exit(3)
         else:
             environ["SCENARIO_FILE"] = scenario_argument
 
@@ -59,8 +60,10 @@ def main(self_service=False):
         environ["SCENARIO_FILE"] = path.abspath(path.join(
             environ["EXPERIMENT_DIR"], "%s.scenario" % path.basename(path.normpath(environ["EXPERIMENT_DIR"]))))
 
-    python_path.append(environ["TRIBLER_DIR"])
-    python_path.append(environ["EXPERIMENT_DIR"])
+    if environ["TRIBLER_DIR"] not in python_path:
+        python_path.append(environ["TRIBLER_DIR"])
+    if environ["EXPERIMENT_DIR"] not in python_path:
+        python_path.append(environ["EXPERIMENT_DIR"])
 
     init_instrumentation()
     setupLogging()
@@ -70,7 +73,7 @@ def main(self_service=False):
     reactor.exitCode = 0
 
     # if self service is requested, start an experiment server to run our scenario. Used to debug the client in an IDE
-    if self_service or "GUMBY_SELF_SERVICE" in environ:
+    if self_service or "SELF_SERVICE" in environ:
         environ["SYNC_HOST"] = "localhost"
         if environ["SYNC_PORT"] == "0":
             environ["SYNC_PORT"] = "57756"       # corresponds to the keyboard rows for the word gumby

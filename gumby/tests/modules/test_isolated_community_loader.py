@@ -1,7 +1,7 @@
 import unittest
 
-from gumby.experiments.community_launcher import CommunityLauncher
-from gumby.experiments.isolated_community_loader import IsolatedLauncherWrapper
+from gumby.modules.community_launcher import CommunityLauncher
+from gumby.modules.isolated_community_loader import IsolatedLauncherWrapper
 
 
 class MockDispersy(object):

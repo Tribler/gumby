@@ -37,6 +37,7 @@ class DispersyModule(BaseDispersyModule):
         self._do_log_lc.start(5.0, True)
         self._do_log()
         self._logger.debug("Finished starting dispersy")
+        self.dispersy_available.callback(self.dispersy)
 
     @experiment_callback
     def stop_session(self):

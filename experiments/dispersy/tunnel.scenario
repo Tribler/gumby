@@ -1,5 +1,5 @@
-#module gumby.modules.dispersy_module.DispersyModule
-#module experiments.dispersy.tunnel_module.TunnelModule
+&module module module gumby.modules.dispersy_module.DispersyModule
+&module module module experiments.dispersy.tunnel_module.TunnelModule
 
 @0.0 isolate_community HiddenTunnelCommunity
 @0:1 should_become_exit True {1-2}

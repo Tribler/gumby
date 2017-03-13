@@ -11,6 +11,8 @@ from gumby.modules.base_dispersy_module import BaseDispersyModule
 class TriblerModule(BaseDispersyModule):
     @experiment_callback
     def start_session(self):
+        super(TriblerModule, self).start_session()
+
         self._logger.error("Starting Tribler Session")
 
         if self.custom_community_loader:
@@ -19,6 +21,7 @@ class TriblerModule(BaseDispersyModule):
         def on_tribler_started(_):
             self._logger.error("Tribler Session started")
             self.dispersy = self.session.lm.dispersy
+            self.dispersy_available.callback(self.dispersy)
 
         return self.session.start().addCallback(on_tribler_started)
 

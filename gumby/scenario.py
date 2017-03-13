@@ -85,7 +85,7 @@ class ScenarioParser(object):
                time stamp, they will be executed in order.
     """
     _re_substitution = re_compile("(\$\w+)")
-    _re_preprocessor_dir = re_compile("^#(\w+)\s+")
+    _re_preprocessor_dir = re_compile("^&(\w+)\s+")
     _re_named_arg = re_compile("^\s*(\w+)\s*=\s*(.*)$")
 
     def __init__(self):
@@ -112,6 +112,9 @@ class ScenarioParser(object):
                     if preproc_match and preproc_match.group(1) in self.preprocessor_callbacks:
                         self.preprocessor_callbacks[preproc_match.group(1)](filename, line_number,
                                                                             line[preproc_match.end():].strip())
+                    else:
+                        self._logger.error("Error reading scenario %s:%d, preprocessor callback %s is unknown.",
+                                           filename, line_number, line)
                 elif not line.startswith('#'):
                     line = line.strip()
                     self.line_buffer.append((filename, line_number, line))
@@ -293,6 +296,7 @@ class ScenarioRunner(ScenarioParser):
                 continue
             tstmp = tstmp + self._expstartstamp
             delay = tstmp - time()
+            self._logger.info("Register call %s %s:%d %s %s %s", tstmp, filename, line_number, clb, repr(args), repr(kwargs))
             reactor.callLater(
                 delay if delay > 0.0 else 0,
                 self._callables[clb],

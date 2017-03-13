@@ -1,5 +1,5 @@
-#module gumby.modules.dispersy_module.DispersyModule
-#module experiments.dispersy.allchannel_module.AllChannelModule
+&module gumby.modules.dispersy_module.DispersyModule
+&module experiments.dispersy.allchannel_module.AllChannelModule
 
 @0.0 isolate_community AllChannelCommunity
 @0:1 start_session {1-980,990-1000}

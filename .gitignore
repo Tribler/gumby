@@ -48,3 +48,6 @@ output/
 \#*\#
 .\#*
 /TAGS
+
+#IDEs
+.idea

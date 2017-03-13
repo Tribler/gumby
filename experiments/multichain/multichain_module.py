@@ -1,13 +1,14 @@
 from random import randint, choice
 
 from gumby.experiment import experiment_callback
+
 from gumby.modules.experiment_module import static_module
 from gumby.modules.community_experiment_module import CommunityExperimentModule
 
 from twisted.internet.task import LoopingCall
 
 from Tribler.dispersy.candidate import Candidate
-
+from Tribler.Core import permid
 from Tribler.community.multichain.community import MultiChainCommunity
 
 
@@ -15,20 +16,40 @@ from Tribler.community.multichain.community import MultiChainCommunity
 class MultichainModule(CommunityExperimentModule):
     def __init__(self, experiment):
         super(MultichainModule, self).__init__(experiment, MultiChainCommunity)
-        self.session_config.set_enable_multichain(True)
         self.request_signatures_lc = LoopingCall(self.request_random_signature)
 
     def on_id_received(self):
         super(MultichainModule, self).on_id_received()
-        self.vars['public_key'] = self.session.multichain_keypair.pub().key_to_bin().encode("base64")
+        self.session_config.set_enable_multichain(True)
+
+        # We need the multichain key at this point. However, the configured session is not started yet. So we generate
+        # the keys here and place them in the correct place. When the session starts it will load these keys.
+        multichain_keypair = permid.generate_keypair_multichain()
+        multichain_pairfilename = self.session_config.get_multichain_permid_keypair_filename()
+        permid.save_keypair_multichain(multichain_keypair, multichain_pairfilename)
+        permid.save_pub_key_multichain(multichain_keypair, "%s.pub" % multichain_pairfilename)
+
+        self.vars['multichain_public_key'] = multichain_keypair.pub().key_to_bin().encode("base64")
+
+    def on_dispersy_available(self, dispersy):
+        # jump start candidate discovery
+        self._logger.error("Dispersy became available, all vars %s " % repr(self.all_vars))
+        for candidate_id in self.all_vars.iterkeys():
+            self._logger.error("Dispersy became available, candidate %s " % candidate_id)
+            if candidate_id != self.my_id:
+                self._logger.error("Forcing creation of candidate %d" % candidate_id)
+                self.get_candidate(candidate_id)
 
     def get_candidate(self, candidate_id):
         target = self.all_vars[candidate_id]
-        candidate = self.community.get_candidate((str(target['host']), target['port']))
+        address = (str(target['host']), target['port'])
+        candidate = self.community.get_candidate(address)
         if candidate is None:
-            candidate = Candidate((str(target['host']), target['port']), False)
+            self._logger.error("Candidate %d @ %s did not exist, creating... " % (candidate_id, address))
+            candidate = self.community.create_candidate(address, False, address, ("0.0.0.0", 0), "unknown")
         if not candidate.get_member():
-            member = self.community.get_member(public_key=target['public_key'].decode("base64"))
+            self._logger.error("Candidate %d @ %s did not have a member association, creating... " % (candidate_id, address))
+            member = self.community.get_member(public_key=target['multichain_public_key'].decode("base64"))
             member.add_identity(self.community)
             candidate.associate(member)
         return candidate

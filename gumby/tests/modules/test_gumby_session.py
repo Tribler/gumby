@@ -1,7 +1,7 @@
 import unittest
 
-from gumby.experiments.community_launcher import CommunityLauncher
-from gumby.experiments.gumby_session import CommunityLoader
+from gumby.modules.community_launcher import CommunityLauncher
+from gumby.modules.gumby_session import CommunityLoader
 
 
 class MockCommunity(object):
