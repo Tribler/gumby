@@ -76,7 +76,8 @@ class MultiChainClient(TriblerExperimentScriptClient):
         """
         Load the multichain community
         """
-        my_member = self.session.get_dispersy_instance().get_member(private_key=self.my_member_private_key)
+        keypair = self.session.multichain_keypair
+        my_member = self.session.get_dispersy_instance().get_member(private_key=keypair.key_to_bin())
         self.multichain_community = self.session.get_dispersy_instance().define_auto_load(
             MultiChainCommunity, my_member, load=True, kargs={'tribler_session': self.session})[0]
 
