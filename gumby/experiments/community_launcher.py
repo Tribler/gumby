@@ -126,22 +126,6 @@ class AllChannelCommunityLauncher(CommunityLauncher):
         return AllChannelCommunity
 
 
-class BarterCommunityLauncher(CommunityLauncher):
-
-    def get_name(self):
-        return "BarterCommunity"
-
-    def should_launch(self, session):
-        return session.get_barter_community_enabled()
-
-    def get_community_class(self):
-        from Tribler.community.bartercast4.community import BarterCommunity
-        return BarterCommunity
-
-    def get_kwargs(self, session):
-        return {}
-
-
 class ChannelCommunityLauncher(CommunityLauncher):
 
     def get_name(self):
