@@ -3,7 +3,6 @@
 import csv
 import json
 import os
-import sys
 import numpy as np
 
 
@@ -79,20 +78,20 @@ class DroppedStatsProcessor:
 
     def process(self, n_stats=5, n_std=3):
         """
-        Process the current and historical dropped statistics, exit 1 when a large deviation is detected.
+        Process the current and historical dropped statistics.
         :param n_stats: The number of historical values to keep
         :param n_std: The latest value must be within n_std standard deviations of the historical mean for this function
         to exit successfully.
         """
         # write the current data if we don't have old data
         if not os.path.exists(self._dropped_stats_json):
-            print(self._dropped_stats_json + " does not exist, trying to create it")
+            print self._dropped_stats_json + " does not exist, trying to create it"
             mkdir_for_file(self._dropped_stats_json)
             with open(self._dropped_stats_json, 'w') as f:
                 json.dump([self._compute_stats()], f)
             return
         else:
-            print(self._dropped_stats_json + " exists, proceeding")
+            print self._dropped_stats_json + " exists, proceeding"
 
         # we update the historical json with the latest statistics
         combined = self._combine_stats(n_stats)
@@ -107,8 +106,8 @@ class DroppedStatsProcessor:
         combined_avg = [x['average'] for x in combined]
         large_deviation, mean, std = has_large_deviation(combined_avg[0], combined_avg[1:], n_std)
         if large_deviation:
-            sys.stderr.write("large deviation detected, mean: " + str(mean) + ", std: " + str(std))
-            exit(1)
+            print "large deviation detected, new_value: {}, mean: {}, n_std: {}, std: {}"\
+                .format(combined_avg[0], mean, n_std, std)
 
     def _combine_stats(self, n):
         stats = self._get_stats()
