@@ -1,3 +1,6 @@
+from sys import maxint
+from time import time
+
 from random import randint, choice
 
 from gumby.experiment import experiment_callback
@@ -7,9 +10,8 @@ from gumby.modules.community_experiment_module import CommunityExperimentModule
 
 from twisted.internet.task import LoopingCall
 
-from Tribler.dispersy.candidate import Candidate
 from Tribler.Core import permid
-from Tribler.community.multichain.community import MultiChainCommunity
+from Tribler.community.multichain.community import MultiChainCommunity, PendingBytes
 
 
 @static_module
@@ -31,28 +33,20 @@ class MultichainModule(CommunityExperimentModule):
 
         self.vars['multichain_public_key'] = multichain_keypair.pub().key_to_bin().encode("base64")
 
-    def on_dispersy_available(self, dispersy):
-        # jump start candidate discovery
-        self._logger.error("Dispersy became available, all vars %s " % repr(self.all_vars))
-        for candidate_id in self.all_vars.iterkeys():
-            self._logger.error("Dispersy became available, candidate %s " % candidate_id)
-            if candidate_id != self.my_id:
-                self._logger.error("Forcing creation of candidate %d" % candidate_id)
-                self.get_candidate(candidate_id)
+    def get_candidate_public_key(self, candidate_id):
+        # override the default implementation since we use the multichain key here.
+        return self.all_vars[candidate_id]['multichain_public_key']
 
-    def get_candidate(self, candidate_id):
-        target = self.all_vars[candidate_id]
-        address = (str(target['host']), target['port'])
-        candidate = self.community.get_candidate(address)
-        if candidate is None:
-            self._logger.error("Candidate %d @ %s did not exist, creating... " % (candidate_id, address))
-            candidate = self.community.create_candidate(address, False, address, ("0.0.0.0", 0), "unknown")
-        if not candidate.get_member():
-            self._logger.error("Candidate %d @ %s did not have a member association, creating... " % (candidate_id, address))
-            member = self.community.get_member(public_key=target['multichain_public_key'].decode("base64"))
-            member.add_identity(self.community)
-            candidate.associate(member)
-        return candidate
+    def on_dispersy_available(self, dispersy):
+        self.introduce_peers()
+
+    @experiment_callback
+    def set_unlimited_pending(self):
+        # each peer has an almost unlimited number of bytes pending at each other peer. So we can sign stuff.
+        for candidate_id in self.all_vars.iterkeys():
+            if int(candidate_id) != self.my_id:
+                pk = self.get_candidate(candidate_id).get_member().public_key
+                self.community.pending_bytes[pk] = PendingBytes(maxint/2, maxint/2)
 
     @experiment_callback
     def start_requesting_signatures(self):
@@ -64,13 +58,14 @@ class MultichainModule(CommunityExperimentModule):
 
     @experiment_callback
     def request_signature(self, candidate_id, up, down):
-        self._logger.info("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate_id))
         self.request_signature_from_candidate(self.get_candidate(candidate_id), up, down)
 
     @experiment_callback
     def request_crawl(self, candidate_id, sequence_number):
         self._logger.info("%s: Requesting block: %s For candidate: %s" % (self.my_id, sequence_number, candidate_id))
-        self.community.send_crawl_request(self.get_candidate(candidate_id), int(sequence_number))
+        self.community.send_crawl_request(self.get_candidate(candidate_id),
+                                          self.get_candidate(candidate_id).get_member().public_key,
+                                          int(sequence_number))
 
     @experiment_callback
     def request_random_signature(self):
@@ -83,4 +78,5 @@ class MultichainModule(CommunityExperimentModule):
         self.request_signature_from_candidate(choice(known_candidates), rand_up * 1024 * 1024, rand_down * 1024 * 1024)
 
     def request_signature_from_candidate(self, candidate, up, down):
-        self.community.schedule_block(candidate, int(up), int(down))
+        self._logger.error("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate))
+        self.community.sign_block(candidate, candidate.get_member().public_key, int(up), int(down))

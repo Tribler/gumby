@@ -1,5 +1,10 @@
+from time import time
+
+from gumby.experiment import experiment_callback
 from gumby.modules.base_dispersy_module import BaseDispersyModule
 from gumby.modules.experiment_module import ExperimentModule
+
+from Tribler.Core import permid
 
 
 class CommunityExperimentModule(ExperimentModule):
@@ -70,5 +75,41 @@ class CommunityExperimentModule(ExperimentModule):
                 return community
         return None
 
+    @experiment_callback
+    def introduce_peers(self):
+        # bootstrap the peer introduction, ensuring everybody knows everybody to start off with.
+        for candidate_id in self.all_vars.iterkeys():
+            if int(candidate_id) != self.my_id:
+                self.get_candidate(candidate_id)
+
+    def get_candidate(self, candidate_id):
+        target = self.all_vars[candidate_id]
+        address = (str(target['host']), target['port'])
+        candidate = self.community.get_candidate(address)
+        if candidate is None:
+            candidate = self.community.create_candidate(address, False, address, ("0.0.0.0", 0), u"unknown")
+            # Pretend we "walked" into this candidate.
+            candidate.walk_response(time())
+        if not candidate.get_member():
+            member = self.community.get_member(public_key=self.get_candidate_public_key(candidate_id).decode("base64"))
+            member.add_identity(self.community)
+            candidate.associate(member)
+        return candidate
+
+    def get_candidate_public_key(self, candidate_id):
+        return self.all_vars[candidate_id]['public_key']
+
     def on_dispersy_available(self, dispersy):
         pass
+
+    def on_id_received(self):
+        super(CommunityExperimentModule, self).on_id_received()
+
+        # We need the dispersy / member key at this point. However, the configured session is not started yet. So we
+        # generate the keys here and place them in the correct place. When the session starts it will load these keys.
+        keypair = permid.generate_keypair()
+        pairfilename = self.session_config.get_permid_keypair_filename()
+        permid.save_keypair(keypair, pairfilename)
+        permid.save_pub_key(keypair, "%s.pub" % pairfilename)
+
+        self.vars['public_key'] = str(keypair.pub().get_key()).encode("base64")
