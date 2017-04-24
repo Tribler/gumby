@@ -38,7 +38,7 @@ class CommunityLoader(object):
         assert isinstance(launcher, CommunityLauncher)
 
         if launcher.get_name() in self.community_launchers:
-            self._logger.warning("Overriding CommunityLauncher %s", launcher.get_name())
+            self._logger.info("Overriding CommunityLauncher %s", launcher.get_name())
             if self.has_launched(launcher.get_name()):
                 self._logger.error("Unable to replace launcher for %s, it was already launched", launcher.get_name())
                 return

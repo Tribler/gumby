@@ -56,11 +56,16 @@ class AllChannelModule(CommunityExperimentModule):
     def __init__(self, experiment):
         super(AllChannelModule, self).__init__(experiment, AllChannelCommunity)
         # by default the dispersy providers will not load this one
-        self.session_config.set_enable_channel_search(True)
         self.my_channel = None
         self.joined_community = None
         self.torrentindex = 1
         self.join_lc = None
+
+    def on_id_received(self):
+        super(AllChannelModule, self).on_id_received()
+        self.session_config.set_enable_channel_search(True)
+        self.community_launcher.community_kwargs["tribler_session"] = None
+        self.community_loader.get_launcher("ChannelCommunity").community_kwargs["tribler_session"] = None
 
     @experiment_callback
     def create(self):

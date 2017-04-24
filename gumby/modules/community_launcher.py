@@ -111,8 +111,8 @@ class CommunityLauncher(object):
         :rtype: dict or None
         """
         ret = {}
-        ret.update(self.community_kwargs)
         ret.update({'tribler_session': session})
+        ret.update(self.community_kwargs)
         return ret
 
 
@@ -124,6 +124,10 @@ class DiscoveryCommunityLauncher(CommunityLauncher):
     def get_my_member(self, dispersy, session):
         return dispersy.get_new_member()
 
+    def get_kwargs(self, session):
+        ret = super(DiscoveryCommunityLauncher, self).get_kwargs(session)
+        del ret["tribler_session"]
+        return ret
 
 class SearchCommunityLauncher(CommunityLauncher):
 

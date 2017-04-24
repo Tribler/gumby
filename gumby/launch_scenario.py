@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-from logging import debug, error
+from logging import debug, warning
 from twisted.internet import reactor
 from os import environ, path
 from sys import path as python_path, argv
@@ -68,7 +68,7 @@ def main(self_service=False):
     init_instrumentation()
     setupLogging()
     if not path.exists(environ["SCENARIO_FILE"]):
-        error("Unable to find scenario file: %s", environ["SCENARIO_FILE"])
+        warning("Unable to find scenario file: %s", environ["SCENARIO_FILE"])
 
     reactor.exitCode = 0
 

@@ -1,5 +1,3 @@
-from os import environ, path, getpid, makedirs, symlink
-
 from twisted.internet.threads import deferToThread
 
 from gumby.experiment import experiment_callback
@@ -28,13 +26,3 @@ class TriblerModule(BaseDispersyModule):
     @experiment_callback
     def stop_session(self):
         deferToThread(self.session.shutdown)
-
-    def setup_session_config(self):
-        # symlink the bootstrap file so we are only connecting to our own trackers
-        my_tribler_path = path.abspath(path.join(environ["OUTPUT_DIR"], ".Tribler-%d") % getpid())
-        makedirs(my_tribler_path)
-        symlink(path.join(environ['TRIBLER_DIR'], 'bootstraptribler.txt'),
-                path.join(my_tribler_path, 'bootstraptribler.txt'))
-        config = super(TriblerModule, self).setup_session_config()
-        config.set_state_dir(my_tribler_path)
-        return config

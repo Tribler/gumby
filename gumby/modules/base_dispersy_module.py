@@ -1,4 +1,4 @@
-from os import environ
+from os import environ, makedirs, symlink, path, getpid
 
 from twisted.internet.defer import Deferred
 
@@ -51,9 +51,17 @@ class BaseDispersyModule(ExperimentModule):
     def setup_session_config(self):
         if self.dispersy_port is None:
             self.dispersy_port = 12000 + self.experiment.my_id
-        self._logger.error("Dispersy port set to %d" % self.dispersy_port)
+        self._logger.info("Dispersy port set to %d" % self.dispersy_port)
+
+        my_state_path = path.abspath(path.join(environ["OUTPUT_DIR"], ".%s-%d-%d" % (self.__class__.__name__,
+                                                                                     getpid(), self.my_id)))
+        makedirs(my_state_path)
+        bootstrap_file = path.join(environ['OUTPUT_DIR'], 'bootstraptribler.txt')
+        if path.exists(bootstrap_file):
+            symlink(bootstrap_file, path.join(my_state_path, 'bootstraptribler.txt'))
 
         config = SessionStartupConfig()
+        config.set_state_dir(my_state_path)
         config.set_install_dir(environ["TRIBLER_DIR"])
         config.set_torrent_checking(False)
         config.set_multicast_local_peer_discovery(False)
@@ -70,6 +78,8 @@ class BaseDispersyModule(ExperimentModule):
         config.set_upgrader_enabled(False)
         config.set_listen_port(20000 + self.experiment.my_id)
         config.set_dispersy_port(self.dispersy_port)
+        config.set_tunnel_community_enabled(False)
+        config.set_enable_multichain(False)
         return config
 
     @classmethod

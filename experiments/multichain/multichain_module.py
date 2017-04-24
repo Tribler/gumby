@@ -78,5 +78,5 @@ class MultichainModule(CommunityExperimentModule):
         self.request_signature_from_candidate(choice(known_candidates), rand_up * 1024 * 1024, rand_down * 1024 * 1024)
 
     def request_signature_from_candidate(self, candidate, up, down):
-        self._logger.error("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate))
+        self._logger.info("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate))
         self.community.sign_block(candidate, candidate.get_member().public_key, int(up), int(down))
