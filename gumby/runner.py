@@ -37,7 +37,7 @@
 
 # Code:
 
-from os import path, chdir, environ, makedirs, listdir
+from os import path, chdir, environ, makedirs, listdir, remove
 from shutil import rmtree
 import logging
 import sys
@@ -327,7 +327,10 @@ class ExperimentRunner():
         # Clear output dir before starting.
         if path.exists(self._output_dir):
             for element in listdir(self._output_dir):
-                rmtree(path.join(self._output_dir, element))
+                if path.isfile(path.join(self._output_dir, element)):
+                    remove(path.join(self._output_dir, element))
+                else:
+                    rmtree(path.join(self._output_dir, element))
 
         # Step 3:
         # Sync the working dir with the head nodes

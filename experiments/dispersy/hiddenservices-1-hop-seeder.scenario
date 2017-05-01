@@ -4,8 +4,8 @@
 
 &include hidden_services_common.scenario
 
-@0:20 setup_seeder 1hops100mb 1 {4}
-@0:100 start_download 1hops100mb 1 {5}
-@0:250 start_download 1hops100mb 2 {6}
-@0:400 start_download 1hops100mb 3 {7}
+@0:20 transfer action=seed hops=1 {4}
+@0:100 transfer {5}
+@0:250 transfer hops=1 {6}
+@0:400 transfer hops=2 {7}
 @0:600 stop

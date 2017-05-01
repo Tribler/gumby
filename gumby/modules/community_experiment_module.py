@@ -44,9 +44,9 @@ class CommunityExperimentModule(ExperimentModule):
 
     @property
     def session_config(self):
-        # The session config only exists after on_id_received up to session start. The session start copy constructs all
-        # settings so writing to the original session_config after this will not do anything. So on any access to the
-        # session_config after the session has launched, return the session. It acts as a session_config as well and
+        # The session config only exists after on_id_received, up to session start. The session start copy constructs
+        # all settings so writing to the original session_config after this will not do anything. So on any access to
+        # the session_config after the session has launched, return the session. It acts as a session_config as well and
         # alerts the user if some setting cannot be changed at runtime.
         if self.dispersy_provider.session_config is None:
             return self.session
@@ -91,6 +91,7 @@ class CommunityExperimentModule(ExperimentModule):
             # Pretend we "walked" into this candidate.
             candidate.walk_response(time())
         if not candidate.get_member():
+            self._logger.info("Candidate %s, Vars: %s" % (str(candidate_id), repr(self.all_vars)))
             member = self.community.get_member(public_key=self.get_candidate_public_key(candidate_id).decode("base64"))
             member.add_identity(self.community)
             candidate.associate(member)
@@ -99,10 +100,10 @@ class CommunityExperimentModule(ExperimentModule):
     def get_candidate_public_key(self, candidate_id):
         return self.all_vars[candidate_id]['public_key']
 
-    def on_dispersy_available(self, dispersy):
-        pass
-
     def on_id_received(self):
+        # Since the dispersy source module is loaded before any community module, the dispersy on_id_received has
+        # already completed. This means that the session_config is now available. So any configuration should happen in
+        # overrides of this function. (Be sure to call this super though!)
         super(CommunityExperimentModule, self).on_id_received()
 
         # We need the dispersy / member key at this point. However, the configured session is not started yet. So we
@@ -113,3 +114,9 @@ class CommunityExperimentModule(ExperimentModule):
         permid.save_pub_key(keypair, "%s.pub" % pairfilename)
 
         self.vars['public_key'] = str(keypair.pub().get_key()).encode("base64")
+
+    def on_dispersy_available(self, dispersy):
+        # The dispersy object is now available. This means that the session_config has been copy constructed into the
+        # session object. Using the session_config object after this is useless. The community is also guaranteed to be
+        # available.
+        pass
