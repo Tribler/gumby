@@ -19,11 +19,11 @@ summary <- read.table("summary.txt", header=T, quote="\"")
 summary$Server <- factor(paste(summary$HOST_NAME, "\n", summary$ADDRESS, "\n", sep=''))
 
 p <- ggplot(summary, aes(HOST_NAME, RESPONSES))
-p <- p + geom_bar(aes(fill=Server))
+p <- p + geom_bar(aes(fill=Server), stat="identity", width=0.5)
 p <- p + coord_flip()
 p <- p + ylim(0, max(summary$REQUESTS))
 p <- p + scale_x_discrete(limits=rev(sort(summary$HOST_NAME)))
-p <- p + labs(title=paste("Bootstrap server walk request success\nout of", max(summary$REQUESTS), "requests"),
+p <- p + labs(title=paste("Bootstrap server walk request success out of", max(summary$REQUESTS), "requests"),
               x="Server address",
               y="Successfull walks",
               colour="Server hostname")
