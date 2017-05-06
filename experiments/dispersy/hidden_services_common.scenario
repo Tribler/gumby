@@ -1,0 +1,13 @@
+&module gumby.modules.tribler_module.TriblerModule
+&module experiments.dispersy.hidden_services_module.HiddenServicesModule
+
+@0:0 isolate_community HiddenTunnelCommunity
+@0:1 set_tunnel_exit True {1-2}
+@0:1 set_tunnel_exit False {3-20}
+
+# default the hidden tunnel experiments to 100MB
+@0:1 set_transfer_size 104857600
+
+@0:4 start_session
+@0:11 introduce_peers
+@0:20 reset_dispersy_statistics
