@@ -119,12 +119,18 @@ class DroppedStatsProcessor:
 
     def _get_stats(self):
         with open(self._dropped_stats_json) as f:
-            stats = json.load(f)
+            try:
+                stats = json.load(f)
+            except ValueError:
+                stats = []
         # we expect the file to be in ASCII, so change the unicode type to UTF-8
         stats = byteify(stats)
         return stats
 
     def _compute_stats(self):
+        if not os.path.exists(self._dropped_reduced):
+            return {}
+
         last_row = get_last_row(self._dropped_reduced)
         # first element is the time, not the no. of dropped messages, last element is empty string
         last_row = last_row[1:-1]

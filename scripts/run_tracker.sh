@@ -81,11 +81,6 @@ else
 fi
 
 mkdir -p "$OUTPUT_DIR/tracker"
-rm -f ../bootstraptribler.txt
-
-# create a bootstraptribler.txt file for the trackers to prevent them from connecting to our own trackers
-# TODO: does not seem to work
-echo "127.0.0.1 0" >> bootstraptribler.txt
 
 if [ "${TRACKER_PROFILE,,}" == "true" ]; then
     echo "Tracker profiling enabled"
@@ -98,9 +93,10 @@ fi
 
 NR_TRACKERS=0
 while [ $EXPECTED_SUBSCRIBERS -gt 0 ] || [ $NR_TRACKERS -lt 4 ]; do
-    echo $HEAD_HOST $TRACKER_PORT >> ../bootstraptribler.txt
+    echo $HEAD_HOST $TRACKER_PORT >> $OUTPUT_DIR/bootstraptribler.txt
     STATEDIR="$OUTPUT_DIR/tracker/$TRACKER_PORT"
     mkdir -p $STATEDIR
+    ln -s $OUTPUT_DIR/bootstraptribler.txt $STATEDIR/bootstraptribler.txt
     # Do not daemonize the process as we want to wait for all of them to die at the end of this script
     twistd --pidfile tracker_$TRACKER_PORT.pid -n $EXTRA_ARGS --logfile="$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" tracker --port $TRACKER_PORT --crypto $TRACKER_CRYPTO $EXTRA_TRACKER_ARGS --statedir=$STATEDIR &
     let TRACKER_PORT=$TRACKER_PORT+1

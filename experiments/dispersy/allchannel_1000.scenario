@@ -1,6 +1,8 @@
-@0:0 set_master_member 3081a7301006072a8648ce3d020106052b81040027038192000403cbbfd2dfb67a7db66c88988df56f93fa6e7f982f9a6a0fa8898492c8b8cae23e10b159ace60b7047012082a5aa4c6e221d7e58107bb550436d57e046c11ab4f51f0ab18fa8f58d0346cc12d1cc2b61fc86fe5ed192309152e11e3f02489e30c7c971dd989e1ce5030ea0fb77d5220a92cceb567cbc94bc39ba246a42e215b55e9315b543ddeff0209e916f77c0d747
-@0:0 start_dispersy
-@0:1 online {1-980,990-1000}
+&module gumby.modules.dispersy_module.DispersyModule
+&module experiments.dispersy.allchannel_module.AllChannelModule
+
+@0:0 isolate_community AllChannelCommunity
+@0:1 start_session {1-980,990-1000}
 @0:110 reset_dispersy_statistics
 @0:120 annotate start-experiment
 @0:121 join {272,309,310,687,728,922}
@@ -1415,7 +1417,7 @@
 @0:1677 publish 2 {1}
 @0:1678 publish 2 {1}
 @0:1679 publish 2 {1}
-@0:1680 online {982}
+@0:1680 start_session {982}
 @0:1680 join {982}
 @0:1680 publish 2 {1}
 @0:1681 publish 2 {1}
@@ -1427,11 +1429,11 @@
 @0:1687 publish 2 {1}
 @0:1688 publish 2 {1}
 @0:1689 publish 2 {1}
-@0:1690 online {985,989}
+@0:1690 start_session {985,989}
 @0:1690 join {985,989,990}
 @0:1690 publish 2 {1}
 @0:1691 publish 2 {1}
-@0:1692 online {987}
+@0:1692 start_session {987}
 @0:1692 join {987}
 @0:1692 publish 2 {1}
 @0:1693 publish 2 {1}
@@ -1448,7 +1450,7 @@
 @0:1704 publish 2 {1}
 @0:1705 publish 2 {1}
 @0:1706 publish 2 {1}
-@0:1707 online {981}
+@0:1707 start_session {981}
 @0:1707 join {981}
 @0:1707 publish 2 {1}
 @0:1708 publish 2 {1}
@@ -1477,7 +1479,7 @@
 @0:1731 publish 2 {1}
 @0:1732 publish 2 {1}
 @0:1733 publish 2 {1}
-@0:1734 online {986}
+@0:1734 start_session {986}
 @0:1734 join {986}
 @0:1734 publish 2 {1}
 @0:1735 publish 2 {1}
@@ -1489,7 +1491,7 @@
 @0:1741 publish 2 {1}
 @0:1742 publish 2 {1}
 @0:1743 publish 2 {1}
-@0:1744 online {988}
+@0:1744 start_session {988}
 @0:1744 join {988}
 @0:1744 publish 2 {1}
 @0:1745 publish 2 {1}
@@ -1509,11 +1511,11 @@
 @0:1759 publish 2 {1}
 @0:1760 publish 2 {1}
 @0:1761 publish 2 {1}
-@0:1762 online {983}
+@0:1762 start_session {983}
 @0:1762 join {983}
 @0:1762 publish 2 {1}
 @0:1763 publish 2 {1}
-@0:1764 online {984}
+@0:1764 start_session {984}
 @0:1764 join {984}
 @0:1764 publish 2 {1}
 @0:1765 publish 2 {1}
@@ -2287,5 +2289,5 @@
 @0:2633 publish 2 {1}
 @0:2634 publish 2 {1}
 @0:2635 publish 2 {1}
-@0:3135 stop_dispersy
+@0:3135 stop_session
 @0:3145 stop

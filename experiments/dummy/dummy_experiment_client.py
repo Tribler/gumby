@@ -42,7 +42,8 @@ from os import environ
 from sys import exit, stderr, stdout
 
 from gumby.log import setupLogging
-from gumby.sync import ExperimentClient, ExperimentClientFactory
+from gumby.sync import ExperimentClientFactory
+from gumby.experiment import ExperimentClient
 from twisted.internet import reactor
 from twisted.python.log import err, msg, startLogging
 

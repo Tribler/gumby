@@ -25,7 +25,7 @@ class ExtractStatistics:
         files = sorted(self.yield_files())
         if not len(files):
             print >> sys.stderr, "No files found to parse!"
-            sys.exit(1)
+            return
 
         print >> sys.stderr, "Starting to parse", len(files), "files"
 
@@ -708,7 +708,7 @@ class AnnotateMessages(AbstractHandler):
 def get_parser(argv):
     e = ExtractStatistics(argv[1])
     e.add_handler(BasicExtractor())
-    e.add_handler(SuccMessages(argv[2]))
+    e.add_handler(SuccMessages(argv[2] if len(argv) > 2 else ""))
     e.add_handler(StatisticMessages())
     e.add_handler(DropMessages())
     e.add_handler(BootstrapMessages())
@@ -717,8 +717,8 @@ def get_parser(argv):
     return e
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print "Usage: %s <node-directory> <messagestoplot>" % (sys.argv[0])
+    if len(sys.argv) != 2 and len(sys.argv) != 3:
+        print "Usage: %s <node-directory> [messagestoplot]" % (sys.argv[0])
         print >> sys.stderr, sys.argv
 
         sys.exit(1)
