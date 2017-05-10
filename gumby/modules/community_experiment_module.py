@@ -113,7 +113,7 @@ class CommunityExperimentModule(ExperimentModule):
         permid.save_keypair(keypair, pairfilename)
         permid.save_pub_key(keypair, "%s.pub" % pairfilename)
 
-        self.vars['public_key'] = str(keypair.pub().get_key()).encode("base64")
+        self.vars['public_key'] = str(keypair.pub()).encode("base64")
 
     def on_dispersy_available(self, dispersy):
         # The dispersy object is now available. This means that the session_config has been copy constructed into the

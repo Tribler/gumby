@@ -1,5 +1,7 @@
+import imp
 import json
 import logging
+import os
 from time import time
 from collections import Iterable
 from os import environ, path, makedirs, chdir
@@ -9,7 +11,6 @@ from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
 
 from gumby.scenario import ScenarioRunner
-from gumby.modules.experiment_module import ExperimentModule
 
 
 def experiment_callback(name=None):
@@ -254,6 +255,116 @@ class ExperimentClient(object, LineReceiver):
             return new_values
         return prev_dict
 
+    @staticmethod
+    def direct_import(module_name, name, directory_path):
+        """
+        Import a file by name (without extension) from some path.
+        Then register it as a certain module name.
+
+        For example:
+
+        "foo.bar", "bar", "/home/user/foo/"
+
+        Imports ``foo.bar`` from the file "/home/user/foo/bar.py"*.
+
+        * Next to .py, this can also be .pyc or dynamic library
+
+        :param module_name: the fully qualified module path
+        :param name: the (extensionless) file name
+        :param directory_path: the file's path
+        :return: the imported module or None
+        """
+        module = None
+        f = None
+        try:
+            f, pathname, desc = imp.find_module(name, [directory_path, ])
+            module = imp.load_module(module_name, f, pathname, desc)
+        except ImportError:
+            pass
+        finally:
+            if f:
+                f.close()
+        return module
+
+    @staticmethod
+    def find_modules_for(directory_path):
+        """
+        Every folder with an __init__ should be loaded for a path.
+        This allows the file to normally perform imports.
+
+        For example in the structure:
+
+        /
+        /foo/__init.py
+        /foo/bar/__init__.py
+        /foo/bar/myclass.py
+
+        find_modules("foo.bar.myclass.MyClass.SubClass")
+         > [("foo", "/foo"), ("foo.bar", "/foo/bar")],
+         > ("myclass", "/foo/bar"),
+         > ["MyClass", "SubClass"]
+
+        Note that the top folder does not contain an init and is not returned
+
+        :param directory_path: the user specified module name
+        :return: a list of tuples of module name and folder, target file, remaining classes
+        """
+        # Parse input as a list of folders | file | classes
+        folder_list = directory_path.split('.')
+
+        # Setup the root folder and root name
+        current_folder = os.path.dirname(os.path.dirname(__file__))
+        module_tree = ""
+
+        # Containers for output
+        out = [] # List of tuples
+        out_file = "" # File name containing actual module
+
+        # Traverse the file structure
+        folder_index = 0
+        for folder in folder_list:
+            folder_index += 1
+            candidate = os.path.join(current_folder, folder)
+            # If this folder contains an __init__, add it to the output
+            if os.path.isfile(os.path.join(current_folder, "__init__.py")) or \
+                    os.path.isfile(os.path.join(current_folder, "__init__.pyc")):
+                out.append((module_tree, current_folder))
+            # If this is a directory, step into it
+            # Otherwise, we have found our file
+            if os.path.isdir(candidate):
+                module_tree = '.'.join([module_tree, folder]) if module_tree else folder
+                current_folder = candidate
+            else:
+                out_file = folder
+                break
+
+        out_file_module = '.'.join([module_tree, out_file]) if module_tree else out_file
+
+        return out, (out_file_module, out_file, current_folder), folder_list[folder_index:]
+
+    @staticmethod
+    def perform_class_import(logger, line_number, directory_path):
+        """
+        Import a user specified class from a fully qualified path.
+
+        :param logger: the logger to use
+        :param line_number: the source line
+        :param directory_path: the fully qualified path
+        :return: the imported class or None
+        """
+        init_folders, (file_module, file_name, file_dir), classes = ExperimentClient.find_modules_for(directory_path)
+
+        for mod, folder in init_folders:
+            ExperimentClient.direct_import(mod, "__init__", folder)
+
+        stuff = ExperimentClient.direct_import(file_module, file_name, file_dir)
+
+        if not stuff:
+            logger.error("Unable to import %s (from %s:%d)", directory_path, file_name, line_number, exc_info=True)
+            return None
+
+        return reduce(getattr, classes, stuff)
+
     def _preproc_module(self, filename, line_number, line):
         """
         Handler for preprocessor directive 'module'. It invokes the python import built-in to find the module.
@@ -279,32 +390,10 @@ class ExperimentClient(object, LineReceiver):
         :param line_number: The line number where the preprocessor directive was invoked
         :param line: The text that remained on the line after the prprocessor directive
         """
+        stuff = self.perform_class_import(self._logger, line_number, line)
 
-        # First detect if it is a simple or fully qualified name
-        (modulename, _, classname) = line.rpartition('.')
-        try:
-            if modulename is None or modulename == "":
-                stuff = __import__(classname)
-            else:
-                try:
-                    stuff = __import__(modulename, fromlist=[classname])
-                except:
-                    # Perhaps the user specified a qualified module name, not class name. So import it as a module.
-                    stuff = __import__(line)
-        except:
-            self._logger.error("Unable to import %s (from %s:%d)", line, filename, line_number, exc_info=True)
-            return
-
-        # If something was found, scan it for: Classes, that are of ExperimentModule, are not ExperimentModule itself
-        # and have not been loaded previously.
-        for item in [getattr(stuff, item_key) for item_key in dir(stuff)]:
-            if not isinstance(item, type) or \
-                    not issubclass(item, ExperimentModule) or \
-                    item is ExperimentModule or \
-                    item in self.loaded_experiment_module_classes:
-                continue
-
-            # This class matches the criteria, load it and invoke the on_module_load class method if it exists.
-            self.loaded_experiment_module_classes.append(item)
-            if hasattr(item, "on_module_load") and callable(item.on_module_load):
-                item.on_module_load(self)
+        # If something has not been loaded previously.
+        if stuff not in self.loaded_experiment_module_classes:
+            self.loaded_experiment_module_classes.append(stuff)
+            if hasattr(stuff, "on_module_load") and callable(stuff.on_module_load):
+                stuff.on_module_load(self)
