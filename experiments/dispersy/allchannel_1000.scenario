@@ -3,7 +3,7 @@
 
 @0:0 isolate_community AllChannelCommunity
 @0:1 start_session {1-980,990-1000}
-@0:110 reset_dispersy_statistics
+@0:110 reset_dispersy_statistics {1-980,990-1000}
 @0:120 annotate start-experiment
 @0:121 join {272,309,310,687,728,922}
 @0:121 create {1}

@@ -256,7 +256,7 @@ class ExperimentClient(object, LineReceiver):
         return prev_dict
 
     @staticmethod
-    def direct_import(module_name, name, directory_path):
+    def direct_import(module_name, name, directory_path, logger=None):
         """
         Import a file by name (without extension) from some path.
         Then register it as a certain module name.
@@ -280,7 +280,8 @@ class ExperimentClient(object, LineReceiver):
             f, pathname, desc = imp.find_module(name, [directory_path, ])
             module = imp.load_module(module_name, f, pathname, desc)
         except ImportError:
-            pass
+            if logger:
+                logger.error("Unable to import %s from %s as %s!", name, directory_path, module_name)
         finally:
             if f:
                 f.close()
@@ -355,9 +356,9 @@ class ExperimentClient(object, LineReceiver):
         init_folders, (file_module, file_name, file_dir), classes = ExperimentClient.find_modules_for(directory_path)
 
         for mod, folder in init_folders:
-            ExperimentClient.direct_import(mod, "__init__", folder)
+            ExperimentClient.direct_import(mod, "", folder, logger)
 
-        stuff = ExperimentClient.direct_import(file_module, file_name, file_dir)
+        stuff = ExperimentClient.direct_import(file_module, file_name, file_dir, logger)
 
         if not stuff:
             logger.error("Unable to import %s (from %s:%d)", directory_path, file_name, line_number, exc_info=True)
