@@ -2,11 +2,15 @@
 
 import csv
 import json
+import math
 import os
-import numpy as np
+import sys
 
 
 def is_float(x):
+    """
+    Check if a number can be cast to float
+    """
     try:
         float(x)
         return True
@@ -17,6 +21,7 @@ def is_float(x):
 def get_last_row(f, delimiter=' '):
     """
     Gets the last row of the CSV file
+    
     :param f: The filename
     :param delimiter: The delimiter
     :return: The last row
@@ -28,41 +33,32 @@ def get_last_row(f, delimiter=' '):
         return last_row
 
 
-def byteify(inp):
-    """
-    Recursively encode an object from unicode into UTF-8, any object that is not of instance unicode is ignored.
-    :param inp: The input object.
-    :return: The encoded object.
-    """
-    if isinstance(inp, dict):
-        return {byteify(key): byteify(value) for key, value in inp.iteritems()}
-    elif isinstance(inp, list):
-        return [byteify(element) for element in inp]
-    elif isinstance(inp, unicode):
-        return inp.encode('utf-8')
-    else:
-        return inp
-
-
-def has_large_deviation(x, xs, n=1):
-    """
-    Checks whether x is within n standard deviations of the mean of xs.
-    :param x: the latest value
-    :param xs: the historical values
-    :param n: number of standard deviations
-    :return: True if x over n standard deviations away from the mean of the historical values, the mean and the
-    standard deviation.
-    """
-    arr = np.array(xs)
-    mean = arr.mean()
-    std = arr.std()
-    if abs(mean - x) > n * std:
-        return True, mean, std
-    return False, mean, std
-
 def mkdir_for_file(filename):
+    """
+    Create a directory structure for a file
+    """
     if not os.path.exists(os.path.dirname(filename)):
         os.makedirs(os.path.dirname(filename))
+
+
+def large_deviation(data, point):
+    """
+    Check if a data point is within 1.5 IQR of the median. 
+    
+    :param data: a list of previous data points
+    :param point: the data point to check
+    :return: whether the point is an outlier
+    """
+    pdf = sorted(data)
+    IQR = pdf[int(math.ceil(3*len(pdf)/4))] - pdf[int(math.floor(len(pdf)/4))]
+    median = pdf[int(math.floor(len(pdf)/2))]
+    if int(math.floor(len(pdf)/2)) != int(math.ceil(len(pdf)/2)):
+        median = (median + pdf[int(math.ceil(len(pdf)/2))])/2
+
+    min_allowed = median - 1.5*IQR
+    max_allowed = median + 1.5*IQR
+
+    return point > max_allowed or point < min_allowed
 
 class DroppedStatsProcessor:
 
@@ -75,81 +71,91 @@ class DroppedStatsProcessor:
         """
         self._dropped_stats_json = dropped_stats_json
         self._dropped_reduced = dropped_reduced
+        self.scenario = os.environ.get("SCENARIO_FILE", None)
 
-    def process(self, n_stats=5, n_std=3):
+    def process(self):
         """
         Process the current and historical dropped statistics.
-        :param n_stats: The number of historical values to keep
-        :param n_std: The latest value must be within n_std standard deviations of the historical mean for this function
-        to exit successfully.
         """
-        # write the current data if we don't have old data
+        # Stop if we have no scenario file
+        if not self.scenario:
+            print "Could not find scenario file"
+            return 0
+        # Stop if we have no data to extract
+        total_dropped = self._extract_total_dropped()
+        if total_dropped is None:
+            print "Could not find file", self._dropped_reduced
+            return 0
+        # Write the current data if we don't have old data
         if not os.path.exists(self._dropped_stats_json):
-            print self._dropped_stats_json + " does not exist, trying to create it"
+            print self._dropped_stats_json, "does not exist, trying to create it"
             mkdir_for_file(self._dropped_stats_json)
             with open(self._dropped_stats_json, 'w') as f:
-                json.dump([self._compute_stats()], f)
-            return
+                json.dump({self.scenario: [total_dropped, ]}, f)
+            return 0
         else:
             print self._dropped_stats_json + " exists, proceeding"
 
-        # we update the historical json with the latest statistics
-        combined = self._combine_stats(n_stats)
+        # We update the historical json with the latest statistics
+        combined = self._combine_stats(self.scenario, total_dropped)
         with open(self._dropped_stats_json, 'w') as f:
             json.dump(combined, f)
 
-        # return if we don't have enough data, need at least 2 to compute standard deviation
-        if len(combined) < 3:
-            return
+        # Return if we don't have enough data, need at least 2 to compute standard deviation
+        previous_values = combined[self.scenario]
+        if len(previous_values) < 3:
+            print "Not enough data to check deviation"
+            return 0
 
-        # TODO average can also be computed on total or maximum, which one to use?
-        combined_avg = [x['average'] for x in combined]
-        large_deviation, mean, std = has_large_deviation(combined_avg[0], combined_avg[1:], n_std)
-        if large_deviation:
-            print "large deviation detected, new_value: {}, mean: {}, n_std: {}, std: {}"\
-                .format(combined_avg[0], mean, n_std, std)
+        if large_deviation(previous_values, total_dropped):
+            print "Large deviation in dropped message count detected!"
+            print total_dropped, "<<>>", sum(previous_values)/len(previous_values)
+            return 1
+        else:
+            return 0
 
-    def _combine_stats(self, n):
+    def _combine_stats(self, scenario, total_dropped):
+        """
+        Insert the new data into the old data.
+        
+        :param scenario: the scenario name to update
+        :param total_dropped: the value to update with
+        :return: the new dict
+        """
         stats = self._get_stats()
-        stats.append(self._compute_stats())
-        stats.sort(key=lambda x: x['build_number'], reverse=True)
-        if n > len(stats):
-            n = len(stats)
-        return stats[0:n]
-
-    def _get_stats(self):
-        with open(self._dropped_stats_json) as f:
-            try:
-                stats = json.load(f)
-            except ValueError:
-                stats = []
-        # we expect the file to be in ASCII, so change the unicode type to UTF-8
-        stats = byteify(stats)
+        values = stats.get(scenario, [])
+        values.append(total_dropped)
+        stats[scenario] = values[:10]
         return stats
 
-    def _compute_stats(self):
+    def _get_stats(self):
+        """
+        Retrieve the historical stats dict.
+        """
+        with open(self._dropped_stats_json) as f:
+            try:
+                return json.load(f)
+            except ValueError:
+                print self._dropped_stats_json, "seems to be corrupt, resetting!"
+                return {}
+
+    def _extract_total_dropped(self):
+        """
+        Read the new count of dropped messages.
+        """
         if not os.path.exists(self._dropped_reduced):
-            return {}
+            return None
 
         last_row = get_last_row(self._dropped_reduced)
+        if not last_row:
+            return 0
         # first element is the time, not the no. of dropped messages, last element is empty string
-        last_row = last_row[1:-1]
+        last_row = last_row[1:]
         last_row = [float(x) for x in last_row if is_float(x)]
-        tot = sum(last_row)
-        avg = tot / float(len(last_row))
 
-        dropped_stats_dict = {
-            'build_number':  int(os.environ['BUILD_NUMBER']),
-            'total': tot,
-            'average': avg,
-            'maximum': max(last_row)
-        }
-
-        return dropped_stats_dict
+        return sum(last_row)
 
 
 if __name__ == '__main__':
     d = DroppedStatsProcessor()
-    d.process()
-
-
+    sys.exit(d.process())
