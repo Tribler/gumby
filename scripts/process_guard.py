@@ -6,7 +6,7 @@ import exceptions
 import json
 from glob import iglob
 from math import ceil
-from os import (R_OK, access, errno, getpgid, getpid, kill, killpg, makedirs, path, setsid, sysconf,
+from os import (R_OK, access, errno, getpgid, getpid, kill, killpg, makedirs, mkdir, path, setsid, sysconf,
                 sysconf_names)
 from signal import SIGKILL, SIGTERM, signal
 from subprocess import Popen
@@ -229,8 +229,11 @@ class ProcessMonitor(object):
 
         if monitor_dir:
             self.monitor_file = open(monitor_dir + "/resource_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
-            self.fd_file = open(monitor_dir + "/fd_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
-            self.fd_file.write("time pid num_fds\n")
+            if not path.exists(monitor_dir + "/autoplot"):
+                mkdir(monitor_dir + "/autoplot")
+            # Set the file's buffering to 10MB
+            self.fd_file = open(monitor_dir + "/autoplot/fd_usage.csv", "w", (1024 ** 2) * 10)
+            self.fd_file.write("time,pid,Number of file descriptors\n")
             # We read the jiffie -> second conversion rate from the os, by dividing the utime
             # and stime values by this conversion rate we will get the actual cpu seconds spend during this second.
             try:
@@ -321,10 +324,10 @@ class ProcessMonitor(object):
                 for child_process in p_children:
                     try:
                         if hasattr(self.psutil_process, 'num_fds'):
-                            self.fd_file.write("%.1f %s %d\n" %
+                            self.fd_file.write("%.1f,%s,%d\n" %
                                                (r_timestamp, child_process.pid, child_process.num_fds()))
                         else:
-                            self.fd_file.write("%.1f %s %d\n" %
+                            self.fd_file.write("%.1f,%s,%d\n" %
                                                (r_timestamp, child_process.pid, child_process.get_num_fds()))
                     except (AccessDenied, NoSuchProcess):
                         pass  # Just ignore the file descriptors of this invalid process
