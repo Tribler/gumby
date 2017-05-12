@@ -150,6 +150,8 @@ class ExtractStatistics:
 
     def yield_files(self, file_to_check='statistics.log'):
         pattern = re.compile('[0-9]+')
+
+        # DAS structure
         for headnode in os.listdir(self.node_directory):
             headdir = os.path.join(self.node_directory, headnode)
             if os.path.isdir(headdir):
@@ -162,8 +164,18 @@ class ExtractStatistics:
                                 peer_nr = int(peer)
 
                                 filename = os.path.join(self.node_directory, headnode, node, peer, file_to_check)
-                                if os.path.exists(filename):
+                                if os.path.exists(filename) and os.stat(filename).st_size > 0:
                                     yield peer_nr, filename, peerdir
+
+        # localhost structure
+        for peer in os.listdir(self.node_directory):
+            peerdir = os.path.join(self.node_directory, peer)
+            if os.path.isdir(peerdir) and pattern.match(peer):
+                peer_nr = int(peer)
+
+                filename = os.path.join(self.node_directory, peer, file_to_check)
+                if os.path.exists(filename) and os.stat(filename).st_size > 0:
+                    yield peer_nr, filename, peerdir
 
     def merge_records(self, inputfilename, outputfilename, columnindex, diffoutputfilename=None):
         all_nodes = []
