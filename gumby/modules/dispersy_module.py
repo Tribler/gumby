@@ -30,12 +30,12 @@ class DispersyModule(BaseDispersyModule):
         super(DispersyModule, self).start_session()
 
         self._logger.info("Starting dispersy")
-        self.dispersy = Dispersy(StandaloneEndpoint(self.session.get_dispersy_port(), '0.0.0.0'),
-                                  unicode(self.session.get_state_dir()), u"dispersy.db", self.crypto)
+        self.dispersy = Dispersy(StandaloneEndpoint(self.session.config.get_dispersy_port(), '0.0.0.0'),
+                                 unicode(self.session.config.get_state_dir()), u"dispersy.db", self.crypto)
         self.dispersy.statistics.enable_debug_statistics(True)
         self.dispersy.start(autoload_discovery=False)
 
-        pairfilename = self.session.get_permid_keypair_filename()
+        pairfilename = self.session.config.get_permid_keypair_filename()
         if not path.exists(pairfilename):
             keypair = permid.generate_keypair()
             permid.save_keypair(keypair, pairfilename)
@@ -45,7 +45,8 @@ class DispersyModule(BaseDispersyModule):
         self.session.dispersy_member = self.dispersy.get_member(private_key=private_key)
 
         self.custom_community_loader.load(self.dispersy, self.session)
-        self.session.set_anon_proxy_settings(2, ("127.0.0.1", self.session.get_tunnel_community_socks5_listen_ports()))
+        self.session.config.set_anon_proxy_settings(2, ("127.0.0.1",
+                                                        self.session.config.get_tunnel_community_socks5_listen_ports()))
 
         self._do_log_lc.start(5.0, True)
         self._logger.info("Finished starting dispersy")

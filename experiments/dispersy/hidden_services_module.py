@@ -61,12 +61,12 @@ class HiddenServicesModule(CommunityExperimentModule):
 
     def on_id_received(self):
         super(HiddenServicesModule, self).on_id_received()
-        self.session_config.set_tunnel_community_enabled(True)
-        self.session_config.set_mainline_dht(True)
-        self.session_config.set_libtorrent(True)
-        self.session_config.set_tunnel_community_socks5_listen_ports([23000 + 100 * self.my_id + i for i in range(5)])
-        self.session_config.set_tunnel_community_exitnode_enabled(False)
-        self.community_launcher.community_kwargs["settings"] = TunnelSettings(self.session_config)
+        self.tribler_config.set_tunnel_community_enabled(True)
+        self.tribler_config.set_mainline_dht_enabled(True)
+        self.tribler_config.set_libtorrent_enabled(True)
+        self.tribler_config.set_tunnel_community_socks5_listen_ports([23000 + 100 * self.my_id + i for i in range(5)])
+        self.tribler_config.set_tunnel_community_exitnode_enabled(False)
+        self.community_launcher.community_kwargs["settings"] = TunnelSettings(self.tribler_config)
 
     def on_dispersy_available(self, _):
         super(HiddenServicesModule, self).on_dispersy_available(_)
@@ -76,7 +76,7 @@ class HiddenServicesModule(CommunityExperimentModule):
             return 1.0, []
         self.session.set_download_states_callback(monitor_downloads, False)
 
-    # TunnelSettings should be obtained from session_config settings. But not all properties of the tunnel settings can
+    # TunnelSettings should be obtained from tribler_config settings. But not all properties of the tunnel settings can
     # be controlled that way. So we store a custom TunnelSettings object in the community launcher. Properties that have
     # a regular config option should also be set in the config object so we're consistent as far as all other code is
     # concerned.
@@ -88,7 +88,7 @@ class HiddenServicesModule(CommunityExperimentModule):
     def set_tunnel_exit(self, value):
         value = HiddenServicesModule.str2bool(value)
         self._logger.error("This peer will be exit node: %s" % ('Yes' if value else 'No'))
-        self.session_config.set_tunnel_community_exitnode_enabled(value)
+        self.tribler_config.set_tunnel_community_exitnode_enabled(value)
         self.tunnel_settings.become_exitnode = value
 
     @experiment_callback
