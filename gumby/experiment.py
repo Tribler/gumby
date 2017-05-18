@@ -2,6 +2,7 @@ import imp
 import json
 import logging
 import os
+import sys
 from time import time
 from collections import Iterable
 from os import environ, path, makedirs, chdir
@@ -274,14 +275,16 @@ class ExperimentClient(object, LineReceiver):
         :param directory_path: the file's path
         :return: the imported module or None
         """
+        if module_name in sys.modules and sys.modules[module_name]:
+            return sys.modules[module_name]
         module = None
         f = None
         try:
             f, pathname, desc = imp.find_module(name, [directory_path, ])
             module = imp.load_module(module_name, f, pathname, desc)
-        except ImportError:
+        except ImportError as e:
             if logger:
-                logger.error("Unable to import %s from %s as %s!", name, directory_path, module_name)
+                logger.error("Unable to import %s from %s as %s: %s", name, directory_path, module_name, str(e))
         finally:
             if f:
                 f.close()
