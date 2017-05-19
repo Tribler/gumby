@@ -36,14 +36,18 @@
 
 # Code:
 
+import logging.config
 from os import environ, path, chdir, makedirs
 from sys import stdout, stderr
 import logging
-import logging.config
 import sys
 
 from twisted.python.log import msg, FileLogObserver, textFromEventDict, _safeFormat, removeObserver, addObserver, startLogging
 from twisted.python import util
+
+
+
+
 
 class ColoredFileLogObserver(FileLogObserver):
     CANCEL_COLOR = "\x1b[0m"
@@ -66,6 +70,7 @@ class ColoredFileLogObserver(FileLogObserver):
 
     def emit(self, eventDict):
         text = textFromEventDict(eventDict)
+        a = "a"
         if text is None:
             return
 
