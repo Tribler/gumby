@@ -36,6 +36,19 @@ class TestExperimentImport(unittest.TestCase):
         self.assertIsNone(module)
         self.assertNotIn("some.other.test.module.name", sys.modules)
 
+    def test_duplicate_import(self):
+        module1 = ExperimentClient.direct_import("some.test.module.name",
+                                                 "my_module",
+                                                 TestExperimentImport.test_class_folder)
+        module2 = ExperimentClient.direct_import("some.test.module.name",
+                                                 "my_module",
+                                                 TestExperimentImport.test_class_folder)
+
+        self.assertIsNotNone(module1)
+        self.assertIsNotNone(module2)
+        self.assertIn("some.test.module.name", sys.modules)
+        self.assertEqual(module1, module2)
+
     def test_find_modules_no_class(self):
         init_folders, class_file, classes = ExperimentClient.find_modules_for(TestExperimentImport.test_class_module)
 
