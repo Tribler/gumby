@@ -257,6 +257,31 @@ class ExperimentClient(object, LineReceiver):
         return prev_dict
 
     @staticmethod
+    def local_import(module_name, logger=None):
+        """
+        Try to perform a local import of a module with a certain name.
+
+        :param module_name: the fully qualified module path
+        :return: the imported module or Non
+        """
+        if module_name in sys.modules and sys.modules[module_name]:
+            return sys.modules[module_name]
+        try:
+            # Can raise ImportError when module_name cannot be imported
+            __import__(module_name, level=0)
+            # Can raise Attribute error if module_name wasn't loaded after all
+            if sys.modules[module_name]:
+                # The module can still be unloaded
+                return sys.modules[module_name]
+        except AttributeError:
+            pass # Fall into the error message
+        except ImportError:
+            pass # Fall into the error message
+        if logger:
+            logger.info("Unable to load %s as a local module", module_name)
+        return None
+
+    @staticmethod
     def direct_import(module_name, name, directory_path, logger=None):
         """
         Import a file by name (without extension) from some path.
@@ -358,12 +383,19 @@ class ExperimentClient(object, LineReceiver):
         """
         init_folders, (file_module, file_name, file_dir), classes = ExperimentClient.find_modules_for(directory_path)
 
-        for mod, folder in init_folders:
-            ExperimentClient.direct_import(mod, "", folder, logger)
-
-        stuff = ExperimentClient.direct_import(file_module, file_name, file_dir, logger)
+        # Attempt a local import
+        stuff = ExperimentClient.local_import(file_module, logger)
 
         if not stuff:
+            # Local import failed, fall back to non-local import
+            # Mimic the parent modules
+            for mod, folder in init_folders:
+                ExperimentClient.direct_import(mod, "", folder, logger)
+            # Load the actual module
+            stuff = ExperimentClient.direct_import(file_module, file_name, file_dir, logger)
+
+        if not stuff:
+            # Both local and non-local imports failed
             logger.error("Unable to import %s (from %s:%d)", directory_path, file_name, line_number, exc_info=True)
             return None
 
