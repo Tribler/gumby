@@ -60,6 +60,7 @@
 # Code:
 import json
 import logging
+from random import randint
 from time import time
 
 from twisted.internet import reactor
@@ -236,6 +237,13 @@ class ExperimentServiceFactory(Factory):
                 subscriber_vars['host'] = subscriber.transport.getPeer().host
             vars[subscriber.id] = subscriber_vars
 
+        vars = {
+            "server":
+                {
+                    "global_random": randint(0, (2 ** 32) - 1)
+                },
+            "clients": vars
+        }
         json_vars = json.dumps(vars)
         del vars
         self._logger.info("Pushing a %d bytes long json doc.", len(json_vars))

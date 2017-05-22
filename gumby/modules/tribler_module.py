@@ -1,5 +1,6 @@
 from os import path, remove
 from posix import environ
+from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 
 from gumby.experiment import experiment_callback
@@ -48,13 +49,22 @@ class TriblerModule(BaseDispersyModule):
         self.transfer_size = long(size)
 
     @experiment_callback
-    def transfer(self, action="download", file_name=None, hops=None):
+    def set_libtorrentmgr_alert_mask(self, mask=0xffffffff):
+        self.session.lm.ltmgr.default_alert_mask = mask
+        self.session.lm.ltmgr.alert_callback = self._process_libtorrent_alert
+        for ltsession in self.session.lm.ltmgr.ltsessions.itervalues():
+            ltsession.set_alert_mask(mask)
+
+    @experiment_callback
+    def transfer(self, action="download", file_name=None, hops=None, timeout=None):
         assert action in ("download", "seed"), "Invalid transfer kind"
 
         if file_name is None:
             file_name = path.basename(environ["SCENARIO_FILE"])
         else:
             file_name = path.basename(environ["SCENARIO_FILE"]) + '-' + file_name
+
+        file_name = file_name + str(self.experiment.server_vars["global_random"])
 
         if hops is not None:
             hops = int(hops)
@@ -71,15 +81,25 @@ class TriblerModule(BaseDispersyModule):
             remove(path.join(dscfg.get_dest_dir(), file_name))
 
         def cb(ds):
-            self._logger.info('transfer: %s infohash=%s, hops=%d, down=%s, up=%d, progress=%s, status=%s, seeds=%s',
+            self._logger.info('transfer: %s infohash=%s, hops=%d, down=%d, up=%d, progress=%s, status=%s, seeds=%s',
                               action,
-                               tdef.get_infohash().encode('hex')[:5],
-                              hops,
+                              tdef.get_infohash().encode('hex')[:5],
+                              hops if hops else 0,
                               ds.get_current_speed('down'),
                               ds.get_current_speed('up'),
                               ds.get_progress(),
                               dlstatus_strings[ds.get_status()],
                               sum(ds.get_num_seeds_peers()))
+
+            if ds.get_peerlist():
+                for peer in ds.get_peerlist():
+                    self._logger.info(" - peer %s, addr %s:%s has (%s), U: %s D: %s",
+                                      peer["id"].encode("hex"),
+                                      peer["ip"],
+                                      peer["port"],
+                                      peer["completed"] * 100.0,
+                                      peer["uprate"],
+                                      peer["downrate"])
 
             new_download_stats = {
                 'download': ds.get_current_speed('down'),
@@ -88,9 +108,13 @@ class TriblerModule(BaseDispersyModule):
             }
             self.download_stats = self.print_dict_changes("download-stats", self.download_stats, new_download_stats)
 
-            return 1.0, False
+            return 1.0, True
 
-        self.session.start_download_from_tdef(tdef, dscfg).set_state_callback(cb)
+        self.session.start_download_from_tdef(tdef, dscfg).set_state_callback(cb, getpeerlist=True)
+
+        if timeout:
+            reactor.callLater(long(timeout), self.session.remove_download_by_id, tdef.infohash, removecontent=True,
+                              removestate=True)
 
     def create_test_torrent(self, file_name):
         if not path.exists(file_name):
@@ -104,3 +128,5 @@ class TriblerModule(BaseDispersyModule):
         tdef.finalize()
         return tdef
 
+    def _process_libtorrent_alert(self, alert):
+        self._logger.info("LibtorrentDownloadImpl: alert %s", alert)

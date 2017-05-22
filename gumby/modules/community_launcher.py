@@ -195,12 +195,26 @@ class HiddenTunnelCommunityLauncher(CommunityLauncher):
 
 class TrustChainCommunityLauncher(CommunityLauncher):
 
+    def get_community_class(self):
+        from Tribler.community.trustchain.community import TrustChainCommunity
+        return TrustChainCommunity
+
+    def get_my_member(self, dispersy, session):
+        keypair = session.trustchain_keypair
+        return dispersy.get_member(private_key=keypair.key_to_bin())
+
+    def get_kwargs(self, session):
+        return {}
+
+
+class TriblerChainCommunityLauncher(CommunityLauncher):
+
     def should_launch(self, session):
         return session.config.get_trustchain_enabled()
 
     def get_community_class(self):
-        from Tribler.community.trustchain.community import TrustChainCommunity
-        return TrustChainCommunity
+        from Tribler.community.triblerchain.community import TriblerChainCommunity
+        return TriblerChainCommunity
 
     def get_my_member(self, dispersy, session):
         keypair = session.trustchain_keypair
