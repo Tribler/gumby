@@ -5,6 +5,7 @@ from gumby.modules.base_dispersy_module import BaseDispersyModule
 from gumby.modules.experiment_module import ExperimentModule
 
 from Tribler.Core import permid
+from Tribler.dispersy.candidate import WalkCandidate
 
 
 class CommunityExperimentModule(ExperimentModule):
@@ -85,9 +86,9 @@ class CommunityExperimentModule(ExperimentModule):
     def get_candidate(self, candidate_id):
         target = self.all_vars[candidate_id]
         address = (str(target['host']), target['port'])
-        candidate = self.community.get_candidate(address)
+        candidate = self.community.get_candidate(address, replace=False)
         if candidate is None:
-            candidate = self.community.create_candidate(address, False, address, ("0.0.0.0", 0), u"unknown")
+            candidate = WalkCandidate(address, False, address, ("0.0.0.0", 0), u"unknown")
             # Pretend we "walked" into this candidate.
             candidate.walk_response(time())
         if not candidate.get_member():
@@ -95,6 +96,7 @@ class CommunityExperimentModule(ExperimentModule):
             member = self.community.get_member(public_key=self.get_candidate_public_key(candidate_id).decode("base64"))
             member.add_identity(self.community)
             candidate.associate(member)
+        self.community.add_candidate(candidate)
         return candidate
 
     def get_candidate_public_key(self, candidate_id):
