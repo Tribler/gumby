@@ -6,6 +6,7 @@ from gumby.modules.experiment_module import ExperimentModule
 
 from Tribler.Core import permid
 from Tribler.dispersy.candidate import WalkCandidate
+from Tribler.dispersy.crypto import M2CryptoPK
 
 
 class CommunityExperimentModule(ExperimentModule):
@@ -115,7 +116,8 @@ class CommunityExperimentModule(ExperimentModule):
         permid.save_keypair(keypair, pairfilename)
         permid.save_pub_key(keypair, "%s.pub" % pairfilename)
 
-        self.vars['public_key'] = str(keypair.pub()).encode("base64")
+        m2c_pk = M2CryptoPK(ec_pub=keypair.pub())
+        self.vars['public_key'] = str(m2c_pk.key_to_bin()).encode("base64")
 
     def on_dispersy_available(self, dispersy):
         # The dispersy object is now available. This means that the session_config has been copy constructed into the
