@@ -1,9 +1,8 @@
 &module gumby.modules.tribler_module.TriblerModule
-&module experiments.multichain.multichain_module.MultichainModule
+&module experiments.trustchain.trustchain_module.TrustchainModule
 
-@0:1 isolate_community MultiChainCommunity
+@0:1 isolate_community TrustChainCommunity
 @0:2 start_session
-@0:13 set_unlimited_pending
 @0:15 start_requesting_signatures
 @0:130 stop_requesting_signatures
 @0:140 stop_session

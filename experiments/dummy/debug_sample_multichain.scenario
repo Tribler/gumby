@@ -1,2 +1,0 @@
-&module gumby.modules.tribler_module.TriblerModule
-&module experiments.multichain.multichain_module.MultichainModule
