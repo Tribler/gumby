@@ -205,3 +205,6 @@ class TrustChainCommunityLauncher(CommunityLauncher):
     def get_my_member(self, dispersy, session):
         keypair = session.trustchain_keypair
         return dispersy.get_member(private_key=keypair.key_to_bin())
+
+    def get_kwargs(self, session):
+        return {}
