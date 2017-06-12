@@ -22,12 +22,12 @@ class MultichainModule(CommunityExperimentModule):
 
     def on_id_received(self):
         super(MultichainModule, self).on_id_received()
-        self.session_config.set_enable_multichain(True)
+        self.tribler_config.set_multichain_enabled(True)
 
         # We need the multichain key at this point. However, the configured session is not started yet. So we generate
         # the keys here and place them in the correct place. When the session starts it will load these keys.
         multichain_keypair = permid.generate_keypair_multichain()
-        multichain_pairfilename = self.session_config.get_multichain_permid_keypair_filename()
+        multichain_pairfilename = self.tribler_config.get_multichain_permid_keypair_filename()
         permid.save_keypair_multichain(multichain_keypair, multichain_pairfilename)
         permid.save_pub_key_multichain(multichain_keypair, "%s.pub" % multichain_pairfilename)
 

@@ -63,7 +63,7 @@ class AllChannelModule(CommunityExperimentModule):
 
     def on_id_received(self):
         super(AllChannelModule, self).on_id_received()
-        self.session_config.set_enable_channel_search(True)
+        self.tribler_config.set_channel_search_enabled(True)
         self.community_launcher.community_kwargs["tribler_session"] = None
         self.community_loader.get_launcher("ChannelCommunity").community_kwargs["tribler_session"] = None
 

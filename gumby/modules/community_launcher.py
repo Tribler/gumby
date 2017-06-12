@@ -36,7 +36,7 @@ class CommunityLauncher(object):
 
         For example:
 
-            return session.get_tunnel_community_enabled()
+            return session.config.get_tunnel_community_enabled()
 
         :type session: Tribler.Core.Session.Session
         :rtype: bool
@@ -121,7 +121,7 @@ class DiscoveryCommunityLauncher(CommunityLauncher):
 class SearchCommunityLauncher(CommunityLauncher):
 
     def should_launch(self, session):
-        return session.get_enable_torrent_search()
+        return session.config.get_torrent_search_enabled()
 
     def get_community_class(self):
         from Tribler.community.search.community import SearchCommunity
@@ -131,7 +131,7 @@ class SearchCommunityLauncher(CommunityLauncher):
 class AllChannelCommunityLauncher(CommunityLauncher):
 
     def should_launch(self, session):
-        return session.get_enable_channel_search()
+        return session.config.get_channel_search_enabled()
 
     def get_community_class(self):
         from Tribler.community.allchannel.community import AllChannelCommunity
@@ -141,7 +141,7 @@ class AllChannelCommunityLauncher(CommunityLauncher):
 class ChannelCommunityLauncher(CommunityLauncher):
 
     def should_launch(self, session):
-        return session.get_channel_community_enabled()
+        return session.config.get_channel_community_enabled()
 
     def get_community_class(self):
         from Tribler.community.channel.community import ChannelCommunity
@@ -151,7 +151,7 @@ class ChannelCommunityLauncher(CommunityLauncher):
 class PreviewChannelCommunityLauncher(CommunityLauncher):
 
     def should_launch(self, session):
-        return session.get_preview_channel_community_enabled()
+        return session.config.get_preview_channel_community_enabled()
 
     def get_community_class(self):
         from Tribler.community.channel.preview import PreviewChannelCommunity
@@ -167,14 +167,14 @@ class HiddenTunnelCommunityLauncher(CommunityLauncher):
         return ["MultiChainCommunity",]
 
     def should_launch(self, session):
-        return session.get_tunnel_community_enabled()
+        return session.config.get_tunnel_community_enabled()
 
     def get_community_class(self):
         from Tribler.community.tunnel.hidden_community import HiddenTunnelCommunity
         return HiddenTunnelCommunity
 
     def get_my_member(self, dispersy, session):
-        if session.get_enable_multichain():
+        if session.config.get_multichain_enabled():
             keypair = session.multichain_keypair
             return dispersy.get_member(private_key=keypair.key_to_bin())
         else:
@@ -196,7 +196,7 @@ class HiddenTunnelCommunityLauncher(CommunityLauncher):
 class MultiChainCommunityLauncher(CommunityLauncher):
 
     def should_launch(self, session):
-        return session.get_enable_multichain()
+        return session.config.get_multichain_enabled()
 
     def get_community_class(self):
         from Tribler.community.multichain.community import MultiChainCommunity

@@ -132,7 +132,9 @@ class GumbyLaunchMany(TriblerLaunchMany):
 
         self.community_loader.load(self.dispersy, self.session)
 
-        self.session.set_anon_proxy_settings(2, ("127.0.0.1", self.session.get_tunnel_community_socks5_listen_ports()))
+        self.session.config.set_anon_proxy_settings(2,
+                                                    ("127.0.0.1",
+                                                     self.session.config.get_tunnel_community_socks5_listen_ports()))
 
         self._logger.info("tribler: communities are ready in %.2f seconds", timemod.time() - now_time)
 
@@ -143,6 +145,6 @@ class GumbySession(Session):
     Overwritten Session allowing for custom community loading in Session.lm.
     """
 
-    def __init__(self, scfg=None, ignore_singleton=False, autoload_discovery=True):
-        super(GumbySession, self).__init__(scfg, ignore_singleton, autoload_discovery)
+    def __init__(self, config=None, ignore_singleton=False, autoload_discovery=True):
+        super(GumbySession, self).__init__(config, ignore_singleton, autoload_discovery)
         self.lm = GumbyLaunchMany()
