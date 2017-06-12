@@ -1,3 +1,4 @@
+import json
 import os
 from os import path
 import base64
@@ -10,21 +11,14 @@ class TrustChainExperimentAnalysisDatabase(TrustChainDB):
     Extended TrustChainDB that provides additional functionality to analyze an experiment.
     """
 
-    def __init__(self, dispersy, working_directory):
-        super(TrustChainExperimentAnalysisDatabase, self).__init__(dispersy, working_directory)
+    def __init__(self, working_directory):
+        super(TrustChainExperimentAnalysisDatabase, self).__init__(working_directory, "trustchain")
 
     def get_all_blocks(self):
         """
         Returns all blocks form the database
         """
-        db_query = u"SELECT public_key_requester, public_key_responder, up, down, " \
-                   u"total_up_requester, total_down_requester, sequence_number_requester, previous_hash_requester, " \
-                   u"signature_requester, hash_requester, " \
-                   u"total_up_responder, total_down_responder, sequence_number_responder, previous_hash_responder, " \
-                   u"signature_responder, hash_responder, insert_time " \
-                   u"FROM `trust_chain`"
-        db_result = self.execute(db_query).fetchall()
-        return [self._create_database_block(result) for result in db_result]
+        return self._getall(u"LIMIT ?", (-1,))
 
 
 class DatabaseReader(object):
@@ -47,59 +41,26 @@ class DatabaseReader(object):
         """
         raise NotImplementedError("Abstract method")
 
-    def generate_graph(self):
-        """
-        Generates a png file of the graph.
-        """
-        raise NotImplementedError("Abstract method")
-
     def generate_block_file(self):
-        print "Writing trustchain to file"
+        print "Writing TrustChain records to file"
         with open(os.path.join(self.working_directory, "trustchain.dat"), 'w') as trustchain_file:
             # Write header
             trustchain_file.write(
-                "public_key_requester "
-                "public_key_responder "
-                "up "
-                "down "
-
-                "total_up_requester "
-                "total_down_requester "
-                "sequence_number_requester "
-                "previous_hash_requester "
-                "signature_requester "
-                "hash_requester "
-
-                "total_up_responder "
-                "total_down_responder "
-                "sequence_number_responder "
-                "previous_hash_responder "
-                "signature_responder "
-                "hash_responder\n"
+                "tx public_key sequence_number link_public_key link_sequence_number previous_hash signature hash\n"
             )
 
             # Write blocks
             blocks = self.database.get_all_blocks()
             for block in blocks:
                 trustchain_file.write(
-                    base64.encodestring(block.public_key_requester).replace('\n', '').replace('\r', '') + " " +
-                    base64.encodestring(block.public_key_responder).replace('\n', '').replace('\r', '') + " " +
-                    str(block.up) + " " +
-                    str(block.down) + " " +
-
-                    str(block.total_up_requester) + " " +
-                    str(block.total_down_requester) + " " +
-                    str(block.sequence_number_requester) + " " +
-                    base64.encodestring(block.previous_hash_requester).replace('\n', '').replace('\r', '') + " " +
-                    base64.encodestring(block.signature_requester).replace('\n', '').replace('\r', '') + " " +
-                    base64.encodestring(block.hash_requester).replace('\n', '').replace('\r', '') + " " +
-
-                    str(block.total_up_responder) + " " +
-                    str(block.total_down_responder) + " " +
-                    str(block.sequence_number_responder) + " " +
-                    base64.encodestring(block.previous_hash_responder).replace('\n', '').replace('\r', '') + " " +
-                    base64.encodestring(block.signature_responder).replace('\n', '').replace('\r', '') + " " +
-                    base64.encodestring(block.hash_responder).replace('\n', '').replace('\r', '') + " " +
+                    json.dumps(block.transaction) + " " +
+                    base64.encodestring(block.public_key).replace('\n', '').replace('\r', '') + " " +
+                    str(block.sequence_number) + " " +
+                    base64.encodestring(block.link_public_key).replace('\n', '').replace('\r', '') + " " +
+                    str(block.link_sequence_number) + " " +
+                    base64.encodestring(block.previous_hash).replace('\n', '').replace('\r', '') + " " +
+                    base64.encodestring(block.signature).replace('\n', '').replace('\r', '') + " " +
+                    base64.encodestring(block.hash).replace('\n', '').replace('\r', '') + " " +
                     "\n"
                 )
 
@@ -107,20 +68,20 @@ class DatabaseReader(object):
 class GumbyDatabaseAggregator(DatabaseReader):
 
     def get_database(self, db_path):
-        return TrustChainExperimentAnalysisDatabase(None, db_path)
+        return TrustChainExperimentAnalysisDatabase(db_path)
 
     def combine_databases(self):
         print "Reading databases"
-        databases = []
-        for dir_name in os.listdir(self.working_directory):
-            # Read all nodes
-            if dir_name.startswith(".Tribler"):
-                databases.append(TrustChainDB(None, path.join(self.working_directory, dir_name)))
-        for database in databases:
-            hashes_requester = database.get_all_hash_requester()
-            for hash_requester in hashes_requester:
-                block = database.get_by_hash_requester(hash_requester)
-                if not self.database.contains(hash_requester):
-                    self.database.add_block(block)
-        total_blocks = len(self.database.get_all_hash_requester())
-        print "Found " + str(total_blocks) + " unique trustchain blocks across databases"
+        total_blocks = 0
+        for node_dir_name in os.listdir(path.join(self.working_directory, "localhost")):
+            for mod_dir_name in os.listdir(path.join(self.working_directory, "localhost", node_dir_name)):
+                # Read all nodes
+                if mod_dir_name.startswith(".TriblerModule"):
+                    db_path = path.join(self.working_directory, "localhost", node_dir_name, mod_dir_name)
+                    print "Considering database %s" % db_path
+                    database = TrustChainExperimentAnalysisDatabase(db_path)
+                    for block in database.get_all_blocks():
+                        if not self.database.contains(block):
+                            self.database.add_block(block)
+                            total_blocks += 1
+        print "Found %d unique trustchain (half) blocks across databases" % total_blocks
