@@ -164,7 +164,7 @@ class PreviewChannelCommunityLauncher(CommunityLauncher):
 class HiddenTunnelCommunityLauncher(CommunityLauncher):
 
     def not_before(self):
-        return ["MultiChainCommunity",]
+        return ["TriblerChainCommunity",]
 
     def should_launch(self, session):
         return session.config.get_tunnel_community_enabled()
@@ -174,8 +174,8 @@ class HiddenTunnelCommunityLauncher(CommunityLauncher):
         return HiddenTunnelCommunity
 
     def get_my_member(self, dispersy, session):
-        if session.config.get_multichain_enabled():
-            keypair = session.multichain_keypair
+        if session.config.get_trustchain_enabled():
+            keypair = session.trustchain_keypair
             return dispersy.get_member(private_key=keypair.key_to_bin())
         else:
             keypair = dispersy.crypto.generate_key(u"curve25519")
@@ -193,15 +193,18 @@ class HiddenTunnelCommunityLauncher(CommunityLauncher):
         session.lm.tunnel_community = community
 
 
-class MultiChainCommunityLauncher(CommunityLauncher):
+class TrustChainCommunityLauncher(CommunityLauncher):
 
     def should_launch(self, session):
-        return session.config.get_multichain_enabled()
+        return session.config.get_trustchain_enabled()
 
     def get_community_class(self):
-        from Tribler.community.multichain.community import MultiChainCommunity
-        return MultiChainCommunity
+        from Tribler.community.trustchain.community import TrustChainCommunity
+        return TrustChainCommunity
 
     def get_my_member(self, dispersy, session):
-        keypair = session.multichain_keypair
+        keypair = session.trustchain_keypair
         return dispersy.get_member(private_key=keypair.key_to_bin())
+
+    def get_kwargs(self, session):
+        return {}

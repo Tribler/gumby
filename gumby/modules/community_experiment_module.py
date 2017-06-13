@@ -93,7 +93,6 @@ class CommunityExperimentModule(ExperimentModule):
             # Pretend we "walked" into this candidate.
             candidate.walk_response(time())
         if not candidate.get_member():
-            self._logger.info("Candidate %s, Vars: %s" % (str(candidate_id), repr(self.all_vars)))
             member = self.community.get_member(public_key=self.get_candidate_public_key(candidate_id).decode("base64"))
             member.add_identity(self.community)
             candidate.associate(member)

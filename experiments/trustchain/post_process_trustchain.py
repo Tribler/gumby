@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 """
-Performs database aggregation after a multichain experiment.
+Performs database aggregation after a trustchain experiment.
 """
 import os
 import sys
@@ -9,7 +9,7 @@ if __name__ == '__main__':
     # Fix the path
     sys.path.append(os.environ['PROJECT_DIR'])
     sys.path.append(os.path.join(os.environ['PROJECT_DIR'], 'tribler'))
-    sys.path.append(os.path.join(os.environ['PROJECT_DIR'], 'gumby', 'experiments', 'multichain'))
+    sys.path.append(os.path.join(os.environ['PROJECT_DIR'], 'gumby', 'experiments', 'trustchain'))
 
     # Create output dir
     aggregation_path = os.path.join(os.environ['PROJECT_DIR'], 'output', 'sqlite')

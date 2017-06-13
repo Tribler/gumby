@@ -407,8 +407,8 @@ class ExperimentClient(object, LineReceiver):
 
         Without a fully qualified name:
 
-        &module multichain_module
-        Will attempt to find multichain_module.py on the python path and import it. (The python path should be set by
+        &module trustchain_module
+        Will attempt to find trustchain_module.py on the python path and import it. (The python path should be set by
         launch_scenario to include the experiment dir, tribler dir and gumby itself)
 
         With a fully qualified name:

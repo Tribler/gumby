@@ -1,0 +1,2 @@
+&module gumby.modules.tribler_module.TriblerModule
+&module experiments.trustchain.trustchain_module.TrustchainModule
