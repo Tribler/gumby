@@ -59,6 +59,9 @@ class BaseDispersyModule(ExperimentModule):
         bootstrap_file = path.join(environ['OUTPUT_DIR'], 'bootstraptribler.txt')
         if path.exists(bootstrap_file):
             symlink(bootstrap_file, path.join(my_state_path, 'bootstraptribler.txt'))
+        else:
+            with open(path.join(my_state_path, 'bootstraptribler.txt'), "w+") as f:
+                f.write(environ['HEAD_HOST'] + " " + environ['TRACKER_PORT'])
 
         config = TriblerConfig()
         config.set_state_dir(my_state_path)
