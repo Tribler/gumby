@@ -142,3 +142,6 @@ If you create a script generic enough to be useful to others, please send a pull
 #### Scripts and components available to use to build your experiments ####
 
 Please, check the documentation in the config file template.
+
+## Tutorial ##
+A tutorial for creating your first Gumby experiment is availble [here](docs/hello_world.rst).
