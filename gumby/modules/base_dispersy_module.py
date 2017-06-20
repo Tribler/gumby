@@ -60,8 +60,11 @@ class BaseDispersyModule(ExperimentModule):
         if path.exists(bootstrap_file):
             symlink(bootstrap_file, path.join(my_state_path, 'bootstraptribler.txt'))
         else:
+            base_tracker_port = int(environ['TRACKER_PORT'])
+            port_range = range(base_tracker_port, base_tracker_port + 4)
             with open(path.join(my_state_path, 'bootstraptribler.txt'), "w+") as f:
-                f.write(environ['HEAD_HOST'] + " " + environ['TRACKER_PORT'])
+                f.write("\n".join(["%s %d" % (environ['HEAD_HOST'], port) for port in port_range]))
+
 
         config = TriblerConfig()
         config.set_state_dir(my_state_path)
