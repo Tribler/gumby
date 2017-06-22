@@ -142,6 +142,9 @@ Consider the following ``hello_world.scenario``:
     
     # At 1 second into the experiment, start running Dispersy
     @1 start_session
+
+    # At 2 seconds into the experiment, introduce all of the peers to each other
+    @2 introduce_peers
     
     # At 15 seconds into the experiment, reset our Dispersy statistics
     # And draw a line in our output graphs called `start-experiment`
@@ -197,6 +200,9 @@ The module code for our running example is given below:
         """
         def get_community_class(self):
             return HelloWorldCommunity
+
+        def get_my_member(self, dispersy, session):
+            return dispersy.get_new_member()
 
         def get_kwargs(self, session):
             return {}
