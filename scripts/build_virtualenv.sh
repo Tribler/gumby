@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=22
+SCRIPT_VERSION=23
 
 # Code:
 set -e
@@ -537,6 +537,9 @@ six
 twisted # Used by the config server/clients
 unicodecsv # used for report generation scripts from Cor-Paul
 validate
+storm
+transaction
+zope.component
 " > ~/requirements.txt
 
 # For some reason the pip scripts get a python 2.6 shebang, fix it.
