@@ -208,3 +208,17 @@ class TrustChainCommunityLauncher(CommunityLauncher):
 
     def get_kwargs(self, session):
         return {}
+
+
+class MarketCommunityLauncher(CommunityLauncher):
+
+    def should_launch(self, session):
+        return session.config.get_market_community_enabled()
+
+    def get_community_class(self):
+        from Tribler.community.market.community import MarketCommunity
+        return MarketCommunity
+
+    def get_my_member(self, dispersy, session):
+        keypair = session.tradechain_keypair
+        return dispersy.get_member(private_key=keypair.key_to_bin())

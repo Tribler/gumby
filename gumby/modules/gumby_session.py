@@ -113,6 +113,7 @@ class DefaultCommunityLoader(CommunityLoader):
         self.set_launcher(PreviewChannelCommunityLauncher())
         self.set_launcher(TrustChainCommunityLauncher())
         self.set_launcher(HiddenTunnelCommunityLauncher())
+        self.set_launcher(MarketCommunityLauncher())
 
 
 class GumbyLaunchMany(TriblerLaunchMany):
