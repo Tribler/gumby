@@ -40,7 +40,7 @@
 #
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=22
+SCRIPT_VERSION=24
 
 # Code:
 set -e
@@ -519,19 +519,28 @@ Jinja2 # Used for systemtap report generation scripts from Cor-Paul
 configobj
 cryptography
 cython
+dnspython
+ecdsa
 gmpy==1.16
 ipython
+jsonrpclib
+networkx
 nose
 nosexcover
 ntplib
+pbkdf2
 pillow
+protobuf
 psutil
+pyaes
 pyasn1 # for twisted
 pycparser
 pycrypto # Twisted needs it
 pynacl # New EC crypto stuff for tunnelcommunity
+PySocks
 pysqlite
 pyzmq
+qrcode
 service_identity
 six
 twisted # Used by the config server/clients

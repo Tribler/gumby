@@ -178,7 +178,7 @@ class ScenarioParser(object):
                 if timespec[0] == '@':
                     timespec = timespec[1:]
                 timespec = timespec.split(':')
-                begin = int(timespec[-1])
+                begin = float(timespec[-1])
                 if len(timespec) > 1:
                     begin += int(timespec[-2]) * 60
                 if len(timespec) > 2:
