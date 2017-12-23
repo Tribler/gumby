@@ -100,6 +100,10 @@ class HiddenServicesModule(CommunityExperimentModule):
         self.tunnel_settings.max_traffic = long(value)
 
     @experiment_callback
+    def set_tunnel_max_time(self, value):
+        self.tunnel_settings.max_time = long(value)
+
+    @experiment_callback
     def disable_tunnel_crypto(self):
         self._logger.error("Disable tunnel crypto")
         self.tunnel_settings.crypto = NoTunnelCrypto()

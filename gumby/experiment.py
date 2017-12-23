@@ -47,14 +47,15 @@ class ExperimentClient(object, LineReceiver):
     # Allow for 4MB long lines (for the json stuff)
     MAX_LENGTH = 2 ** 22
 
-    def __init__(self, vars):
+    def __init__(self, my_vars):
         super(ExperimentClient, self).__init__()
         self._logger = logging.getLogger(self.__class__.__name__)
 
         self.state = "id"
         self.my_id = None
-        self.vars = vars
+        self.vars = my_vars
         self.all_vars = {}
+        self.server_vars = {}
         self.time_offset = None
         self.scenario_runner = ScenarioRunner()
         self.scenario_runner.preprocessor_callbacks["module"] = self._preproc_module
@@ -117,7 +118,9 @@ class ExperimentClient(object, LineReceiver):
             self.sendLine("set:%s:%s" % (key, val))
 
     def on_all_vars_received(self):
-        pass
+        for module in self.experiment_modules:
+            if module is not self:
+                module.on_all_vars_received()
 
     def start_experiment(self):
         self.scenario_runner.run()
@@ -158,7 +161,9 @@ class ExperimentClient(object, LineReceiver):
     def proto_all_vars(self, line):
         self._logger.debug("Got experiment variables")
 
-        self.all_vars = json.loads(line)
+        all_vars = json.loads(line)
+        self.all_vars = all_vars["clients"]
+        self.server_vars = all_vars["server"]
         self.time_offset = self.all_vars[str(self.my_id)]["time_offset"]
         self.on_all_vars_received()
 

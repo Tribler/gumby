@@ -111,7 +111,7 @@ class DefaultCommunityLoader(CommunityLoader):
         self.set_launcher(AllChannelCommunityLauncher())
         self.set_launcher(ChannelCommunityLauncher())
         self.set_launcher(PreviewChannelCommunityLauncher())
-        self.set_launcher(TrustChainCommunityLauncher())
+        self.set_launcher(TriblerChainCommunityLauncher())
         self.set_launcher(HiddenTunnelCommunityLauncher())
         self.set_launcher(MarketCommunityLauncher())
 

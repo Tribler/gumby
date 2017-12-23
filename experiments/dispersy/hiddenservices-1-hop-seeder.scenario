@@ -6,6 +6,9 @@
 
 @0:20 transfer action=seed hops=1 {4}
 @0:100 transfer {5}
-@0:250 transfer hops=1 {6}
-@0:400 transfer hops=2 {7}
-@0:600 stop
+@0:150 transfer hops=1 {6}
+@0:160 disable_libtorrent_dht {6}
+@0:200 transfer hops=2 {7}
+@0:210 disable_libtorrent_dht {7}
+@0:400 print_dht_table
+@0:800 stop

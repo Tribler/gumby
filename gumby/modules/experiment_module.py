@@ -34,6 +34,16 @@ class ExperimentModule(object):
         return self.experiment.all_vars
 
     def on_id_received(self):
+        """
+        The experiment node has been assigned it's ID. After all the handlers for this event are completed the Vars
+        dictionary is sent to the experiment server.
+        """
+        pass
+
+    def on_all_vars_received(self):
+        """
+        The experiment server has sent us all the vars dictionaries of all the experiment nodes.
+        """
         pass
 
     @staticmethod
