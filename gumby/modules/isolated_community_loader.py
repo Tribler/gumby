@@ -47,11 +47,28 @@ class IsolatedLauncherWrapper(CommunityLauncher):
         """
         Perform our own init_community() with our custom master member.
         """
-        community = self.get_community_class().init_community(dispersy,
-                                                              self.get_master_member(dispersy),
-                                                              self.get_my_member(dispersy, session),
-                                                              *self.get_args(session),
-                                                              **self.get_kwargs(session))
+        from gumby.modules.ipv8_module import IPV8
+        if isinstance(dispersy, IPV8):
+
+            if hasattr(self.get_community_class(), "master_peer"):
+                # Old style/deprecated IPv8 community
+                community = self.get_community_class()(self.get_my_member(dispersy, session),
+                                                       endpoint=self.dispersy.endpoint, network=self.dispersy.network,
+                                                       *self.get_args(session), **self.get_kwargs(session))
+                community.master_peer = self.get_master_member(dispersy)
+            else:
+                # New style IPv8 community
+                community = self.get_community_class()(self.get_master_member(dispersy),
+                                                       self.get_my_member(dispersy, session),
+                                                       endpoint=self.dispersy.endpoint, network=self.dispersy.network,
+                                                       *self.get_args(session), **self.get_kwargs(session))
+        else:
+            # Dispersy community
+            community = self.get_community_class().init_community(dispersy,
+                                                                  self.get_master_member(dispersy),
+                                                                  self.get_my_member(dispersy, session),
+                                                                  *self.get_args(session),
+                                                                  **self.get_kwargs(session))
         self.child.finalize(dispersy, session, community)
 
     def get_community_class(self):
