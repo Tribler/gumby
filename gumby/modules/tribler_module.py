@@ -1,3 +1,4 @@
+import json
 from os import path, remove
 from posix import environ
 from twisted.internet import reactor
@@ -64,7 +65,7 @@ class TriblerModule(BaseDispersyModule):
         else:
             file_name = path.basename(environ["SCENARIO_FILE"]) + '-' + file_name
 
-        file_name = file_name + str(self.experiment.server_vars["global_random"])
+        file_name += str(self.experiment.server_vars["global_random"])
 
         if hops is not None:
             hops = int(hops)
@@ -115,6 +116,18 @@ class TriblerModule(BaseDispersyModule):
         if timeout:
             reactor.callLater(long(timeout), self.session.remove_download_by_id, tdef.infohash, removecontent=True,
                               removestate=True)
+
+    @experiment_callback
+    def add_peer_to_downloads(self, peer_nr):
+        self._logger.info("Adding peer %s to all downloads", peer_nr)
+        host, port = self.experiment.get_peer_ip_port_by_id(peer_nr)
+        for download in self.session.get_downloads():
+            download.add_peer((host, port))
+
+    @experiment_callback
+    def write_triblerchain_stats(self):
+        with open('triblerchain.txt', 'w', 0) as triblerchain_file:
+            triblerchain_file.write(json.dumps(self.session.lm.triblerchain_community.get_statistics()))
 
     def create_test_torrent(self, file_name):
         if not path.exists(file_name):

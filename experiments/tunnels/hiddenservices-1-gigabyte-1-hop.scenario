@@ -5,7 +5,6 @@
 
 &include hidden_services_common.scenario
 
-@0:2 set_test_file_size 1073741824
 @0:2 enable_security_limiters
 
 @0:20 setup_seeder 1hopsgigabyte 1 {4}

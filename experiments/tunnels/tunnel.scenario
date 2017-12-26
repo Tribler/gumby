@@ -3,17 +3,15 @@
 #
 
 &module gumby.modules.dispersy_module.DispersyModule
-&module experiments.dispersy.hidden_services_module.HiddenServicesModule
+&module experiments.tunnels.hidden_services_module.HiddenServicesModule
 
 @0:0 isolate_community HiddenTunnelCommunity
 @0:1 set_tunnel_exit True {1-2}
 @0:1 set_tunnel_max_circuits 0
 @0:4 start_session
 @0:19 reset_dispersy_statistics
-@0:20 start_circuit_monitor
 @0:20 set_tunnel_max_circuits 8
 @0:20 annotate start-experiment
 @0:21 build_circuits
-@0:595 stop_circuit_monitor
 @0:600 stop_session
 @0:610 stop

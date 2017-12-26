@@ -1,0 +1,11 @@
+&include hidden_services_common.scenario
+
+@0:20 annotate start-seeding
+@0:20 transfer action=seed hops=0 {4}
+@0:40 annotate start-downloading
+@0:40 transfer hops=1 {5}
+@0:97 print_dht_table
+@0:97 write_tunnels_info
+@0:97 write_triblerchain_stats
+@0:100 stop_session
+@0:110 stop

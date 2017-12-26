@@ -1,14 +1,11 @@
-# This experiment runs a 1 hop seeder seeding a 100mb file. Other processes will
-# download from this seeder using respectively 1, 2 and 3 hops. 
-#
-
 &include hidden_services_common.scenario
 
+@0:20 annotate start-seeding
 @0:20 transfer action=seed hops=1 {4}
-@0:100 transfer {5}
-@0:150 transfer hops=1 {6}
-@0:160 disable_libtorrent_dht {6}
-@0:200 transfer hops=2 {7}
-@0:210 disable_libtorrent_dht {7}
-@0:400 print_dht_table
-@0:800 stop
+@0:40 annotate start-downloading
+@0:40 transfer hops=1 {5}
+@0:137 print_dht_table
+@0:137 write_tunnels_info
+@0:137 write_triblerchain_stats
+@0:140 stop_session
+@0:150 stop

@@ -5,7 +5,7 @@
 #
 
 &module module module gumby.modules.tribler_module.TriblerModule
-&module module module experiments.dispersy.hidden_services_module.HiddenServicesModule
+&module module module experiments.tunnels.hidden_services_module.HiddenServicesModule
 
 @0.0 isolate_community HiddenTunnelCommunity
 @0:1 set_tunnel_exit True {1-2}

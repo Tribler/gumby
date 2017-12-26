@@ -44,15 +44,15 @@ class DHTModule(ExperimentModule):
 
     @property
     def session_config(self):
-        if self.tribler.session_config is None:
+        if self.tribler.tribler_config is None:
             return self.tribler.session
-        else:
-            return self.tribler.session_config
+
+        return self.tribler.tribler_config
 
     def on_id_received(self):
         super(DHTModule, self).on_id_received()
-        self.session_config.set_mainline_dht(True)
-        self.vars["dht_node_port"] = self.session_config.get_mainline_dht_listen_port()
+        self.session_config.set_mainline_dht_enabled(True)
+        self.vars["dht_node_port"] = self.session_config.get_mainline_dht_port()
 
     def on_all_vars_received(self):
         super(DHTModule, self).on_id_received()
@@ -64,7 +64,8 @@ class DHTModule(ExperimentModule):
     def print_dht_table(self):
         self.lm.mainline_dht.controller._routing_m.table.print_table()
         for ltsession in self.lm.ltmgr.ltsessions.itervalues():
-            ltsession.post_dht_stats()
+            if hasattr(ltsession, 'post_dht_stats'):
+                ltsession.post_dht_stats()
 
     @experiment_callback
     def disable_libtorrent_dht(self):

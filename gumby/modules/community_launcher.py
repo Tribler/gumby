@@ -182,7 +182,7 @@ class HiddenTunnelCommunityLauncher(CommunityLauncher):
         from Tribler.community.tunnel.tunnel_community import TunnelSettings
         shared_args = super(HiddenTunnelCommunityLauncher, self).get_kwargs(session)
         if 'settings' not in shared_args and session is None:
-            shared_args['settings'] = TunnelSettings(tribler_session=session)
+            shared_args['settings'] = TunnelSettings()
         return shared_args
 
     def finalize(self, dispersy, session, community):
@@ -200,9 +200,6 @@ class TrustChainCommunityLauncher(CommunityLauncher):
         keypair = session.trustchain_keypair
         return dispersy.get_member(private_key=keypair.key_to_bin())
 
-    def get_kwargs(self, session):
-        return {}
-
 
 class TriblerChainCommunityLauncher(CommunityLauncher):
 
@@ -217,8 +214,9 @@ class TriblerChainCommunityLauncher(CommunityLauncher):
         keypair = session.trustchain_keypair
         return dispersy.get_member(private_key=keypair.key_to_bin())
 
-    def get_kwargs(self, session):
-        return {}
+    def finalize(self, dispersy, session, community):
+        super(TriblerChainCommunityLauncher, self).finalize(dispersy, session, community)
+        session.lm.triblerchain_community = community
 
 
 class MarketCommunityLauncher(CommunityLauncher):
