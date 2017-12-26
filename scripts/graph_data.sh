@@ -52,7 +52,7 @@ for R_SCRIPT in ""$R_SCRIPTS_TO_RUN $EXTRA_R_SCRIPTS_TO_RUN; do
             R_SCRIPT_PATH=$R_SCRIPTS_PATH/$R_SCRIPT
         else
             echo "ERROR: $R_SCRIPT not found!"
-            FAILED=yes
+            FAILED=5
         fi
     fi
     R --no-save --quiet --args $XMIN $XMAX $R_SCRIPT < $R_SCRIPT_PATH | tee ${R_SCRIPT}.log &
