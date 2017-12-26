@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from extract_dispersy_statistics import AbstractHandler, get_parser
+from experiments.dispersy.extract_dispersy_statistics import AbstractHandler, get_parser
 import os
 import sys
 import logging
