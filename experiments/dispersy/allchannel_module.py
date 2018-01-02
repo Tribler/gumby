@@ -84,6 +84,12 @@ class AllChannelModule(CommunityExperimentModule):
 
         self._logger.info("trying-to-join-community")
 
+        if not self.community:
+            # The community class has been removed and this lc is still going
+            self._logger.error("join() not satisfied before end of experiment")
+            self.join_lc.stop()
+            return
+
         cid = self.community._channelcast_db.getChannelIdFromDispersyCID(None)
         if cid:
             community = self.community._get_channel_community(cid)

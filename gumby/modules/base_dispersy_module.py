@@ -65,8 +65,8 @@ class BaseDispersyModule(ExperimentModule):
             with open(path.join(my_state_path, 'bootstraptribler.txt'), "w+") as f:
                 f.write("\n".join(["%s %d" % (environ['HEAD_HOST'], port) for port in port_range]))
 
-
         config = TriblerConfig()
+        config.set_permid_keypair_filename("keypair_" + str(self.experiment.my_id))
         config.set_state_dir(my_state_path)
         config.set_torrent_checking_enabled(False)
         config.set_megacache_enabled(False)
