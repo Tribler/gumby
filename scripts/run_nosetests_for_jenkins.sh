@@ -157,7 +157,7 @@ else
                 pids+=" $!"
                 let COUNT=1+$COUNT
             done
-            for p in $pids; do
+            for p in `echo $pids`; do
                 if wait $p; then
                     echo "Process $p success"
                 else
