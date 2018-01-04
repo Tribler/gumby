@@ -145,7 +145,6 @@ else
             fi
         else
             mkdir $TEST_RUNNER_OUT_DIR
-            pids=""
             for LINE in $LINES; do
                 echo "Starting $LINE"
                 TIMEOUT_CMD="timeout"
@@ -154,26 +153,9 @@ else
                 fi
                 TEST_BUCKET=$COUNT COVERAGE_FILE=.coverage.$COUNT ${TIMEOUT_CMD} 600 $WORKSPACE/gumby/scripts/wrap_in_temp_home.sh nosetests -v --with-xcoverage --xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part $NOSEARGS_COMMON $LINE \
                 > $TEST_RUNNER_OUT_DIR/${COUNT}.out 2> $TEST_RUNNER_OUT_DIR/${COUNT}.err &
-                pids+=" $!"
                 let COUNT=1+$COUNT
             done
-            for p in `echo $pids`; do
-                if wait $p; then
-                    echo "Process $p success"
-                else
-                    echo "ERROR: Process $p failed with exit code $PG_EXIT_STATUS, aborting and printing logs"
-                    [ ! -z $PYLINT_PID ] && kill -3 $PYLINT_PID ||:
-                    [ ! -z $SLOCCOUNT_PID ] && kill -3 $SLOCCOUNT_PID ||:
-                    for LOG in $(ls -1 $TEST_RUNNER_OUT_DIR/* | sort); do
-                        echo "##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv##"
-                        echo "## Last 20 lines of $LOG"
-                        tail -20 $LOG
-                        echo "## End of $LOG"
-                        echo "##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^##"
-                    done
-                    exit 1
-                fi
-            done
+            wait
         fi
     else
         echo "ERROR: NOSE_TESTS_PARALLELISATION is set but NOSE_TESTS_TO_RUN is not a directory, bailing out."
