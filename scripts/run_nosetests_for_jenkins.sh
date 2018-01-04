@@ -156,6 +156,21 @@ else
                 let COUNT=1+$COUNT
             done
             wait
+            bash $WORKSPACE/gumby/scripts/check_test_runner_output.sh $TEST_RUNNER_OUT_DIR
+            EXIT_CODE=$?
+            if [ ! $EXIT_CODE -eq 0 ]; then
+                echo "ERROR: Process guard failed with exit code $EXIT_CODE, aborting and printing logs"
+                [ ! -z $PYLINT_PID ] && kill -3 $PYLINT_PID ||:
+                [ ! -z $SLOCCOUNT_PID ] && kill -3 $SLOCCOUNT_PID ||:
+                for LOG in $(ls -1 $TEST_RUNNER_OUT_DIR/* | sort); do
+                    echo "##vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv##"
+                    echo "## Last 20 lines of $LOG"
+                    tail -20 $LOG
+                    echo "## End of $LOG"
+                    echo "##^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^##"
+                done
+                exit 1
+            fi
         fi
     else
         echo "ERROR: NOSE_TESTS_PARALLELISATION is set but NOSE_TESTS_TO_RUN is not a directory, bailing out."
