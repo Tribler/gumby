@@ -84,6 +84,8 @@ def main(self_service=False):
 
         # create experiment service with 1 expected subscriber, and start in 0 seconds
         fact = ExperimentServiceFactory(1, 0)
+        if "PEER_ID" in environ:
+            fact.connection_counter = int(environ["PEER_ID"]) - 1
         # need to monkey patch this one or it will kill the reactor.
         fact.onExperimentStarted = exp_started
         reactor.listenTCP(int(environ['SYNC_PORT']), fact)

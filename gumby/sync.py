@@ -167,7 +167,7 @@ class ExperimentServiceFactory(Factory):
         self.expected_subscribers = expected_subscribers
         self.experiment_start_delay = experiment_start_delay
         self.parsing_semaphore = DeferredSemaphore(500)
-        self.connection_counter = -1
+        self.connection_counter = 0
         self.connections_made = []
         self.connections_ready = []
         self.vars_received = []
@@ -179,7 +179,7 @@ class ExperimentServiceFactory(Factory):
 
     def buildProtocol(self, addr):
         self.connection_counter += 1
-        return ExperimentServiceProto(self, self.connection_counter + 1)
+        return ExperimentServiceProto(self, self.connection_counter)
 
     def setConnectionMade(self, proto):
         if not self._timeout_delayed_call:

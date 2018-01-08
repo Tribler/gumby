@@ -4,7 +4,7 @@
 &module experiments.dispersy.hidden_services_module.HiddenServicesModule
 
 @0:0 isolate_community HiddenTunnelCommunity
-@0:0 isolate_community MultiChainCommunity
+@0:0 isolate_community TriblerChainCommunity
 @0:0 isolate_dht
 
 @0:1 set_transfer_size 16777216
