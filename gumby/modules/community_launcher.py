@@ -112,9 +112,6 @@ class DiscoveryCommunityLauncher(CommunityLauncher):
         from Tribler.dispersy.discovery.community import DiscoveryCommunity
         return DiscoveryCommunity
 
-    def get_my_member(self, dispersy, session):
-        return dispersy.get_new_member()
-
     def get_kwargs(self, session):
         return self.community_kwargs
 

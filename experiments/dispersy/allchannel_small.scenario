@@ -12,5 +12,5 @@
 @0:29 reset_dispersy_statistics {5}
 @0:30 join {5}
 @0:30 publish 2 {1}
-@0:50 stop_session
-@0:55 stop
+@1:50 stop_session
+@1:55 stop
