@@ -7,7 +7,7 @@ import json
 from glob import iglob
 from math import ceil
 from os import (R_OK, access, errno, getpgid, getpid, kill, killpg, makedirs, mkdir, path, setsid, sysconf,
-                sysconf_names)
+                sysconf_names, environ)
 from signal import SIGKILL, SIGTERM, signal
 from subprocess import Popen
 from time import sleep, time
@@ -172,7 +172,10 @@ class ResourceMonitor(object):
         print >> stdout, "Starting #%05d: %s" % (self.cmd_counter, cmd)
         if stdout:
             stdout.flush()
-        p = PGPopen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=None, preexec_fn=setsid)
+
+        env = dict(environ)
+        env["GUMBY_PROCESS_ID"] = str(self.cmd_counter)
+        p = PGPopen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=env, preexec_fn=setsid)
         self.pid_dict[p.pid] = p
         self.pgid_list.append(getpgid(p.pid))
 

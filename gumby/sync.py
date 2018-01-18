@@ -78,10 +78,10 @@ class ExperimentServiceProto(LineReceiver):
     # Allow for 4MB long lines (for the json stuff)
     MAX_LENGTH = 2 ** 22
 
-    def __init__(self, factory, id):
+    def __init__(self, factory):
         self._logger = logging.getLogger(self.__class__.__name__)
 
-        self.id = id
+        self.id = None
         self.factory = factory
         self.ready = False
         self.state = 'init'
@@ -126,7 +126,11 @@ class ExperimentServiceProto(LineReceiver):
 
             self._logger.debug("Time offset is %s", self.vars["time_offset"])
             return 'init'
-
+        elif line.startswith('reqid:'):
+            requested_id = int(line.strip().split(':')[1])
+            self._logger.debug("This subscriber requested id %s", requested_id)
+            self.factory.ask_swap_id(self, requested_id)
+            return 'init'
         elif line.startswith('set:'):
             _, key, value = line.strip().split(':', 2)
             self._logger.debug("This subscriber sets %s to %s", key, value)
@@ -167,10 +171,11 @@ class ExperimentServiceFactory(Factory):
         self.expected_subscribers = expected_subscribers
         self.experiment_start_delay = experiment_start_delay
         self.parsing_semaphore = DeferredSemaphore(500)
-        self.connection_counter = -1
         self.connections_made = []
         self.connections_ready = []
         self.vars_received = []
+
+        self.id_map = [None] * expected_subscribers
 
         self._made_looping_call = None
         self._subscriber_looping_call = None
@@ -178,8 +183,19 @@ class ExperimentServiceFactory(Factory):
         self._timeout_delayed_call = None
 
     def buildProtocol(self, addr):
-        self.connection_counter += 1
-        return ExperimentServiceProto(self, self.connection_counter + 1)
+        return ExperimentServiceProto(self)
+
+    def ask_swap_id(self, proto, requested):
+        if requested >= len(self.id_map):
+            self._logger.error("Peer %s requested id %s, out of range", str(proto.transport.getPeer()), requested)
+            return
+        if proto in self.id_map:
+            self.id_map[self.id_map.index(proto)] = None
+        if self.id_map[requested] is None:
+            self.id_map[requested] = proto
+            proto.id = requested
+        else:
+            self._logger.error("Peer %s requested id %s, already taken", str(proto.transport.getPeer()), requested)
 
     def setConnectionMade(self, proto):
         if not self._timeout_delayed_call:
@@ -193,7 +209,8 @@ class ExperimentServiceFactory(Factory):
             if self._made_looping_call and self._made_looping_call.running:
                 self._made_looping_call.stop()
 
-            self.pushIdToSubscribers()
+            # this gives the reactor some seconds to process pending id request messages
+            reactor.callLater(5 + 0.2*self.expected_subscribers, self.pushIdToSubscribers)
         else:
             if not self._made_looping_call:
                 self._made_looping_call = LoopingCall(self._print_subscribers_made)
@@ -204,6 +221,12 @@ class ExperimentServiceFactory(Factory):
             self._logger.info("%d of %d expected subscribers connected.", len(self.connections_made), self.expected_subscribers)
 
     def pushIdToSubscribers(self):
+        self._logger.debug("Assigning id's to clients that did not request an id")
+        for proto in self.connections_made:
+            if proto not in self.id_map:
+                self.ask_swap_id(proto, self.id_map.index(None))
+
+        self._logger.info("Pushing ID's to all subscribers")
         for proto in self.connections_made:
             self.parsing_semaphore.run(proto.sendAndWaitForReady)
 

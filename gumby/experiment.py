@@ -84,6 +84,9 @@ class ExperimentClient(object, LineReceiver):
     def connectionMade(self):
         self._logger.debug("Connected to the experiment server")
         self.sendLine("time:%f" % time())
+        if "GUMBY_PROCESS_ID" in environ:
+            self._logger.debug("Requesting id %s", environ["GUMBY_PROCESS_ID"])
+            self.sendLine("reqid:%d" % int(environ["GUMBY_PROCESS_ID"]))
 
         self.state = "id"
 
