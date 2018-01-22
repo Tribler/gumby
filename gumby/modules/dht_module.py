@@ -180,8 +180,8 @@ class DHTModule(ExperimentModule):
         def do_dht_check(*_):
             pass
 
-        def create_session(inst, hops=0):
-            sess = original_create_session(inst, hops)
+        def create_session(inst, hops=0, store_listen_port=True):
+            sess = original_create_session(inst, hops=hops, store_listen_port=store_listen_port)
             for node in self.dht_nodes:
                 sess.add_dht_node(node)
 
