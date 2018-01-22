@@ -146,6 +146,6 @@ class GumbySession(Session):
     Overwritten Session allowing for custom community loading in Session.lm.
     """
 
-    def __init__(self, config=None, ignore_singleton=False, autoload_discovery=True):
-        super(GumbySession, self).__init__(config, ignore_singleton, autoload_discovery)
+    def __init__(self, config=None, autoload_discovery=True):
+        super(GumbySession, self).__init__(config, autoload_discovery)
         self.lm = GumbyLaunchMany()
