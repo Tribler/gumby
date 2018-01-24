@@ -3,11 +3,10 @@ from os import environ, makedirs, symlink, path, getpid
 from twisted.internet.defer import Deferred
 
 from gumby.experiment import experiment_callback
+from gumby.gumby_tribler_config import GumbyTriblerConfig
 from gumby.modules.experiment_module import ExperimentModule
 from gumby.modules.gumby_session import GumbySession
 from gumby.modules.isolated_community_loader import IsolatedCommunityLoader
-
-from Tribler.Core.Config.tribler_config import TriblerConfig
 
 
 class BaseDispersyModule(ExperimentModule):
@@ -65,7 +64,7 @@ class BaseDispersyModule(ExperimentModule):
             with open(path.join(my_state_path, 'bootstraptribler.txt'), "w+") as f:
                 f.write("\n".join(["%s %d" % (environ['HEAD_HOST'], port) for port in port_range]))
 
-        config = TriblerConfig()
+        config = GumbyTriblerConfig()
         config.set_permid_keypair_filename("keypair_" + str(self.experiment.my_id))
         config.set_state_dir(my_state_path)
         config.set_torrent_checking_enabled(False)
@@ -82,7 +81,6 @@ class BaseDispersyModule(ExperimentModule):
         config.set_libtorrent_port(20000 + self.experiment.my_id)
         config.set_dispersy_port(self.dispersy_port)
         config.set_tunnel_community_enabled(False)
-        config.set_trustchain_enabled(False)
         return config
 
     @classmethod

@@ -127,7 +127,7 @@ class TriblerModule(BaseDispersyModule):
     @experiment_callback
     def write_triblerchain_stats(self):
         with open('triblerchain.txt', 'w', 0) as triblerchain_file:
-            triblerchain_file.write(json.dumps(self.session.lm.triblerchain_community.get_statistics()))
+            triblerchain_file.write(json.dumps(self.session.lm.tunnel_community.get_statistics()))
 
     def create_test_torrent(self, file_name):
         if not path.exists(file_name):

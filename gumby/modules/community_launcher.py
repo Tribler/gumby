@@ -158,36 +158,40 @@ class PreviewChannelCommunityLauncher(CommunityLauncher):
         return False
 
 
-class HiddenTunnelCommunityLauncher(CommunityLauncher):
-
-    def not_before(self):
-        return ["TriblerChainCommunity",]
+class TunnelCommunityLauncher(CommunityLauncher):
 
     def should_launch(self, session):
-        return session.config.get_tunnel_community_enabled()
+        return session.config.get_tunnel_community_enabled() and \
+               not session.config.get_tunnel_community_hidden_seeding()
 
     def get_community_class(self):
-        from Tribler.community.tunnel.hidden_community import HiddenTunnelCommunity
-        return HiddenTunnelCommunity
+        from Tribler.community.tunnel.tunnel_community import TunnelCommunity
+        return TunnelCommunity
 
     def get_my_member(self, dispersy, session):
-        if session.config.get_trustchain_enabled():
-            keypair = session.trustchain_keypair
-            return dispersy.get_member(private_key=keypair.key_to_bin())
-        else:
-            keypair = dispersy.crypto.generate_key(u"curve25519")
-            return dispersy.get_member(private_key=dispersy.crypto.key_to_bin(keypair))
+        keypair = session.trustchain_keypair
+        return dispersy.get_member(private_key=keypair.key_to_bin())
 
     def get_kwargs(self, session):
         from Tribler.community.tunnel.tunnel_community import TunnelSettings
-        shared_args = super(HiddenTunnelCommunityLauncher, self).get_kwargs(session)
+        shared_args = super(TunnelCommunityLauncher, self).get_kwargs(session)
         if 'settings' not in shared_args and session is None:
             shared_args['settings'] = TunnelSettings()
         return shared_args
 
     def finalize(self, dispersy, session, community):
-        super(HiddenTunnelCommunityLauncher, self).finalize(dispersy, session, community)
+        super(TunnelCommunityLauncher, self).finalize(dispersy, session, community)
         session.lm.tunnel_community = community
+
+
+class HiddenTunnelCommunityLauncher(TunnelCommunityLauncher):
+
+    def should_launch(self, session):
+        return session.config.get_tunnel_community_enabled and session.config.get_tunnel_community_hidden_seeding()
+
+    def get_community_class(self):
+        from Tribler.community.hiddentunnel.hidden_community import HiddenTunnelCommunity
+        return HiddenTunnelCommunity
 
 
 class TrustChainCommunityLauncher(CommunityLauncher):
@@ -213,10 +217,6 @@ class TriblerChainCommunityLauncher(CommunityLauncher):
     def get_my_member(self, dispersy, session):
         keypair = session.trustchain_keypair
         return dispersy.get_member(private_key=keypair.key_to_bin())
-
-    def finalize(self, dispersy, session, community):
-        super(TriblerChainCommunityLauncher, self).finalize(dispersy, session, community)
-        session.lm.triblerchain_community = community
 
 
 class MarketCommunityLauncher(CommunityLauncher):

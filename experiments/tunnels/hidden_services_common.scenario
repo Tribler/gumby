@@ -1,9 +1,8 @@
 &module gumby.modules.tribler_module.TriblerModule
 &module gumby.modules.dht_module.DHTModule
-&module experiments.tunnels.hidden_services_module.HiddenServicesModule
+&module experiments.tunnels.tunnel_module.TunnelModule
 
-@0:0 isolate_community HiddenTunnelCommunity
-@0:0 isolate_community TriblerChainCommunity
+@0:0 isolate_community TunnelCommunity
 @0:0 isolate_dht
 
 @0:1 set_tunnel_exit True {1-5}

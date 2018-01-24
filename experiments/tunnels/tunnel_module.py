@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # bartercast_client.py ---
 #
-# Filename: hidden_services_module.py
+# Filename: tunnel_module.py
 # Description:
 # Author: Rob Ruigrok
 # Maintainer:
@@ -40,9 +40,9 @@ import time
 
 from Tribler.Core.Libtorrent.LibtorrentDownloadImpl import LibtorrentStatisticsResponse
 from Tribler.Core.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
-from Tribler.community.tunnel.tunnel_community import TunnelSettings
+from Tribler.community.hiddentunnel.hidden_community import HiddenTunnelCommunity
+from Tribler.community.tunnel.tunnel_community import TunnelSettings, TunnelCommunity
 from Tribler.community.tunnel.crypto.tunnelcrypto import NoTunnelCrypto
-from Tribler.community.tunnel.hidden_community import HiddenTunnelCommunity
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module
@@ -50,16 +50,16 @@ from gumby.modules.community_experiment_module import CommunityExperimentModule
 
 
 @static_module
-class HiddenServicesModule(CommunityExperimentModule):
+class TunnelModule(CommunityExperimentModule):
 
     def __init__(self, experiment):
-        super(HiddenServicesModule, self).__init__(experiment, HiddenTunnelCommunity)
+        super(TunnelModule, self).__init__(experiment, TunnelCommunity)
         self.download_states_history = []
 
     def on_id_received(self):
-        super(HiddenServicesModule, self).on_id_received()
+        super(TunnelModule, self).on_id_received()
         self.tribler_config.set_tunnel_community_enabled(True)
-        self.tribler_config.set_trustchain_enabled(True)
+        self.tribler_config.set_tunnel_community_hidden_seeding(False)
         self.tribler_config.set_mainline_dht_enabled(True)
         self.tribler_config.set_libtorrent_enabled(True)
         self.tribler_config.set_market_community_enabled(False)
@@ -68,10 +68,12 @@ class HiddenServicesModule(CommunityExperimentModule):
         self.community_launcher.community_kwargs["settings"] = TunnelSettings(tribler_config=self.tribler_config)
 
     def on_dispersy_available(self, _):
-        super(HiddenServicesModule, self).on_dispersy_available(_)
+        super(TunnelModule, self).on_dispersy_available(_)
 
         def monitor_downloads(dslist):
-            self.community.monitor_downloads(dslist)
+            if isinstance(self.community, HiddenTunnelCommunity):
+                self.community.monitor_downloads(dslist)
+
             for state in dslist:
                 download = state.get_download()
                 stats = download.network_create_statistics_reponse() or LibtorrentStatisticsResponse(0, 0, 0, 0, 0, 0, 0)
@@ -100,7 +102,7 @@ class HiddenServicesModule(CommunityExperimentModule):
 
     @experiment_callback
     def set_tunnel_exit(self, value):
-        value = HiddenServicesModule.str2bool(value)
+        value = TunnelModule.str2bool(value)
         self._logger.info("This peer will be exit node: %s" % ('Yes' if value else 'No'))
         self.tribler_config.set_tunnel_community_exitnode_enabled(value)
         self.tunnel_settings.become_exitnode = value
@@ -140,14 +142,6 @@ class HiddenServicesModule(CommunityExperimentModule):
         """
         Write information about established tunnels/introduction points/rendezvous points to files.
         """
-        with open('introduction_points.txt', 'w', 0) as ips_file:
-            for infohash in self.community.intro_point_for.iterkeys():
-                ips_file.write("%s,%s\n" % (self.my_id, infohash.encode('hex')))
-
-        with open('rendezvous_points.txt', 'w', 0) as rps_file:
-            for cookie in self.community.rendezvous_point_for.iterkeys():
-                rps_file.write("%s,%s\n" % (self.my_id, cookie.encode('hex')))
-
         with open('circuits.txt', 'w', 0) as circuits_file:
             for circuit_id, circuit in self.community.circuits.iteritems():
                 circuits_file.write('%s,%s,%s,%s,%s,%s,%s,%s:%d\n' % (circuit_id, str(circuit.state), circuit.goal_hops,
