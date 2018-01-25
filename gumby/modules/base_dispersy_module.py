@@ -17,7 +17,7 @@ class BaseDispersyModule(ExperimentModule):
 
         super(BaseDispersyModule, self).__init__(experiment)
         self.session = None
-        self.tribler_config = None
+        self.session_config = None
         self.dispersy_port = None
         self.dispersy = None
         self.session_id = environ['SYNC_HOST'] + environ['SYNC_PORT']
@@ -26,15 +26,16 @@ class BaseDispersyModule(ExperimentModule):
 
     def on_id_received(self):
         super(BaseDispersyModule, self).on_id_received()
-        self.tribler_config = self.setup_config()
+        self.session_config = self.setup_config()
 
     def create_community_loader(self):
         return IsolatedCommunityLoader(self.session_id)
 
     @experiment_callback
     def start_session(self):
-        self.session = GumbySession(config=self.tribler_config)
-        self.tribler_config = None
+        conf = self.session_config
+        self.session_config = None
+        self.session = GumbySession(config=conf)
 
     @experiment_callback
     def set_dispersy_port(self, port):
@@ -84,6 +85,7 @@ class BaseDispersyModule(ExperimentModule):
         config.set_dispersy_port(self.dispersy_port)
         config.set_tunnel_community_enabled(False)
         config.set_trustchain_enabled(False)
+        config.set_market_community_enabled(False)
         return config
 
     @classmethod
@@ -92,3 +94,31 @@ class BaseDispersyModule(ExperimentModule):
             if isinstance(module, BaseDispersyModule):
                 return module
         return None
+
+    @classmethod
+    def get_dispersy(cls, experiment):
+        provider = cls.get_dispery_provider(experiment)
+        if not provider:
+            return None
+        return provider.dispersy
+
+    @classmethod
+    def get_session(cls, experiment):
+        provider = cls.get_dispery_provider(experiment)
+        if not provider:
+            return None
+        return cls.get_dispery_provider(experiment).session
+
+    @classmethod
+    def get_session_config(cls, experiment):
+        provider = cls.get_dispery_provider(experiment)
+        if not provider:
+            return None
+
+        # The session_config only exists after on_id_received, up to session start. The session start copies
+        # all settings so writing to the original session_config after this will not do anything. So on any access to
+        # the session_config after the session has launched, return the sessions config.
+        if provider.session_config is None:
+            return provider.session.config
+        else:
+            return provider.session_config

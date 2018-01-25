@@ -38,22 +38,15 @@ class CommunityExperimentModule(ExperimentModule):
 
     @property
     def dispersy(self):
-        return self.dispersy_provider.dispersy
+        return BaseDispersyModule.get_dispersy(self)
 
     @property
     def session(self):
-        return self.dispersy_provider.session
+        return BaseDispersyModule.get_session(self)
 
     @property
-    def tribler_config(self):
-        # The tribler config only exists after on_id_received, up to session start. The session start copy constructs
-        # all settings so writing to the original tribler_config after this will not do anything. So on any access to
-        # the tribler_config after the session has launched, return the session. It acts as a tribler_config as well and
-        # alerts the user if some setting cannot be changed at runtime.
-        if self.dispersy_provider.tribler_config is None:
-            return self.session
-        else:
-            return self.dispersy_provider.tribler_config
+    def session_config(self):
+        return BaseDispersyModule.get_session_config(self)
 
     @property
     def community_loader(self):
@@ -72,9 +65,10 @@ class CommunityExperimentModule(ExperimentModule):
         # number/name argument to indicate what community to work on. An alternative approach would be to instance a
         # CommunityExperimentModule for each instance of the community_class. However it would be difficult to separate
         # the scenario usage of its @experiment_callbacks, they would have to be dynamically named/generated.
-        for community in self.dispersy.get_communities():
-            if isinstance(community, self.community_class):
-                return community
+        if self.dispersy:
+            for community in self.dispersy.get_communities():
+                if isinstance(community, self.community_class):
+                    return community
         return None
 
     @experiment_callback
@@ -104,14 +98,14 @@ class CommunityExperimentModule(ExperimentModule):
 
     def on_id_received(self):
         # Since the dispersy source module is loaded before any community module, the dispersy on_id_received has
-        # already completed. This means that the tribler_config is now available. So any configuration should happen in
+        # already completed. This means that the session_config is now available. So any configuration should happen in
         # overrides of this function. (Be sure to call this super though!)
         super(CommunityExperimentModule, self).on_id_received()
 
         # We need the dispersy / member key at this point. However, the configured session is not started yet. So we
         # generate the keys here and place them in the correct place. When the session starts it will load these keys.
         keypair = permid.generate_keypair()
-        pairfilename = self.tribler_config.get_permid_keypair_filename()
+        pairfilename = self.session_config.get_permid_keypair_filename()
         permid.save_keypair(keypair, pairfilename)
         permid.save_pub_key(keypair, "%s.pub" % pairfilename)
 
@@ -119,7 +113,7 @@ class CommunityExperimentModule(ExperimentModule):
         self.vars['public_key'] = str(m2c_pk.key_to_bin()).encode("base64")
 
     def on_dispersy_available(self, dispersy):
-        # The dispersy object is now available. This means that the tribler_config has been copy constructed into the
-        # session object. Using the tribler_config object after this is useless. The community is also guaranteed to be
+        # The dispersy object is now available. This means that the session_config has been copy constructed into the
+        # session object. Using the session_config object after this is useless. The community is also guaranteed to be
         # available.
         pass

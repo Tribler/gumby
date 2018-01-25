@@ -20,12 +20,12 @@ class TrustchainModule(CommunityExperimentModule):
 
     def on_id_received(self):
         super(TrustchainModule, self).on_id_received()
-        self.tribler_config.set_trustchain_enabled(True)
+        self.session_config.set_trustchain_enabled(True)
 
         # We need the trustchain key at this point. However, the configured session is not started yet. So we generate
         # the keys here and place them in the correct place. When the session starts it will load these keys.
         trustchain_keypair = permid.generate_keypair_trustchain()
-        trustchain_pairfilename = self.tribler_config.get_trustchain_permid_keypair_filename()
+        trustchain_pairfilename = self.session_config.get_trustchain_permid_keypair_filename()
         permid.save_keypair_trustchain(trustchain_keypair, trustchain_pairfilename)
         permid.save_pub_key_trustchain(trustchain_keypair, "%s.pub" % trustchain_pairfilename)
 

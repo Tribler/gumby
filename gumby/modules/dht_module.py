@@ -51,8 +51,8 @@ class DHTModule(ExperimentModule):
 
     def on_id_received(self):
         super(DHTModule, self).on_id_received()
-        self.session_config.set_mainline_dht(True)
-        self.vars["dht_node_port"] = self.session_config.get_mainline_dht_listen_port()
+        self.session_config.set_mainline_dht_enabled(True)
+        self.vars["dht_node_port"] = self.session_config.get_mainline_dht_port()
 
     def on_all_vars_received(self):
         super(DHTModule, self).on_id_received()
@@ -89,7 +89,7 @@ class DHTModule(ExperimentModule):
     @experiment_callback
     def enable_pymdht_dht(self):
         if not self.lm.mainline_dht:
-            self.lm.mainline_dht = pymdht.init(('127.0.0.1', self.session_config.get_mainline_dht_listen_port()),
+            self.lm.mainline_dht = pymdht.init(('127.0.0.1', self.session_config.get_mainline_dht_port()),
                                                self.session_config.get_state_dir())
 
     @experiment_callback
