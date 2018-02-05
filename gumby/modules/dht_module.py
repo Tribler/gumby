@@ -72,14 +72,14 @@ class DHTModule(ExperimentModule):
         for sess in self.lm.ltmgr.ltsessions.itervalues():
             settings = sess.get_settings()
             settings["enable_dht"] = False
-            sess.set_settings(settings)
+            sess.apply_settings(settings)
 
     @experiment_callback
     def enable_libtorrent_dht(self):
         for sess in self.lm.ltmgr.ltsessions.itervalues():
             settings = sess.get_settings()
             settings["enable_dht"] = True
-            sess.set_settings(settings)
+            sess.apply_settings(settings)
 
     @experiment_callback
     def disable_pymdht_dht(self):
@@ -183,16 +183,18 @@ class DHTModule(ExperimentModule):
 
         def create_session(inst, hops=0, store_listen_port=True):
             sess = original_create_session(inst, hops=hops, store_listen_port=store_listen_port)
+            settings = sess.get_settings()
+            settings["enable_lsd"] = False
+            sess.apply_settings(settings)
+
+            if hasattr(sess, "stop_lsd"):
+                sess.stop_lsd()
+
             for node in self.dht_nodes:
                 sess.add_dht_node(node)
 
             if hops == 0:
                 self.dht_nodes.append(("127.0.0.1", sess.listen_port()))
-            # else: we don't know the port of the exit socket
-
-            settings = sess.get_settings()
-            settings["enable_lsd"] = False
-            sess.set_settings(settings)
 
             inst.dht_ready = True
             return sess
