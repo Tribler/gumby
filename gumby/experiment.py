@@ -149,8 +149,12 @@ class ExperimentClient(object, LineReceiver):
         # id:SOMETHING
         maybe_id, id = line.strip().split(':', 1)
         if maybe_id == "id":
-            self.my_id = int(id)
-            self._logger.debug('Got assigned id: %s', id)
+            if "PEER_ID" in os.environ:
+                self.my_id = int(os.environ["PEER_ID"])
+            else:
+                self.my_id = int(id)
+
+            self._logger.debug('Got assigned id: %s', self.my_id)
             d = deferToThread(self.on_id_received)
             d.addCallback(lambda _: self.sendLine("ready"))
             return "all_vars"
@@ -164,6 +168,11 @@ class ExperimentClient(object, LineReceiver):
         all_vars = json.loads(line)
         self.all_vars = all_vars["clients"]
         self.server_vars = all_vars["server"]
+        if "PEER_ID" in os.environ:
+            # this is a self service run, i.e. debugging a specific gumby experiment (hopefully in an IDE)
+            # and since the my_id var was explicitly set it won't match what the server sent... so let's fix that
+            self.all_vars[str(self.my_id)] = self.all_vars["0"]
+
         self.time_offset = self.all_vars[str(self.my_id)]["time_offset"]
         self.on_all_vars_received()
 
