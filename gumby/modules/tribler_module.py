@@ -1,6 +1,9 @@
 import json
 from os import path, remove
 from posix import environ
+
+import keyring
+from keyrings.alt.file import PlaintextKeyring
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 
@@ -26,6 +29,13 @@ class TriblerModule(BaseDispersyModule):
             'progress': 0.0,
             'upload': 0
         }
+
+        # We don't use the system keychain but a PlainText keyring for performance during tests
+        self._logger.info("Available keyrings: %s", keyring.backend.get_all_keyring())
+        for new_keyring in keyring.backend.get_all_keyring():
+            if isinstance(new_keyring, PlaintextKeyring):
+                self._logger.info("Setting keyring: %s", new_keyring)
+                keyring.set_keyring(new_keyring)
 
     @experiment_callback
     def start_session(self):
