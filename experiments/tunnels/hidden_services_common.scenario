@@ -2,7 +2,7 @@
 &module gumby.modules.dht_module.DHTModule
 &module experiments.tunnels.tunnel_module.TunnelModule
 
-@0:0 isolate_community TunnelCommunity
+@0:0 isolate_ipv8_overlay TriblerTunnelCommunity
 @0:0 isolate_dht
 
 @0:1 set_tunnel_exit True {1-5}
@@ -18,4 +18,3 @@
 @0:4 annotate start-experiment
 @0:6 set_libtorrentmgr_alert_mask
 @0:11 introduce_peers
-@0:20 reset_dispersy_statistics

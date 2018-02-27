@@ -23,7 +23,7 @@ class DispersyModule(BaseDispersyModule):
         super(DispersyModule, self).__init__(experiment)
         self.crypto = ECCrypto()
         self._do_log_lc = LoopingCall(self._do_log)
-        self.custom_community_loader.set_launcher(DiscoveryCommunityLauncher())
+        self.custom_dispersy_community_loader.set_launcher(DiscoveryCommunityLauncher())
 
     @experiment_callback
     def start_session(self):
@@ -44,7 +44,7 @@ class DispersyModule(BaseDispersyModule):
         private_key = self.crypto.key_to_bin(M2CryptoSK(filename=pairfilename))
         self.session.dispersy_member = self.dispersy.get_member(private_key=private_key)
 
-        self.custom_community_loader.load(self.dispersy, self.session)
+        self.custom_dispersy_community_loader.load(self.dispersy, self.session)
         self.session.config.set_anon_proxy_settings(2, ("127.0.0.1",
                                                         self.session.config.get_tunnel_community_socks5_listen_ports()))
 

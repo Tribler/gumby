@@ -6,10 +6,6 @@ from gumby.modules.experiment_module import static_module
 @static_module
 class HiddenTunnelModule(TunnelModule):
 
-    def on_id_received(self):
-        super(HiddenTunnelModule, self).on_id_received()
-        self.tribler_config.set_tunnel_community_hidden_seeding(True)
-
     @experiment_callback
     def write_tunnels_info(self):
         super(HiddenTunnelModule, self).write_tunnels_info()

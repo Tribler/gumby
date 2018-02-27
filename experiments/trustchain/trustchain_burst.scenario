@@ -1,7 +1,7 @@
 &module gumby.modules.tribler_module.TriblerModule
 &module experiments.trustchain.trustchain_module.TrustchainModule
 
-@0:1 isolate_community TrustChainCommunity
+@0:1 isolate_ipv8_overlay TrustChainCommunity
 @0:2 start_session
 
 @0:15 request_signature 1 10 5 {2-5}

@@ -8,12 +8,12 @@ from twisted.internet.task import LoopingCall
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module
-from gumby.modules.community_experiment_module import CommunityExperimentModule
+from gumby.modules.community_experiment_module import DispersyCommunityExperimentModule
 from Tribler.dispersy.discovery.community import DiscoveryCommunity
 
 
 @static_module
-class DiscoveryModule(CommunityExperimentModule):
+class DiscoveryModule(DispersyCommunityExperimentModule):
 
     def __init__(self, experiment):
         super(DiscoveryModule, self).__init__(experiment, DiscoveryCommunity)
@@ -22,8 +22,8 @@ class DiscoveryModule(CommunityExperimentModule):
         self.monitor_friends_lc = None
         self._prev_scenario_statistics = {}
         self._prev_scenario_debug = {}
-        self.community_launcher.community_kwargs['max_prefs'] = maxint
-        self.community_launcher.community_kwargs['max_tbs'] = 25
+        self.dispersy_community_launcher.community_kwargs['max_prefs'] = maxint
+        self.dispersy_community_launcher.community_kwargs['max_tbs'] = 25
 
     def on_community_loaded(self):
         self.community.my_preferences = self.get_preferences

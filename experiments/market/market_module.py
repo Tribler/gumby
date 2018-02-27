@@ -8,9 +8,11 @@ from Tribler.community.market.core.transaction_manager import TransactionManager
 from Tribler.community.market.core.transaction_repository import MemoryTransactionRepository
 from Tribler.community.market.wallet.tc_wallet import TrustchainWallet
 from Tribler.community.triblerchain.community import TriblerChainCommunity
+from Tribler.pyipv8.ipv8.peer import Peer
+from Tribler.pyipv8.ipv8.peerdiscovery.discovery import EdgeWalk
 
 from gumby.experiment import experiment_callback
-from gumby.modules.community_experiment_module import CommunityExperimentModule
+from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
 
 
@@ -19,7 +21,7 @@ from Tribler.community.market.wallet.dummy_wallet import DummyWallet1, DummyWall
 
 
 @static_module
-class MarketModule(CommunityExperimentModule):
+class MarketModule(IPv8OverlayExperimentModule):
     """
     This module contains code to manage experiments with the market community.
     """
@@ -31,17 +33,32 @@ class MarketModule(CommunityExperimentModule):
         self.tc_community = None
         self.order_id_map = {}
 
+    def on_id_received(self):
+        super(MarketModule, self).on_id_received()
+        self.tribler_config.set_dispersy_enabled(False)
+        self.tribler_config.set_market_community_enabled(True)
+
+    def on_dispersy_available(self, dispersy):
+        # Disable threadpool messages
+        self.overlay._use_main_thread = True
+
     @experiment_callback
     def init_trustchain(self):
-        self.tc_community = self.dispersy.define_auto_load(TriblerChainCommunity, self.community.my_member,
-                                                           load=True, kargs={})[0]
+        triblerchain_peer = Peer(self.session.trustchain_keypair)
+
+        self.session.lm.triblerchain_community = TriblerChainCommunity(triblerchain_peer, self.ipv8.endpoint,
+                                                                       self.ipv8.network,
+                                                                       tribler_session=self.session,
+                                                                       working_directory=self.session.config.get_state_dir())
+        self.ipv8.overlays.append(self.session.lm.triblerchain_community)
+        self.ipv8.strategies.append((EdgeWalk(self.session.lm.triblerchain_community), 20))
 
     @experiment_callback
     def init_wallets(self):
         dummy1_wallet = DummyWallet1()
         dummy2_wallet = DummyWallet2()
-        self.community.use_local_address = True
-        self.community.wallets = {
+        self.overlay.use_local_address = True
+        self.overlay.wallets = {
             dummy1_wallet.get_identifier(): dummy1_wallet,
             dummy2_wallet.get_identifier(): dummy2_wallet
         }
@@ -54,23 +71,23 @@ class MarketModule(CommunityExperimentModule):
         if self.tc_community:
             tc_wallet = TrustchainWallet(self.tc_community)
             tc_wallet.check_negative_balance = False
-            self.community.wallets[tc_wallet.get_identifier()] = tc_wallet
+            self.overlay.wallets[tc_wallet.get_identifier()] = tc_wallet
 
         # We use a memory repository in the market community
-        self.community.order_manager = OrderManager(MemoryOrderRepository(self.community.mid))
-        self.community.transaction_manager = TransactionManager(MemoryTransactionRepository(self.community.mid))
+        self.overlay.order_manager = OrderManager(MemoryOrderRepository(self.overlay.mid))
+        self.overlay.transaction_manager = TransactionManager(MemoryTransactionRepository(self.overlay.mid))
 
         # Disable incremental payments
-        self.community.use_incremental_payments = False
+        self.overlay.use_incremental_payments = False
 
         # Disable tick validation to improve performance
-        self.community.validate_tick_signatures = False
+        self.overlay.validate_tick_signatures = False
 
     @experiment_callback
     def init_matchmakers(self):
         peer_num = self.experiment.scenario_runner._peernumber
         if peer_num > int(os.environ['NUM_MATCHMAKERS']):
-            self.community.disable_matchmaker()
+            self.overlay.disable_matchmaker()
 
     @experiment_callback
     def connect_matchmakers(self, num_to_connect):
@@ -83,23 +100,19 @@ class MarketModule(CommunityExperimentModule):
         # Send introduction request to matchmakers
         for peer_num in connect:
             self._logger.info("Connecting to matchmaker %d", peer_num)
-            host, port = self.experiment.get_peer_ip_port_by_id(peer_num)
-            walk_candidate = self.community.create_or_update_walkcandidate((host, port), ('0.0.0.0', 0),
-                                                                           (host, port), False, u'unknown')
-            walk_candidate.set_keepalive(self.community)
-            self.community.create_introduction_request(walk_candidate, self.community.dispersy_enable_bloom_filter_sync)
+            self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_num))
 
     @experiment_callback
     def ask(self, price, price_type, quantity, quantity_type, order_id=None):
         self.num_asks += 1
-        order = self.community.create_ask(float(price), price_type, float(quantity), quantity_type, 3600)
+        order = self.overlay.create_ask(float(price), price_type, float(quantity), quantity_type, 3600)
         if order_id:
             self.order_id_map[order_id] = order.order_id
 
     @experiment_callback
     def bid(self, price, price_type, quantity, quantity_type, order_id=None):
         self.num_bids += 1
-        order = self.community.create_bid(float(price), price_type, float(quantity), quantity_type, 3600)
+        order = self.overlay.create_bid(float(price), price_type, float(quantity), quantity_type, 3600)
         if order_id:
             self.order_id_map[order_id] = order.order_id
 
@@ -109,11 +122,11 @@ class MarketModule(CommunityExperimentModule):
             self._logger.warning("Want to cancel order but order id %s not found!", order_id)
             return
 
-        self.community.cancel_order(self.order_id_map[order_id])
+        self.overlay.cancel_order(self.order_id_map[order_id])
 
     @experiment_callback
     def compute_reputation(self):
-        self.community.compute_reputation()
+        self.overlay.compute_reputation()
 
     @experiment_callback
     def write_stats(self):
@@ -121,8 +134,8 @@ class MarketModule(CommunityExperimentModule):
         transactions = []
 
         # Parse transactions
-        for transaction in self.community.transaction_manager.find_all():
-            partner_peer_id = self.community.lookup_ip(transaction.partner_order_id.trader_id)[1] - 12000
+        for transaction in self.overlay.transaction_manager.find_all():
+            partner_peer_id = self.overlay.lookup_ip(transaction.partner_order_id.trader_id)[1] - 12000
             if partner_peer_id < scenario_runner._peernumber:  # Only one peer writes the transaction
                 transactions.append((float(transaction.timestamp) - scenario_runner._expstartstamp,
                                      float(transaction.price), float(transaction.total_quantity),
@@ -135,7 +148,7 @@ class MarketModule(CommunityExperimentModule):
 
         # Write orders
         with open('orders.log', 'w', 0) as orders_file:
-            for order in self.community.order_manager.order_repository.find_all():
+            for order in self.overlay.order_manager.order_repository.find_all():
                 orders_file.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (float(order.timestamp),
                                                                        order.order_id,
                                                                        scenario_runner._peernumber,
@@ -147,27 +160,28 @@ class MarketModule(CommunityExperimentModule):
 
         # Write ticks in order book
         with open('orderbook.txt', 'w', 0) as orderbook_file:
-            orderbook_file.write(str(self.community.order_book))
+            orderbook_file.write(str(self.overlay.order_book))
 
         # Write known matchmakers
         with open('matchmakers.txt', 'w', 0) as matchmakers_file:
-            for matchmaker in self.community.matchmakers:
-                matchmakers_file.write("%s,%d" % (matchmaker[0], matchmaker[1]))
+            for matchmaker in self.overlay.matchmakers:
+                matchmakers_file.write("%s,%d\n" % (matchmaker.address[0], matchmaker.address[1]))
 
         # Write verified candidates
         with open('verified_candidates.txt', 'w', 0) as candidates_files:
-            for candidate in self.community.dispersy_yield_verified_candidates():
-                if candidate.sock_addr[1] > 15000:
+            for peer in self.overlay.network.verified_peers:
+                if peer.address[1] > 15000:
                     continue
-                candidates_files.write('%d\n' % (candidate.sock_addr[1] - 12000))
+                candidates_files.write('%d\n' % (peer.address[1] - 12000))
 
-        with open('bandwidth.txt', 'w', 0) as bandwidth_file:
-            bandwidth_file.write("%s,%f" % (self.dispersy.statistics.total_up, self.dispersy.statistics.total_down))
+        # TODO IPv8 has no bandwidth accounting
+        #with open('bandwidth.txt', 'w', 0) as bandwidth_file:
+        #    bandwidth_file.write("%s,%f" % (self.dispersy.statistics.total_up, self.dispersy.statistics.total_down))
 
         # Get statistics about the amount of fulfilled orders (asks/bids)
         fulfilled_asks = 0
         fulfilled_bids = 0
-        for order in self.community.order_manager.order_repository.find_all():
+        for order in self.overlay.order_manager.order_repository.find_all():
             if order.is_complete():  # order is fulfilled
                 if order.is_ask():
                     fulfilled_asks += 1
@@ -181,5 +195,5 @@ class MarketModule(CommunityExperimentModule):
 
         # Write reputation
         with open('reputation.log', 'w', 0) as rep_file:
-            for peer_id, reputation in self.community.reputation_dict.iteritems():
+            for peer_id, reputation in self.overlay.reputation_dict.iteritems():
                 rep_file.write("%s,%s\n" % (peer_id.encode('hex'), reputation))

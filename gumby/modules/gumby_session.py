@@ -53,7 +53,7 @@ class CommunityLoader(object):
         if launcher.get_name() in self.community_launchers:
             del self.community_launchers[launcher.get_name()]
 
-    def load(self, dispersy, session):
+    def load(self, overlay_provider, session):
         """
         Load all of the communities specified by the registered launchers into Dispersy.
 
@@ -74,12 +74,31 @@ class CommunityLoader(object):
                             self.community_launchers[dependency][0].should_launch(session):
                         validated = validated and self.has_launched(dependency)
                 if validated:
-                    self._launch(launcher, dispersy, session)
+                    self._launch(launcher, overlay_provider, session)
                 else:
                     remaining.append(launcher)
         if cycle < 0:
             launcher_names = [launcher.get_name() for launcher in remaining]
             raise RuntimeError("Cycle detected in CommunityLauncher not_before(): %s" % (str(launcher_names)))
+
+    def _launch(self, launcher, overlay_provider, session):
+        """
+        This method should be overridden.
+        """
+        pass
+
+
+class DispersyCommunityLoader(CommunityLoader):
+    """
+    Loader for Dispersy communities.
+    """
+
+    def __init__(self):
+        super(DispersyCommunityLoader, self).__init__()
+        self.set_launcher(SearchCommunityLauncher())
+        self.set_launcher(AllChannelCommunityLauncher())
+        self.set_launcher(ChannelCommunityLauncher())
+        self.set_launcher(PreviewChannelCommunityLauncher())
 
     def _launch(self, launcher, dispersy, session):
         """
@@ -99,22 +118,39 @@ class CommunityLoader(object):
         self.community_launchers[launcher.get_name()] = (launcher, True)
 
 
-class DefaultCommunityLoader(CommunityLoader):
-
+class IPv8CommunityLoader(CommunityLoader):
     """
-    DefaultCommunityLoader, mimicking TriblerLaunchMany.
+    Loader for IPv8 communities.
     """
 
     def __init__(self):
-        super(DefaultCommunityLoader, self).__init__()
-        self.set_launcher(SearchCommunityLauncher())
-        self.set_launcher(AllChannelCommunityLauncher())
-        self.set_launcher(ChannelCommunityLauncher())
-        self.set_launcher(PreviewChannelCommunityLauncher())
+        super(IPv8CommunityLoader, self).__init__()
+        self.set_launcher(TrustChainCommunityLauncher())
         self.set_launcher(TriblerChainCommunityLauncher())
-        self.set_launcher(TunnelCommunityLauncher())
-        self.set_launcher(HiddenTunnelCommunityLauncher())
+        self.set_launcher(TriblerTunnelCommunityLauncher())
         self.set_launcher(MarketCommunityLauncher())
+
+    def _launch(self, launcher, ipv8, session):
+        """
+        Launch a launcher: register the community with Dispersy.
+        """
+        # Prepare launcher
+        launcher.prepare(ipv8, session)
+        # Register community
+        overlay_class = launcher.get_overlay_class()
+        walk_strategy_class = launcher.get_walk_strategy_class()
+        walk_strategy_max_peers = launcher.get_walk_strategy_max_peers()
+        peer = launcher.get_my_peer(ipv8, session)
+        args = launcher.get_args(session)
+        kwargs = launcher.get_kwargs(session)
+        overlay = overlay_class(peer, ipv8.endpoint, ipv8.network, *args, **kwargs)
+
+        ipv8.overlays.append(overlay)
+        ipv8.strategies.append((walk_strategy_class(overlay), walk_strategy_max_peers))
+
+        # Cleanup
+        launcher.finalize(ipv8, session, overlay)
+        self.community_launchers[launcher.get_name()] = (launcher, True)
 
 
 class GumbyLaunchMany(TriblerLaunchMany):
@@ -123,22 +159,37 @@ class GumbyLaunchMany(TriblerLaunchMany):
     Overwritten TriblerLaunchMany allowing for custom community loading.
     """
 
-    def __init__(self, community_loader=DefaultCommunityLoader()):
+    def __init__(self, dispersy_community_loader=DispersyCommunityLoader(),
+                 ipv8_community_loader=IPv8CommunityLoader()):
         super(GumbyLaunchMany, self).__init__()
-        self.community_loader = community_loader
+        self.dispersy_community_loader = dispersy_community_loader
+        self.ipv8_community_loader = ipv8_community_loader
 
     @blocking_call_on_reactor_thread
-    def load_communities(self):
-        self._logger.info("tribler: Preparing communities...")
+    def load_dispersy_communities(self):
+        self._logger.info("tribler: Preparing Dispersy communities...")
         now_time = timemod.time()
 
-        self.community_loader.load(self.dispersy, self.session)
+        self.dispersy_community_loader.load(self.dispersy, self.session)
 
         self.session.config.set_anon_proxy_settings(2,
                                                     ("127.0.0.1",
                                                      self.session.config.get_tunnel_community_socks5_listen_ports()))
 
-        self._logger.info("tribler: communities are ready in %.2f seconds", timemod.time() - now_time)
+        self._logger.info("tribler: Dispersy communities are ready in %.2f seconds", timemod.time() - now_time)
+
+    @blocking_call_on_reactor_thread
+    def load_ipv8_overlays(self):
+        self._logger.info("tribler: Preparing IPv8 overlays...")
+        now_time = timemod.time()
+
+        self.ipv8_community_loader.load(self.ipv8, self.session)
+
+        self.session.config.set_anon_proxy_settings(2,
+                                                    ("127.0.0.1",
+                                                     self.session.config.get_tunnel_community_socks5_listen_ports()))
+
+        self._logger.info("tribler: IPv8 overlays are ready in %.2f seconds", timemod.time() - now_time)
 
 
 class GumbySession(Session):
