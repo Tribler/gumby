@@ -1,0 +1,6 @@
+&module gumby.modules.ipv8_module.IPv8Module
+&module experiments.ipv8_experiment.testmodule.TestModule
+
+@0:0 start_session
+@0:15 stop_session
+@0:16 stop
