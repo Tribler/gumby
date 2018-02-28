@@ -44,14 +44,14 @@ from twisted.internet.task import LoopingCall
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module
-from gumby.modules.community_experiment_module import CommunityExperimentModule
+from gumby.modules.community_experiment_module import DispersyCommunityExperimentModule
 
 from Tribler.community.allchannel.community import AllChannelCommunity
 from Tribler.community.channel.community import ChannelCommunity
 
 
 @static_module
-class AllChannelModule(CommunityExperimentModule):
+class AllChannelModule(DispersyCommunityExperimentModule):
 
     def __init__(self, experiment):
         super(AllChannelModule, self).__init__(experiment, AllChannelCommunity)
@@ -64,8 +64,8 @@ class AllChannelModule(CommunityExperimentModule):
     def on_id_received(self):
         super(AllChannelModule, self).on_id_received()
         self.tribler_config.set_channel_search_enabled(True)
-        self.community_launcher.community_kwargs["tribler_session"] = None
-        self.community_loader.get_launcher("ChannelCommunity").community_kwargs["tribler_session"] = None
+        self.dispersy_community_launcher.community_kwargs["tribler_session"] = None
+        self.dispersy_community_loader.get_launcher("ChannelCommunity").community_kwargs["tribler_session"] = None
 
     @experiment_callback
     def create(self):

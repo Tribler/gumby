@@ -40,39 +40,37 @@ import time
 
 from Tribler.Core.Libtorrent.LibtorrentDownloadImpl import LibtorrentStatisticsResponse
 from Tribler.Core.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
-from Tribler.community.hiddentunnel.hidden_community import HiddenTunnelCommunity
-from Tribler.community.tunnel.tunnel_community import TunnelSettings, TunnelCommunity
-from Tribler.community.tunnel.crypto.tunnelcrypto import NoTunnelCrypto
+from Tribler.community.triblertunnel.community import TriblerTunnelCommunity
+from Tribler.pyipv8.ipv8.messaging.anonymization.community import TunnelSettings
 
 from gumby.experiment import experiment_callback
+from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
-from gumby.modules.community_experiment_module import CommunityExperimentModule
 
 
 @static_module
-class TunnelModule(CommunityExperimentModule):
+class TunnelModule(IPv8OverlayExperimentModule):
 
     def __init__(self, experiment):
-        super(TunnelModule, self).__init__(experiment, TunnelCommunity)
+        super(TunnelModule, self).__init__(experiment, TriblerTunnelCommunity)
         self.download_states_history = []
 
     def on_id_received(self):
         super(TunnelModule, self).on_id_received()
+        self.tribler_config.set_dispersy_enabled(False)
         self.tribler_config.set_tunnel_community_enabled(True)
-        self.tribler_config.set_tunnel_community_hidden_seeding(False)
         self.tribler_config.set_mainline_dht_enabled(True)
         self.tribler_config.set_libtorrent_enabled(True)
-        self.tribler_config.set_market_community_enabled(False)
         self.tribler_config.set_tunnel_community_socks5_listen_ports([23000 + 100 * self.my_id + i for i in range(5)])
         self.tribler_config.set_tunnel_community_exitnode_enabled(False)
-        self.community_launcher.community_kwargs["settings"] = TunnelSettings(tribler_config=self.tribler_config)
+        self.ipv8_community_launcher.community_kwargs["settings"] = TunnelSettings()
 
     def on_dispersy_available(self, _):
         super(TunnelModule, self).on_dispersy_available(_)
 
         def monitor_downloads(dslist):
-            if isinstance(self.community, HiddenTunnelCommunity):
-                self.community.monitor_downloads(dslist)
+            if isinstance(self.overlay, TriblerTunnelCommunity):
+                self.overlay.monitor_downloads(dslist)
 
             for state in dslist:
                 download = state.get_download()
@@ -98,7 +96,7 @@ class TunnelModule(CommunityExperimentModule):
     # concerned.
     @property
     def tunnel_settings(self):
-        return self.community_launcher.community_kwargs["settings"]
+        return self.ipv8_community_launcher.community_kwargs["settings"]
 
     @experiment_callback
     def set_tunnel_exit(self, value):
@@ -128,14 +126,9 @@ class TunnelModule(CommunityExperimentModule):
         self.tunnel_settings.max_time_inactive = long(value)
 
     @experiment_callback
-    def disable_tunnel_crypto(self):
-        self._logger.error("Disable tunnel crypto")
-        self.tunnel_settings.crypto = NoTunnelCrypto()
-
-    @experiment_callback
     def build_circuits(self, hops):
         self._logger.info("Start building circuits")
-        self.community.build_tunnels(int(hops))
+        self.overlay.build_tunnels(int(hops))
 
     @experiment_callback
     def write_tunnels_info(self):
@@ -143,14 +136,14 @@ class TunnelModule(CommunityExperimentModule):
         Write information about established tunnels/introduction points/rendezvous points to files.
         """
         with open('circuits.txt', 'w', 0) as circuits_file:
-            for circuit_id, circuit in self.community.circuits.iteritems():
+            for circuit_id, circuit in self.overlay.circuits.iteritems():
                 circuits_file.write('%s,%s,%s,%s,%s,%s,%s,%s:%d\n' % (circuit_id, str(circuit.state), circuit.goal_hops,
                                                                       circuit.bytes_up, circuit.bytes_down,
                                                                       circuit.creation_time, circuit.ctype,
-                                                                      circuit.first_hop[0], circuit.first_hop[1]))
+                                                                      circuit.sock_addr[0], circuit.sock_addr[1]))
 
         with open('relays.txt', 'w', 0) as relays_file:
-            for circuit_id_1, relay in self.community.relay_from_to.iteritems():
+            for circuit_id_1, relay in self.overlay.relay_from_to.iteritems():
                 relays_file.write('%s,%s,%s:%d,%s\n' % (circuit_id_1, relay.circuit_id, relay.sock_addr[0], relay.sock_addr[1], relay.bytes_up))
 
         with open('downloads_history.txt', 'w', 0) as downloads_file:

@@ -1,25 +1,25 @@
 from random import randint, choice
 
 from Tribler.Core import permid
+from Tribler.pyipv8.ipv8.attestation.trustchain.community import TrustChainCommunity
 
 from gumby.experiment import experiment_callback
 
 from gumby.modules.experiment_module import static_module
-from gumby.modules.community_experiment_module import CommunityExperimentModule
+from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 
 from twisted.internet.task import LoopingCall
 
-from Tribler.community.trustchain.community import TrustChainCommunity
-
 
 @static_module
-class TrustchainModule(CommunityExperimentModule):
+class TrustchainModule(IPv8OverlayExperimentModule):
     def __init__(self, experiment):
         super(TrustchainModule, self).__init__(experiment, TrustChainCommunity)
         self.request_signatures_lc = LoopingCall(self.request_random_signature)
 
     def on_id_received(self):
         super(TrustchainModule, self).on_id_received()
+        self.tribler_config.set_dispersy_enabled(False)
 
         # We need the trustchain key at this point. However, the configured session is not started yet. So we generate
         # the keys here and place them in the correct place. When the session starts it will load these keys.
@@ -30,12 +30,9 @@ class TrustchainModule(CommunityExperimentModule):
 
         self.vars['trustchain_public_key'] = trustchain_keypair.pub().key_to_bin().encode("base64")
 
-    def get_candidate_public_key(self, candidate_id):
+    def get_peer_public_key(self, peer_id):
         # override the default implementation since we use the trustchain key here.
-        return self.all_vars[candidate_id]['trustchain_public_key']
-
-    def on_dispersy_available(self, dispersy):
-        self.introduce_peers()
+        return self.all_vars[peer_id]['trustchain_public_key']
 
     @experiment_callback
     def start_requesting_signatures(self):
@@ -46,28 +43,32 @@ class TrustchainModule(CommunityExperimentModule):
         self.request_signatures_lc.stop()
 
     @experiment_callback
-    def request_signature(self, candidate_id, up, down):
-        self.request_signature_from_candidate(self.get_candidate(candidate_id), up, down)
+    def request_signature(self, peer_id, up, down):
+        self.request_signature_from_peer(self.get_peer(peer_id), up, down)
 
     @experiment_callback
-    def request_crawl(self, candidate_id, sequence_number):
-        self._logger.info("%s: Requesting block: %s For candidate: %s" % (self.my_id, sequence_number, candidate_id))
-        self.community.send_crawl_request(self.get_candidate(candidate_id),
-                                          self.get_candidate(candidate_id).get_member().public_key,
-                                          int(sequence_number))
+    def request_crawl(self, peer_id, sequence_number):
+        self._logger.info("%s: Requesting block: %s for peer: %s" % (self.my_id, sequence_number, peer_id))
+        self.overlay.send_crawl_request(self.get_peer(peer_id),
+                                        self.get_peer(peer_id).public_key.key_to_bin(),
+                                        int(sequence_number))
 
     @experiment_callback
     def request_random_signature(self):
         """
-        Request a random signature from one of your known candidates
+        Request a random signature from one of your known verified peers
         """
         rand_up = randint(1, 1000)
         rand_down = randint(1, 1000)
 
-        known_candidates = list(self.community.dispersy_yield_verified_candidates())
-        self.request_signature_from_candidate(choice(known_candidates), rand_up * 1024 * 1024, rand_down * 1024 * 1024)
+        if not self.overlay.network.verified_peers:
+            self._logger.warning("No verified peers to request random signature from!")
+            return
 
-    def request_signature_from_candidate(self, candidate, up, down):
-        self._logger.info("%s: Requesting Signature for candidate: %s" % (self.my_id, candidate))
+        verified_peers = list(self.overlay.network.verified_peers)
+        self.request_signature_from_peer(choice(verified_peers), rand_up * 1024 * 1024, rand_down * 1024 * 1024)
+
+    def request_signature_from_peer(self, peer, up, down):
+        self._logger.info("%s: Requesting signature from peer: %s" % (self.my_id, peer))
         transaction = {"up": up, "down": down}
-        self.community.sign_block(candidate, candidate.get_member().public_key, transaction)
+        self.overlay.sign_block(peer, peer.public_key.key_to_bin(), transaction)

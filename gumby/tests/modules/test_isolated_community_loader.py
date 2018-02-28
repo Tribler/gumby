@@ -1,7 +1,7 @@
 import unittest
 
-from gumby.modules.community_launcher import CommunityLauncher
-from gumby.modules.isolated_community_loader import IsolatedLauncherWrapper
+from gumby.modules.community_launcher import DispersyCommunityLauncher
+from gumby.modules.isolated_community_loader import IsolatedDispersyLauncherWrapper
 
 
 class MockDispersy(object):
@@ -10,7 +10,7 @@ class MockDispersy(object):
         return public_key
 
 
-class MockUniqueLauncher1(CommunityLauncher):
+class MockUniqueLauncher1(DispersyCommunityLauncher):
 
     def get_name(self):
         return "MockUniqueLauncher1"
@@ -19,7 +19,7 @@ class MockUniqueLauncher1(CommunityLauncher):
         pass
 
 
-class MockUniqueLauncher2(CommunityLauncher):
+class MockUniqueLauncher2(DispersyCommunityLauncher):
 
     def get_name(self):
         return "MockUniqueLauncher2"
@@ -38,8 +38,8 @@ class TestIsolatedLauncherWrapper(unittest.TestCase):
         """
         A master member is shared if session_ids and community names match
         """
-        wrapper1 = IsolatedLauncherWrapper(MockUniqueLauncher1(), self.session_id)
-        wrapper2 = IsolatedLauncherWrapper(MockUniqueLauncher1(), self.session_id)
+        wrapper1 = IsolatedDispersyLauncherWrapper(MockUniqueLauncher1(), self.session_id)
+        wrapper2 = IsolatedDispersyLauncherWrapper(MockUniqueLauncher1(), self.session_id)
 
         self.assertEqual(wrapper1.get_master_member(self.dispersy),
                          wrapper2.get_master_member(self.dispersy))
@@ -48,8 +48,8 @@ class TestIsolatedLauncherWrapper(unittest.TestCase):
         """
         A master member is unique if session_ids differ and community names match
         """
-        wrapper1 = IsolatedLauncherWrapper(MockUniqueLauncher1(), self.session_id)
-        wrapper2 = IsolatedLauncherWrapper(MockUniqueLauncher1(), "I am something else")
+        wrapper1 = IsolatedDispersyLauncherWrapper(MockUniqueLauncher1(), self.session_id)
+        wrapper2 = IsolatedDispersyLauncherWrapper(MockUniqueLauncher1(), "I am something else")
 
         self.assertNotEqual(wrapper1.get_master_member(self.dispersy),
                             wrapper2.get_master_member(self.dispersy))
@@ -58,8 +58,8 @@ class TestIsolatedLauncherWrapper(unittest.TestCase):
         """
         A master member is unique if session_ids match and community names are unique
         """
-        wrapper1 = IsolatedLauncherWrapper(MockUniqueLauncher1(), self.session_id)
-        wrapper2 = IsolatedLauncherWrapper(MockUniqueLauncher2(), self.session_id)
+        wrapper1 = IsolatedDispersyLauncherWrapper(MockUniqueLauncher1(), self.session_id)
+        wrapper2 = IsolatedDispersyLauncherWrapper(MockUniqueLauncher2(), self.session_id)
 
         self.assertNotEqual(wrapper1.get_master_member(self.dispersy),
                             wrapper2.get_master_member(self.dispersy))
@@ -68,8 +68,8 @@ class TestIsolatedLauncherWrapper(unittest.TestCase):
         """
         A master member is unique if session_ids and community names are unique
         """
-        wrapper1 = IsolatedLauncherWrapper(MockUniqueLauncher1(), self.session_id)
-        wrapper2 = IsolatedLauncherWrapper(MockUniqueLauncher2(), "I am something else")
+        wrapper1 = IsolatedDispersyLauncherWrapper(MockUniqueLauncher1(), self.session_id)
+        wrapper2 = IsolatedDispersyLauncherWrapper(MockUniqueLauncher2(), "I am something else")
 
         self.assertNotEqual(wrapper1.get_master_member(self.dispersy),
                             wrapper2.get_master_member(self.dispersy))

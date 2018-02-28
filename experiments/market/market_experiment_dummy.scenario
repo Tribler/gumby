@@ -1,7 +1,7 @@
 &module gumby.modules.dispersy_module.DispersyModule
 &module experiments.market.market_module.MarketModule
 
-@0:0 isolate_community MarketCommunity
+@0:0 isolate_ipv8_overlay MarketCommunity
 @0:1 start_session
 @0:1 annotate start-experiment
 @0:5 init_wallets

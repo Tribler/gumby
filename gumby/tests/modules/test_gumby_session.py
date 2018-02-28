@@ -1,7 +1,7 @@
 import unittest
 
-from gumby.modules.community_launcher import CommunityLauncher
-from gumby.modules.gumby_session import CommunityLoader
+from gumby.modules.community_launcher import DispersyCommunityLauncher
+from gumby.modules.gumby_session import DispersyCommunityLoader
 
 
 class MockCommunity(object):
@@ -17,7 +17,7 @@ class MockDispersy(object):
         self.loaded_classes.append(community_class.__name__)
 
 
-class MockUniqueLauncher(CommunityLauncher):
+class MockUniqueLauncher(DispersyCommunityLauncher):
 
     def get_name(self):
         return str(id(self))
@@ -32,7 +32,7 @@ class MockUniqueLauncher(CommunityLauncher):
 class TestCommunityLoader(unittest.TestCase):
 
     def setUp(self):
-        self.loader = CommunityLoader()
+        self.loader = DispersyCommunityLoader()
         self.dispersy = MockDispersy()
 
     def test_unknown_dependency(self):
@@ -43,10 +43,11 @@ class TestCommunityLoader(unittest.TestCase):
         """
         launcher = MockUniqueLauncher()
         launcher.not_before = lambda: "I don't exist"
+        self.loader.community_launchers = {}
         self.loader.set_launcher(launcher)
         self.loader.load(self.dispersy, None)
 
-        self.assertListEqual(self.dispersy.loaded_classes, ["MockCommunity",])
+        self.assertListEqual(self.dispersy.loaded_classes, ["MockCommunity", ])
 
     def test_cycle_dependency(self):
         """
@@ -58,6 +59,7 @@ class TestCommunityLoader(unittest.TestCase):
         launcher1.not_before = lambda: [launcher2.get_name(),]
         launcher2.not_before = lambda: [launcher3.get_name(),]
         launcher3.not_before = lambda: [launcher1.get_name(),]
+        self.loader.community_launchers = {}
         self.loader.set_launcher(launcher1)
         self.loader.set_launcher(launcher2)
         self.loader.set_launcher(launcher3)

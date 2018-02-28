@@ -1,6 +1,9 @@
 import json
 from os import path, remove
 from posix import environ
+
+import keyring
+from keyrings.alt.file import PlaintextKeyring
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 
@@ -19,11 +22,20 @@ class TriblerModule(BaseDispersyModule):
     def __init__(self, experiment):
         super(TriblerModule, self).__init__(experiment)
         self.transfer_size = 25 * 1024 * 1024
+        self.dispersy = None
+        self.ipv8 = None
         self.download_stats = {
             'download': 0,
             'progress': 0.0,
             'upload': 0
         }
+
+        # We don't use the system keychain but a PlainText keyring for performance during tests
+        self._logger.info("Available keyrings: %s", keyring.backend.get_all_keyring())
+        for new_keyring in keyring.backend.get_all_keyring():
+            if isinstance(new_keyring, PlaintextKeyring):
+                self._logger.info("Setting keyring: %s", new_keyring)
+                keyring.set_keyring(new_keyring)
 
     @experiment_callback
     def start_session(self):
@@ -31,12 +43,16 @@ class TriblerModule(BaseDispersyModule):
 
         self._logger.error("Starting Tribler Session")
 
-        if self.custom_community_loader:
-            self.session.lm.community_loader = self.custom_community_loader
+        if self.custom_dispersy_community_loader:
+            self.session.lm.dispersy_community_loader = self.custom_dispersy_community_loader
+
+        if self.custom_ipv8_community_loader:
+            self.session.lm.ipv8_community_loader = self.custom_ipv8_community_loader
 
         def on_tribler_started(_):
             self._logger.error("Tribler Session started")
             self.dispersy = self.session.lm.dispersy
+            self.ipv8 = self.session.lm.ipv8
             self.dispersy_available.callback(self.dispersy)
 
         return self.session.start().addCallback(on_tribler_started)
@@ -127,7 +143,7 @@ class TriblerModule(BaseDispersyModule):
     @experiment_callback
     def write_triblerchain_stats(self):
         with open('triblerchain.txt', 'w', 0) as triblerchain_file:
-            triblerchain_file.write(json.dumps(self.session.lm.tunnel_community.get_statistics()))
+            triblerchain_file.write(json.dumps(self.session.lm.triblerchain_community.get_statistics()))
 
     def create_test_torrent(self, file_name):
         if not path.exists(file_name):

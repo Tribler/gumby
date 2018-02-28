@@ -3,7 +3,7 @@ import os
 from os import path
 import base64
 
-from Tribler.community.trustchain.database import TrustChainDB
+from Tribler.pyipv8.ipv8.attestation.trustchain.database import TrustChainDB
 
 
 class TrustChainExperimentAnalysisDatabase(TrustChainDB):
