@@ -150,7 +150,7 @@ class MarketModule(IPv8OverlayExperimentModule):
 
         # Write verified candidates
         with open('verified_candidates.txt', 'w', 0) as candidates_files:
-            for peer in self.overlay.network.verified_peers:
+            for peer in self.overlay.network.get_peers_for_service(self.overlay.master_peer.mid):
                 if peer.address[1] > 15000:
                     continue
                 candidates_files.write('%d\n' % (peer.address[1] - 12000))
