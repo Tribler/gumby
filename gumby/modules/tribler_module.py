@@ -130,8 +130,8 @@ class TriblerModule(BaseDispersyModule):
         self.session.start_download_from_tdef(tdef, dscfg).set_state_callback(cb, getpeerlist=True)
 
         if timeout:
-            reactor.callLater(long(timeout), self.session.remove_download_by_id, tdef.infohash, removecontent=True,
-                              removestate=True)
+            reactor.callLater(long(timeout), self.session.remove_download_by_id, tdef.infohash, remove_content=True,
+                              remove_state=True)
 
     @experiment_callback
     def add_peer_to_downloads(self, peer_nr):
