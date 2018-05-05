@@ -365,6 +365,7 @@ echo "
 configobj
 cryptography
 cython
+datrie
 dnspython
 ecdsa
 jsonrpclib

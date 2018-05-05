@@ -103,6 +103,7 @@ class BaseDispersyModule(ExperimentModule):
         config.set_libtorrent_port(20000 + self.experiment.my_id)
         config.set_dispersy_port(self.dispersy_port)
         config.set_tunnel_community_enabled(False)
+        config.set_dht_enabled(False)
         return config
 
     @classmethod
