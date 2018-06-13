@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 post_process_trustchain.py
 
-graph_data.sh
+graph_process_guard_data.sh

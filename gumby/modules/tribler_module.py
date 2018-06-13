@@ -1,4 +1,3 @@
-import json
 from os import path, remove
 from posix import environ
 
@@ -125,9 +124,9 @@ class TriblerModule(BaseDispersyModule):
             }
             self.download_stats = self.print_dict_changes("download-stats", self.download_stats, new_download_stats)
 
-            return 1.0, True
+            return 1.0
 
-        self.session.start_download_from_tdef(tdef, dscfg).set_state_callback(cb, getpeerlist=True)
+        self.session.start_download_from_tdef(tdef, dscfg).set_state_callback(cb)
 
         if timeout:
             reactor.callLater(long(timeout), self.session.remove_download_by_id, tdef.infohash, remove_content=True,
@@ -139,11 +138,6 @@ class TriblerModule(BaseDispersyModule):
         host, port = self.experiment.get_peer_ip_port_by_id(peer_nr)
         for download in self.session.get_downloads():
             download.add_peer((host, port))
-
-    @experiment_callback
-    def write_triblerchain_stats(self):
-        with open('triblerchain.txt', 'w', 0) as triblerchain_file:
-            triblerchain_file.write(json.dumps(self.session.lm.triblerchain_community.get_statistics()))
 
     def create_test_torrent(self, file_name):
         if not path.exists(file_name):

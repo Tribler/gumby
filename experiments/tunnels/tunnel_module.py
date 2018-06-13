@@ -36,9 +36,9 @@
 #
 
 # Code:
+import json
 import time
 
-from Tribler.Core.Libtorrent.LibtorrentDownloadImpl import LibtorrentStatisticsResponse
 from Tribler.Core.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
 from Tribler.community.triblertunnel.community import TriblerTunnelCommunity
 from Tribler.pyipv8.ipv8.messaging.anonymization.community import TunnelSettings
@@ -74,16 +74,15 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
             for state in dslist:
                 download = state.get_download()
-                stats = download.network_create_statistics_reponse() or LibtorrentStatisticsResponse(0, 0, 0, 0, 0, 0, 0)
                 status_dict = {
                     "time": time.time() - self.experiment.scenario_runner._expstartstamp,
                     "infohash": download.get_def().get_infohash().encode('hex'),
-                    "progress": download.get_progress(),
-                    "status": dlstatus_strings[download.get_status()],
-                    "total_up": stats.upTotal,
-                    "total_down": stats.downTotal,
-                    "speed_down": download.get_current_speed(DOWNLOAD),
-                    "speed_up": download.get_current_speed(UPLOAD),
+                    "progress": state.get_progress(),
+                    "status": dlstatus_strings[state.get_status()],
+                    "total_up": state.get_total_transferred(UPLOAD),
+                    "total_down": state.get_total_transferred(DOWNLOAD),
+                    "speed_up": state.get_current_speed(UPLOAD),
+                    "speed_down": state.get_current_speed(DOWNLOAD),
                 }
                 self.download_states_history.append(status_dict)
 
@@ -129,6 +128,11 @@ class TunnelModule(IPv8OverlayExperimentModule):
     def build_circuits(self, hops):
         self._logger.info("Start building circuits")
         self.overlay.build_tunnels(int(hops))
+
+    @experiment_callback
+    def write_trustchain_stats(self):
+        with open('trustchain.txt', 'w', 0) as trustchain_file:
+            trustchain_file.write(json.dumps(self.overlay.bandwidth_wallet.get_statistics()))
 
     @experiment_callback
     def write_tunnels_info(self):

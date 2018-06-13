@@ -2,22 +2,17 @@ import json
 import os
 import random
 
+from Tribler.community.market.community import MarketCommunity
 from Tribler.community.market.core.order_manager import OrderManager
 from Tribler.community.market.core.order_repository import MemoryOrderRepository
 from Tribler.community.market.core.transaction_manager import TransactionManager
 from Tribler.community.market.core.transaction_repository import MemoryTransactionRepository
-from Tribler.community.market.wallet.tc_wallet import TrustchainWallet
-from Tribler.community.triblerchain.community import TriblerChainCommunity
-from Tribler.pyipv8.ipv8.peer import Peer
-from Tribler.pyipv8.ipv8.peerdiscovery.discovery import EdgeWalk
+from Tribler.Core.Modules.wallet.dummy_wallet import DummyWallet1, DummyWallet2
+from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
-
-
-from Tribler.community.market.community import MarketCommunity
-from Tribler.community.market.wallet.dummy_wallet import DummyWallet1, DummyWallet2
 
 
 @static_module
@@ -30,7 +25,6 @@ class MarketModule(IPv8OverlayExperimentModule):
         super(MarketModule, self).__init__(experiment, MarketCommunity)
         self.num_bids = 0
         self.num_asks = 0
-        self.tc_community = None
         self.order_id_map = {}
 
     def on_id_received(self):
@@ -41,17 +35,6 @@ class MarketModule(IPv8OverlayExperimentModule):
     def on_dispersy_available(self, dispersy):
         # Disable threadpool messages
         self.overlay._use_main_thread = True
-
-    @experiment_callback
-    def init_trustchain(self):
-        triblerchain_peer = Peer(self.session.trustchain_keypair)
-
-        self.session.lm.triblerchain_community = TriblerChainCommunity(triblerchain_peer, self.ipv8.endpoint,
-                                                                       self.ipv8.network,
-                                                                       tribler_session=self.session,
-                                                                       working_directory=self.session.config.get_state_dir())
-        self.ipv8.overlays.append(self.session.lm.triblerchain_community)
-        self.ipv8.strategies.append((EdgeWalk(self.session.lm.triblerchain_community), 20))
 
     @experiment_callback
     def init_wallets(self):
@@ -68,10 +51,9 @@ class MarketModule(IPv8OverlayExperimentModule):
         dummy1_wallet.MONITOR_DELAY = 0
         dummy2_wallet.MONITOR_DELAY = 0
 
-        if self.tc_community:
-            tc_wallet = TrustchainWallet(self.tc_community)
-            tc_wallet.check_negative_balance = False
-            self.overlay.wallets[tc_wallet.get_identifier()] = tc_wallet
+        tc_wallet = TrustchainWallet(self.session.lm.trustchain_community)
+        tc_wallet.check_negative_balance = False
+        self.overlay.wallets[tc_wallet.get_identifier()] = tc_wallet
 
         # We use a memory repository in the market community
         self.overlay.order_manager = OrderManager(MemoryOrderRepository(self.overlay.mid))

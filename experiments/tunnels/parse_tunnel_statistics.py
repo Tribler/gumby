@@ -47,7 +47,7 @@ class TunnelStatisticsParser(object):
     def aggregate_trustchain_balances(self):
         with open('trustchain_balances.csv', 'w', 0) as balances_file:
             balances_file.write('peer,total_up,total_down,balance\n')
-            for peer_nr, filename, dir in self.yield_files(file_to_check='triblerchain.txt'):
+            for peer_nr, filename, dir in self.yield_files(file_to_check='trustchain.txt'):
                 with open(filename) as tc_file:
                     tc_json = json.loads(tc_file.read())
                     total_up = 0

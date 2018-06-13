@@ -2,6 +2,7 @@ from random import randint, choice
 
 from Tribler.Core import permid
 from Tribler.pyipv8.ipv8.attestation.trustchain.community import TrustChainCommunity
+from Tribler.pyipv8.ipv8.attestation.trustchain.listener import BlockListener
 
 from gumby.experiment import experiment_callback
 
@@ -12,7 +13,7 @@ from twisted.internet.task import LoopingCall
 
 
 @static_module
-class TrustchainModule(IPv8OverlayExperimentModule):
+class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
     def __init__(self, experiment):
         super(TrustchainModule, self).__init__(experiment, TrustChainCommunity)
         self.request_signatures_lc = LoopingCall(self.request_random_signature)
@@ -33,6 +34,10 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     def get_peer_public_key(self, peer_id):
         # override the default implementation since we use the trustchain key here.
         return self.all_vars[peer_id]['trustchain_public_key']
+
+    @experiment_callback
+    def init_trustchain(self):
+        self.overlay.add_listener(self, ['test'])
 
     @experiment_callback
     def start_requesting_signatures(self):
@@ -71,4 +76,10 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     def request_signature_from_peer(self, peer, up, down):
         self._logger.info("%s: Requesting signature from peer: %s" % (self.my_id, peer))
         transaction = {"up": up, "down": down}
-        self.overlay.sign_block(peer, peer.public_key.key_to_bin(), transaction)
+        self.overlay.sign_block(peer, peer.public_key.key_to_bin(), block_type='test', transaction=transaction)
+
+    def should_sign(self, block):
+        return True
+
+    def received_block(self, block):
+        pass
