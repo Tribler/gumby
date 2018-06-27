@@ -59,7 +59,7 @@ if [ "${RUN_SLOCCOUNT}" != "false" ]; then
     mkdir -p $OUTPUT_DIR/slocdata
 
     (ionice -c 3 nice sloccount --datadir $OUTPUT_DIR/slocdata --duplicates --wide --details Tribler | \
-            fgrep -v .svn | fgrep -v .git | fgrep -v /dispersy/ | fgrep -v /SwiftEngine/ | \
+            fgrep -v .svn | fgrep -v .git | fgrep -v /dispersy/ | \
             fgrep -v debian | fgrep -v test_.Tribler | fgrep -v /pymdht/ \
                                                              > $OUTPUT_DIR/sloccount.out 2> $OUTPUT_DIR/sloccount.log) &
     SLOCCOUNT_PID=$!

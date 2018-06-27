@@ -126,18 +126,6 @@ if not running_local_and_virtualenv_disabled and "VIRTUALENV_DIR" in environ and
     # This is a replacement for running venv/bin/activate
     environ["VIRTUAL_ENV"] = venv_dir
     extend_var(environ, "PATH", path.join(venv_dir, "bin"))
-
-    # TODO: Move this to a systemtap_setup script.
-    print "Generating stap files:"
-    # Path substitution for the tapsets, needs to be done even in case of USE_LOCAL_SYSTEMTAP
-    # is disabled as we could be using systemtap from within the experiment.
-    tapset_dir = path.join(venv_dir, "tapsets")
-    if not path.exists(tapset_dir):
-        makedirs(tapset_dir)
-    for source_file in glob("gumby/scripts/stp/tapsets/*"):
-        dest_file = path.join(tapset_dir, path.basename(path.splitext(source_file)[0]))
-        print "  %s  ->  %s" % (source_file, dest_file)
-        open(dest_file, "w").write(open(source_file, 'r').read().replace("__VIRTUALENV_PATH__", venv_dir))
 else:
     print "NOT activating virtualenv."
 
