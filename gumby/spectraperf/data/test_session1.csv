@@ -1,3 +1,0 @@
-"TYPE","FILE","TRACE","BYTES","PROCESS","TIME","COUNT"
-WRITE, file1, test1, 10, tribler, 391, 1
-WRITE, file1, test2, 10, tribler, 391, 1
