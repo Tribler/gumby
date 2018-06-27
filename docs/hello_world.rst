@@ -119,9 +119,6 @@ Alternatively, if you want to run your first experiment on the DAS5:
     # Run python in a virtual environment
     use_local_venv = TRUE
     
-    # Use systemtap (for debugging)
-    with_systemtap = false
-    
 The scenario file
 -----------------
 Now that we have instructed Gumby how to set up our environment, we can write the file in charge of generating events: the scenario (.scenario) file.

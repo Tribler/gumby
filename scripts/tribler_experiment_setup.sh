@@ -38,20 +38,6 @@
 
 # Code:
 
-
-# @CONF_OPTION BUILD_SWIFT: Set to any value if your experiment needs swift. (default is disabled)
-if [ ! -z "$BUILD_SWIFT" ]; then
-    echo "build_swift set, building Swift."
-    if [ -e tribler/Tribler/SwiftEngine/ ]; then
-        buildswift.sh || ( echo "Swift failed to build!" ; exit 1 )
-    else
-        echo "Couldn't find Swift at tribler/Tribler/SwiftEngine, bailing out."
-        exit 2
-    fi
-else
-    echo "Not building Swift."
-fi
-
 if [ -z "$LOCAL_RUN" -o $(echo $USE_LOCAL_VENV | tr '[:upper:]' '[:lower:]') == 'true' ]; then
     build_virtualenv.sh
 fi
