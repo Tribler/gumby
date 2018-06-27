@@ -4,7 +4,6 @@
 @0:0 isolate_ipv8_overlay MarketCommunity
 @0:1 start_session
 @0:1 annotate start-experiment
-@0:5 init_triblerchain
 @0:6 init_wallets
 @0:45 annotate start-trading
 @0:45 bid 10 MC 10 DUM2 {1-50}

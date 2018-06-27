@@ -126,7 +126,6 @@ class IPv8CommunityLoader(CommunityLoader):
     def __init__(self):
         super(IPv8CommunityLoader, self).__init__()
         self.set_launcher(TrustChainCommunityLauncher())
-        self.set_launcher(TriblerChainCommunityLauncher())
         self.set_launcher(TriblerTunnelCommunityLauncher())
         self.set_launcher(MarketCommunityLauncher())
 

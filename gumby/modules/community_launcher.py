@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 from Tribler.Core.DecentralizedTracking.dht_provider import MainlineDHTProvider
+from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
 from Tribler.pyipv8.ipv8.peer import Peer
 from Tribler.pyipv8.ipv8.peerdiscovery.discovery import RandomWalk
 
@@ -227,6 +228,9 @@ class PreviewChannelCommunityLauncher(DispersyCommunityLauncher):
 
 class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
 
+    def not_before(self):
+        return ['TrustChainCommunity']
+
     def should_launch(self, session):
         return session.config.get_tunnel_community_enabled()
 
@@ -240,21 +244,12 @@ class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
     def get_kwargs(self, session):
         kwargs = super(TriblerTunnelCommunityLauncher, self).get_kwargs(session)
         kwargs['dht_provider'] = MainlineDHTProvider(session.lm.mainline_dht, session.config.get_dispersy_port())
+        kwargs['bandwidth_wallet'] = TrustchainWallet(session.lm.trustchain_community)
         return kwargs
 
     def finalize(self, dispersy, session, community):
         super(TriblerTunnelCommunityLauncher, self).finalize(dispersy, session, community)
         session.lm.tunnel_community = community
-
-
-class TriblerChainCommunityLauncher(IPv8CommunityLauncher):
-
-    def get_overlay_class(self):
-        from Tribler.community.triblerchain.community import TriblerChainCommunity
-        return TriblerChainCommunity
-
-    def get_my_peer(self, ipv8, session):
-        return Peer(session.trustchain_keypair)
 
 
 class TrustChainCommunityLauncher(IPv8CommunityLauncher):
@@ -269,8 +264,15 @@ class TrustChainCommunityLauncher(IPv8CommunityLauncher):
     def get_kwargs(self, session):
         return {'working_directory': session.config.get_state_dir()}
 
+    def finalize(self, dispersy, session, community):
+        super(TrustChainCommunityLauncher, self).finalize(dispersy, session, community)
+        session.lm.trustchain_community = community
+
 
 class MarketCommunityLauncher(IPv8CommunityLauncher):
+
+    def not_before(self):
+        return ['TrustChainCommunity']
 
     def should_launch(self, session):
         return session.config.get_market_community_enabled()
@@ -280,4 +282,9 @@ class MarketCommunityLauncher(IPv8CommunityLauncher):
         return MarketCommunity
 
     def get_my_peer(self, ipv8, session):
-        return Peer(session.tradechain_keypair)
+        return Peer(session.trustchain_keypair)
+
+    def get_kwargs(self, session):
+        kwargs = super(MarketCommunityLauncher, self).get_kwargs(session)
+        kwargs['trustchain'] = session.lm.trustchain_community
+        return kwargs
