@@ -87,14 +87,14 @@ class MarketModule(IPv8OverlayExperimentModule):
     @experiment_callback
     def ask(self, price, price_type, quantity, quantity_type, order_id=None):
         self.num_asks += 1
-        order = self.overlay.create_ask(float(price), price_type, float(quantity), quantity_type, 3600)
+        order = self.overlay.create_ask(int(price), price_type, int(quantity), quantity_type, 3600)
         if order_id:
             self.order_id_map[order_id] = order.order_id
 
     @experiment_callback
     def bid(self, price, price_type, quantity, quantity_type, order_id=None):
         self.num_bids += 1
-        order = self.overlay.create_bid(float(price), price_type, float(quantity), quantity_type, 3600)
+        order = self.overlay.create_bid(int(price), price_type, int(quantity), quantity_type, 3600)
         if order_id:
             self.order_id_map[order_id] = order.order_id
 
@@ -120,7 +120,7 @@ class MarketModule(IPv8OverlayExperimentModule):
             partner_peer_id = self.overlay.lookup_ip(transaction.partner_order_id.trader_id)[1] - 12000
             if partner_peer_id < scenario_runner._peernumber:  # Only one peer writes the transaction
                 transactions.append((float(transaction.timestamp) - scenario_runner._expstartstamp,
-                                     float(transaction.price), float(transaction.total_quantity),
+                                     transaction.price.amount, transaction.total_quantity.amount,
                                      len(transaction.payments), scenario_runner._peernumber, partner_peer_id))
 
         # Write transactions
@@ -131,14 +131,13 @@ class MarketModule(IPv8OverlayExperimentModule):
         # Write orders
         with open('orders.log', 'w', 0) as orders_file:
             for order in self.overlay.order_manager.order_repository.find_all():
-                orders_file.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (float(order.timestamp),
-                                                                       order.order_id,
-                                                                       scenario_runner._peernumber,
-                                                              'ask' if order.is_ask() else 'bid',
-                                                              'complete' if order.is_complete() else 'incomplete',
-                                                              float(order.price), float(order.total_quantity),
-                                                              float(order.reserved_quantity), float(order.traded_quantity),
-                                                              float(order.completed_timestamp) if order.is_complete() else '-1'))
+                order_data = (float(order.timestamp), order.order_id, scenario_runner._peernumber,
+                              'ask' if order.is_ask() else 'bid',
+                              'complete' if order.is_complete() else 'incomplete',
+                              order.price.amount, order.total_quantity.amount, order.reserved_quantity.amount,
+                              order.traded_quantity.amount,
+                              float(order.completed_timestamp) if order.is_complete() else '-1')
+                orders_file.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % order_data)
 
         # Write ticks in order book
         with open('orderbook.txt', 'w', 0) as orderbook_file:
@@ -156,9 +155,9 @@ class MarketModule(IPv8OverlayExperimentModule):
                     continue
                 candidates_files.write('%d\n' % (peer.address[1] - 12000))
 
-        # TODO IPv8 has no bandwidth accounting
-        #with open('bandwidth.txt', 'w', 0) as bandwidth_file:
-        #    bandwidth_file.write("%s,%f" % (self.dispersy.statistics.total_up, self.dispersy.statistics.total_down))
+        # Write bandwidth statistics
+        with open('bandwidth.txt', 'w', 0) as bandwidth_file:
+            bandwidth_file.write("%d,%d" % (self.overlay.endpoint.bytes_up, self.overlay.endpoint.bytes_down))
 
         # Get statistics about the amount of fulfilled orders (asks/bids)
         fulfilled_asks = 0
