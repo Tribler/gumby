@@ -3,6 +3,8 @@ import os
 import random
 
 from Tribler.community.market.community import MarketCommunity
+from Tribler.community.market.core.assetamount import AssetAmount
+from Tribler.community.market.core.assetpair import AssetPair
 from Tribler.community.market.core.order_manager import OrderManager
 from Tribler.community.market.core.order_repository import MemoryOrderRepository
 from Tribler.community.market.core.transaction_manager import TransactionManager
@@ -62,9 +64,6 @@ class MarketModule(IPv8OverlayExperimentModule):
         # Disable incremental payments
         self.overlay.use_incremental_payments = False
 
-        # Disable tick validation to improve performance
-        self.overlay.validate_tick_signatures = False
-
     @experiment_callback
     def init_matchmakers(self):
         peer_num = self.experiment.scenario_runner._peernumber
@@ -85,16 +84,18 @@ class MarketModule(IPv8OverlayExperimentModule):
             self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_num))
 
     @experiment_callback
-    def ask(self, price, price_type, quantity, quantity_type, order_id=None):
+    def ask(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
         self.num_asks += 1
-        order = self.overlay.create_ask(int(price), price_type, int(quantity), quantity_type, 3600)
+        pair = AssetPair(AssetAmount(int(asset1_amount), asset1_type), AssetAmount(int(asset2_amount), asset2_type))
+        order = self.overlay.create_ask(pair, 3600)
         if order_id:
             self.order_id_map[order_id] = order.order_id
 
     @experiment_callback
-    def bid(self, price, price_type, quantity, quantity_type, order_id=None):
+    def bid(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
         self.num_bids += 1
-        order = self.overlay.create_bid(int(price), price_type, int(quantity), quantity_type, 3600)
+        pair = AssetPair(AssetAmount(int(asset1_amount), asset1_type), AssetAmount(int(asset2_amount), asset2_type))
+        order = self.overlay.create_bid(pair, 3600)
         if order_id:
             self.order_id_map[order_id] = order.order_id
 
@@ -120,7 +121,8 @@ class MarketModule(IPv8OverlayExperimentModule):
             partner_peer_id = self.overlay.lookup_ip(transaction.partner_order_id.trader_id)[1] - 12000
             if partner_peer_id < scenario_runner._peernumber:  # Only one peer writes the transaction
                 transactions.append((float(transaction.timestamp) - scenario_runner._expstartstamp,
-                                     transaction.price.amount, transaction.total_quantity.amount,
+                                     transaction.transferred_assets.first.amount,
+                                     transaction.transferred_assets.second.amount,
                                      len(transaction.payments), scenario_runner._peernumber, partner_peer_id))
 
         # Write transactions
@@ -134,9 +136,8 @@ class MarketModule(IPv8OverlayExperimentModule):
                 order_data = (float(order.timestamp), order.order_id, scenario_runner._peernumber,
                               'ask' if order.is_ask() else 'bid',
                               'complete' if order.is_complete() else 'incomplete',
-                              order.price.amount, order.total_quantity.amount, order.reserved_quantity.amount,
-                              order.traded_quantity.amount,
-                              float(order.completed_timestamp) if order.is_complete() else '-1')
+                              order.assets.first.amount, order.assets.second.amount, order.reserved_quantity,
+                              order.traded_quantity, float(order.completed_timestamp) if order.is_complete() else '-1')
                 orders_file.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % order_data)
 
         # Write ticks in order book
