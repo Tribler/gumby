@@ -73,6 +73,16 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
             for state in dslist:
                 download = state.get_download()
+
+                # Check the peers of this download every five seconds and add them to the payout manager when
+                # this peer runs a Tribler instance
+                if download.get_hops() == 0:
+                    for peer in download.get_peerlist():
+                        if 'Tribler' in peer["extended_version"]:
+                            self.session.lm.payout_manager.update_peer(peer["id"].decode('hex'),
+                                                                       download.get_def().get_infohash(),
+                                                                       peer["dtotal"])
+
                 status_dict = {
                     "time": time.time() - self.experiment.scenario_runner._expstartstamp,
                     "infohash": download.get_def().get_infohash().encode('hex'),

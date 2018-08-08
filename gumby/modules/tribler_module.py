@@ -72,6 +72,17 @@ class TriblerModule(BaseDispersyModule):
             ltsession.set_alert_mask(mask)
 
     @experiment_callback
+    def disable_lt_rc4_encryption(self):
+        """
+        Disable the RC4 encryption that the libtorrent session in Tribler uses by default.
+        This should speed up downloads when testing.
+        """
+        ltsession = self.session.lm.ltmgr.get_session(0)
+        settings = ltsession.get_settings()
+        settings['prefer_rc4'] = False
+        ltsession.set_settings(settings)
+
+    @experiment_callback
     def transfer(self, action="download", file_name=None, hops=None, timeout=None):
         assert action in ("download", "seed"), "Invalid transfer kind"
 

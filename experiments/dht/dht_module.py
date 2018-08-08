@@ -4,7 +4,7 @@ from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
 
-from Tribler.pyipv8.ipv8.dht.community import DHTCommunity
+from Tribler.pyipv8.ipv8.dht.discovery import DHTDiscoveryCommunity
 
 
 @static_module
@@ -14,7 +14,7 @@ class DHTModule(IPv8OverlayExperimentModule):
     """
 
     def __init__(self, experiment):
-        super(DHTModule, self).__init__(experiment, DHTCommunity)
+        super(DHTModule, self).__init__(experiment, DHTDiscoveryCommunity)
         self.start_time = 0
 
     def on_id_received(self):
@@ -34,6 +34,16 @@ class DHTModule(IPv8OverlayExperimentModule):
     @experiment_callback
     def find(self, key):
         self.log_timing(self.overlay.find_values(key.decode('hex')), 'find')
+
+    @experiment_callback
+    def do_dht_announce(self):
+        def on_peer_stored(nodes):
+            self._logger.info("Stored this peer on %d nodes", len(nodes))
+
+        def on_peer_store_error(failure):
+            self._logger.error("Error when storing peer: %s", failure)
+
+        self.overlay.store_peer().addCallbacks(on_peer_stored, on_peer_store_error)
 
     def log_timing(self, deferred, op):
         ts = time.time() - self.start_time

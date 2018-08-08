@@ -299,11 +299,15 @@ class DHTCommunityLauncher(IPv8CommunityLauncher):
         return session.config.get_dht_enabled()
 
     def get_overlay_class(self):
-        from Tribler.pyipv8.ipv8.dht.community import DHTCommunity
-        return DHTCommunity
+        from Tribler.pyipv8.ipv8.dht.discovery import DHTDiscoveryCommunity
+        return DHTDiscoveryCommunity
 
     def get_my_peer(self, ipv8, session):
         return Peer(session.trustchain_keypair)
 
     def get_kwargs(self, session):
         return {}
+
+    def finalize(self, dispersy, session, community):
+        super(DHTCommunityLauncher, self).finalize(dispersy, session, community)
+        session.lm.dht_community = community
