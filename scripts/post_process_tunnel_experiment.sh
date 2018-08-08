@@ -3,5 +3,5 @@
 # Parse statistics about the tunnel community
 gumby/experiments/tunnels/parse_tunnel_statistics.py .
 
-# Run the regular Dispersy message extraction script
-post_process_dispersy_experiment.sh
+# Run the regular statistics extraction script
+graph_process_guard_data.sh
