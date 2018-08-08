@@ -128,6 +128,7 @@ class IPv8CommunityLoader(CommunityLoader):
         self.set_launcher(TrustChainCommunityLauncher())
         self.set_launcher(TriblerTunnelCommunityLauncher())
         self.set_launcher(MarketCommunityLauncher())
+        self.set_launcher(DHTCommunityLauncher())
 
     def _launch(self, launcher, ipv8, session):
         """

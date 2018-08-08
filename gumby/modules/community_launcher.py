@@ -254,6 +254,9 @@ class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
 
 class TrustChainCommunityLauncher(IPv8CommunityLauncher):
 
+    def should_launch(self, session):
+        return session.config.get_trustchain_enabled()
+
     def get_overlay_class(self):
         from Tribler.pyipv8.ipv8.attestation.trustchain.community import TrustChainCommunity
         return TrustChainCommunity
@@ -288,3 +291,19 @@ class MarketCommunityLauncher(IPv8CommunityLauncher):
         kwargs = super(MarketCommunityLauncher, self).get_kwargs(session)
         kwargs['trustchain'] = session.lm.trustchain_community
         return kwargs
+
+
+class DHTCommunityLauncher(IPv8CommunityLauncher):
+
+    def should_launch(self, session):
+        return session.config.get_dht_enabled()
+
+    def get_overlay_class(self):
+        from Tribler.pyipv8.ipv8.dht.community import DHTCommunity
+        return DHTCommunity
+
+    def get_my_peer(self, ipv8, session):
+        return Peer(session.trustchain_keypair)
+
+    def get_kwargs(self, session):
+        return {}
