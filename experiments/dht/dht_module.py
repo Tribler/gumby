@@ -20,7 +20,6 @@ class DHTModule(IPv8OverlayExperimentModule):
     def on_id_received(self):
         super(DHTModule, self).on_id_received()
         self.tribler_config.set_dht_enabled(True)
-        self.tribler_config.set_trustchain_enabled(False)
 
         self.start_time = time.time()
 
