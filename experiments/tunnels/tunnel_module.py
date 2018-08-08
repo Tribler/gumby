@@ -57,7 +57,6 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
     def on_id_received(self):
         super(TunnelModule, self).on_id_received()
-        self.tribler_config.set_dispersy_enabled(False)
         self.tribler_config.set_tunnel_community_enabled(True)
         self.tribler_config.set_mainline_dht_enabled(True)
         self.tribler_config.set_libtorrent_enabled(True)

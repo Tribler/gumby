@@ -89,7 +89,7 @@ class BaseDispersyModule(ExperimentModule):
         config.set_state_dir(my_state_path)
         config.set_torrent_checking_enabled(False)
         config.set_megacache_enabled(False)
-        config.set_dispersy_enabled(True)
+        config.set_dispersy_enabled(False)
         config.set_market_community_enabled(False)
         config.set_mainline_dht_enabled(False)
         config.set_mainline_dht_port(18000 + self.my_id)

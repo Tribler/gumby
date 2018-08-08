@@ -63,6 +63,7 @@ class AllChannelModule(DispersyCommunityExperimentModule):
 
     def on_id_received(self):
         super(AllChannelModule, self).on_id_received()
+        self.tribler_config.set_dispersy_enabled(True)
         self.tribler_config.set_channel_search_enabled(True)
         self.dispersy_community_launcher.community_kwargs["tribler_session"] = None
         self.dispersy_community_loader.get_launcher("ChannelCommunity").community_kwargs["tribler_session"] = None
