@@ -110,7 +110,7 @@ class TriblerModule(BaseDispersyModule):
             if ds.get_peerlist():
                 for peer in ds.get_peerlist():
                     self._logger.info(" - peer %s, addr %s:%s has (%s), U: %s D: %s",
-                                      peer["id"].encode("hex"),
+                                      peer["id"],
                                       peer["ip"],
                                       peer["port"],
                                       peer["completed"] * 100.0,
