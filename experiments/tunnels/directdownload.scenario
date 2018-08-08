@@ -1,0 +1,16 @@
+&module gumby.modules.tribler_module.TriblerModule
+&module experiments.tunnels.tunnel_module.TunnelModule
+
+@0:0 isolate_ipv8_overlay TriblerTunnelCommunity
+@0:1 set_transfer_size 10485760
+@0:4 start_session
+@0:4 annotate start-experiment
+@0:6 set_libtorrentmgr_alert_mask
+@0:11 introduce_peers
+@0:20 transfer action=seed hops=0 {1}
+@0:30 annotate start-downloading
+@0:30 transfer hops=0 {2}
+@0:35 add_peer_to_downloads 1 {2}
+@0:70 write_tunnels_info
+@0:72 stop_session
+@0:80 stop
