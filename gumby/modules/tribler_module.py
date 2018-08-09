@@ -165,3 +165,14 @@ class TriblerModule(BaseDispersyModule):
 
     def _process_libtorrent_alert(self, alert):
         self._logger.info("LibtorrentDownloadImpl: alert %s", alert)
+
+    @experiment_callback
+    def write_overlay_statistics(self):
+        """
+        Write information about the IPv8 overlay networks to a file.
+        """
+        with open('overlays.txt', 'w', 0) as overlays_file:
+            overlays_file.write("name,pub_key\n")
+            for overlay in self.session.lm.ipv8.overlays:
+                overlays_file.write("%s,%s\n" % (overlay.__class__.__name__,
+                                                 overlay.my_peer.public_key.key_to_bin().encode('hex')))

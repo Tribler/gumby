@@ -16,5 +16,6 @@
 @0:35 add_peer_to_downloads 1 {2}
 @0:70 write_tunnels_info
 @0:70 write_trustchain_stats
+@0:70 write_overlay_statistics
 @0:72 stop_session
 @0:80 stop
