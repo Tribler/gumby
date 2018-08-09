@@ -275,11 +275,11 @@ class ScenarioRunner(ScenarioParser):
         """
         if name is None:
             name = clb.__name__
-        if name in self._callables:
-            self._logger.warning("Callback method override! Collision for %s from %s and %s",
-                                 name, clb, self._callables[name])
+        if name not in self._callables:
+            self._callables[name] = []
+
+        self._callables[name].append(clb)
         self._logger.debug("Registered callback %s target %s", name, clb)
-        self._callables[name] = clb
 
     def run(self):
         """
@@ -297,12 +297,13 @@ class ScenarioRunner(ScenarioParser):
             tstmp = tstmp + self._expstartstamp
             delay = tstmp - time()
             self._logger.info("Register call %s %s:%d %s %s %s", tstmp, filename, line_number, clb, repr(args), repr(kwargs))
-            reactor.callLater(
-                delay if delay > 0.0 else 0,
-                self._callables[clb],
-                *args,
-                **kwargs
-            )
+            for target in self._callables[clb]:
+                reactor.callLater(
+                    delay if delay > 0.0 else 0,
+                    target,
+                    *args,
+                    **kwargs
+                )
 
     def _parse_for_this_peer(self, peerspec):
         if peerspec:
