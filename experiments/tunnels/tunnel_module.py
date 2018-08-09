@@ -36,7 +36,6 @@
 #
 
 # Code:
-import json
 import time
 
 from Tribler.Core.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
@@ -137,11 +136,6 @@ class TunnelModule(IPv8OverlayExperimentModule):
     def build_circuits(self, hops):
         self._logger.info("Start building circuits")
         self.overlay.build_tunnels(int(hops))
-
-    @experiment_callback
-    def write_trustchain_stats(self):
-        with open('trustchain.txt', 'w', 0) as trustchain_file:
-            trustchain_file.write(json.dumps(self.overlay.bandwidth_wallet.get_statistics()))
 
     @experiment_callback
     def write_tunnels_info(self):

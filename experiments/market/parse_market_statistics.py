@@ -1,39 +1,23 @@
 #!/usr/bin/env python2
 import json
 import os
-import re
 import sys
 
+from gumby.statsparser import StatisticsParser
 
-class MarketStatisticsParser(object):
+
+class MarketStatisticsParser(StatisticsParser):
     """
     This class is responsible for parsing statistics of the market community
     """
 
     def __init__(self, node_directory):
-        self.node_directory = node_directory
+        super(MarketStatisticsParser, self).__init__(node_directory)
         self.total_quantity_traded = 0
         self.total_payment = 0
         self.total_ask_quantity = 0
         self.total_bid_quantity = 0
         self.avg_order_latency = 0
-
-    def yield_files(self, file_to_check='market_stats.log'):
-        pattern = re.compile('[0-9]+')
-        for headnode in os.listdir(self.node_directory):
-            headdir = os.path.join(self.node_directory, headnode)
-            if os.path.isdir(headdir):
-                for node in os.listdir(headdir):
-                    nodedir = os.path.join(self.node_directory, headnode, node)
-                    if os.path.isdir(nodedir):
-                        for peer in os.listdir(nodedir):
-                            peerdir = os.path.join(self.node_directory, headnode, node, peer)
-                            if os.path.isdir(peerdir) and pattern.match(peer):
-                                peer_nr = int(peer)
-
-                                filename = os.path.join(self.node_directory, headnode, node, peer, file_to_check)
-                                if os.path.exists(filename):
-                                    yield peer_nr, filename, peerdir
 
     def aggregate_transaction_data(self):
         """
@@ -43,7 +27,7 @@ class MarketStatisticsParser(object):
         transactions_cumulative_str = "0,0\n"
         transactions_times = []
 
-        for peer_nr, filename, dir in self.yield_files(file_to_check='transactions.log'):
+        for peer_nr, filename, dir in self.yield_files('transactions.log'):
             transactions = [line.rstrip('\n') for line in open(filename)]
             for transaction in transactions:
                 parts = transaction.split(',')
@@ -69,7 +53,7 @@ class MarketStatisticsParser(object):
     def aggregate_candidate_connections(self):
         candidate_connections = set()
 
-        for peer_nr, filename, dir in self.yield_files(file_to_check='verified_candidates.txt'):
+        for peer_nr, filename, dir in self.yield_files('verified_candidates.txt'):
             peer_connections = [line.rstrip('\n') for line in open(filename)]
             for peer_connection in peer_connections:
                 candidate_connections.add((peer_nr, int(peer_connection)))
@@ -81,7 +65,7 @@ class MarketStatisticsParser(object):
 
     def aggregate_bandwidth(self):
         total_up, total_down = 0, 0
-        for peer_nr, filename, dir in self.yield_files(file_to_check='bandwidth.txt'):
+        for peer_nr, filename, dir in self.yield_files('bandwidth.txt'):
             with open(filename) as bandwidth_file:
                 parts = bandwidth_file.read().rstrip('\n').split(",")
                 total_up += int(parts[0])
@@ -97,7 +81,7 @@ class MarketStatisticsParser(object):
         orders_str = "time,id,peer,is_ask,completed,price,quantity,reserved_quantity,traded_quantity,completed_time\n"
         orders_data_all = ""
 
-        for peer_nr, filename, dir in self.yield_files(file_to_check='orders.log'):
+        for peer_nr, filename, dir in self.yield_files('orders.log'):
             with open(filename) as order_file:
                 orders_data = order_file.read()
                 orders_str += orders_data
@@ -136,7 +120,7 @@ class MarketStatisticsParser(object):
         fulfilled_asks = 0
         fulfilled_bids = 0
 
-        for peer_nr, filename, dir in self.yield_files(file_to_check='market_stats.log'):
+        for peer_nr, filename, dir in self.yield_files('market_stats.log'):
             with open(filename) as stats_file:
                 stats_dict = json.loads(stats_file.read())
                 total_asks += stats_dict['asks']

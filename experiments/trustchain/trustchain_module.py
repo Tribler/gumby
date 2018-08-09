@@ -1,6 +1,8 @@
+import json
 from random import randint, choice
 
 from Tribler.Core import permid
+from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
 from Tribler.pyipv8.ipv8.attestation.trustchain.community import TrustChainCommunity
 from Tribler.pyipv8.ipv8.attestation.trustchain.listener import BlockListener
 
@@ -24,7 +26,7 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
         # We need the trustchain key at this point. However, the configured session is not started yet. So we generate
         # the keys here and place them in the correct place. When the session starts it will load these keys.
         trustchain_keypair = permid.generate_keypair_trustchain()
-        trustchain_pairfilename = self.tribler_config.get_trustchain_permid_keypair_filename()
+        trustchain_pairfilename = self.tribler_config.get_trustchain_keypair_filename()
         permid.save_keypair_trustchain(trustchain_keypair, trustchain_pairfilename)
         permid.save_pub_key_trustchain(trustchain_keypair, "%s.pub" % trustchain_pairfilename)
 
@@ -82,3 +84,9 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
 
     def received_block(self, block):
         pass
+
+    @experiment_callback
+    def write_trustchain_stats(self):
+        with open('trustchain.txt', 'w', 0) as trustchain_file:
+            wallet = TrustchainWallet(self.overlay)
+            trustchain_file.write(json.dumps(wallet.get_statistics()))
