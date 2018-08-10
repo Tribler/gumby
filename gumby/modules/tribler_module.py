@@ -1,7 +1,12 @@
-from os import path, remove
-from posix import environ
+import glob
+import os
 
+from posix import environ
+from random import Random
+
+import binascii
 import keyring
+from Tribler.pyipv8.ipv8.dht.provider import DHTCommunityProvider
 from keyrings.alt.file import PlaintextKeyring
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
@@ -28,6 +33,7 @@ class TriblerModule(BaseDispersyModule):
             'progress': 0.0,
             'upload': 0
         }
+        self.dht_provider = None
 
         # We don't use the system keychain but a PlainText keyring for performance during tests
         self._logger.info("Available keyrings: %s", keyring.backend.get_all_keyring())
@@ -52,6 +58,8 @@ class TriblerModule(BaseDispersyModule):
             self._logger.error("Tribler Session started")
             self.dispersy = self.session.lm.dispersy
             self.ipv8 = self.session.lm.ipv8
+            self.dht_provider = DHTCommunityProvider(self.session.lm.dht_community,
+                                                     self.session.config.get_libtorrent_port())
             self.dispersy_available.callback(self.dispersy)
 
         return self.session.start().addCallback(on_tribler_started)
@@ -83,15 +91,26 @@ class TriblerModule(BaseDispersyModule):
         ltsession.set_settings(settings)
 
     @experiment_callback
-    def transfer(self, action="download", file_name=None, hops=None, timeout=None):
+    def transfer(self, action="download", hops=None, timeout=None, download_id=None, length=None):
+        """
+        Start to seed/download a specific torrent file. After starting the download, it will either announce itself
+        in the DHT (when seeding) or look for peers (when downloading)
+
+        :param action: Whether to seed or download a torrent (either 'seed' or 'download')
+        :param hops: The number of hops to download/seed with
+        :param timeout: A timeout for this download (it will be removed when the timeout is triggered)
+        :param download_id: An identifier for the download, will be used to generate a unique download
+        :param length: The size of the download, defaults to self.transfer_size
+        """
         assert action in ("download", "seed"), "Invalid transfer kind"
 
-        if file_name is None:
-            file_name = path.basename(environ["SCENARIO_FILE"])
+        file_name = os.path.basename(environ["SCENARIO_FILE"])
+        if download_id:
+            download_id = int(download_id)
         else:
-            file_name = path.basename(environ["SCENARIO_FILE"]) + '-' + file_name
+            download_id = self.experiment.server_vars["global_random"]
 
-        file_name += str(self.experiment.server_vars["global_random"])
+        file_name += str(download_id)
 
         if hops is not None:
             hops = int(hops)
@@ -99,13 +118,18 @@ class TriblerModule(BaseDispersyModule):
         else:
             self._logger.info('Start transfer: %s file "%s"', action, file_name)
 
-        tdef = self.create_test_torrent(file_name)
+        if length:
+            length = int(length)
+        else:
+            length = self.transfer_size
+
+        tdef = self.create_test_torrent(file_name, download_id, length)
         dscfg = DefaultDownloadStartupConfig.getInstance().copy()
         if hops is not None:
             dscfg.set_hops(hops)
-        dscfg.set_dest_dir(path.join(environ["OUTPUT_DIR"], str(self.my_id)))
+        dscfg.set_dest_dir(os.path.join(environ["OUTPUT_DIR"], str(self.my_id)))
         if action == "download":
-            remove(path.join(dscfg.get_dest_dir(), file_name))
+            os.remove(os.path.join(dscfg.get_dest_dir(), file_name))
 
         def cb(ds):
             self._logger.info('transfer: %s infohash=%s, hops=%d, down=%d, up=%d, progress=%s, status=%s, seeds=%s',
@@ -138,7 +162,21 @@ class TriblerModule(BaseDispersyModule):
 
             return 1.0
 
-        self.session.start_download_from_tdef(tdef, dscfg).set_state_callback(cb)
+        download = self.session.start_download_from_tdef(tdef, dscfg)
+        download.set_state_callback(cb)
+
+        if action == 'seed':
+            # Announce to the DHT
+            self.dht_provider.announce(tdef.get_infohash())
+        elif action == 'download':
+            # Schedule a DHT lookup to fetch peers to add to this download
+            def on_peers(info):
+                _, peers, _ = info
+                self._logger.debug("Received peers for seeder lookup: %s", str(peers))
+                for peer in peers:
+                    download.add_peer(peer)
+
+            reactor.callLater(5, self.dht_provider.lookup, tdef.get_infohash(), on_peers)
 
         if timeout:
             reactor.callLater(long(timeout), self.session.remove_download_by_id, tdef.infohash, remove_content=True,
@@ -151,11 +189,24 @@ class TriblerModule(BaseDispersyModule):
         for download in self.session.get_downloads():
             download.add_peer((host, port))
 
-    def create_test_torrent(self, file_name):
-        if not path.exists(file_name):
+    @experiment_callback
+    def remove_download_data(self):
+        for f in glob.glob(environ["SCENARIO_FILE"] + "*"):
+            os.remove(f)
+
+    @staticmethod
+    def int2bytes(i):
+        hex_string = '%x' % i
+        n = len(hex_string)
+        return binascii.unhexlify(hex_string.zfill(n + (n & 1)))
+
+    def create_test_torrent(self, file_name, download_id, length):
+        if not os.path.exists(file_name):
             self._logger.info("Creating torrent data file %s", file_name)
             with open(file_name, 'wb') as fp:
-                fp.write("0" * self.transfer_size)
+                rand = Random()
+                rand.seed(download_id)
+                fp.write(TriblerModule.int2bytes(rand.getrandbits(8 * length)))
 
         tdef = TorrentDef()
         tdef.add_content(file_name)

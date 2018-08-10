@@ -15,7 +15,6 @@
 @0:20 transfer action=seed hops=0 {1}
 @0:30 annotate start-downloading
 @0:30 transfer hops=0 {2}
-@0:35 add_peer_to_downloads 1 {2}
 @0:70 write_tunnels_info
 @0:70 write_trustchain_stats
 @0:70 write_overlay_statistics
