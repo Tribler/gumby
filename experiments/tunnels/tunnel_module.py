@@ -57,7 +57,6 @@ class TunnelModule(IPv8OverlayExperimentModule):
     def on_id_received(self):
         super(TunnelModule, self).on_id_received()
         self.tribler_config.set_tunnel_community_enabled(True)
-        self.tribler_config.set_mainline_dht_enabled(True)
         self.tribler_config.set_libtorrent_enabled(True)
         self.tribler_config.set_tunnel_community_socks5_listen_ports([23000 + 100 * self.my_id + i for i in range(5)])
         self.tribler_config.set_tunnel_community_exitnode_enabled(False)
