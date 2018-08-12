@@ -1,6 +1,6 @@
 &module gumby.modules.tribler_module.TriblerModule
 &module experiments.dht.dht_module.DHTModule
-@0:0 isolate_ipv8_overlay DHTCommunity
+@0:0 isolate_ipv8_overlay DHTDiscoveryCommunity
 @0:1 start_session
 @0:1 annotate start-experiment
 @0:10 introduce_peers

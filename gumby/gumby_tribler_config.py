@@ -11,9 +11,3 @@ class GumbyTriblerConfig(TriblerConfig):
         super(GumbyTriblerConfig, self).__init__(config=config)
 
         self.config['trustchain']['enabled'] = True
-
-    def set_trustchain_enabled(self, enabled):
-        self.config['trustchain']['enabled'] = enabled
-
-    def get_trustchain_enabled(self):
-        return self.config['trustchain']['enabled']

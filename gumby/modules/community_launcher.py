@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 from Tribler.Core.DecentralizedTracking.dht_provider import MainlineDHTProvider
 from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
+from Tribler.pyipv8.ipv8.dht.provider import DHTCommunityProvider
 from Tribler.pyipv8.ipv8.peer import Peer
 from Tribler.pyipv8.ipv8.peerdiscovery.discovery import RandomWalk
 
@@ -229,7 +230,7 @@ class PreviewChannelCommunityLauncher(DispersyCommunityLauncher):
 class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
 
     def not_before(self):
-        return ['TrustChainCommunity']
+        return ['DHTDiscoveryCommunity', 'TrustChainCommunity']
 
     def should_launch(self, session):
         return session.config.get_tunnel_community_enabled()
@@ -243,7 +244,10 @@ class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
 
     def get_kwargs(self, session):
         kwargs = super(TriblerTunnelCommunityLauncher, self).get_kwargs(session)
-        kwargs['dht_provider'] = MainlineDHTProvider(session.lm.mainline_dht, session.config.get_dispersy_port())
+        if session.config.get_dht_enabled():
+            kwargs['dht_provider'] = DHTCommunityProvider(session.lm.dht_community, session.config.get_dispersy_port())
+        else:
+            kwargs['dht_provider'] = MainlineDHTProvider(session.lm.mainline_dht, session.config.get_dispersy_port())
         kwargs['bandwidth_wallet'] = TrustchainWallet(session.lm.trustchain_community)
         return kwargs
 
@@ -299,11 +303,15 @@ class DHTCommunityLauncher(IPv8CommunityLauncher):
         return session.config.get_dht_enabled()
 
     def get_overlay_class(self):
-        from Tribler.pyipv8.ipv8.dht.community import DHTCommunity
-        return DHTCommunity
+        from Tribler.pyipv8.ipv8.dht.discovery import DHTDiscoveryCommunity
+        return DHTDiscoveryCommunity
 
     def get_my_peer(self, ipv8, session):
         return Peer(session.trustchain_keypair)
 
     def get_kwargs(self, session):
         return {}
+
+    def finalize(self, dispersy, session, community):
+        super(DHTCommunityLauncher, self).finalize(dispersy, session, community)
+        session.lm.dht_community = community

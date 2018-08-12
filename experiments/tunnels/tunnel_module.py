@@ -36,7 +36,6 @@
 #
 
 # Code:
-import json
 import time
 
 from Tribler.Core.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
@@ -58,7 +57,6 @@ class TunnelModule(IPv8OverlayExperimentModule):
     def on_id_received(self):
         super(TunnelModule, self).on_id_received()
         self.tribler_config.set_tunnel_community_enabled(True)
-        self.tribler_config.set_mainline_dht_enabled(True)
         self.tribler_config.set_libtorrent_enabled(True)
         self.tribler_config.set_tunnel_community_socks5_listen_ports([23000 + 100 * self.my_id + i for i in range(5)])
         self.tribler_config.set_tunnel_community_exitnode_enabled(False)
@@ -73,6 +71,16 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
             for state in dslist:
                 download = state.get_download()
+
+                # Check the peers of this download every five seconds and add them to the payout manager when
+                # this peer runs a Tribler instance
+                if download.get_hops() == 0:
+                    for peer in download.get_peerlist():
+                        if 'Tribler' in peer["extended_version"]:
+                            self.session.lm.payout_manager.update_peer(peer["id"].decode('hex'),
+                                                                       download.get_def().get_infohash(),
+                                                                       peer["dtotal"])
+
                 status_dict = {
                     "time": time.time() - self.experiment.scenario_runner._expstartstamp,
                     "infohash": download.get_def().get_infohash().encode('hex'),
@@ -127,11 +135,6 @@ class TunnelModule(IPv8OverlayExperimentModule):
     def build_circuits(self, hops):
         self._logger.info("Start building circuits")
         self.overlay.build_tunnels(int(hops))
-
-    @experiment_callback
-    def write_trustchain_stats(self):
-        with open('trustchain.txt', 'w', 0) as trustchain_file:
-            trustchain_file.write(json.dumps(self.overlay.bandwidth_wallet.get_statistics()))
 
     @experiment_callback
     def write_tunnels_info(self):
