@@ -16,7 +16,7 @@
 @0:30 annotate start-downloading
 @0:30 transfer hops=0 {2}
 @0:70 write_tunnels_info
-@0:70 write_trustchain_stats
+@0:70 write_trustchain_statistics
 @0:70 write_overlay_statistics
 @0:72 stop_session
 @0:80 stop
