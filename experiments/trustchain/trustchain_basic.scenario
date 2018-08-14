@@ -7,5 +7,7 @@
 @0:10 introduce_peers
 @0:70 start_requesting_signatures
 @0:130 stop_requesting_signatures
+@0:138 write_overlay_statistics
+@0:138 write_trustchain_statistics
 @0:140 stop_session
 @0:150 stop

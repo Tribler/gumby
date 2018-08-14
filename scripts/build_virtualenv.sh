@@ -86,7 +86,7 @@ mkdir -p $VENV/src
 source $VENV/bin/activate
 
 # Install apsw manually as it is not available trough pip (well, it is but it's not the official will :)
-APSW_VERSION=3.23.1-r1
+APSW_VERSION=3.24.0-r1
 APSW_MARKER=`build_marker apsw $APSW_VERSION`
 if [ ! -e $VENV/lib/python2.*/site-packages/apsw-*.egg -o ! -e $APSW_MARKER ]; then
     pushd $VENV/src
@@ -97,7 +97,7 @@ if [ ! -e $VENV/lib/python2.*/site-packages/apsw-*.egg -o ! -e $APSW_MARKER ]; t
         unzip apsw*.zip
     fi
     cd apsw*/
-    python setup.py fetch --missing-checksum-ok --all build --enable-all-extensions install
+    python setup.py fetch --missing-checksum-ok --all --version=3.24.0 build --enable-all-extensions install
     popd
     touch $APSW_MARKER
 fi

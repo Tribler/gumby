@@ -165,7 +165,7 @@
 @0:295 transfer download_id=53715 length=48043538 hops=0 {8}
 @0:298 transfer download_id=39478 length=22244220 hops=0 {24}
 @0:320 write_tunnels_info
-@0:320 write_trustchain_stats
+@0:320 write_trustchain_statistics
 @0:320 write_overlay_statistics
 @0:322 stop_session
 @0:329 remove_download_data

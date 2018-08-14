@@ -86,7 +86,7 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
         pass
 
     @experiment_callback
-    def write_trustchain_stats(self):
+    def write_trustchain_statistics(self):
         with open('trustchain.txt', 'w', 0) as trustchain_file:
             wallet = TrustchainWallet(self.overlay)
             trustchain_file.write(json.dumps(wallet.get_statistics()))

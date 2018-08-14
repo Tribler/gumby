@@ -146,11 +146,12 @@ class TunnelModule(IPv8OverlayExperimentModule):
                 circuits_file.write('%s,%s,%s,%s,%s,%s,%s,%s:%d\n' % (circuit_id, str(circuit.state), circuit.goal_hops,
                                                                       circuit.bytes_up, circuit.bytes_down,
                                                                       circuit.creation_time, circuit.ctype,
-                                                                      circuit.sock_addr[0], circuit.sock_addr[1]))
+                                                                      circuit.peer.address[0], circuit.peer.address[1]))
 
         with open('relays.txt', 'w', 0) as relays_file:
             for circuit_id_1, relay in self.overlay.relay_from_to.iteritems():
-                relays_file.write('%s,%s,%s:%d,%s\n' % (circuit_id_1, relay.circuit_id, relay.sock_addr[0], relay.sock_addr[1], relay.bytes_up))
+                relays_file.write('%s,%s,%s:%d,%s\n' % (circuit_id_1, relay.circuit_id, relay.peer.address[0],
+                                                        relay.peer.address[1], relay.bytes_up))
 
         with open('downloads_history.txt', 'w', 0) as downloads_file:
             for state_dict in self.download_states_history:
