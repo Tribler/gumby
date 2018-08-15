@@ -279,7 +279,7 @@ class TrustChainCommunityLauncher(IPv8CommunityLauncher):
 class MarketCommunityLauncher(IPv8CommunityLauncher):
 
     def not_before(self):
-        return ['TrustChainCommunity']
+        return ['DHTDiscoveryCommunity', 'TrustChainCommunity']
 
     def should_launch(self, session):
         return session.config.get_market_community_enabled()
@@ -294,6 +294,7 @@ class MarketCommunityLauncher(IPv8CommunityLauncher):
     def get_kwargs(self, session):
         kwargs = super(MarketCommunityLauncher, self).get_kwargs(session)
         kwargs['trustchain'] = session.lm.trustchain_community
+        kwargs['dht'] = session.lm.dht_community
         return kwargs
 
 

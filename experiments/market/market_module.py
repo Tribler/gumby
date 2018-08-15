@@ -31,6 +31,7 @@ class MarketModule(IPv8OverlayExperimentModule):
 
     def on_id_received(self):
         super(MarketModule, self).on_id_received()
+        self.tribler_config.set_dht_enabled(True)
         self.tribler_config.set_market_community_enabled(True)
 
     def on_dispersy_available(self, dispersy):

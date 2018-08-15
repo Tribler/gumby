@@ -1,12 +1,16 @@
 &module gumby.modules.tribler_module.TriblerModule
 &module experiments.market.market_module.MarketModule
+&module experiments.dht.dht_module.DHTModule
 
+@0:0 isolate_ipv8_overlay DHTDiscoveryCommunity
 @0:0 isolate_ipv8_overlay MarketCommunity
 @0:1 start_session
 @0:1 annotate start-experiment
 @0:5 init_wallets
 @0:5 init_matchmakers
 @0:10 connect_matchmakers 10
+@0:10 introduce_peers_dht
+@0:20 do_dht_announce
 @0:45 annotate start-trading
 @0:45.1 bid 10 DUM1 10 DUM2 {1}
 @0:45.2 bid 10 DUM1 10 DUM2 {2}
