@@ -28,6 +28,12 @@ class DHTModule(IPv8OverlayExperimentModule):
         self.overlay._use_main_thread = True
 
     @experiment_callback
+    def introduce_peers_dht(self):
+        for peer_id in self.all_vars.iterkeys():
+            if int(peer_id) != self.my_id:
+                self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
+
+    @experiment_callback
     def store(self, key, value):
         self.log_timing(self.overlay.store_value(key.decode('hex'), value), 'store')
 
