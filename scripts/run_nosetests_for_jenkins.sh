@@ -180,7 +180,7 @@ else
 fi
 
 python-coverage combine
-python-coverage xml -o $OUTPUT_DIR/coverage.xml
+python-coverage xml -i -o $OUTPUT_DIR/coverage.xml
 
 chmod 644 $OUTPUT_DIR/coverage.xml
 
