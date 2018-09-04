@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # run.py ---
 #
 # Filename: run.py
@@ -390,7 +390,7 @@ class OneShotProcessProtocol(ProcessProtocol):
 
     def outReceived(self, data):
         # we could recv more than 1 line and/or a partial line.
-        self._stdout_bytes += data
+        self._stdout_bytes += data.decode('utf-8')
         remainder = ""
         for line in self._stdout_bytes.splitlines(True):
             if line.endswith('\n'):
@@ -402,7 +402,7 @@ class OneShotProcessProtocol(ProcessProtocol):
         self._stdout_bytes = remainder
 
     def errReceived(self, data):
-        self._stderr_bytes += data
+        self._stderr_bytes += data.decode('utf-8')
         remainder = ""
         for line in self._stderr_bytes.splitlines(True):
             if line.endswith('\n'):

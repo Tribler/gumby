@@ -7,6 +7,7 @@ from time import time
 from collections import Iterable
 from os import environ, path, makedirs, chdir
 
+import functools
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
@@ -43,7 +44,7 @@ def experiment_callback(name=None):
         return experiment_callback_wrapper
 
 
-class ExperimentClient(object, LineReceiver):
+class ExperimentClient(LineReceiver):
     # Allow for 4MB long lines (for the json stuff)
     MAX_LENGTH = 2 ** 22
 
@@ -83,7 +84,7 @@ class ExperimentClient(object, LineReceiver):
 
     def connectionMade(self):
         self._logger.debug("Connected to the experiment server")
-        self.sendLine("time:%f" % time())
+        self.sendLine(("time:%f" % time()).encode('utf-8'))
 
         self.state = "id"
 
@@ -114,8 +115,8 @@ class ExperimentClient(object, LineReceiver):
             if module is not self:
                 module.on_id_received()
 
-        for key, val in self.vars.iteritems():
-            self.sendLine("set:%s:%s" % (key, val))
+        for key, val in self.vars.items():
+            self.sendLine(("set:%s:%s" % (key, val)).encode('utf-8'))
 
     def on_all_vars_received(self):
         for module in self.experiment_modules:
@@ -127,7 +128,7 @@ class ExperimentClient(object, LineReceiver):
 
     def get_peer_id(self, ip, port):
         port = int(port)
-        for peer_id, peer_dict in self.all_vars.iteritems():
+        for peer_id, peer_dict in self.all_vars.items():
             if peer_dict['host'] == ip and int(peer_dict['port']) == port:
                 return peer_id
 
@@ -147,7 +148,7 @@ class ExperimentClient(object, LineReceiver):
     def proto_id(self, line):
         # We should get a line such as:
         # id:SOMETHING
-        maybe_id, id = line.strip().split(':', 1)
+        maybe_id, id = line.decode('utf-8').strip().split(':', 1)
         if maybe_id == "id":
             if "PEER_ID" in os.environ:
                 self.my_id = int(os.environ["PEER_ID"])
@@ -156,13 +157,14 @@ class ExperimentClient(object, LineReceiver):
 
             self._logger.debug('Got assigned id: %s', self.my_id)
             d = deferToThread(self.on_id_received)
-            d.addCallback(lambda _: self.sendLine("ready"))
+            d.addCallback(lambda _: self.sendLine("ready".encode('utf-8')))
             return "all_vars"
         else:
             self._logger.error("Received an unexpected string from the server, closing connection")
             return "done"
 
     def proto_all_vars(self, line):
+        line = line.decode('utf-8')
         self._logger.debug("Got experiment variables")
 
         all_vars = json.loads(line)
@@ -176,10 +178,11 @@ class ExperimentClient(object, LineReceiver):
         self.time_offset = self.all_vars[str(self.my_id)]["time_offset"]
         self.on_all_vars_received()
 
-        self.sendLine("vars_received")
+        self.sendLine("vars_received".encode('utf-8'))
         return "go"
 
     def proto_go(self, line):
+        line = line.decode('utf-8')
         self._logger.debug("Got GO signal")
         if line.strip().startswith("go:"):
             start_delay = max(0, float(line.strip().split(":")[1]) - time())
@@ -239,7 +242,7 @@ class ExperimentClient(object, LineReceiver):
             new_values = {}
             changed_values = {}
             if cur_dict:
-                for key, value in cur_dict.iteritems():
+                for key, value in cur_dict.items():
                     # convert key to make it printable
                     if not isinstance(key, (basestring, int, long, float)):
                         key = str(key)
@@ -413,7 +416,7 @@ class ExperimentClient(object, LineReceiver):
             logger.error("Unable to import %s (from %s:%d)", directory_path, file_name, line_number, exc_info=True)
             return None
 
-        return reduce(getattr, classes, stuff)
+        return functools.reduce(getattr, classes, stuff)
 
     def _preproc_module(self, filename, line_number, line):
         """

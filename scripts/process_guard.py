@@ -1,8 +1,7 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Mircea Bardac
 # Rewritten by Elric Milon (Dec. 2012 and Aug. 2013)
 
-import exceptions
 import json
 from glob import iglob
 from math import ceil
@@ -71,7 +70,7 @@ class ResourceMonitor(object):
             else:
                 return True
         pids_to_remove = set()
-        for pid, popen in self.pid_dict.iteritems():
+        for pid, popen in self.pid_dict.items():
             if popen.poll() is not None:
                 pids_to_remove.add(pid)
 
@@ -84,7 +83,7 @@ class ResourceMonitor(object):
                 p = self.pid_dict.pop(pid)
                 status = p.poll()
                 if self.verbose:
-                    print "Command:\n\t %s\n\t exited with status: %d" % (p.cmd, status)
+                    print("Command:\n\t %s\n\t exited with status: %d" % (p.cmd, status))
                 if status:
                     self.failed_commands[pid] = (p.cmd, status)
             if pid in self.pid_list:
@@ -117,9 +116,9 @@ class ResourceMonitor(object):
                         stats.append(line.split(': ')[1][:-1])  # Skip the newline
 
                     except Exception as e:
-                        print "Got exception while reading/splitting line:"
-                        print e
-                        print "Line contents are:", line
+                        print("Got exception while reading/splitting line:")
+                        print(e)
+                        print("Line contents are: %s" % line)
                 yield ' '.join(stats)
 
             except IOError:
@@ -169,7 +168,7 @@ class ResourceMonitor(object):
         else:
             stdout = stderr = None
 
-        print >> stdout, "Starting #%05d: %s" % (self.cmd_counter, cmd)
+        print("Starting #%05d: %s" % (self.cmd_counter, cmd))
         if stdout:
             stdout.flush()
         p = PGPopen(cmd, shell=True, stdout=stdout, stderr=stderr, close_fds=True, env=None, preexec_fn=setsid)
@@ -188,12 +187,12 @@ class ResourceMonitor(object):
 
         self.prune_pid_list()
         for id, p in self.pid_dict.items():
-            print "TERMinating group. Still %i process(es) running:" % len(self.pid_dict)
+            print("TERMinating group. Still %i process(es) running:" % len(self.pid_dict))
             for pid in self.get_pid_list():
                 try:
                     with open("/proc/%d/cmdline" % pid, 'r') as cmd:
-                        print " - %s" % cmd.read()
-                except exceptions.IOError:
+                        print(" - %s" % cmd.read())
+                except IOError:
                     pass
             killpg(id, SIGTERM)  # kill the entire process group, we are ignoring the SIGTERM.
 
@@ -201,8 +200,8 @@ class ResourceMonitor(object):
             sleep(0.1)
             self.prune_pid_list()
             if self.pid_dict:
-                    print "Some processes survived SIGTERM."
-                    print "Nuking the whole thing, have a nice day..."
+                    print("Some processes survived SIGTERM.")
+                    print("Nuking the whole thing, have a nice day...")
                     for id, p in self.pid_dict.items():
                         killpg(id, SIGKILL)  # kill the entire process group
 
@@ -273,16 +272,16 @@ class ProcessMonitor(object):
         failed = self._rm.get_failed_commands()
         self._rm.terminate()
         if failed:
-            print "Some processes failed:"
-            for pid, (command, exit_code) in failed.iteritems():
-                print "  %s (%d) exited value: %d" % (command, pid, exit_code)
-            print "Process guard exiting with error"
+            print("Some processes failed:")
+            for pid, (command, exit_code) in failed.items():
+                print("  %s (%d) exited value: %d" % (command, pid, exit_code))
+            print("Process guard exiting with error")
             return COMMANDS_FAILED_EXIT_CODE
         else:
             return OK_EXIT_CODE
 
     def _termTrap(self, *argv):
-        print "Captured TERM signal"
+        print("Captured TERM signal")
         if not self.stopping:
             self.stop()
 
@@ -303,7 +302,7 @@ class ProcessMonitor(object):
                 last_subprocess_update = timestamp
 
             if self._rm.is_everyone_dead():
-                print "All child processes have died, exiting"
+                print("All child processes have died, exiting")
                 return self.stop()
 
             elif self.monitor_file:
@@ -314,7 +313,7 @@ class ProcessMonitor(object):
 
                 sleep_time = next_wake - timestamp
                 if sleep_time < 0:
-                    print "Can't keep up with this interval, try a higher value!", sleep_time
+                    print("Can't keep up with this interval, try a higher value! %s" % sleep_time)
                     return self.stop()
 
             if self.network_monitor_file:
@@ -353,7 +352,7 @@ class ProcessMonitor(object):
                         pass  # Just ignore the number of threads of this invalid process
 
             if self.end_time and timestamp > self.end_time:  # if self.end_time == 0 the time out is disabled.
-                print "Time out, killing monitored processes."
+                print("Time out, killing monitored processes.")
                 self.timed_out = True
                 return self.stop()
             sleep(sleep_time)
@@ -422,7 +421,7 @@ if __name__ == "__main__":
         parser.error("Could not collect a list of commands to run.\nMake sure that the commands file is not empty or has all the lines commented out.")
 
     if options.output_dir and not path.exists(options.output_dir):
-        print "making output directory: %s" % options.output_dir
+        print("making output directory: %s" % options.output_dir)
         makedirs(options.output_dir)
 
     pm = ProcessMonitor(commands, options.timeout, options.interval, options.output_dir, options.monitor_dir, options.network)
@@ -430,8 +429,8 @@ if __name__ == "__main__":
         exit(pm.monitoring_loop())
 
     except KeyboardInterrupt as RuntimeError:
-        print "Killing monitored processes..."
+        print("Killing monitored processes...")
         pm.stop()
-        print "Done."
+        print("Done.")
     if pm.timed_out and options.fail_on_timeout:
         exit(TIMEOUT_EXIT_CODE)

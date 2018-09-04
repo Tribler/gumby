@@ -106,7 +106,8 @@ class ExperimentServiceProto(LineReceiver):
 
     def sendAndWaitForReady(self):
         self.ready_d = Deferred()
-        self.sendLine("id:%s" % self.id)
+        id_str = "id:%s" % self.id
+        self.sendLine(id_str.encode('utf-8'))
         return self.ready_d
 
     def connectionLost(self, reason=connectionDone):
@@ -119,6 +120,7 @@ class ExperimentServiceProto(LineReceiver):
     #
 
     def proto_init(self, line):
+        line = line.decode('utf-8')
         if line.startswith("time"):
             self.vars["time_offset"] = float(line.strip().split(':')[1]) - time()
             if abs(self.vars['time_offset']) < 0.5:  # ignore time_offset if smaller than +0.5/-0.5
@@ -146,6 +148,7 @@ class ExperimentServiceProto(LineReceiver):
             return 'done'
 
     def proto_vars_received(self, line):
+        line = line.decode('utf-8')
         if line.strip() == 'vars_received':
             self.factory.setConnectionReceived(self)
             return "wait"
@@ -154,6 +157,7 @@ class ExperimentServiceProto(LineReceiver):
         return 'done'
 
     def proto_wait(self, line):
+        line = line.decode('utf-8')
         self._logger.error('Unexpected command received "%s" while in ready state. Closing connection', line)
         return 'done'
 
@@ -253,7 +257,7 @@ class ExperimentServiceFactory(Factory):
 
     def _sendLineToAllGenerator(self, line):
         for subscriber in self.connections_ready:
-            yield subscriber.sendLine(line)
+            yield subscriber.sendLine(line.encode('utf-8'))
 
     def setConnectionReceived(self, proto):
         self._timeout_delayed_call.reset(EXPERIMENT_SYNC_TIMEOUT)
@@ -283,7 +287,7 @@ class ExperimentServiceFactory(Factory):
         start_time = time() + self.experiment_start_delay
         for subscriber in self.connections_ready:
             # Sync the experiment start time among instances
-            subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
+            subscriber.sendLine(("go:%f" % (start_time + subscriber.vars['time_offset'])).encode('utf-8'))
 
         d = deferLater(reactor, 5, lambda: self._logger.info("Done, disconnecting all clients."))
         d.addCallback(lambda _: self.disconnectAll())

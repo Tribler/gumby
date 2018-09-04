@@ -67,7 +67,7 @@ post_process_cmd = string(default="")
 
 use_local_venv = boolean(default=True)
 use_remote_venv = boolean(default=True)
-virtualenv_dir = string(default="$HOME/venv")
+virtualenv_dir = string(default="$HOME/venv3")
 '''
 
 
@@ -84,15 +84,15 @@ def loadConfig(file_path):
         # ID, the experiment name, the experiment execution dir and the config option name.
         if value == '__unique_port__':
             md5sum = md5()
-            md5sum.update(getuser())
-            md5sum.update(config['experiment_name'])
-            md5sum.update(path.abspath(curdir))
-            md5sum.update(key)
+            md5sum.update(getuser().encode('utf-8'))
+            md5sum.update(config['experiment_name'].encode('utf-8'))
+            md5sum.update(path.abspath(curdir).encode('utf-8'))
+            md5sum.update(key.encode('utf-8'))
             config[key] = int(md5sum.hexdigest()[-16:], 16) % 20000 + 20000
 
     # Override config options with env. variables.
     revalidate = False
-    for key, value in environ.iteritems():
+    for key, value in environ.items():
         if key.startswith("GUMBY_"):
             name = key[6:].lower()  # "GUMBY_".len()
             config[name] = value

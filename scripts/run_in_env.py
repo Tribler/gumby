@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # run_in_env.py ---
 #
 # Filename: run_in_env.py
@@ -63,7 +63,7 @@ def expand_var(var):
 
 # move to the project root dir, which is the parent of the one where this file is located (PROJECT_DIR/scripts/THIS_FILE)
 project_dir = path.abspath(path.join(path.dirname(path.abspath(__file__)), '..', '..'))
-print 'Project root is:', project_dir
+print('Project root is: %s' % project_dir)
 
 scripts_dir = path.join(project_dir, "gumby/scripts")
 r_scripts_dir = path.join(scripts_dir, "r")
@@ -76,12 +76,12 @@ chdir(project_dir)
 if len(sys.argv) >= 3:
     conf_path = path.abspath(sys.argv[1])
     if not path.exists(conf_path):
-        print "Error: The specified configuration file (%s) doesn't exist." % conf_path
+        print("Error: The specified configuration file (%s) doesn't exist." % conf_path)
         exit(2)
     config = loadConfig(conf_path)
     experiment_dir = path.abspath(path.dirname(path.abspath(conf_path)))
 else:
-    print "Usage:\n%s EXPERIMENT_CONFIG COMMAND" % sys.argv[0]
+    print("Usage:\n%s EXPERIMENT_CONFIG COMMAND" % sys.argv[0])
     exit(1)
 
 environ.update(configToEnv(config))
@@ -118,7 +118,7 @@ extend_var(environ, "R_SCRIPTS_PATH", r_scripts_dir)
 running_local_and_virtualenv_disabled = not (environ.get("USE_LOCAL_VENV", "False").lower() == environ.get("LOCAL_RUN", "False").lower() == "true")
 if not running_local_and_virtualenv_disabled and "VIRTUALENV_DIR" in environ and path.exists(expand_var(environ["VIRTUALENV_DIR"])):
     venv_dir = path.abspath(expand_var(environ["VIRTUALENV_DIR"]))
-    print "Activating virtualenv at", venv_dir
+    print("Activating virtualenv at %s" % venv_dir)
     extend_var(environ, "LD_LIBRARY_PATH", path.join(venv_dir, "inst/lib"))
     extend_var(environ, "LD_LIBRARY_PATH", path.join(venv_dir, "lib"))  # TODO: Check if this one is needed
     extend_var(environ, "PATH", path.join(venv_dir, "inst/bin"))
@@ -127,7 +127,7 @@ if not running_local_and_virtualenv_disabled and "VIRTUALENV_DIR" in environ and
     environ["VIRTUAL_ENV"] = venv_dir
     extend_var(environ, "PATH", path.join(venv_dir, "bin"))
 else:
-    print "NOT activating virtualenv."
+    print("NOT activating virtualenv.")
 
 # @CONF_OPTION OUTPUT_DIR: Dir where to write all the output generated from the experiment (default is workspace_dir/output)
 # Create the experiment output dir if necessary
@@ -141,7 +141,7 @@ if 'OUTPUT_DIR' in environ:
 
 # Run the actual command
 cmd = expand_var(" ".join(sys.argv[2:]))
-print "Running", cmd
+print("Running", cmd)
 
 argv = (shlex.split(cmd))
 

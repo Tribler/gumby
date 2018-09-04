@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # scenario.py ---
 #
 # Filename: scenario.py
@@ -229,7 +229,7 @@ class ScenarioParser(object):
                     # parse the peer number (or peer number pair)
                     if "-" in peer:
                         low, high = peer.split("-")
-                        peers.update(xrange(int(low), int(high) + 1))
+                        peers.update(range(int(low), int(high) + 1))
                     else:
                         peers.add(int(peer))
 
