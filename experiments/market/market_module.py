@@ -149,17 +149,6 @@ class MarketModule(IPv8OverlayExperimentModule):
             for matchmaker in self.overlay.matchmakers:
                 matchmakers_file.write("%s,%d\n" % (matchmaker.address[0], matchmaker.address[1]))
 
-        # Write verified candidates
-        with open('verified_candidates.txt', 'w', 0) as candidates_files:
-            for peer in self.overlay.network.get_peers_for_service(self.overlay.master_peer.mid):
-                if peer.address[1] > 15000:
-                    continue
-                candidates_files.write('%d\n' % (peer.address[1] - 12000))
-
-        # Write bandwidth statistics
-        with open('bandwidth.txt', 'w', 0) as bandwidth_file:
-            bandwidth_file.write("%d,%d" % (self.overlay.endpoint.bytes_up, self.overlay.endpoint.bytes_down))
-
         # Get statistics about the amount of fulfilled orders (asks/bids)
         fulfilled_asks = 0
         fulfilled_bids = 0

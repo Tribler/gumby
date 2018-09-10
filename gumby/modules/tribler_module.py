@@ -227,3 +227,13 @@ class TriblerModule(BaseDispersyModule):
             for overlay in self.session.lm.ipv8.overlays:
                 overlays_file.write("%s,%s\n" % (overlay.__class__.__name__,
                                                  overlay.my_peer.public_key.key_to_bin().encode('hex')))
+
+        # Write verified peers
+        with open('verified_peers.txt', 'w', 0) as peers_file:
+            for peer in self.session.lm.ipv8.network.verified_peers:
+                peers_file.write('%d\n' % (peer.address[1] - 12000))
+
+        # Write bandwidth statistics
+        with open('bandwidth.txt', 'w', 0) as bandwidth_file:
+            bandwidth_file.write("%d,%d" % (self.session.lm.ipv8.endpoint.bytes_up,
+                                            self.session.lm.ipv8.endpoint.bytes_down))
