@@ -11,3 +11,10 @@ class GumbyTriblerConfig(TriblerConfig):
         super(GumbyTriblerConfig, self).__init__(config=config)
 
         self.config['trustchain']['enabled'] = True
+        self.config['ipv8']['discovery'] = False
+
+    def set_ipv8_discovery(self, value):
+        self.config['ipv8']['discovery'] = value
+
+    def get_ipv8_discovery(self):
+        return self.config['ipv8']['discovery']

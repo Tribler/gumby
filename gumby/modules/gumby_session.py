@@ -125,6 +125,7 @@ class IPv8CommunityLoader(CommunityLoader):
 
     def __init__(self):
         super(IPv8CommunityLoader, self).__init__()
+        self.set_launcher(IPv8DiscoveryCommunityLauncher())
         self.set_launcher(TrustChainCommunityLauncher())
         self.set_launcher(TriblerTunnelCommunityLauncher())
         self.set_launcher(MarketCommunityLauncher())
@@ -138,15 +139,15 @@ class IPv8CommunityLoader(CommunityLoader):
         launcher.prepare(ipv8, session)
         # Register community
         overlay_class = launcher.get_overlay_class()
-        walk_strategy_class = launcher.get_walk_strategy_class()
-        walk_strategy_max_peers = launcher.get_walk_strategy_max_peers()
+        walk_strategies = launcher.get_walk_strategies()
         peer = launcher.get_my_peer(ipv8, session)
         args = launcher.get_args(session)
         kwargs = launcher.get_kwargs(session)
         overlay = overlay_class(peer, ipv8.endpoint, ipv8.network, *args, **kwargs)
 
         ipv8.overlays.append(overlay)
-        ipv8.strategies.append((walk_strategy_class(overlay), walk_strategy_max_peers))
+        for strategy_class, strategy_kwargs, max_peers in walk_strategies:
+            ipv8.strategies.append((strategy_class(overlay, **strategy_kwargs), max_peers))
 
         # Cleanup
         launcher.finalize(ipv8, session, overlay)

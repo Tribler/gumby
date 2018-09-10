@@ -1,0 +1,10 @@
+&module gumby.modules.tribler_module.TriblerModule
+&module experiments.ipv8.discovery_module.DiscoveryModule
+@0:0 enable_ipv8_statistics
+@0:1 start_session
+@0:1 annotate start-experiment
+@0:5 introduce_some_peers 10
+@0:58 write_overlay_statistics
+@0:60 stop_session
+@0:65 write_overlay_statistics
+@0:67 stop
