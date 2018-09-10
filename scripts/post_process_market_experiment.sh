@@ -3,5 +3,5 @@
 # Parse statistics about the market community
 gumby/experiments/market/parse_market_statistics.py .
 
-# Run the regular process guard script
-graph_process_guard_data.sh
+# Invoke the IPv8 experiment process which will also plot our market statistics
+post_process_ipv8_experiment.sh

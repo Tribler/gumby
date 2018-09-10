@@ -153,6 +153,10 @@ class IPv8CommunityLoader(CommunityLoader):
         launcher.finalize(ipv8, session, overlay)
         self.community_launchers[launcher.get_name()] = (launcher, True)
 
+        # Enable community statistics if applicable
+        if session.config.get_ipv8_statistics():
+            ipv8.endpoint.enable_community_statistics(overlay.get_prefix(), True)
+
 
 class GumbyLaunchMany(TriblerLaunchMany):
 

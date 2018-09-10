@@ -50,17 +50,17 @@ class MarketStatisticsParser(StatisticsParser):
             transactions_file.write("time,transactions\n")
             transactions_file.write(transactions_cumulative_str)
 
-    def aggregate_candidate_connections(self):
-        candidate_connections = set()
+    def aggregate_peer_connections(self):
+        peers_connections = set()
 
-        for peer_nr, filename, dir in self.yield_files('verified_candidates.txt'):
+        for peer_nr, filename, dir in self.yield_files('verified_peers.txt'):
             peer_connections = [line.rstrip('\n') for line in open(filename)]
             for peer_connection in peer_connections:
-                candidate_connections.add((peer_nr, int(peer_connection)))
+                peers_connections.add((peer_nr, int(peer_connection)))
 
-        with open('candidate_connections.log', 'w', 0) as connections_file:
+        with open('peer_connections.log', 'w', 0) as connections_file:
             connections_file.write("peer_a,peer_b\n")
-            for peer_a, peer_b in candidate_connections:
+            for peer_a, peer_b in peers_connections:
                 connections_file.write("%d,%d\n" % (peer_a, peer_b))
 
     def aggregate_bandwidth(self):
@@ -140,7 +140,7 @@ class MarketStatisticsParser(StatisticsParser):
 
     def run(self):
         self.aggregate_transaction_data()
-        self.aggregate_candidate_connections()
+        self.aggregate_peer_connections()
         self.aggregate_order_data()
         self.aggregate_general_stats()
         self.aggregate_bandwidth()

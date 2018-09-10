@@ -4,8 +4,10 @@
 
 @0:0 isolate_ipv8_overlay DHTDiscoveryCommunity
 @0:0 isolate_ipv8_overlay MarketCommunity
+@0:0 enable_ipv8_statistics
 @0:1 start_session
 @0:1 annotate start-experiment
+@0:3 start_ipv8_statistics_monitor
 @0:5 init_wallets
 @0:5 init_matchmakers
 @0:10 connect_matchmakers 10
@@ -53,5 +55,6 @@
 @0:48.9 ask 10 DUM1 10 DUM2 {39}
 @0:49.0 ask 10 DUM1 10 DUM2 {40}
 @0:68 write_stats
+@0:68 write_overlay_statistics
 @0:70 stop_session
 @0:90 stop

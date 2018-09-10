@@ -1,6 +1,9 @@
+import json
 from os import environ, makedirs, symlink, path, getpid
 
+import time
 from twisted.internet.defer import Deferred
+from twisted.internet.task import LoopingCall
 
 from gumby.experiment import experiment_callback
 from gumby.gumby_tribler_config import GumbyTriblerConfig
@@ -23,6 +26,22 @@ class BaseDispersyModule(ExperimentModule):
         self.custom_dispersy_community_loader = self.create_dispersy_community_loader()
         self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
         self.dispersy_available = Deferred()
+        self.ipv8_statistics_monitor = LoopingCall(self.write_ipv8_statistics)
+
+    def write_ipv8_statistics(self):
+        statistics = self.session.lm.ipv8.endpoint.statistics
+
+        # Cleanup this dictionary
+        time_elapsed = time.time() - self.experiment.scenario_runner._expstartstamp
+        new_dict = {"time": time_elapsed, "stats": {}}
+        for overlay_prefix, messages_dict in statistics.iteritems():
+            hex_prefix = overlay_prefix.encode('hex')
+            new_dict["stats"][hex_prefix] = {}
+            for msg_id, msg_stats in messages_dict.iteritems():
+                new_dict["stats"][hex_prefix][msg_id] = msg_stats.to_dict()
+
+        with open('ipv8_statistics.txt', 'a') as statistics_file:
+            statistics_file.write(json.dumps(new_dict) + '\n')
 
     def on_id_received(self):
         super(BaseDispersyModule, self).on_id_received()
@@ -38,6 +57,14 @@ class BaseDispersyModule(ExperimentModule):
     def start_session(self):
         self.session = GumbySession(config=self.tribler_config)
         self.tribler_config = None
+
+    @experiment_callback
+    def enable_ipv8_statistics(self):
+        self.tribler_config.set_ipv8_statistics(True)
+
+    @experiment_callback
+    def start_ipv8_statistics_monitor(self):
+        self.ipv8_statistics_monitor.start(1)
 
     @experiment_callback
     def set_dispersy_port(self, port):
