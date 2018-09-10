@@ -104,6 +104,7 @@ class BaseDispersyModule(ExperimentModule):
         config.set_dispersy_port(self.dispersy_port)
         config.set_tunnel_community_enabled(False)
         config.set_dht_enabled(False)
+        config.set_version_checker_enabled(False)
         return config
 
     @classmethod
