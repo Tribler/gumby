@@ -110,9 +110,9 @@ if __name__ == '__main__':
         logger.info("Killing leftover local sub processes...")
         pids_found = _killGroup()
         wait_start_time = time()
-        while pids_found and (time() - wait_start_time) < 30:
+        while pids_found > 1 and (time() - wait_start_time) < 30:
             pids_found = _killGroup()
-            if pids_found:
+            if pids_found > 1:
                 logger.info("Waiting for %d subprocess(es) to die...", pids_found)
             sleep(5)
 

@@ -82,7 +82,7 @@ class TunnelModule(IPv8OverlayExperimentModule):
                                                                        peer["dtotal"])
 
                 status_dict = {
-                    "time": time.time() - self.experiment.scenario_runner._expstartstamp,
+                    "time": time.time() - self.experiment.scenario_runner.exp_start_time,
                     "infohash": download.get_def().get_infohash().encode('hex'),
                     "progress": state.get_progress(),
                     "status": dlstatus_strings[state.get_status()],

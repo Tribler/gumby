@@ -155,17 +155,12 @@ class IPv8CommunityLauncher(CommunityLauncher):
         """
         pass
 
-    def get_walk_strategy_class(self):
+    def get_walk_strategies(self):
         """
-        Get the class of the walk strategy.
+        Get walk strategies for this class.
+        It should be provided as a list of tuples with the class, kwargs and maximum number of peers.
         """
-        return RandomWalk
-
-    def get_walk_strategy_max_peers(self):
-        """
-        Get the maximum number of peers for the walk strategy.
-        """
-        return 20
+        return [(RandomWalk, {}, 20)]
 
 
 # Dispersy communities
@@ -225,6 +220,24 @@ class PreviewChannelCommunityLauncher(DispersyCommunityLauncher):
 
 
 # IPv8 communities
+
+class IPv8DiscoveryCommunityLauncher(IPv8CommunityLauncher):
+
+    def get_overlay_class(self):
+        from Tribler.pyipv8.ipv8.peerdiscovery.deprecated.discovery import DiscoveryCommunity
+        return DiscoveryCommunity
+
+    def should_launch(self, session):
+        return session.config.get_ipv8_discovery()
+
+    def get_my_peer(self, ipv8, session):
+        return Peer(session.trustchain_keypair)
+
+    def get_kwargs(self, session):
+        return {}
+
+    def get_walk_strategies(self):
+        return [(RandomWalk, {'timeout': 1.0}, -1)]
 
 
 class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):

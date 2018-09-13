@@ -151,6 +151,9 @@ class IsolatedIPv8LauncherWrapper(IPv8CommunityLauncher):
     def get_kwargs(self, session):
         return self.child.get_kwargs(session)
 
+    def get_walk_strategies(self):
+        return self.child.get_walk_strategies()
+
 
 class IsolatedDispersyCommunityLoader(DispersyCommunityLoader):
 
