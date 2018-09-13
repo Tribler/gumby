@@ -32,7 +32,7 @@ class BaseDispersyModule(ExperimentModule):
         statistics = self.session.lm.ipv8.endpoint.statistics
 
         # Cleanup this dictionary
-        time_elapsed = time.time() - self.experiment.scenario_runner._expstartstamp
+        time_elapsed = time.time() - self.experiment.scenario_runner.exp_start_time
         new_dict = {"time": time_elapsed, "stats": {}}
         for overlay_prefix, messages_dict in statistics.iteritems():
             hex_prefix = overlay_prefix.encode('hex')

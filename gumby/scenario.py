@@ -263,7 +263,7 @@ class ScenarioRunner(ScenarioParser):
     def __init__(self, expstartstamp=None):
         super(ScenarioRunner, self).__init__()
         self._callables = {}
-        self._expstartstamp = expstartstamp
+        self.exp_start_time = expstartstamp
 
     def set_peernumber(self, peernumber):
         self._peernumber = peernumber
@@ -287,14 +287,14 @@ class ScenarioRunner(ScenarioParser):
         """
         self._logger.info("Running scenario")
 
-        if self._expstartstamp is None:
-            self._expstartstamp = time()
+        if self.exp_start_time is None:
+            self.exp_start_time = time()
 
         for tstmp, filename, line_number, clb, args, kwargs in self._parse_scenario():
             if clb not in self._callables:
                 self._logger.error("Error running scenario %s:%d, undefined callback %s.", filename, line_number, clb)
                 continue
-            tstmp = tstmp + self._expstartstamp
+            tstmp = tstmp + self.exp_start_time
             delay = tstmp - time()
             self._logger.info("Register call %s %s:%d %s %s %s", tstmp, filename, line_number, clb, repr(args), repr(kwargs))
             for target in self._callables[clb]:

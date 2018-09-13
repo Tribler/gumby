@@ -120,7 +120,7 @@ class MarketModule(IPv8OverlayExperimentModule):
         for transaction in self.overlay.transaction_manager.find_all():
             partner_peer_id = self.overlay.lookup_ip(transaction.partner_order_id.trader_id)[1] - 12000
             if partner_peer_id < scenario_runner._peernumber:  # Only one peer writes the transaction
-                transactions.append((float(transaction.timestamp) - scenario_runner._expstartstamp,
+                transactions.append((float(transaction.timestamp) - scenario_runner.exp_start_time,
                                      transaction.transferred_assets.first.amount,
                                      transaction.transferred_assets.second.amount,
                                      len(transaction.payments), scenario_runner._peernumber, partner_peer_id))
