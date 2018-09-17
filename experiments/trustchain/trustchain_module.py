@@ -18,7 +18,7 @@ from twisted.internet.task import LoopingCall
 class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
     def __init__(self, experiment):
         super(TrustchainModule, self).__init__(experiment, TrustChainCommunity)
-        self.request_signatures_lc = LoopingCall(self.request_random_signature)
+        self.request_signatures_lc = None
 
     def on_id_received(self):
         super(TrustchainModule, self).on_id_received()
@@ -42,6 +42,7 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
 
     @experiment_callback
     def start_requesting_signatures(self):
+        self.request_signatures_lc = LoopingCall(self.request_random_signature)
         self.request_signatures_lc.start(1)
 
     @experiment_callback
