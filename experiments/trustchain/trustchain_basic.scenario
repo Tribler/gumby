@@ -5,9 +5,9 @@
 @0:2 start_session
 @0:5 init_trustchain
 @0:10 introduce_peers
-@0:70 start_requesting_signatures
-@0:130 stop_requesting_signatures
-@0:138 write_overlay_statistics
-@0:138 write_trustchain_statistics
-@0:140 stop_session
-@0:150 stop
+@0:30 start_requesting_signatures
+@0:90 stop_requesting_signatures
+@0:95 write_overlay_statistics
+@0:95 write_trustchain_statistics
+@0:97 stop_session
+@0:100 stop
