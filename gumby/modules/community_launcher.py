@@ -160,7 +160,7 @@ class IPv8CommunityLauncher(CommunityLauncher):
         Get walk strategies for this class.
         It should be provided as a list of tuples with the class, kwargs and maximum number of peers.
         """
-        return [(RandomWalk, {}, 20)]
+        return []
 
 
 # Dispersy communities
