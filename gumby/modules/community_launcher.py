@@ -288,6 +288,14 @@ class TrustChainCommunityLauncher(IPv8CommunityLauncher):
         super(TrustChainCommunityLauncher, self).finalize(dispersy, session, community)
         session.lm.trustchain_community = community
 
+        # If we're using a memory DB, replace the existing one
+        if session.config.use_trustchain_memory_db():
+            orig_db = community.persistence
+
+            from experiments.trustchain.trustchain_mem_db import TrustchainMemoryDatabase
+            community.persistence = TrustchainMemoryDatabase(session.config.get_state_dir(), 'trustchain')
+            community.persistence.original_db = orig_db
+
 
 class MarketCommunityLauncher(IPv8CommunityLauncher):
 

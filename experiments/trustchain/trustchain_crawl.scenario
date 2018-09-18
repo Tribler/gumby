@@ -9,6 +9,6 @@
 @0:30 start_requesting_signatures
 @0:90 stop_requesting_signatures
 @0:95 write_overlay_statistics
-@0:95 write_trustchain_statistics
-@0:97 stop_session
-@0:100 stop
+@0:95 commit_blocks_to_db
+@0:117 stop_session
+@0:127 stop

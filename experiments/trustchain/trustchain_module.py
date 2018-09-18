@@ -45,6 +45,10 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
         self.overlay.add_listener(self, ['test'])
 
     @experiment_callback
+    def enable_trustchain_memory_db(self):
+        self.tribler_config.set_trustchain_memory_db(True)
+
+    @experiment_callback
     def start_requesting_signatures(self):
         self.request_signatures_lc = LoopingCall(self.request_random_signature)
         self.request_signatures_lc.start(1)
@@ -89,6 +93,11 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
 
     def received_block(self, block):
         pass
+
+    @experiment_callback
+    def commit_blocks_to_db(self):
+        if self.session.config.use_trustchain_memory_db():
+            self.overlay.persistence.commit(self.overlay.my_peer.public_key.key_to_bin())
 
     @experiment_callback
     def write_trustchain_statistics(self):
