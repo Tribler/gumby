@@ -1,3 +1,4 @@
+from random import sample
 from time import time
 
 from Tribler.pyipv8.ipv8.peer import Peer
@@ -196,11 +197,31 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         return None
 
     @experiment_callback
-    def introduce_peers(self):
-        # bootstrap the peer introduction, ensuring everybody knows everybody to start off with.
-        for peer_id in self.all_vars.iterkeys():
-            if int(peer_id) != self.my_id:
-                self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
+    def introduce_peers(self, max_peers=None, excluded_peers=None):
+        """
+        Introduce peers to each other.
+        :param max_peers: If specified, this peer will walk to this number of peers at most.
+        :param excluded_peers: If specified, this method will ignore a specific peer from the introductions.
+        """
+        excluded_peers_list = []
+        if excluded_peers:
+            excluded_peers_list = [int(excluded_peer) for excluded_peer in excluded_peers.split(",")]
+
+        if self.my_id in excluded_peers_list:
+            self._logger.info("Not participating in the peer introductions!")
+            return
+
+        if not max_peers:
+            # bootstrap the peer introduction, ensuring everybody knows everybody to start off with.
+            for peer_id in self.all_vars.iterkeys():
+                if int(peer_id) != self.my_id and int(peer_id) not in excluded_peers_list:
+                    self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
+        else:
+            # Walk to a number of peers
+            eligible_peers = [peer_id for peer_id in self.all_vars.keys() if int(peer_id) not in excluded_peers_list]
+            rand_peer_ids = sample(eligible_peers, int(max_peers))
+            for rand_peer_id in rand_peer_ids:
+                self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(rand_peer_id))
 
     def get_peer(self, peer_id):
         target = self.all_vars[peer_id]
