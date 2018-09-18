@@ -19,7 +19,6 @@ class DiscoveryModule(IPv8OverlayExperimentModule):
     def on_id_received(self):
         super(DiscoveryModule, self).on_id_received()
         self.tribler_config.set_ipv8_discovery(True)
-        self.tribler_config.set_trustchain_enabled(False)
 
     def on_dispersy_available(self, dispersy):
         # Disable threadpool messages
