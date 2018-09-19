@@ -2,6 +2,8 @@ from random import sample
 from time import time
 
 from Tribler.pyipv8.ipv8.peer import Peer
+from Tribler.pyipv8.ipv8.peerdiscovery.churn import RandomChurn
+from Tribler.pyipv8.ipv8.peerdiscovery.discovery import EdgeWalk, RandomWalk
 
 from gumby.experiment import experiment_callback
 from gumby.modules.base_dispersy_module import BaseDispersyModule
@@ -222,6 +224,22 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             rand_peer_ids = sample(eligible_peers, int(max_peers))
             for rand_peer_id in rand_peer_ids:
                 self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(rand_peer_id))
+
+    @experiment_callback
+    def add_walking_strategy(self, name, max_peers, **kwargs):
+        if name not in ['RandomWalk', 'EdgeWalk', 'RandomChurn']:
+            self._logger.warning("Strategy %s not found!", name)
+            return
+
+        strategy = None
+        if name == 'RandomWalk':
+            strategy = RandomWalk(self.overlay, **kwargs)
+        elif name == 'EdgeWalk':
+            strategy = EdgeWalk(self.overlay, **kwargs)
+        elif name == 'RandomChurn':
+            strategy = RandomChurn(self.overlay, **kwargs)
+
+        self.session.lm.ipv8.strategies.append((strategy, max_peers))
 
     def get_peer(self, peer_id):
         target = self.all_vars[peer_id]
