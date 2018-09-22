@@ -4,6 +4,7 @@
 
 @0:2 start_session
 @0:5 init_trustchain
+@0:5 set_validation_range 1
 @0:10 introduce_peers max_peers=10 excluded_peers=1
 @0:10 add_walking_strategy RandomWalk -1 {1}
 @0:11 introduce_peers max_peers=1 {1}

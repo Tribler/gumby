@@ -51,6 +51,10 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
         self.tribler_config.set_trustchain_memory_db(True)
 
     @experiment_callback
+    def set_validation_range(self, value):
+        self.overlay.settings.validation_range = int(value)
+
+    @experiment_callback
     def start_requesting_signatures(self):
         self.request_signatures_lc = LoopingCall(self.request_random_signature)
         self.request_signatures_lc.start(1)
