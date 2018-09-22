@@ -55,6 +55,10 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
         self.overlay.settings.validation_range = int(value)
 
     @experiment_callback
+    def enable_crawler(self):
+        self.overlay.settings.crawler = True
+
+    @experiment_callback
     def start_requesting_signatures(self):
         self.request_signatures_lc = LoopingCall(self.request_random_signature)
         self.request_signatures_lc.start(1)
