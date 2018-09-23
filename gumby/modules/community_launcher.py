@@ -160,7 +160,7 @@ class IPv8CommunityLauncher(CommunityLauncher):
         Get walk strategies for this class.
         It should be provided as a list of tuples with the class, kwargs and maximum number of peers.
         """
-        return [(RandomWalk, {}, 20)]
+        return []
 
 
 # Dispersy communities
@@ -287,6 +287,14 @@ class TrustChainCommunityLauncher(IPv8CommunityLauncher):
     def finalize(self, dispersy, session, community):
         super(TrustChainCommunityLauncher, self).finalize(dispersy, session, community)
         session.lm.trustchain_community = community
+
+        # If we're using a memory DB, replace the existing one
+        if session.config.use_trustchain_memory_db():
+            orig_db = community.persistence
+
+            from experiments.trustchain.trustchain_mem_db import TrustchainMemoryDatabase
+            community.persistence = TrustchainMemoryDatabase(session.config.get_state_dir(), 'trustchain')
+            community.persistence.original_db = orig_db
 
 
 class MarketCommunityLauncher(IPv8CommunityLauncher):

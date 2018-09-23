@@ -24,8 +24,14 @@ class TrustchainStatisticsParser(StatisticsParser):
         self.aggregator.combine_databases()
 
     def write_blocks_to_file(self):
-        print "Writing TrustChain blocks to file"
+        # First, determine the experiment start time
+        start_time = 0
+        for peer_nr, filename, dir in self.yield_files('start_time.txt'):
+            with open(filename) as start_time_file:
+                start_time = int(float(start_time_file.read()) * 1000)
+                break
 
+        print "Writing TrustChain blocks to file"
         # Prior to writing all blocks, we construct a map from peer ID to public key
         key_map = {}
         for peer_nr, filename, dir in self.yield_files('overlays.txt'):
@@ -41,15 +47,17 @@ class TrustchainStatisticsParser(StatisticsParser):
 
         interactions = []
 
+        # Get all blocks
+        blocks = self.aggregator.database.get_all_blocks()
+
         with open('trustchain.csv', 'w') as trustchain_file:
             # Write header
             trustchain_file.write(
                 "peer;public_key;sequence_number;link_peer;link_public_key;"
-                "link_sequence_number;previous_hash;signature;hash;type;tx\n"
+                "link_sequence_number;previous_hash;signature;hash;type;time;time_since_start;tx\n"
             )
 
             # Write blocks
-            blocks = self.aggregator.database.get_all_blocks()
             for block in blocks:
                 if block.link_public_key.encode('hex') not in key_map:
                     link_peer = 0
@@ -62,7 +70,7 @@ class TrustchainStatisticsParser(StatisticsParser):
 
                 peer = key_map[block.public_key.encode('hex')]
                 trustchain_file.write(
-                    "%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" % (
+                    "%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s\n" % (
                         peer,
                         block.public_key.encode('hex'),
                         block.sequence_number,
@@ -73,6 +81,8 @@ class TrustchainStatisticsParser(StatisticsParser):
                         block.signature.encode('hex'),
                         block.hash.encode('hex'),
                         block.type,
+                        block.timestamp,
+                        block.timestamp - start_time,
                         json.dumps(block.transaction))
                 )
 

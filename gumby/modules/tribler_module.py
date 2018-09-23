@@ -68,6 +68,10 @@ class TriblerModule(BaseDispersyModule):
     def stop_session(self):
         deferToThread(self.session.shutdown)
 
+        # Write away the start time of the experiment
+        with open('start_time.txt', 'w') as start_time_time:
+            start_time_time.write("%f" % self.experiment.scenario_runner.exp_start_time)
+
     @experiment_callback
     def set_transfer_size(self, size):
         self.transfer_size = long(size)

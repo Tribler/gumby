@@ -19,15 +19,7 @@ class DiscoveryModule(IPv8OverlayExperimentModule):
     def on_id_received(self):
         super(DiscoveryModule, self).on_id_received()
         self.tribler_config.set_ipv8_discovery(True)
-        self.tribler_config.set_trustchain_enabled(False)
 
     def on_dispersy_available(self, dispersy):
         # Disable threadpool messages
         self.overlay._use_main_thread = True
-
-    @experiment_callback
-    def introduce_some_peers(self, num_peers):
-        rand_peer_ids = random.sample(self.all_vars.keys(), int(num_peers))
-        for rand_peer_id in rand_peer_ids:
-            self._logger.info("Walking initially to peer %s", rand_peer_id)
-            self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(rand_peer_id))
