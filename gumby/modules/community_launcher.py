@@ -319,6 +319,22 @@ class MarketCommunityLauncher(IPv8CommunityLauncher):
         return kwargs
 
 
+class Channel2CommunityLauncher(IPv8CommunityLauncher):
+
+    def not_before(self):
+        return ['TrustChainCommunity']
+
+    def should_launch(self, session):
+        return session.config.get_chant_enabled()
+
+    def get_overlay_class(self):
+        from Tribler.community.channel2.community import Channel2Community
+        return Channel2Community
+
+    def get_my_peer(self, ipv8, session):
+        return Peer(session.trustchain_keypair)
+
+
 class DHTCommunityLauncher(IPv8CommunityLauncher):
 
     def should_launch(self, session):

@@ -1,0 +1,15 @@
+&module gumby.modules.tribler_module.TriblerModule
+&module experiments.channels2.channels2_module.Channels2Module
+&module experiments.trustchain.trustchain_module.TrustchainModule
+
+@0:1 isolate_ipv8_overlay TrustChainCommunity
+@0:2 start_session
+@0:8 set_libtorrentmgr_alert_mask
+@0:10 create_channel
+@0:15 add_torrents_to_channel 10
+@0:20 introduce_peers max_peers=1
+@0:20 add_walking_strategy RandomWalk -1 {1}
+@0:60 write_overlay_statistics
+@0:60 write_download_statistics
+@0:65 stop_session
+@0:70 stop

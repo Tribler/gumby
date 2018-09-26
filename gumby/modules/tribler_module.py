@@ -241,3 +241,17 @@ class TriblerModule(BaseDispersyModule):
         with open('bandwidth.txt', 'w', 0) as bandwidth_file:
             bandwidth_file.write("%d,%d" % (self.session.lm.ipv8.endpoint.bytes_up,
                                             self.session.lm.ipv8.endpoint.bytes_down))
+
+    @experiment_callback
+    def write_download_statistics(self):
+        """
+        Write away information about the downloads in Tribler.
+        """
+        with open('downloads.txt', 'w', 0) as downloads_file:
+            downloads_file.write('infohash,status,progress\n')
+            for download in self.session.get_downloads():
+                state = download.get_state()
+                downloads_file.write("%s,%s,%f\n" % (
+                    download.get_def().get_infohash().encode('hex'),
+                    dlstatus_strings[state.get_status()],
+                    state.get_progress()))
