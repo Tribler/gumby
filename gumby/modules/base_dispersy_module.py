@@ -127,7 +127,7 @@ class BaseDispersyModule(ExperimentModule):
         config.set_channel_search_enabled(False)
         config.set_video_server_enabled(False)
         config.set_http_api_enabled(False)
-        config.set_libtorrent_port(20000 + self.experiment.my_id)
+        config.set_libtorrent_port(20000 + self.experiment.my_id * 10)
         config.set_dispersy_port(self.dispersy_port)
         config.set_tunnel_community_enabled(False)
         config.set_dht_enabled(False)
