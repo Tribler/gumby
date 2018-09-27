@@ -24,16 +24,7 @@ class Channels2Module(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def create_channel(self):
-        my_key = self.session.trustchain_keypair
-        my_channel_id = my_key.pub().key_to_bin()
-
-        with db_session:
-            my_channel = self.session.lm.mds.ChannelMetadata(
-                public_key=buffer(my_channel_id), title='test', tags='test', subscribed=True)
-            torrent_path = os.path.join(self.session.lm.mds.channels_dir, my_channel.dir_name + ".torrent")
-            old_infohash, new_infohash = my_channel.add_metadata_to_channel(
-                my_key, self.session.lm.mds.channels_dir, [])
-            self.session.lm.updated_my_channel(old_infohash, new_infohash, torrent_path)
+        self.session.lm.mds.ChannelMetadata.create_channel('test', 'test')
 
     @experiment_callback
     def add_torrents_to_channel(self, amount):
@@ -43,16 +34,30 @@ class Channels2Module(IPv8OverlayExperimentModule):
 
         with db_session:
             my_channel = self.session.lm.mds.ChannelMetadata.get_channel_with_id(my_channel_id)
-            torrent_metadatas = []
             for ind in xrange(amount):
                 random_infohash = '\x00' * 20  # TODO make random
-                random_torrent_metadata = self.session.lm.mds.TorrentMetadata(public_key=buffer(my_channel_id),
-                                                                              title='test ind %d' % ind, tags='test',
-                                                                              size=1234,
-                                                                              infohash=random_infohash)
-                torrent_metadatas.append(random_torrent_metadata)
+                self.session.lm.mds.TorrentMetadata(title='test ind %d' % ind, tags='test',
+                                                    size=1234, infohash=random_infohash)
 
+            my_channel.commit_channel_torrent()
             torrent_path = os.path.join(self.session.lm.mds.channels_dir, my_channel.dir_name + ".torrent")
-            old_infohash, new_infohash = my_channel.add_metadata_to_channel(
-                my_key, self.session.lm.mds.channels_dir, torrent_metadatas)
-            self.session.lm.updated_my_channel(old_infohash, new_infohash, torrent_path)
+            self.session.lm.updated_my_channel(torrent_path)
+
+    @experiment_callback
+    def write_channels(self):
+        """
+        Write information about all discovered channels away.
+        """
+        with db_session:
+            with open('channels.txt', 'w') as output_file:
+                output_file.write('public_key,title,num_torrents\n')
+                chant_channels = list(self.session.lm.mds.ChannelMetadata.select())
+                for chant_channel in chant_channels:
+                    output_file.write("%s,%s,%d\n" % (
+                        str(chant_channel.public_key).encode('hex'),
+                        chant_channel.title,
+                        len(chant_channel.contents_list)))
+
+        with open('channel_download_times.txt', 'w') as output_file:
+            for infohash, download_time in self.overlay.download_times.iteritems():
+                output_file.write('%s,%f\n' % (infohash.encode('hex'), download_time))
