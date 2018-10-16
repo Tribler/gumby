@@ -365,21 +365,16 @@ echo "
 configobj
 cryptography
 cython
-datrie
 dnspython
 ecdsa
-jsonrpclib
 meliae
 netifaces
 networkx
-pbkdf2
 protobuf
 psutil
-pyaes
 pyasn1 # for twisted
 pycrypto # Twisted needs it
 pynacl # New EC crypto stuff for tunnelcommunity
-PySocks
 pysqlite
 qrcode
 service_identity
