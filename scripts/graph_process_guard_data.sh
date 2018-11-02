@@ -54,6 +54,7 @@ rm $TEMPFILE
 reduce_dispersy_statistics.py . 300
 
 modify_annotations.py . $XSTART
+modify_autoplot.py . $XSTART
 
 # Graph the stuff
 export R_SCRIPTS_TO_RUN="\

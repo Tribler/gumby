@@ -130,7 +130,7 @@ class IPv8CommunityLoader(CommunityLoader):
         self.set_launcher(TriblerTunnelCommunityLauncher())
         self.set_launcher(MarketCommunityLauncher())
         self.set_launcher(DHTCommunityLauncher())
-        self.set_launcher(Channel2CommunityLauncher())
+        self.set_launcher(GigaChannelCommunityLauncher())
 
     def _launch(self, launcher, ipv8, session):
         """

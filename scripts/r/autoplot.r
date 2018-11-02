@@ -1,10 +1,8 @@
-if (!require(ggplot2)){
-    install.packages('ggplot2', repos="http://cran.us.r-project.org")
-}
+library(ggplot2)
+library(reshape)
 
-args <- commandArgs(TRUE)
-minX <- as.integer(args[1])
-maxX <- as.integer(args[2])
+minX <- as.integer(commandArgs(TRUE)[1])
+maxX <- as.integer(commandArgs(TRUE)[2])
 
 source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 df3 <- load_annotations()
@@ -15,8 +13,25 @@ for (file in list.files(pattern="*.csv", path="autoplot")){
 	df <- read.csv(paste("autoplot", file, sep="/"), check.names=FALSE)
 
 	df$type <- 'Process'
-	df$time <- df$time - df$time[1]
 	variable_name <- tail(names(df), n = 2)[1]
+
+    pids <- unique(df$pid)
+    approximators <- c()
+    for (pid in pids) {
+        subdf <- df[df$pid == pid, ]
+        approximators <- c(approximators, approxfun(subdf$time, subdf[[variable_name]], rule=2))
+    }
+    agg_df <- data.frame("pid" = pids, "approximator" = NA)
+    agg_df$approximator <- approximators
+
+    agg_sum <- function(x) Reduce("+", lapply(approximators, do.call, as.list(c(x))))
+    de <- data.frame("time" = df$time)
+    de[variable_name] <- unlist(lapply(df$time, agg_sum))
+	de$type <- 'Node'
+	de$pid <- 0
+	df <- rbind(df, de)
+
+	df$value <- df[variable_name]
 
 	p <- ggplot(df) + theme_bw()
 	p <- add_annotations(p, df, df3)

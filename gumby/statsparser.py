@@ -23,11 +23,14 @@ class StatisticsParser(object):
                         for peer in os.listdir(nodedir):
                             peerdir = os.path.join(self.node_directory, headnode, node, peer)
                             if os.path.isdir(peerdir) and pattern.match(peer):
-                                peer_nr = int(peer)
+                                try:
+                                    peer_nr = int(peer)
 
-                                filename = os.path.join(self.node_directory, headnode, node, peer, file_to_check)
-                                if os.path.exists(filename) and os.stat(filename).st_size > 0:
-                                    yield peer_nr, filename, peerdir
+                                    filename = os.path.join(self.node_directory, headnode, node, peer, file_to_check)
+                                    if os.path.exists(filename) and os.stat(filename).st_size > 0:
+                                        yield peer_nr, filename, peerdir
+                                except ValueError:
+                                    break
 
         # Localhost structure
         for peer in os.listdir(self.node_directory):

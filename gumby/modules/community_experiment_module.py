@@ -142,6 +142,11 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         # To be sure that the module loading happens in the right order, this next line serves the dual purpose of
         # triggering the check for a loaded dispersy provider
         self.dispersy_provider.dispersy_available.addCallback(self.on_dispersy_available)
+        self.strategies = {
+            'RandomWalk': RandomWalk,
+            'EdgeWalk': EdgeWalk,
+            'RandomChurn': RandomChurn
+        }
 
     @property
     def dispersy_provider(self):
@@ -228,19 +233,13 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
     @experiment_callback
     def add_walking_strategy(self, name, max_peers, **kwargs):
-        if name not in ['RandomWalk', 'EdgeWalk', 'RandomChurn']:
+        if name not in self.strategies:
             self._logger.warning("Strategy %s not found!", name)
             return
 
-        strategy = None
-        if name == 'RandomWalk':
-            strategy = RandomWalk(self.overlay, **kwargs)
-        elif name == 'EdgeWalk':
-            strategy = EdgeWalk(self.overlay, **kwargs)
-        elif name == 'RandomChurn':
-            strategy = RandomChurn(self.overlay, **kwargs)
+        strategy = self.strategies[name]
 
-        self.session.lm.ipv8.strategies.append((strategy, max_peers))
+        self.session.lm.ipv8.strategies.append((strategy(self.overlay, **kwargs), max_peers))
 
     def get_peer(self, peer_id):
         target = self.all_vars[peer_id]
