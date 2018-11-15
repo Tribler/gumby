@@ -124,10 +124,56 @@ class IPv8StatisticsParser(StatisticsParser):
         with open('total_bandwidth.log', 'w', 0) as output_file:
             output_file.write("%s,%s,%s\n" % (total_up, total_down, (total_up + total_down) / 2))
 
+    def aggregate_autoplot(self):
+        autoplot_dict = {}
+        for peer_nr, filename, dir in self.yield_files('autoplot.txt'):
+            with open(filename, 'r') as directive_file:
+                input_filename = directive_file.readline()[:-1]
+                base_dir = os.path.dirname(filename)
+                while input_filename:
+                    with open(os.path.join(base_dir, 'autoplot', input_filename), 'r') as autoplot_src:
+                        data = autoplot_src.read()
+                        existing_data = autoplot_dict.get(input_filename)
+                        if existing_data:
+                            autoplot_dict[input_filename] = autoplot_dict[input_filename] + data[data.find('\n')+1:]
+                        else:
+                            autoplot_dict[input_filename] = data
+                    input_filename = directive_file.readline()[:-1]
+        if not os.path.exists("autoplot"):
+            os.mkdir("autoplot")
+        for filename in autoplot_dict:
+            with open(os.path.join('autoplot', filename), 'w') as output_file:
+                output_file.write(autoplot_dict[filename])
+
+    def aggregate_annotations(self):
+        annotation_dict = {}
+        peer_set = set()
+        for peer_nr, filename, dir in self.yield_files('statistics.log'):
+            peer_set.add(peer_nr)
+            with open(filename, 'r') as annotation_file:
+                lines = annotation_file.read().split('\n')
+                for line in lines:
+                    extracted = line.split(' ')
+                    if len(extracted) == 1 or extracted[2] != 'annotate':
+                        continue
+                    message = " ".join(extracted[3:])
+                    tuple_dict = annotation_dict.get(message, {})
+                    tuple_dict[extracted[1]] = extracted[0]
+                    annotation_dict[message] = tuple_dict
+        with open(os.path.join(self.node_directory, "annotations.txt"), "w+") as h_annotations:
+            print >> h_annotations, "annotation", " ".join(map(str, sorted(peer_set)))
+            for message, packed_values in annotation_dict.items():
+                print >> h_annotations, '"%s"' % message,
+                for node in sorted(packed_values.keys()):
+                    print >> h_annotations, packed_values.get(node, '?'),
+                print >> h_annotations, ''
+
     def run(self):
+        self.aggregate_annotations()
         self.aggregate_messages()
         self.aggregate_peer_connections()
         self.aggregate_bandwidth()
+        self.aggregate_autoplot()
 
 if __name__ == "__main__":
     # cd to the output directory

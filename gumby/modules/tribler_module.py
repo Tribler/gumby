@@ -5,11 +5,8 @@ from posix import environ
 from random import Random
 
 import binascii
-import keyring
 from Tribler.pyipv8.ipv8.dht.provider import DHTCommunityProvider
-from keyrings.alt.file import PlaintextKeyring
 from twisted.internet import reactor
-from twisted.internet.threads import deferToThread
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module
@@ -35,13 +32,6 @@ class TriblerModule(BaseDispersyModule):
         }
         self.dht_provider = None
 
-        # We don't use the system keychain but a PlainText keyring for performance during tests
-        self._logger.info("Available keyrings: %s", keyring.backend.get_all_keyring())
-        for new_keyring in keyring.backend.get_all_keyring():
-            if isinstance(new_keyring, PlaintextKeyring):
-                self._logger.info("Setting keyring: %s", new_keyring)
-                keyring.set_keyring(new_keyring)
-
     @experiment_callback
     def start_session(self):
         super(TriblerModule, self).start_session()
@@ -66,7 +56,7 @@ class TriblerModule(BaseDispersyModule):
 
     @experiment_callback
     def stop_session(self):
-        deferToThread(self.session.shutdown)
+        reactor.callFromThread(self.session.shutdown)
 
         # Write away the start time of the experiment
         with open('start_time.txt', 'w') as start_time_time:
@@ -241,3 +231,17 @@ class TriblerModule(BaseDispersyModule):
         with open('bandwidth.txt', 'w', 0) as bandwidth_file:
             bandwidth_file.write("%d,%d" % (self.session.lm.ipv8.endpoint.bytes_up,
                                             self.session.lm.ipv8.endpoint.bytes_down))
+
+    @experiment_callback
+    def write_download_statistics(self):
+        """
+        Write away information about the downloads in Tribler.
+        """
+        with open('downloads.txt', 'w', 0) as downloads_file:
+            downloads_file.write('infohash,status,progress\n')
+            for download in self.session.get_downloads():
+                state = download.get_state()
+                downloads_file.write("%s,%s,%f\n" % (
+                    download.get_def().get_infohash().encode('hex'),
+                    dlstatus_strings[state.get_status()],
+                    state.get_progress()))

@@ -224,7 +224,7 @@ class PreviewChannelCommunityLauncher(DispersyCommunityLauncher):
 class IPv8DiscoveryCommunityLauncher(IPv8CommunityLauncher):
 
     def get_overlay_class(self):
-        from Tribler.pyipv8.ipv8.peerdiscovery.deprecated.discovery import DiscoveryCommunity
+        from Tribler.pyipv8.ipv8.peerdiscovery.community import DiscoveryCommunity
         return DiscoveryCommunity
 
     def should_launch(self, session):
@@ -317,6 +317,26 @@ class MarketCommunityLauncher(IPv8CommunityLauncher):
         kwargs['trustchain'] = session.lm.trustchain_community
         kwargs['dht'] = session.lm.dht_community
         return kwargs
+
+
+class GigaChannelCommunityLauncher(IPv8CommunityLauncher):
+
+    def not_before(self):
+        return ['TrustChainCommunity']
+
+    def should_launch(self, session):
+        return session.config.get_chant_enabled()
+
+    def get_overlay_class(self):
+        from Tribler.community.gigachannel.community import GigaChannelCommunity
+        return GigaChannelCommunity
+
+    def get_my_peer(self, ipv8, session):
+        return Peer(session.trustchain_keypair)
+
+    def finalize(self, dispersy, session, community):
+        super(GigaChannelCommunityLauncher, self).finalize(dispersy, session, community)
+        session.lm.gigachannel_community = community
 
 
 class DHTCommunityLauncher(IPv8CommunityLauncher):

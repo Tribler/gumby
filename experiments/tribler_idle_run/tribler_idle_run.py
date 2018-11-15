@@ -40,8 +40,6 @@
 import sys
 import os
 
-import keyring
-from keyrings.alt.file import PlaintextKeyring
 from twisted.internet import reactor
 
 from gumby.instrumentation import init_instrumentation
@@ -58,11 +56,6 @@ from tribler_plugin import TriblerServiceMaker
 class IdleTribleRunner():
 
     def __init__(self):
-        # We don't use the system keychain but a PlainText keyring for performance during tests
-        for new_keyring in keyring.backend.get_all_keyring():
-            if isinstance(new_keyring, PlaintextKeyring):
-                keyring.set_keyring(new_keyring)
-
         init_instrumentation()
         self.service = None
 
