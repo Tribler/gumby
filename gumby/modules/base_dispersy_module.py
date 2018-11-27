@@ -101,7 +101,7 @@ class BaseDispersyModule(ExperimentModule):
             bootstrap_file = path.join(my_state_path, 'bootstraptribler.txt')
 
         # We manually update the IPv8 bootstrap servers since IPv8 does not use the bootstraptribler.txt file.
-        from Tribler.pyipv8.ipv8.deprecated import community
+        from Tribler.pyipv8.ipv8 import community
         community._DEFAULT_ADDRESSES = []
         community._DNS_ADDRESSES = []
         with open(bootstrap_file, 'r') as bfile:
