@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import print_function
 import sys
 import os
 from sys import argv, exit
@@ -14,29 +15,29 @@ def write_records(all_nodes, sum_records, output_directory, outputfile, diffoutp
         fp = open(os.path.join(output_directory, outputfile), 'wb')
         fp2 = open(os.path.join(output_directory, diffoutputfile), 'wb') if diffoutputfile else None
 
-        print >> fp, 'time', ' '.join(all_nodes)
+        print('time', ' '.join(all_nodes), file=fp)
         if fp2:
-            print >> fp2, 'time', ' '.join(all_nodes)
+            print('time', ' '.join(all_nodes), file=fp2)
 
         prev_records = {}
         for time in sorted(sum_records.iterkeys()):
-            print >> fp, time,
+            print(time, end=' ', file=fp)
             if fp2:
-                print >> fp2, time,
+                print(time, end=' ', file=fp2)
 
             nodes = sum_records[time]
             for node in all_nodes:
                 value = nodes.get(node, prev_records.get(node, 0))
-                print >> fp, value,
+                print(value, end=' ', file=fp)
 
                 if fp2:
                     diff = value - prev_records.get(node, 0)
-                    print >> fp2, diff,
+                    print(diff, end=' ', file=fp2)
 
                 prev_records[node] = value
-            print >> fp, ''
+            print('', file=fp)
             if fp2:
-                print >> fp2, ''
+                print('', file=fp2)
 
         fp.close()
         if fp2:
@@ -80,11 +81,11 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
             nodename = root.split('/')[-1]
             all_nodes.append(nodename)
 
-            print >> sys.stderr, "Parsing resource_usage file %s" % (nodename + "/" + filename)
+            print("Parsing resource_usage file %s" % (nodename + "/" + filename), file=sys.stderr)
 
             fn_records = os.path.join(root, filename)
             if os.stat(fn_records).st_size == 0:
-                print >> sys.stderr, "Empty file, skipping"
+                print("Empty file, skipping", file=sys.stderr)
                 continue
             h_records = open(fn_records)
 
@@ -136,8 +137,10 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
                 wchar = long(parts[-6])
                 rchar = long(parts[-7])
 
-                rchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), rchar, prev_rchar.get(pid, rchar)) / 1024.0
-                wchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time), wchar, prev_wchar.get(pid, wchar)) / 1024.0
+                rchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time),
+                                                             rchar, prev_rchar.get(pid, rchar)) / 1024.0
+                wchars.setdefault(time, {})[pid] = calc_diff(time, prev_times.get(pid, time),
+                                                             wchar, prev_wchar.get(pid, wchar)) / 1024.0
                 rchars[time].setdefault(nodename, []).append(rchars[time][pid])
                 wchars[time].setdefault(nodename, []).append(wchars[time][pid])
 
@@ -161,7 +164,8 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
                 warn_utime[pid] = max(nr_1utime[pid], warn_utime.get(pid, nr_1utime[pid]))
 
     for pid, times in warn_utime.iteritems():
-        print >> sys.stderr, "A process with name (%s) was measured to have a utime larger than 0.9 for %d times" % (pid, times)
+        print("A process with name (%s) was measured to have a utime larger than 0.9 for %d times"
+              % (pid, times), file=sys.stderr)
 
     # writing records
     all_pids = list(all_pids)
@@ -191,17 +195,18 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
     write_records(all_nodes, vsizes, output_directory, "vsizes_node.txt")
     write_records(all_nodes, rsizes, output_directory, "rsizes_node.txt")
 
-    print "XMIN=%d" % 0
-    print "XMAX=%d" % (max_timestamp - start_timestamp)
-    print "XSTART=%d" % start_timestamp
+    print("XMIN=%d" % 0)
+    print("XMAX=%d" % (max_timestamp - start_timestamp))
+    print("XSTART=%d" % start_timestamp)
 
 def main(input_directory, output_directory, start_time=None):
     parse_resource_files(input_directory, output_directory, start_time)
 
 if __name__ == "__main__":
     if len(argv) < 3:
-        print >> sys.stderr, "Usage: %s <input-directory> <output-directory> [<experiment start timestamp>]" % (argv[0])
-        print >> sys.stderr, "Got:", argv
+        print("Usage: %s <input-directory> <output-directory> [<experiment start timestamp>]" % (argv[0]),
+              file=sys.stderr)
+        print("Got:", argv, file=sys.stderr)
 
         exit(1)
 

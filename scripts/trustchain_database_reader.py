@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import os
 from os import path
@@ -32,17 +33,17 @@ class GumbyDatabaseAggregator(DatabaseReader):
         return TrustChainDB(db_path, "trustchain")
 
     def combine_databases(self):
-        print "Reading databases"
+        print("Reading databases")
         total_blocks = 0
         for node_dir_name in os.listdir(path.join(self.working_directory, "localhost")):
             for mod_dir_name in os.listdir(path.join(self.working_directory, "localhost", node_dir_name)):
                 # Read all nodes
                 if mod_dir_name.startswith(".TriblerModule"):
                     db_path = path.join(self.working_directory, "localhost", node_dir_name, mod_dir_name)
-                    print "Considering database %s" % db_path
+                    print("Considering database %s" % db_path)
                     database = TrustChainDB(db_path, "trustchain")
                     for block in database.get_all_blocks():
                         if not self.database.contains(block):
                             self.database.add_block(block)
                             total_blocks += 1
-        print "Found %d unique trustchain (half) blocks across databases" % total_blocks
+        print("Found %d unique trustchain (half) blocks across databases" % total_blocks)

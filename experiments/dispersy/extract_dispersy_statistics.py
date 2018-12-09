@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import print_function
 import re
 import sys
 import os
@@ -7,6 +8,13 @@ from collections import defaultdict, Iterable
 from json import loads
 from time import time
 from traceback import print_exc
+
+try:
+    cmp             # Python 2
+except NameError:   # Python 3
+    def cmp(x, y):  # pylint: disable=redefined-builtin
+        return (x > y) - (x < y)
+
 
 class ExtractStatistics:
 
@@ -24,10 +32,10 @@ class ExtractStatistics:
 
         files = sorted(self.yield_files())
         if not len(files):
-            print >> sys.stderr, "No files found to parse!"
+            print("No files found to parse!", file=sys.stderr)
             return
 
-        print >> sys.stderr, "Starting to parse", len(files), "files"
+        print("Starting to parse", len(files), "files", file=sys.stderr)
 
         self.min_timeoffset = sys.maxsize
         self.max_timeoffset = 0
@@ -60,7 +68,7 @@ class ExtractStatistics:
 
                             handler.handle_line(node_nr, line_nr, timestamp, timeoffset, key, converted_json)
                 except:
-                    print >> sys.stderr, "Error while parsing line", key, json
+                    print("Error while parsing line", key, json, file=sys.stderr)
                     print_exc()
 
                 self.min_timeoffset = min(self.min_timeoffset, timeoffset)
@@ -79,23 +87,24 @@ class ExtractStatistics:
                 if diff_size > 0:
                     avg_proc_time = diff_time / diff_size
                     remaining_time = remaining_size * avg_proc_time
-                    print >> sys.stderr, remaining_size, "files or", self.elapsed_time(remaining_time), "remaining (average", str(round(avg_proc_time, 2)) + 's)'
+                    print(remaining_size, "files or", self.elapsed_time(remaining_time),
+                          "remaining (average", str(round(avg_proc_time, 2)) + 's)', file=sys.stderr)
                 else:
-                    print >> sys.stderr, remaining_size, "files or ? remaining"
+                    print(remaining_size, "files or ? remaining", file=sys.stderr)
 
                 start_time = time()
                 start_size = after_size
 
-        print >> sys.stderr, "All files parsed, merging..."
+        print("All files parsed, merging...", file=sys.stderr)
 
         for handler in self.handlers:
             handler.all_files_done(self)
 
-        print >> sys.stderr, "Finished merging"
+        print("Finished merging", file=sys.stderr)
 
-        print "XMIN=%d" % self.min_timeoffset
-        print "XMAX=%d" % self.max_timeoffset
-        print "XSTART=%d" % self.start_of_experiment
+        print("XMIN=%d" % self.min_timeoffset)
+        print("XMAX=%d" % self.max_timeoffset)
+        print("XSTART=%d" % self.start_of_experiment)
 
     def read(self, filename, filterkey=[]):
         for line_nr, line in enumerate(open(filename)):
@@ -131,7 +140,7 @@ class ExtractStatistics:
         datetimes = []
         for node_nr, filename, outputdir in files:
             try:
-                line_nr, timestamp, timeoffset, key, json = self.read(filename, ['annotate', ]).next()
+                line_nr, timestamp, timeoffset, key, json = next(self.read(filename, ['annotate', ]))
                 if json.strip() == "start-experiment":
                     datetimes.append(timestamp)
             except StopIteration:
@@ -141,9 +150,9 @@ class ExtractStatistics:
 
         # Fallback to old method
         if not datetimes:
-            print >> sys.stderr, "Using fallback for get_first_datetime"
+            print("Using fallback for get_first_datetime", file=sys.stderr)
             for node_nr, filename, outputdir in files:
-                line_nr, timestamp, timeoffset, key, json = self.read(filename).next()
+                line_nr, timestamp, timeoffset, key, json = next(self.read(filename))
                 datetimes.append(timestamp)
 
         return min(datetimes)
@@ -214,32 +223,32 @@ class ExtractStatistics:
             fp = open(outputfile, 'wb')
             fp2 = open(diffoutputfile, 'wb') if diffoutputfile else None
 
-            print >> fp, 'time', ' '.join(map(str, all_nodes))
+            print('time', ' '.join(map(str, all_nodes)), file=fp)
             if fp2:
-                print >> fp2, 'time', ' '.join(map(str, all_nodes))
+                print('time', ' '.join(map(str, all_nodes)), file=fp2)
 
             prev_records = {}
             for timestamp in sorted(sum_records.iterkeys()):
-                print >> fp, timestamp,
+                print(timestamp, end=' ', file=fp)
                 if fp2:
-                    print >> fp2, timestamp,
+                    print(timestamp, end=' ', file=fp2)
 
                 nodes = sum_records[timestamp]
                 for node in all_nodes:
                     value = nodes.get(node, prev_records.get(node, "?"))
-                    print >> fp, value,
+                    print(value, end=' ', file=fp)
 
                     if fp2:
                         prev_value = prev_records.get(node, "?")
                         if prev_value == "?":
                             prev_value = 0
                         diff = (value - prev_value) if value != "?" else 0
-                        print >> fp2, diff,
+                        print(diff, end=' ', file=fp2)
 
                     prev_records[node] = value
-                print >> fp, ''
+                print('', file=fp)
                 if fp2:
-                    print >> fp2, ''
+                    print('', file=fp2)
 
             fp.close()
             if fp2:
@@ -335,30 +344,31 @@ class BasicExtractor(AbstractHandler):
         self.c_blstats = defaultdict(lambda: ["?", "?", "?"])
 
         self.h_stat = open(os.path.join(outputdir, "stat.txt"), "w+")
-        print >> self.h_stat, "# timestamp timeoffset total-send total-received"
-        print >> self.h_stat, "0 0 0 0"
+        print("# timestamp timeoffset total-send total-received", file=self.h_stat)
+        print("0 0 0 0", file=self.h_stat)
 
         self.h_drop = open(os.path.join(outputdir, "drop.txt"), "w+")
-        print >> self.h_drop, "# timestamp timeoffset num-drops"
-        print >> self.h_drop, "0 0 0"
+        print("# timestamp timeoffset num-drops", file=self.h_drop)
+        print("0 0 0", file=self.h_drop)
 
         self.h_total_connections = open(os.path.join(outputdir, "total_connections.txt"), "w+")
-        print >> self.h_total_connections, "# timestamp timeoffset (num-connections +) (num-walked + ) (num-stumbled + ) (num-intro + ) (sum-incoming-connections+)"
-        print >> self.h_total_connections, "#", " ".join(self.communities)
+        print("# timestamp timeoffset (num-connections +) (num-walked + ) (num-stumbled + ) "
+              "(num-intro + ) (sum-incoming-connections+)", file=self.h_total_connections)
+        print("#", " ".join(self.communities), file=self.h_total_connections)
 
         self.h_blstats = open(os.path.join(outputdir, "bl_stat.txt"), "w+")
-        print >> self.h_blstats, "# timestamp timeoffset (bl-skip +) (bl-reuse +) (bl-new +)"
-        print >> self.h_blstats, "#", " ".join(self.communities)
+        print("# timestamp timeoffset (bl-skip +) (bl-reuse +) (bl-new +)", file=self.h_blstats)
+        print("#", " ".join(self.communities), file=self.h_blstats)
 
     def end_file(self, node_nr, timestamp, timeoffset):
-        print >> self.h_drop, timestamp, timeoffset, self.c_dropped_record
+        print(timestamp, timeoffset, self.c_dropped_record, file=self.h_drop)
 
         if self.c_communities.values():
-            print >> self.h_total_connections, timestamp, timeoffset,
+            print(timestamp, timeoffset, end=' ', file=self.h_total_connections)
             for i in range(5):
                 for community in self.communities:
-                    print >> self.h_total_connections, self.c_communities[community][i],
-            print >> self.h_total_connections, ''
+                    print(self.c_communities[community][i], end=' ', file=self.h_total_connections)
+            print('', file=self.h_total_connections)
 
             max_incoming_connections = max(nr_candidates[0] for nr_candidates in self.c_communities.values())
             self.nr_connections.append((max_incoming_connections, node_nr))
@@ -380,11 +390,12 @@ class BasicExtractor(AbstractHandler):
         self.dispersy_in_out[node_nr][3] = value.get("received_count", self.dispersy_in_out[node_nr][3])
 
         if "total_down" in value or "total_up" in value:
-            print >> self.h_stat, timestamp, timeoffset, self.dispersy_in_out[node_nr][1], self.dispersy_in_out[node_nr][0]
+            print(timestamp, timeoffset, self.dispersy_in_out[node_nr][1], self.dispersy_in_out[node_nr][0],
+                  file=self.h_stat)
 
         if "drop_count" in value:
             self.c_dropped_record = value["drop_count"]
-            print >> self.h_drop, timestamp, timeoffset, self.c_dropped_record
+            print(timestamp, timeoffset, self.c_dropped_record, file=self.h_drop)
 
         if 'communities' in value:
             for cid, community in value['communities'].iteritems():
@@ -398,26 +409,26 @@ class BasicExtractor(AbstractHandler):
                 self.c_blstats[cid][1] = community.get('sync_bloom_skip', self.c_blstats[cid][1])
                 self.c_blstats[cid][2] = community.get('sync_bloom_new', self.c_blstats[cid][2])
 
-            print >> self.h_total_connections, timestamp, timeoffset,
+            print(timestamp, timeoffset, end=' ', file=self.h_total_connections)
             for i in range(5):
                 for community in self.communities:
-                    print >> self.h_total_connections, self.c_communities[community][i],
-            print >> self.h_total_connections, ''
+                    print(self.c_communities[community][i], end=' ', file=self.h_total_connections)
+            print('', file=self.h_total_connections)
 
-            print >> self.h_blstats, timestamp, timeoffset,
+            print(timestamp, timeoffset, end=' ', file=self.h_blstats)
             for community in self.communities:
-                print >> self.h_blstats, self.c_blstats[community][0],
+                print(self.c_blstats[community][0], end=' ', file=self.h_blstats)
             for community in self.communities:
-                print >> self.h_blstats, self.c_blstats[community][1],
+                print(self.c_blstats[community][1], end=' ', file=self.h_blstats)
             for community in self.communities:
-                print >> self.h_blstats, self.c_blstats[community][2],
-            print >> self.h_blstats, ''
+                print(self.c_blstats[community][2], end=' ', file=self.h_blstats)
+            print('', file=self.h_blstats)
 
     def all_files_done(self, extract_statistics):
         f = open(os.path.join(extract_statistics.node_directory, "dispersy_incomming_connections.txt"), 'w')
-        print >> f, "# peer max_incomming_connections"
+        print("# peer max_incomming_connections", file=f)
         for nr, node in self.nr_connections:
-            print >> f, node, nr
+            print(node, nr, file=f)
         f.close()
 
         extract_statistics.merge_records("total_record.txt", 'sum_total_records.txt', 2)
@@ -449,24 +460,24 @@ class SuccMessages(AbstractHandler):
         self.c_created_records = {}
 
         self.h_received_record = open(os.path.join(outputdir, "received-record.txt"), "w+")
-        print >> self.h_received_record, "# timestamp timeoffset num-records"
-        print >> self.h_received_record, "0 0 0"
+        print("# timestamp timeoffset num-records", file=self.h_received_record)
+        print("0 0 0", file=self.h_received_record)
 
         self.h_created_record = open(os.path.join(outputdir, "created-record.txt"), "w+")
-        print >> self.h_created_record, "# timestamp timeoffset num-records"
-        print >> self.h_created_record, "0 0 0"
+        print("# timestamp timeoffset num-records", file=self.h_created_record)
+        print("0 0 0", file=self.h_created_record)
 
         self.h_total_record = open(os.path.join(outputdir, "total_record.txt"), "w+")
-        print >> self.h_total_record, "# timestamp timeoffset num-records"
-        print >> self.h_total_record, "0 0 0"
+        print("# timestamp timeoffset num-records", file=self.h_total_record)
+        print("0 0 0", file=self.h_total_record)
 
     def end_file(self, node_nr, timestamp, timeoffset):
         c_received_record = sum(self.c_received_records.itervalues())
         c_created_record = sum(self.c_created_records.itervalues())
 
-        print >> self.h_received_record, timestamp, timeoffset, c_received_record
-        print >> self.h_created_record, timestamp, timeoffset, c_created_record
-        print >> self.h_total_record, timestamp, timeoffset, c_received_record + c_created_record
+        print(timestamp, timeoffset, c_received_record, file=self.h_received_record)
+        print(timestamp, timeoffset, c_created_record, file=self.h_created_record)
+        print(timestamp, timeoffset, c_received_record + c_created_record, file=self.h_total_record)
 
         self.h_received_record.close()
         self.h_created_record.close()
@@ -488,7 +499,7 @@ class SuccMessages(AbstractHandler):
 
             if writeTotal:
                 c_received_record = sum(self.c_received_records.itervalues())
-                print >> self.h_received_record, timestamp, timeoffset, c_received_record
+                print(timestamp, timeoffset, c_received_record, file=self.h_received_record)
 
         elif key == "statistics-created-messages":
             for key, value in json.iteritems():
@@ -498,18 +509,18 @@ class SuccMessages(AbstractHandler):
 
             if writeTotal:
                 c_created_record = sum(self.c_created_records.itervalues())
-                print >> self.h_created_record, timestamp, timeoffset, c_created_record
+                print(timestamp, timeoffset, c_created_record, file=self.h_created_record)
 
         if writeTotal:
             c_received_record = sum(self.c_received_records.itervalues())
             c_created_record = sum(self.c_created_records.itervalues())
-            print >> self.h_total_record, timestamp, timeoffset, c_received_record + c_created_record
+            print(timestamp, timeoffset, c_received_record + c_created_record, file=self.h_total_record)
 
     def all_files_done(self, extract_statistics):
         h_dispersy_msg_distribution = open(os.path.join(extract_statistics.node_directory, "dispersy-msg-distribution.txt"), "w+")
-        print >> h_dispersy_msg_distribution, "# msg_name count peer"
+        print("# msg_name count peer", file=h_dispersy_msg_distribution)
         for msg, count in self.dispersy_msg_distribution.iteritems():
-            print >> h_dispersy_msg_distribution, "%s %d %s" % (msg, count[0], count[1])
+            print("%s %d %s" % (msg, count[0], count[1]), file=h_dispersy_msg_distribution)
         h_dispersy_msg_distribution.close()
 
 class StatisticMessages(AbstractHandler):
@@ -525,14 +536,14 @@ class StatisticMessages(AbstractHandler):
 
     def new_file(self, node_nr, filename, outputdir):
         self.h_statistics = open(os.path.join(outputdir, "scenario-statistics.txt"), "w+")
-        print >> self.h_statistics, "# timestamp timeoffset key value"
+        print("# timestamp timeoffset key value", file=self.h_statistics)
 
         self.prev_peertype = ''
         self.prev_values = {}
 
     def end_file(self, node_nr, timestamp, timeoffset):
         for key, value in self.prev_values.iteritems():
-            print >> self.h_statistics, timestamp, timeoffset, key, value
+            print(timestamp, timeoffset, key, value, file=self.h_statistics)
             self.sum_records[timeoffset][key][node_nr] = value
 
         self.h_statistics.close()
@@ -543,7 +554,7 @@ class StatisticMessages(AbstractHandler):
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         if key == "scenario-statistics":
             for key, value in json.iteritems():
-                print >> self.h_statistics, timestamp, timeoffset, key, value
+                print(timestamp, timeoffset, key, value, file=self.h_statistics)
 
                 self.sum_records[timeoffset][key][node_nr] = value
 
@@ -557,22 +568,22 @@ class StatisticMessages(AbstractHandler):
         self.nodes.add(node_nr)
 
     def all_files_done(self, extract_statistics):
-        timestamps = self.sum_records.keys()
-        timestamps.sort()
+        timestamps = sorted(self.sum_records.keys())
 
         if timestamps:
             recordkeys = self.sum_records[timestamps[0]].keys()
 
             h_sum_statistics = open(os.path.join(extract_statistics.node_directory, "sum_statistics.txt"), "w+")
-            print >> h_sum_statistics, "time",
+            print("time", end=' ', file=h_sum_statistics)
             for peertype in self.used_peertypes:
                 for recordkey in recordkeys:
                     if recordkey[-1] == "_":
-                        print >> h_sum_statistics, recordkey[:-1] + ("-" + peertype if peertype else '') + "_",
+                        print(recordkey[:-1] + ("-" + peertype if peertype else '') + "_",
+                              end=' ', file=h_sum_statistics)
                     else:
-                        print >> h_sum_statistics, recordkey + ("-" + peertype if peertype else ''),
+                        print(recordkey + ("-" + peertype if peertype else ''), end=' ', file=h_sum_statistics)
 
-            print >> h_sum_statistics, ''
+            print('', file=h_sum_statistics)
 
             prev_value = defaultdict(lambda: defaultdict(int))
             cur_peertype = defaultdict(str)
@@ -581,7 +592,7 @@ class StatisticMessages(AbstractHandler):
                     cur_peertype[node_nr] = peertype
 
                 if timestamp in self.sum_records:
-                    print >> h_sum_statistics, timestamp,
+                    print(timestamp, end=' ', file=h_sum_statistics)
 
                     for peertype in self.used_peertypes:
                         for recordkey in recordkeys:
@@ -599,9 +610,9 @@ class StatisticMessages(AbstractHandler):
                                 avg = sum_values / nr_nodes
                             else:
                                 avg = 0
-                            print >> h_sum_statistics, avg,
+                            print(avg, end=' ', file=h_sum_statistics)
 
-                    print >> h_sum_statistics, ''
+                    print('', file=h_sum_statistics)
             h_sum_statistics.close()
 
 class DropMessages(AbstractHandler):
@@ -615,20 +626,24 @@ class DropMessages(AbstractHandler):
 
     def handle_line(self, node_nr, line_nr, timestamp, timeoffset, key, json):
         for key, value in json.iteritems():
-            self.dispersy_dropped_msg_distribution[key] = max((value, node_nr), self.dispersy_dropped_msg_distribution.get(key, (0, node_nr)))
+            self.dispersy_dropped_msg_distribution[key] = max(
+                (value, node_nr), self.dispersy_dropped_msg_distribution.get(key, (0, node_nr)))
 
     def all_files_done(self, extract_statistics):
-        h_dispersy_dropped_msg_distribution = open(os.path.join(extract_statistics.node_directory, "dispersy-dropped-msg-distribution.txt"), "w+")
+        h_dispersy_dropped_msg_distribution = open(
+            os.path.join(extract_statistics.node_directory, "dispersy-dropped-msg-distribution.txt"), "w+")
 
-        print >> h_dispersy_dropped_msg_distribution, "# Shows which node dropped a message the most grouped by reason"
-        print >> h_dispersy_dropped_msg_distribution, "# count nodenr msg_name"
+        print("# Shows which node dropped a message the most grouped by reason",
+              file=h_dispersy_dropped_msg_distribution)
+        print("# count nodenr msg_name", file=h_dispersy_dropped_msg_distribution)
 
         keys = self.dispersy_dropped_msg_distribution.keys()
-        keys.sort(cmp=lambda a, b: cmp(self.dispersy_dropped_msg_distribution[a][0], self.dispersy_dropped_msg_distribution[b][0]), reverse=True)
+        keys.sort(cmp=lambda a, b: cmp(self.dispersy_dropped_msg_distribution[a][0],
+                                       self.dispersy_dropped_msg_distribution[b][0]), reverse=True)
 
         for msg in keys:
             count = self.dispersy_dropped_msg_distribution[msg]
-            print >> h_dispersy_dropped_msg_distribution, count[0], count[1], "'%s'" % msg
+            print(count[0], count[1], "'%s'" % msg, file=h_dispersy_dropped_msg_distribution)
         h_dispersy_dropped_msg_distribution.close()
 
 class BootstrapMessages(AbstractHandler):
@@ -646,14 +661,14 @@ class BootstrapMessages(AbstractHandler):
 
     def all_files_done(self, extract_statistics):
         h_dispersy_bootstrap_distribution = open(os.path.join(extract_statistics.node_directory, "dispersy-bootstrap-distribution.txt"), "w+")
-        print >> h_dispersy_bootstrap_distribution, "# sock_addr count"
+        print("# sock_addr count", file=h_dispersy_bootstrap_distribution)
 
         bootstrap_keys = self.dispersy_bootstrap_distribution.keys()
         bootstrap_keys.sort(cmp=lambda a, b: cmp(sum(self.dispersy_bootstrap_distribution[a].values()), sum(self.dispersy_bootstrap_distribution[b].values())), reverse=True)
         for sock_addr in bootstrap_keys:
             nodes = self.dispersy_bootstrap_distribution[sock_addr]
             times = sum(nodes.values())
-            print >> h_dispersy_bootstrap_distribution, "%s %d" % (str(sock_addr), times)
+            print("%s %d" % (str(sock_addr), times), file=h_dispersy_bootstrap_distribution)
         h_dispersy_bootstrap_distribution.close()
 
 class DebugMessages(AbstractHandler):
@@ -680,11 +695,11 @@ class DebugMessages(AbstractHandler):
         filename = os.path.join(self.outputdir, "scenario-%s-debugstatistics.txt" % key)
         if not os.path.exists(filename):
             h_debugstatistics = open(filename, "w+")
-            print >> h_debugstatistics, "# timestamp timeoffset value"
+            print("# timestamp timeoffset value", file=h_debugstatistics)
         else:
             h_debugstatistics = open(filename, "a")
 
-        print >> h_debugstatistics, timestamp, timeoffset, value
+        print(timestamp, timeoffset, value, file=h_debugstatistics)
         h_debugstatistics.close()
 
     def all_files_done(self, extract_statistics):
@@ -710,12 +725,12 @@ class AnnotateMessages(AbstractHandler):
 
     def all_files_done(self, extract_statistics):
         h_annotations = open(os.path.join(extract_statistics.node_directory, "annotations.txt"), "w+")
-        print >> h_annotations, "annotation", " ".join(map(str, self.nodes))
+        print("annotation", " ".join(map(str, self.nodes)), file=h_annotations)
         for annotation, node_dict in self.annotate_dict.iteritems():
-            print >> h_annotations, '"%s"' % annotation,
+            print('"%s"' % annotation, end=' ', file=h_annotations)
             for node in self.nodes:
-                print >> h_annotations, node_dict.get(node, '?'),
-            print >> h_annotations, ''
+                print(node_dict.get(node, '?'), end=' ', file=h_annotations)
+            print('', file=h_annotations)
 
 def get_parser(argv):
     e = ExtractStatistics(argv[1])
@@ -730,8 +745,8 @@ def get_parser(argv):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 and len(sys.argv) != 3:
-        print "Usage: %s <node-directory> [messagestoplot]" % (sys.argv[0])
-        print >> sys.stderr, sys.argv
+        print("Usage: %s <node-directory> [messagestoplot]" % (sys.argv[0]))
+        print(sys.argv, file=sys.stderr)
 
         sys.exit(1)
 

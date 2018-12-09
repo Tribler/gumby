@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sys
 from random import expovariate, random, randint
@@ -14,23 +15,23 @@ class ScenarioPreProcessor(ScenarioRunner):
         self._callables['churn'] = self.churn
         self._callables['churn_pattern'] = self.churn_pattern
 
-        print >> sys.stderr, "Looking for max_timestamp, max_peer... in %s" % filename,
+        print("Looking for max_timestamp, max_peer... in %s" % filename, end=' ', file=sys.stderr)
 
         self.max_peer = 0
         for (tstmp, file, lineno, clb, args, kwargs) in self._parse_scenario():
             max_tstmp = max(tstmp, max_tstmp)
 
-        print >> sys.stderr, "\tfound %d and %d" % (max_tstmp, self.max_peer)
+        print("\tfound %d and %d" % (max_tstmp, self.max_peer), file=sys.stderr)
 
         _max_peer = self.max_peer
-        print >> sys.stderr, "Preprocessing file...",
+        print("Preprocessing file...", end=' ', file=sys.stderr)
         for (tstmp, file, lineno, clb, args, kwargs) in self._parse_scenario():
-            print >> outputfile, self.file_buffer[1][lineno - 1][1]
+            print(self.file_buffer[1][lineno - 1][1], file=outputfile)
             if clb in self._callables:
                 for peer in self.yes_peers:
                     for line in self._callables[clb](tstmp, max_tstmp, *args):
-                        print >> outputfile, line, '{%s}' % peer
-        print >> sys.stderr, "\tdone"
+                        print(line, '{%s}' % peer, file=outputfile)
+        print("\tdone", file=sys.stderr)
 
     def _parse_for_this_peer(self, peerspec):
         if peerspec:
@@ -95,12 +96,12 @@ def main(inputfile, outputfile, maxtime=0):
 
         f.close()
     else:
-        print >> sys.stderr, inputfile, "not found"
+        print(inputfile, "not found", file=sys.stderr)
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print "Usage: %s <input-file> <output-file> (<max-time>)" % (sys.argv[0])
-        print >> sys.stderr, sys.argv
+        print("Usage: %s <input-file> <output-file> (<max-time>)" % (sys.argv[0]))
+        print(sys.argv, file=sys.stderr)
 
         exit(1)
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from __future__ import print_function
 import csv
 import json
 import math
@@ -79,22 +80,22 @@ class DroppedStatsProcessor:
         """
         # Stop if we have no scenario file
         if not self.scenario:
-            print "Could not find scenario file"
+            print("Could not find scenario file")
             return 0
         # Stop if we have no data to extract
         total_dropped = self._extract_total_dropped()
         if total_dropped is None:
-            print "Could not find file", self._dropped_reduced
+            print("Could not find file", self._dropped_reduced)
             return 0
         # Write the current data if we don't have old data
         if not os.path.exists(self._dropped_stats_json):
-            print self._dropped_stats_json, "does not exist, trying to create it"
+            print(self._dropped_stats_json, "does not exist, trying to create it")
             mkdir_for_file(self._dropped_stats_json)
             with open(self._dropped_stats_json, 'w') as f:
                 json.dump({self.scenario: [total_dropped, ]}, f)
             return 0
         else:
-            print self._dropped_stats_json + " exists, proceeding"
+            print(self._dropped_stats_json + " exists, proceeding")
 
         # We update the historical json with the latest statistics
         combined = self._combine_stats(self.scenario, total_dropped)
@@ -104,12 +105,12 @@ class DroppedStatsProcessor:
         # Return if we don't have enough data, need at least 2 to compute standard deviation
         previous_values = combined[self.scenario]
         if len(previous_values) < 3:
-            print "Not enough data to check deviation"
+            print("Not enough data to check deviation")
             return 0
 
         if large_deviation(previous_values, total_dropped):
-            print "Large deviation in dropped message count detected!"
-            print total_dropped, "<<>>", sum(previous_values)/len(previous_values)
+            print("Large deviation in dropped message count detected!")
+            print(total_dropped, "<<>>", sum(previous_values)/len(previous_values))
             return 1
         else:
             return 0
@@ -136,7 +137,7 @@ class DroppedStatsProcessor:
             try:
                 return json.load(f)
             except ValueError:
-                print self._dropped_stats_json, "seems to be corrupt, resetting!"
+                print(self._dropped_stats_json, "seems to be corrupt, resetting!")
                 return {}
 
     def _extract_total_dropped(self):

@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from __future__ import print_function
 from logging import debug, warning
 from twisted.internet import reactor
 from os import environ, path
@@ -29,13 +30,13 @@ def main(self_service=False):
     """
 
     if len(argv) > 2:
-        print "Launch invoke error, too many command line arguments. Specify 1 scenario file to run."
+        print("Launch invoke error, too many command line arguments. Specify 1 scenario file to run.")
         exit(3)
 
     if len(argv) == 2:
         scenario_argument = path.abspath(argv[1])
         if "SCENARIO_FILE" in environ:
-            print "Launch invoke error, can't take both a command line scenario file and an environment scenario file."
+            print("Launch invoke error, can't take both a command line scenario file and an environment scenario file.")
             exit(3)
         else:
             environ["SCENARIO_FILE"] = scenario_argument

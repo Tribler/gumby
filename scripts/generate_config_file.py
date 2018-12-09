@@ -37,6 +37,7 @@
 
 # Code:
 
+from __future__ import print_function
 from os import path, walk
 from sys import argv
 
@@ -127,16 +128,16 @@ CONFIG_FILE_HEADER = '''\
 '''
 if __name__ == '__main__':
     if len(argv) != 2:
-        print "Usage:\n    %s experiments/myexperiment/myconfig.conf" % argv[0]
+        print("Usage:\n    %s experiments/myexperiment/myconfig.conf" % argv[0])
         exit(3)
     config_file_path = argv[1]
     config_file_dir = path.dirname(config_file_path)
     if not path.exists(config_file_dir):
-        print "Directory %s does not exist, please create it first." % config_file_dir
+        print("Directory %s does not exist, please create it first." % config_file_dir)
         exit(2)
 
     if path.exists(config_file_path):
-        print "Specified output file already exists, bailing out."
+        print("Specified output file already exists, bailing out.")
         exit(1)
     else:
         config_file = open(config_file_path, 'w')
@@ -144,9 +145,9 @@ if __name__ == '__main__':
 
     self_abspath = path.abspath(__file__)
     gumby_root = path.abspath(path.join(path.dirname(__file__), '..'))
-    print "Gumby root is:", gumby_root
+    print("Gumby root is:", gumby_root)
     for dirpath, dirnames, filenames in walk(gumby_root):
-        print '* Entering', dirpath
+        print('* Entering', dirpath)
         # Remove blackisted dirs so we don't recurse into them
         for dir_ in BLACKLISTED_DIRS:
             if dir_ in dirnames:
@@ -160,11 +161,11 @@ if __name__ == '__main__':
                 if file_abspath != self_abspath:
                     config_opts = {}
                     doc_lines = []
-                    print '  * Scanning:', file_abspath
+                    print('  * Scanning:', file_abspath)
                     for line in open(file_abspath, 'r').readlines():
                         if CONF_MARKER in line:
                             name, description = [piece.strip() for piece in line.strip().split(CONF_MARKER, 1)[1].split(':', 1)]
-                            print '   - Found:', name
+                            print('   - Found:', name)
                             name = name.lower()
                             config_opts[name] = config_opts[name]+'\n# '+description if name in config_opts else description
                         if DOC_MARKER in line:
