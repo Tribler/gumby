@@ -16,6 +16,11 @@ from Tribler.Core.DownloadConfig import DefaultDownloadStartupConfig
 from Tribler.Core.simpledefs import dlstatus_strings
 from Tribler.Core.TorrentDef import TorrentDef
 
+try:
+    long           # Python 2
+except NameError:  # Python 3
+    long = int     # pylint: disable=redefined-builtin
+
 
 @static_module
 class TriblerModule(BaseDispersyModule):

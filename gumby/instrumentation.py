@@ -39,6 +39,7 @@ import logging
 from os import environ, getpid, makedirs, path
 from time import time
 
+from six.moves import xrange
 from twisted.conch import manhole_tap
 from twisted.internet import reactor
 from twisted.internet.task import LoopingCall

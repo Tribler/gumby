@@ -46,6 +46,11 @@ from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
 
+try:
+    long           # Python 2
+except NameError:  # Python 3
+    long = int     # pylint: disable=redefined-builtin
+
 
 @static_module
 class TunnelModule(IPv8OverlayExperimentModule):

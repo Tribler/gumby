@@ -9,6 +9,8 @@ from json import loads
 from time import time
 from traceback import print_exc
 
+from six.moves import xrange
+
 try:
     cmp             # Python 2
 except NameError:   # Python 3

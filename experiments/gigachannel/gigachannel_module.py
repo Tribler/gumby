@@ -2,6 +2,7 @@ import os
 from time import time
 
 from pony.orm import db_session
+from six.moves import xrange
 from twisted.internet.task import LoopingCall
 
 from Tribler.community.gigachannel.community import GigaChannelCommunity

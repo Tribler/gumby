@@ -40,6 +40,7 @@ from random import choice
 from string import letters
 from time import time
 
+from six.moves import xrange
 from twisted.internet.task import LoopingCall
 
 from gumby.experiment import experiment_callback
