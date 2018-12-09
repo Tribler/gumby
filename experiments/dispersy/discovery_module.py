@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-from sys import maxint
+from sys import maxsize
 from traceback import print_exc
 from hashlib import sha1
 
@@ -22,7 +22,7 @@ class DiscoveryModule(DispersyCommunityExperimentModule):
         self.monitor_friends_lc = None
         self._prev_scenario_statistics = {}
         self._prev_scenario_debug = {}
-        self.dispersy_community_launcher.community_kwargs['max_prefs'] = maxint
+        self.dispersy_community_launcher.community_kwargs['max_prefs'] = maxsize
         self.dispersy_community_launcher.community_kwargs['max_tbs'] = 25
 
     def on_community_loaded(self):

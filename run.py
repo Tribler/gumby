@@ -37,6 +37,7 @@
 
 # Code:
 
+from __future__ import print_function
 import logging
 import sys
 from os import environ, getpgid, getpid, kill, setpgrp
@@ -60,7 +61,7 @@ from gumby.runner import ExperimentRunner
 
 def _termTrap(self, *argv):
     if not _terminating:
-        print "Captured TERM signal"
+        print("Captured TERM signal")
         _killGroup()
         exit(-15)
 
@@ -87,11 +88,11 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         conf_path = sys.argv[1]
         if not exists(conf_path):
-            print "Error: The specified configuration file doesn't exist."
+            print("Error: The specified configuration file doesn't exist.")
             exit(1)
 
         if not exists('/proc'):
-            print "Error: procfs not available on this system."
+            print("Error: procfs not available on this system.")
             exit(5)
 
         # Create a process group so we can clean up after ourselves when
@@ -124,7 +125,7 @@ if __name__ == '__main__':
 
         exit(reactor.exitCode)
     else:
-        print "Usage:\n%s EXPERIMENT_CONFIG" % sys.argv[0]
+        print("Usage:\n%s EXPERIMENT_CONFIG" % sys.argv[0])
 
 #
 # run.py ends here

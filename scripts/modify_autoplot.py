@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import print_function
 import sys
 import os
 
@@ -26,8 +27,8 @@ def main(input_directory, start_timestamp):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print "Usage: %s <peers-directory> <experiment start timestamp>" % (sys.argv[0])
-        print >> sys.stderr, sys.argv
+        print("Usage: %s <peers-directory> <experiment start timestamp>" % (sys.argv[0]))
+        print(sys.argv, file=sys.stderr)
 
         exit(1)
 

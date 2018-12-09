@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import print_function
 import sys
 import os
 from math import ceil
@@ -19,18 +20,18 @@ def reduce(base_directory, nrlines, inputfile, outputfile, removeinputfile=True)
     outputfile = os.path.join(base_directory, outputfile)
 
     if os.path.exists(inputfile):
-        print >> sys.stderr, base_directory, inputfile, outputfile
+        print(base_directory, inputfile, outputfile, file=sys.stderr)
 
         ifp = open(inputfile, 'r')
         ofp = open(outputfile, 'w')
 
         lines = ifp.readlines()
-        print >> ofp, lines[0][:-1]
+        print(lines[0][:-1], file=ofp)
 
         lines = lines[1:]
         if len(lines) > nrlines:
             nrlines_to_merge = int(ceil(len(lines) / float(nrlines)))
-            print >> sys.stderr, "%s has %d lines, reducing to %d lines" % (inputfile, len(lines), nrlines)
+            print("%s has %d lines, reducing to %d lines" % (inputfile, len(lines), nrlines), file=sys.stderr)
 
             max_time = None
             to_be_merged_parts = defaultdict(list)
@@ -43,19 +44,19 @@ def reduce(base_directory, nrlines, inputfile, outputfile, removeinputfile=True)
                     to_be_merged_parts[j].append(part)
 
                 if (i + 1) % nrlines_to_merge == 0 or (i + 1 == len(lines)):
-                    print >> ofp, max_time,
+                    print(max_time, end=' ', file=ofp)
 
                     for j, parts in to_be_merged_parts.iteritems():
                         mean = float_or_unknown_mean(parts)
-                        print >> ofp, mean,
+                        print(mean, end=' ', file=ofp)
 
                         to_be_merged_parts[j] = []
 
-                    print >> ofp, ''
+                    print('', file=ofp)
 
         else:
             for line in lines:
-                print >> ofp, line[:-1]
+                print(line[:-1], file=ofp)
 
         ifp.close()
         ofp.close()
@@ -87,8 +88,8 @@ def main(input_directory, nrlines):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print "Usage: %s <peers-directory> <nr-of-lines-to-output>" % (sys.argv[0])
-        print >> sys.stderr, sys.argv
+        print("Usage: %s <peers-directory> <nr-of-lines-to-output>" % (sys.argv[0]))
+        print(sys.argv, file=sys.stderr)
 
         exit(1)
 

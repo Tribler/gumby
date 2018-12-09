@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+from __future__ import print_function
 import json
 import os
 import sys
@@ -31,7 +32,7 @@ class TrustchainStatisticsParser(StatisticsParser):
                 start_time = int(float(start_time_file.read()) * 1000)
                 break
 
-        print "Writing TrustChain blocks to file"
+        print("Writing TrustChain blocks to file")
         # Prior to writing all blocks, we construct a map from peer ID to public key
         key_map = {}
         for peer_nr, filename, dir in self.yield_files('overlays.txt'):
@@ -42,7 +43,7 @@ class TrustchainStatisticsParser(StatisticsParser):
                         continue
                     parts = line.split(',')
                     if parts[0] == 'TrustChainCommunity':
-                        print "Mapping %s to peer %s" % (parts[1].rstrip(), peer_nr)
+                        print("Mapping %s to peer %s" % (parts[1].rstrip(), peer_nr))
                         key_map[parts[1].rstrip()] = peer_nr
 
         interactions = []
@@ -65,7 +66,7 @@ class TrustchainStatisticsParser(StatisticsParser):
                     link_peer = key_map[block.link_public_key.encode('hex')]
 
                 if block.public_key.encode('hex') not in key_map:
-                    print "Public key %s cannot be mapped to a peer!" % block.public_key.encode('hex')
+                    print("Public key %s cannot be mapped to a peer!" % block.public_key.encode('hex'))
                     continue
 
                 peer = key_map[block.public_key.encode('hex')]

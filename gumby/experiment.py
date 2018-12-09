@@ -2,16 +2,16 @@ import imp
 import json
 import logging
 import os
+from os import chdir, environ, makedirs, path
 import sys
-from time import time
 from collections import Iterable
-from os import environ, path, makedirs, chdir
+from functools import reduce  # pylint: disable=redefined-builtin
+from time import time
 
+from gumby.scenario import ScenarioRunner
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
 from twisted.protocols.basic import LineReceiver
-
-from gumby.scenario import ScenarioRunner
 
 
 def experiment_callback(name=None):
