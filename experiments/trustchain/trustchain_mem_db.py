@@ -1,3 +1,4 @@
+from six.moves import xrange
 from Tribler.pyipv8.ipv8.attestation.trustchain.block import TrustChainBlock
 
 

@@ -8,6 +8,7 @@ from collections import Iterable
 from functools import reduce  # pylint: disable=redefined-builtin
 from time import time
 
+import six
 from gumby.scenario import ScenarioRunner
 from twisted.internet import reactor
 from twisted.internet.threads import deferToThread
@@ -241,7 +242,7 @@ class ExperimentClient(object, LineReceiver):
             if cur_dict:
                 for key, value in cur_dict.iteritems():
                     # convert key to make it printable
-                    if not isinstance(key, (basestring, int, long, float)):
+                    if not isinstance(key, (six.string_types, six.integer_types, float)):
                         key = str(key)
 
                     # if this is a dict, recursively check for changed values
@@ -254,7 +255,7 @@ class ExperimentClient(object, LineReceiver):
 
                     # else convert and compare single value
                     else:
-                        if not isinstance(value, (basestring, int, long, float, Iterable)):
+                        if not isinstance(value, (six.string_types, six.integer_types, float, Iterable)):
                             value = str(value)
 
                         new_values[key] = value

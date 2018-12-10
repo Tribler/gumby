@@ -3,6 +3,7 @@ import json
 import os
 import sys
 
+from six.moves import xrange
 from gumby.statsparser import StatisticsParser
 
 

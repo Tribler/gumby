@@ -7,6 +7,11 @@ from collections import defaultdict
 
 import json
 
+try:
+    long           # Python 2
+except NameError:  # Python 3
+    long = int     # pylint: disable=redefined-builtin
+
 
 def write_records(all_nodes, sum_records, output_directory, outputfile, diffoutputfile=None):
     if len(sum_records) > 0:

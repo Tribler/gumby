@@ -2,6 +2,7 @@ from os import path
 from collections import defaultdict
 from time import time
 
+import six
 from twisted.internet.task import LoopingCall
 
 from gumby.experiment import experiment_callback
@@ -31,7 +32,7 @@ class DispersyModule(BaseDispersyModule):
 
         self._logger.info("Starting dispersy")
         self.dispersy = Dispersy(StandaloneEndpoint(self.session.config.get_dispersy_port(), '0.0.0.0'),
-                                 unicode(self.session.config.get_state_dir()), u"dispersy.db", self.crypto)
+                                 six.text_type(self.session.config.get_state_dir()), u"dispersy.db", self.crypto)
         self.dispersy.statistics.enable_debug_statistics(True)
         self.dispersy.start(autoload_discovery=False)
 
