@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 
-from Tribler.Core.DecentralizedTracking.dht_provider import MainlineDHTProvider
 from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
 from Tribler.pyipv8.ipv8.dht.provider import DHTCommunityProvider
 from Tribler.pyipv8.ipv8.peer import Peer
@@ -259,8 +258,6 @@ class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
         kwargs = super(TriblerTunnelCommunityLauncher, self).get_kwargs(session)
         if session.config.get_dht_enabled():
             kwargs['dht_provider'] = DHTCommunityProvider(session.lm.dht_community, session.config.get_dispersy_port())
-        else:
-            kwargs['dht_provider'] = MainlineDHTProvider(session.lm.mainline_dht, session.config.get_dispersy_port())
         kwargs['bandwidth_wallet'] = TrustchainWallet(session.lm.trustchain_community)
         return kwargs
 
