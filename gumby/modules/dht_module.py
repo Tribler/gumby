@@ -1,15 +1,12 @@
 """
 The dht module aims to provide DHT isolation for experiments, and provide dht related utility experiment callbacks.
 """
-from random import sample
-
 from gumby.experiment import experiment_callback
 
 from gumby.modules.experiment_module import static_module, ExperimentModule
 from gumby.modules.base_dispersy_module import BaseDispersyModule
 from gumby.modules.tribler_module import TriblerModule
 
-from Tribler.Core.DecentralizedTracking.pymdht.core.routing_table import Bucket
 import Tribler.Core.Libtorrent.LibtorrentMgr as lt
 
 
