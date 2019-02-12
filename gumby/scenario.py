@@ -52,7 +52,6 @@ from re import compile as re_compile
 from threading import RLock
 from time import time
 
-from six.moves import xrange
 from twisted.internet import reactor
 
 
@@ -94,6 +93,7 @@ class ScenarioParser(object):
         self._logger = logging.getLogger(self.__class__.__name__)
         self.file_lock = RLock()
         self.line_buffer = []
+        self.user_defined_vars = {}
         self.preprocessor_callbacks = {
             "include": self._preproc_include_file
         }
@@ -176,14 +176,17 @@ class ScenarioParser(object):
                     timespec, callable = parts
                     args = ''
 
-                if timespec[0] == '@':
-                    timespec = timespec[1:]
-                timespec = timespec.split(':')
-                begin = float(timespec[-1])
-                if len(timespec) > 1:
-                    begin += int(timespec[-2]) * 60
-                if len(timespec) > 2:
-                    begin += int(timespec[-3]) * 3600
+                if len(timespec) > 1 and timespec[0] == '@' and timespec[1] == '!':
+                    begin = -1
+                else:
+                    if timespec[0] == '@':
+                        timespec = timespec[1:]
+                    timespec = timespec.split(':')
+                    begin = float(timespec[-1])
+                    if len(timespec) > 1:
+                        begin += int(timespec[-2]) * 60
+                    if len(timespec) > 2:
+                        begin += int(timespec[-3]) * 3600
 
                 unnamed_args = []
                 named_args = {}
@@ -193,6 +196,15 @@ class ScenarioParser(object):
                     if argname:
                         named_args[argname.group(1)] = arg[argname.start(2):]
                     else:
+                        # If this is a variable
+                        if arg[0] == '$':
+                            # Get the name of the variable
+                            var_name = arg[1:]
+                            # After the name has been retrieved we could get it from the parameter dictionary
+                            if var_name not in self.user_defined_vars:
+                                raise Exception("No variable was set under the name %s" % var_name)
+
+                            arg = self.user_defined_vars[var_name]
                         unnamed_args.append(arg)
 
                 return begin, filename, line_number, callable, unnamed_args, named_args
@@ -295,16 +307,23 @@ class ScenarioRunner(ScenarioParser):
             if clb not in self._callables:
                 self._logger.error("Error running scenario %s:%d, undefined callback %s.", filename, line_number, clb)
                 continue
-            tstmp = tstmp + self.exp_start_time
-            delay = tstmp - time()
-            self._logger.info("Register call %s %s:%d %s %s %s", tstmp, filename, line_number, clb, repr(args), repr(kwargs))
-            for target in self._callables[clb]:
-                reactor.callLater(
-                    delay if delay > 0.0 else 0,
-                    target,
-                    *args,
-                    **kwargs
-                )
+            if tstmp >= 0:
+                tstmp = tstmp + self.exp_start_time
+                delay = tstmp - time()
+                self._logger.info("Register call %s %s:%d %s %s %s", tstmp, filename, line_number, clb,
+                                  repr(args), repr(kwargs))
+                for target in self._callables[clb]:
+                    reactor.callLater(
+                        delay if delay > 0.0 else 0,
+                        target,
+                        *args,
+                        **kwargs
+                    )
+            else:
+                self._logger.info("Calling immediately %s:%d %s %s %s", filename, line_number, clb,
+                                  repr(args), repr(kwargs))
+                for target in self._callables[clb]:
+                    target(*args, **kwargs)
 
     def _parse_for_this_peer(self, peerspec):
         if peerspec:

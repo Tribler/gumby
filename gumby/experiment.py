@@ -228,6 +228,19 @@ class ExperimentClient(object, LineReceiver):
         self._logger.info("Stopping reactor")
         reactor.stop()
 
+    @experiment_callback
+    def set(self, variable_name, variable_value):
+        """
+        Allows the user to set a variable, which may be reused throughout the experiment. The value of the variable
+        will be stored as a string. It is up to the experiment programmer to ensure it's converted to the correct
+        type in the methods it will be used.
+
+        :param variable_name: the name of the variable.
+        :param variable_value: the value of the variable. The value will be stored as a string.
+        :return: None
+        """
+        self.scenario_runner.user_defined_vars[variable_name] = variable_value
+
     def print_dict_changes(self, name, prev_dict, cur_dict):
         """
         Prints the changes in a dict with respect to another dict
