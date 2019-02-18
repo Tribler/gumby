@@ -196,15 +196,6 @@ class ScenarioParser(object):
                     if argname:
                         named_args[argname.group(1)] = arg[argname.start(2):]
                     else:
-                        # If this is a variable
-                        if arg[0] == '$':
-                            # Get the name of the variable
-                            var_name = arg[1:]
-                            # After the name has been retrieved we could get it from the parameter dictionary
-                            if var_name not in self.user_defined_vars:
-                                raise Exception("No variable was set under the name %s" % var_name)
-
-                            arg = self.user_defined_vars[var_name]
                         unnamed_args.append(arg)
 
                 return begin, filename, line_number, callable, unnamed_args, named_args
@@ -252,9 +243,12 @@ class ScenarioParser(object):
         raise NotImplementedError('override this method please')
 
     def _expand_line(self, line):
-        # Look for $VARIABLES to replace with config options from the env.
+        # Look for $VARIABLES to replace with config options from the env (lower precedence)
+        # or from the user defined variables (higher precedence)
         for substitution in self._re_substitution.findall(line):
-            if substitution[1:] in environ:
+            if substitution[1:] in self.user_defined_vars:
+                line = line.replace(substitution, self.user_defined_vars[substitution[1:]])
+            elif substitution[1:] in environ:
                 line = line.replace(substitution, environ[substitution[1:]])
 
         return line
