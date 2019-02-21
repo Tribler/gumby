@@ -10,7 +10,7 @@ from twisted.internet import reactor
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module
-from gumby.modules.base_dispersy_module import BaseDispersyModule
+from gumby.modules.base_ipv8_module import BaseIPv8Module
 
 from Tribler.Core.DownloadConfig import DefaultDownloadStartupConfig
 from Tribler.Core.simpledefs import dlstatus_strings
@@ -23,12 +23,11 @@ except NameError:  # Python 3
 
 
 @static_module
-class TriblerModule(BaseDispersyModule):
+class TriblerModule(BaseIPv8Module):
 
     def __init__(self, experiment):
         super(TriblerModule, self).__init__(experiment)
         self.transfer_size = 25 * 1024 * 1024
-        self.dispersy = None
         self.ipv8 = None
         self.download_stats = {
             'download': 0,
@@ -43,19 +42,15 @@ class TriblerModule(BaseDispersyModule):
 
         self._logger.error("Starting Tribler Session")
 
-        if self.custom_dispersy_community_loader:
-            self.session.lm.dispersy_community_loader = self.custom_dispersy_community_loader
-
         if self.custom_ipv8_community_loader:
             self.session.lm.ipv8_community_loader = self.custom_ipv8_community_loader
 
         def on_tribler_started(_):
             self._logger.error("Tribler Session started")
-            self.dispersy = self.session.lm.dispersy
             self.ipv8 = self.session.lm.ipv8
             self.dht_provider = DHTCommunityProvider(self.session.lm.dht_community,
                                                      self.session.config.get_libtorrent_port())
-            self.dispersy_available.callback(self.dispersy)
+            self.ipv8_available.callback(self.ipv8)
 
         return self.session.start().addCallback(on_tribler_started)
 

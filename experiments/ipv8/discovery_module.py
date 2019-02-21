@@ -20,6 +20,6 @@ class DiscoveryModule(IPv8OverlayExperimentModule):
         super(DiscoveryModule, self).on_id_received()
         self.tribler_config.set_ipv8_discovery(True)
 
-    def on_dispersy_available(self, dispersy):
+    def on_ipv8_available(self, _):
         # Disable threadpool messages
         self.overlay._use_main_thread = True

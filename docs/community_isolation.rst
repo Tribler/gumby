@@ -1,26 +1,26 @@
-The purpose of this document is to show a means of isolating Dispersy communities from outside interference in Gumby experiments.
-This document assumes the reader has a basic understanding of running Gumby experiments, creating Dispersy communities and running them through the ``TriblerExperimentScriptClient`` class.
+The purpose of this document is to show a means of isolating IPv8 overlays from outside interference in Gumby experiments.
+This document assumes the reader has a basic understanding of running Gumby experiments, creating IPv8 overlays and running them through the ``TriblerExperimentScriptClient`` class.
 
-********************************************
-Isolating and replacing Dispersy communities
-********************************************
-As you may have noticed, the communities loaded by the ``TriblerExperimentScriptClient`` are the live communities as loaded by Tribler (which you can toggle by setting the correct flags in the ``SessionConfig``).
-In some cases this may be desirable functionality, in other cases one would like to isolate these communities as such that they do not communicate with third parties.
+*************************************
+Isolating and replacing IPv8 overlays
+*************************************
+As you may have noticed, the overlays loaded by the ``TriblerExperimentScriptClient`` are the live overlays as loaded by Tribler (which you can toggle by setting the correct flags in the ``SessionConfig``).
+In some cases this may be desirable functionality, in other cases one would like to isolate these overlays as such that they do not communicate with third parties.
 
 How have we solved this in the past?
-As you may know, part of the unique identification of a Dispersy community is its master member definition.
-Previously, one was required to create a subclass of the community under test in Gumby which had a different master member definition.
-Even though this is still possible, a system has been implemented in Gumby which allows you to easily isolate and/or replace these existing Tribler communities or add your own.
+As you may know, part of the unique identification of a IPv8 overlay is its master peer definition.
+Previously, one was required to create a subclass of the overlay under test in Gumby which had a different master peer definition.
+Even though this is still possible, a system has been implemented in Gumby which allows you to easily isolate and/or replace these existing Tribler overlays or add your own.
 
 Isolation
 ---------
-To demonstrate the use of community isolation we will use the following subclass of ``TriblerExperimentScriptClient``:
+To demonstrate the use of overlay isolation we will use the following subclass of ``TriblerExperimentScriptClient``:
 
 .. code-block:: python
 
     class MyTriblerExperimentScriptClientSubclass(TriblerExperimentScriptClient):
 
-        def create_community_loader(self):
+        def create_overlay_loader(self):
             loader = super(MyTriblerExperimentScriptClientSubclass, self).create_community_loader()
             loader.isolate("HiddenTunnelCommunity")
             return loader
@@ -73,11 +73,11 @@ Method                                     Type        Description
 ``get_name()``                             *str*       The unique name of this launcher.
 ``not_before()``                           *list(str)* The names of launchers which should be loaded before this launcher is launched. Use in combination with ``prepare()`` to retrieve runtime information from other communities.
 ``should_launch(session)``                 *bool*      Checks the Session parameters to see if this community should be loaded.
-``prepare(dispersy, session)``             *None*      Prepare this launcher with information from the current ``Session``.
-``finalize(dispersy, session, community)`` *None*      Called after the community has been loaded. The community may be ``None`` if the ``load()`` setting evaluates to ``False`` or Dispersy failed to load the community.
-``get_community_class()``                  *Community* The class of the community to be loaded by Dispersy.
-``get_my_member(dispersy, session)``       *Member*    The Dispersy member to use for this community.
-``should_load_now(session)``               *bool*      Load this community right now, should be ``True`` in most cases. The alternative is to call ``init_community()`` later. The ``IsolatedCommunityWrapper`` uses this mechanism to provide a custom master member.
-``get_args(session)``                      *tuple*     The arguments to supply to the ``init_community()`` method of the loaded community class.
-``get_kwargs(session)``                    *dict*      The named arguments to supply to the ``init_community()`` method of the loaded community class.
+``prepare(ipv8, session)``                 *None*      Prepare this launcher with information from the current ``Session``.
+``finalize(ipv8, session, community)``     *None*      Called after the overlay has been loaded.
+``get_overlay_class()``                    *Overlay*   The class of the overlay to be loaded by IPv8.
+``get_my_peer(ipv8, session)``             *Member*    The IPv8 member to use for this community.
+``should_load_now(session)``               *bool*      Load this overlay right now, should be ``True`` in most cases. The ``IsolatedCommunityWrapper`` uses this mechanism to provide a custom master member.
+``get_args(session)``                      *tuple*     The arguments to supply to the ``__init__`` method of the loaded overlay class.
+``get_kwargs(session)``                    *dict*      The named arguments to supply to the ``__init__`` method of the loaded overlay class.
 ========================================== =========== ===========

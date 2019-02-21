@@ -41,8 +41,7 @@ class GigaChannelModule(IPv8OverlayExperimentModule):
         with open('autoplot/completed_channels.csv', 'w') as output_file:
             output_file.write('time,pid,num_channels\n')
 
-    def on_dispersy_available(self, dispersy):
-        super(GigaChannelModule, self).on_dispersy_available(dispersy)
+    def on_ipv8_available(self, _):
         LoopingCall(self.write_channels).start(1.0, True)
 
     @experiment_callback

@@ -137,6 +137,3 @@ An example of the scenario file used during the basic TrustChain experiment is g
 
 The scenario file to be used can specified with the `scenario_file` variable in the experiment configuration file.
 Note that scenario files are only correctly loaded if you use `launch_scenario.py` as `das4_node_command`.
-
-## Tutorial
-A tutorial for creating your first Gumby experiment is availble [here](docs/hello_world.rst).

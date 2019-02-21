@@ -1,39 +1,27 @@
 import unittest
 
-from gumby.modules.community_launcher import DispersyCommunityLauncher
-from gumby.modules.gumby_session import DispersyCommunityLoader
+from gumby.modules.community_launcher import IPv8CommunityLauncher
+from gumby.modules.gumby_session import IPv8CommunityLoader
+from gumby.tests.mocking import MockOverlay, MockIPv8, MockSession
 
 
-class MockCommunity(object):
-    pass
-
-
-class MockDispersy(object):
-
-    def __init__(self):
-        self.loaded_classes = []
-
-    def define_auto_load(self, community_class, *args):
-        self.loaded_classes.append(community_class.__name__)
-
-
-class MockUniqueLauncher(DispersyCommunityLauncher):
+class MockUniqueLauncher(IPv8CommunityLauncher):
 
     def get_name(self):
         return str(id(self))
 
-    def get_community_class(self):
-        return MockCommunity
+    def get_overlay_class(self):
+        return MockOverlay
 
-    def get_my_member(self, dispersy, session):
+    def get_my_peer(self, ipv8, session):
         return None
 
 
 class TestCommunityLoader(unittest.TestCase):
 
     def setUp(self):
-        self.loader = DispersyCommunityLoader()
-        self.dispersy = MockDispersy()
+        self.loader = IPv8CommunityLoader()
+        self.ipv8 = MockIPv8()
 
     def test_unknown_dependency(self):
         """
@@ -45,9 +33,9 @@ class TestCommunityLoader(unittest.TestCase):
         launcher.not_before = lambda: "I don't exist"
         self.loader.community_launchers = {}
         self.loader.set_launcher(launcher)
-        self.loader.load(self.dispersy, None)
+        self.loader.load(self.ipv8, MockSession())
 
-        self.assertListEqual(self.dispersy.loaded_classes, ["MockCommunity", ])
+        self.assertTrue(self.ipv8.overlays)
 
     def test_cycle_dependency(self):
         """
@@ -56,12 +44,12 @@ class TestCommunityLoader(unittest.TestCase):
         launcher1 = MockUniqueLauncher()
         launcher2 = MockUniqueLauncher()
         launcher3 = MockUniqueLauncher()
-        launcher1.not_before = lambda: [launcher2.get_name(),]
-        launcher2.not_before = lambda: [launcher3.get_name(),]
-        launcher3.not_before = lambda: [launcher1.get_name(),]
+        launcher1.not_before = lambda: [launcher2.get_name(), ]
+        launcher2.not_before = lambda: [launcher3.get_name(), ]
+        launcher3.not_before = lambda: [launcher1.get_name(), ]
         self.loader.community_launchers = {}
         self.loader.set_launcher(launcher1)
         self.loader.set_launcher(launcher2)
         self.loader.set_launcher(launcher3)
 
-        self.assertRaises(RuntimeError, self.loader.load, self.dispersy, None)
+        self.assertRaises(RuntimeError, self.loader.load, self.ipv8, None)
