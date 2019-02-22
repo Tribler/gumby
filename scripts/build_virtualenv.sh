@@ -85,89 +85,6 @@ mkdir -p $VENV/src
 
 source $VENV/bin/activate
 
-# Install apsw manually as it is not available trough pip (well, it is but it's not the official will :)
-APSW_VERSION=3.24.0-r1
-APSW_MARKER=`build_marker apsw $APSW_VERSION`
-if [ ! -e $VENV/lib/python2.*/site-packages/apsw-*.egg -o ! -e $APSW_MARKER ]; then
-    pushd $VENV/src
-    if [ ! -e apsw-*zip ]; then
-        wget https://github.com/rogerbinns/apsw/releases/download/$APSW_VERSION/apsw-$APSW_VERSION.zip
-    fi
-    if [ ! -d apsw*/src ]; then
-        unzip apsw*.zip
-    fi
-    cd apsw*/
-    python setup.py fetch --missing-checksum-ok --all --version=3.24.0 build --enable-all-extensions install
-    popd
-    touch $APSW_MARKER
-fi
-
-# M2Crypto needs OpenSSL with EC support, but RH/Fedora doesn't provide it.
-# We install it in a different place so it will not end up in LD_LIBRARY_PATH
-# affecting the system's ssh binary.
-M2CDEPS=$VENV/m2cdeps
-mkdir -p $M2CDEPS
-
-OPENSSL_VERSION=1.0.1h
-OPENSSL_MARKER=`build_marker openssl $OPENSSL_VERSION`
-if [ ! -e $M2CDEPS/lib/libcrypto.a -o ! -e $OPENSSL_MARKER ]; then
-    pushd $VENV/src
-    if [ ! -e openssl-$OPENSSL_VERSION*.tar.gz ]; then
-        wget --no-check-certificate https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz
-    fi
-    if [ ! -d openssl-$OPENSSL_VERSION*/ ]; then
-        rm -fR openssl-*/
-        tar xvzpf openssl-$OPENSSL_VERSION*tar.gz
-    fi
-    pushd openssl-$OPENSSL_VERSION*/
-
-    ./config -fPIC -DOPENSSL_PIC --prefix=$M2CDEPS threads no-shared --openssldir=$M2CDEPS/share/openssl
-    make -j${CONCURRENCY_LEVEL} || make -j2 || make # Fails when building in multithreaded mode (at least with -j24)
-    make depend
-    make install_sw
-    echo "Done"
-    popd
-    popd
-    touch $OPENSSL_MARKER
-fi
-
-M2CRYPTO_VERSION=0.24.0
-M2CRYPTO_MARKER=`build_marker m2crypto $M2CRYPTO_VERSION`
-if [ ! -e $VENV/lib/python*/site-packages/M2Crypto*.egg  -o ! -e $M2CRYPTO_MARKER ]; then
-    pushd $VENV/src
-    if [ ! -e M2Crypto-$M2CRYPTO_VERSION*gz ]; then
-        wget --no-check-certificate https://pypi.python.org/packages/source/M/M2Crypto/M2Crypto-$M2CRYPTO_VERSION.tar.gz
-    fi
-    if [ ! -d M2Crypto-$M2CRYPTO_VERSION*/ ]; then
-        rm -fR M2Crypto-*/
-        tar xvapf M2Crypto-$M2CRYPTO_VERSION*gz
-    fi
-    pushd M2Crypto-$M2CRYPTO_VERSION*/
-
-    # disable linking against libssl and libcrypto as we are statically linking against it. See openssl build section
-    # and the end of this section for a convoluted explanation.
-    sed -i 's/self.libraries.*ssl.*crypto.*/self.libraries = []/g' setup.py
-
-    # Add openssl's .a's at THE END of the compile command. Using LDFLAGS won't work as it would end up in the middle.
-    EXTRA_LINK_ARGS="-fPIC $M2CDEPS/lib/libssl.a $M2CDEPS/lib/libcrypto.a"
-    sed -i 's~\( extra_compile_args=\[.*,$\)~\1 extra_link_args='"'$EXTRA_LINK_ARGS'.split()"',~' setup.py
-
-    # python setup.py clean # This doesn't clean everything
-    rm -fR build # this does
-    #python setup.py build || : # Do not run this, it will break the proper stuff made by build_ext
-    python setup.py build_py
-    # This should use our custom libcrypto (explicit RPATH) (It doesn't matter anymore as we are statically linking)
-    python setup.py --verbose build_ext --openssl=$M2CDEPS --rpath=$M2CDEPS/lib --include-dirs=$M2CDEPS/include
-
-    python setup.py install
-    popd
-
-    echo "Testing if the EC stuff is working..."
-    python -c 'import M2Crypto as m; m.EC.gen_params(m.m2.NID_sect409k1)'
-
-    touch $M2CRYPTO_MARKER
-fi
-
 # Build libboost
 BOOST_VERSION=1.58.0
 BOOST_MARKER=`build_marker boost $BOOST_VERSION`
@@ -189,8 +106,6 @@ if [ ! -e $VENV/src/boost_$BOOST_PATHV/bjam -o ! -e $VENV/lib/libboost_python.so
     popd
     touch $BOOST_MARKER
 fi
-
-
 
 #
 # Build Libtorrent and its python bindings
@@ -250,7 +165,7 @@ if [ ! -e $VENV/include/gmp.h  -o ! -e $GMP_MARKER ]; then
 fi
 
 # libmpfr needed by gmpy2
-MPFR_VERSION=4.0.1
+MPFR_VERSION=4.0.2
 MPFR_MARKER=`build_marker mpfr $MPFR_VERSION`
 if [ ! -e $VENV/include/mpfr.h  -o ! -e $MPFR_MARKER ]; then
 
@@ -367,9 +282,11 @@ cryptography
 cython
 dnspython
 ecdsa
+lz4
 meliae
 netifaces
 networkx
+pony
 protobuf
 psutil
 pyasn1 # for twisted

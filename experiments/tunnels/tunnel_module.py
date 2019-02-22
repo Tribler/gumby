@@ -67,8 +67,8 @@ class TunnelModule(IPv8OverlayExperimentModule):
         self.tribler_config.set_tunnel_community_exitnode_enabled(False)
         self.ipv8_community_launcher.community_kwargs["settings"] = TunnelSettings()
 
-    def on_dispersy_available(self, _):
-        super(TunnelModule, self).on_dispersy_available(_)
+    def on_ipv8_available(self, _):
+        super(TunnelModule, self).on_ipv8_available(_)
 
         def monitor_downloads(dslist):
             if isinstance(self.overlay, TriblerTunnelCommunity):

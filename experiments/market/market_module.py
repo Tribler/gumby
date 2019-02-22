@@ -34,7 +34,7 @@ class MarketModule(IPv8OverlayExperimentModule):
         self.tribler_config.set_dht_enabled(True)
         self.tribler_config.set_market_community_enabled(True)
 
-    def on_dispersy_available(self, dispersy):
+    def on_ipv8_available(self, _):
         # Disable threadpool messages
         self.overlay._use_main_thread = True
 

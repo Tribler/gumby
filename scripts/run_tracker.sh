@@ -9,7 +9,7 @@
 
 # Commentary:
 #
-# %*% Starts a dispersy tracker.
+# %*% Starts an IPv8 tracker.
 #
 #
 
@@ -38,18 +38,12 @@
 # Code:
 
 # @CONF_OPTION TRACKER_PORT: Set the port to be used by the tracker. (required)
-# @CONF_OPTION TRACKER_IP: Listen only on the specified IP. (default: dispersy's default 0.0.0.0)
-# @CONF_OPTION TRACKER_CRYPTO: Set the type of crypto to be used by the tracker. (default is ECCrypto)
+# @CONF_OPTION TRACKER_IP: Listen only on the specified IP. (default: IPv8's default 0.0.0.0)
 # @CONF_OPTION TRACKER_PROFILE: Enable profiling for the tracker? (default: FALSE)
 
 if [ -z "$TRACKER_PORT" ]; then
     echo "ERROR: you need to specify the TRACKER_PORT when using $0" >&2
     exit 1
-fi
-
-if [ -z "$TRACKER_CRYPTO" ]; then
-    echo "TRACKER_CRYPTO not set, using ECCrypto"
-    export TRACKER_CRYPTO="ECCrypto"
 fi
 
 cd $PROJECT_DIR
@@ -58,12 +52,12 @@ if [ -e tribler ]; then
     cd tribler/Tribler
 fi
 
-if [ ! -e dispersy ]; then
-    echo "Dispersy dir not found at $PWD/dispersy, bailing out."
+if [ ! -e pyipv8 ]; then
+    echo "IPv8 dir not found at $PWD/pyipv8, bailing out."
     exit 1
 fi
 
-export PYTHONPATH=$PYTHONPATH:$PWD:$PWD/dispersy
+export PYTHONPATH=$PYTHONPATH:$PWD:$PWD/pyipv8
 
 if [ -z "$HEAD_HOST" ]; then
     HEAD_HOST=$(hostname)
@@ -98,7 +92,7 @@ while [ $EXPECTED_SUBSCRIBERS -gt 0 ] || [ $NR_TRACKERS -lt 4 ]; do
     mkdir -p $STATEDIR
     ln -s $OUTPUT_DIR/bootstraptribler.txt $STATEDIR/bootstraptribler.txt
     # Do not daemonize the process as we want to wait for all of them to die at the end of this script
-    twistd --pidfile $STATEDIR/tracker_$TRACKER_PORT.pid -n $EXTRA_ARGS --logfile="$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" tracker --port $TRACKER_PORT --crypto $TRACKER_CRYPTO $EXTRA_TRACKER_ARGS --statedir=$STATEDIR &
+    twistd --pidfile $STATEDIR/tracker_$TRACKER_PORT.pid -n $EXTRA_ARGS --logfile="$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" tracker --listen_port $TRACKER_PORT $EXTRA_TRACKER_ARGS &
     let TRACKER_PORT=$TRACKER_PORT+1
     let EXPECTED_SUBSCRIBERS=$EXPECTED_SUBSCRIBERS-1000
     let NR_TRACKERS=$NR_TRACKERS+1

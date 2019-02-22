@@ -67,15 +67,12 @@ class IdleTribleRunner():
         else:
             run_time = 60 * 10  # Run for 10 minutes by default
 
-        auto_join_channels = os.environ.get("AUTO_JOIN_CHANNELS", "FALSE").upper() == "TRUE"
-
         reactor.callLater(run_time, self.stop)
         self.service.start_tribler({
             'restapi': 0,
-            'dispersy': 21000,
+            'ipv8': 21000,
             'statedir': os.path.abspath(os.path.join(BASE_DIR, "output", "tribler-state")),
             'libtorrent': 21005,
-            'auto-join-channel': True if auto_join_channels else None,
             'ipv8_bootstrap_override': None
         })
 
