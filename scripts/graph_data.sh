@@ -61,5 +61,3 @@ done
 wait
 
 exit $FAILED
-#
-# post_process_dispersy_experiment.sh ends here

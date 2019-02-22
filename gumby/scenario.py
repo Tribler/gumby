@@ -9,8 +9,7 @@
 
 # Commentary:
 # This module parses events from a scenario file and schedules them on the main
-# Twisted thread. Based on Dispersy's scenario parser by Boudewijn Schoon (uses
-# the same syntax).
+# Twisted thread.
 #
 # Usage example:
 #     t = Tribler(...)

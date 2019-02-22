@@ -34,7 +34,7 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
 
         self.vars['trustchain_public_key'] = trustchain_keypair.pub().key_to_bin().encode("base64")
 
-    def on_dispersy_available(self, dispersy):
+    def on_ipv8_available(self, _):
         # Disable threadpool messages
         self.overlay._use_main_thread = True
 

@@ -51,7 +51,7 @@ extract_process_guard_stats.py . .  > $TEMPFILE
 source $TEMPFILE
 rm $TEMPFILE
 
-reduce_dispersy_statistics.py . 300
+reduce_statistics.py . 300
 
 modify_annotations.py . $XSTART
 modify_autoplot.py . $XSTART

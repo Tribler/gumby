@@ -48,7 +48,7 @@ fi
 
 # @CONF_OPTION RUN_PYLINT: Run pylint in parallel with the unit tests (default is TRUE)
 if [ "${RUN_PYLINT}" != "false" ]; then
-    ionice -c 3 nice pylint --ignore=.git --ignore=dispersy --ignore=pymdht --ignore=libnacl --output-format=parseable --reports=y  Tribler \
+    ionice -c 3 nice pylint --ignore=.git --ignore=pymdht --ignore=libnacl --output-format=parseable --reports=y  Tribler \
          > $OUTPUT_DIR/pylint.out 2> $OUTPUT_DIR/pylint.log &
     PYLINT_PID=$!
 fi
@@ -59,7 +59,7 @@ if [ "${RUN_SLOCCOUNT}" != "false" ]; then
     mkdir -p $OUTPUT_DIR/slocdata
 
     (ionice -c 3 nice sloccount --datadir $OUTPUT_DIR/slocdata --duplicates --wide --details Tribler | \
-            fgrep -v .svn | fgrep -v .git | fgrep -v /dispersy/ | \
+            fgrep -v .svn | fgrep -v .git | \
             fgrep -v debian | fgrep -v test_.Tribler | fgrep -v /pymdht/ \
                                                              > $OUTPUT_DIR/sloccount.out 2> $OUTPUT_DIR/sloccount.log) &
     SLOCCOUNT_PID=$!

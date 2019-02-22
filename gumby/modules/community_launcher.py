@@ -9,7 +9,7 @@ from Tribler.pyipv8.ipv8.peerdiscovery.discovery import RandomWalk
 class CommunityLauncher(object):
 
     """
-    Object in charge of preparing a Community for loading in Dispersy.
+    Object in charge of preparing a Community for loading in IPv8.
     """
 
     __metaclass__ = ABCMeta
@@ -52,18 +52,18 @@ class CommunityLauncher(object):
         """
         Perform setup tasks before the community is loaded.
 
-        :type overlay_provider: Tribler.dispersy.dispersy.Dispersy or Tribler.pyipv8.ipv8.IPv8
+        :type overlay_provider: Tribler.pyipv8.ipv8.IPv8
         :type session: Tribler.Core.Session.Session
         """
         pass
 
-    def finalize(self, overlay_provider, session, community):
+    def finalize(self, ipv8, session, community):
         """
         Perform cleanup tasks after the community has been loaded.
 
-        :type overlay_provider: Tribler.dispersy.dispersy.Dispersy or Tribler.pyipv8.ipv8.IPv8
+        :type ipv8: Tribler.pyipv8.ipv8.IPv8
         :type session: Tribler.Core.Session.Session
-        :type community: Tribler.dispersy.community.Community or None
+        :type community: IPv8 community
         """
         pass
 
@@ -84,45 +84,6 @@ class CommunityLauncher(object):
         ret = {'tribler_session': session}
         ret.update(self.community_kwargs)
         return ret
-
-
-class DispersyCommunityLauncher(CommunityLauncher):
-    """
-    Launcher for Dispersy communities.
-    """
-
-    def get_name(self):
-        """
-        Get the launcher name, for pre-launch organisation.
-
-        :rtype: str
-        """
-        return self.get_community_class().__name__
-
-    def should_load_now(self, session):
-        """
-        Load this class immediately, or perform init_community() later manually.
-
-        :rtype: bool
-        """
-        return True
-
-    @abstractmethod
-    def get_community_class(self):
-        """
-        Get the Community class this launcher wants to load.
-
-        :rtype: Tribler.dispersy.community.Community.__class__
-        """
-        pass
-
-    def get_my_member(self, dispersy, session):
-        """
-        Get the member to load the community with.
-
-        :rtype: Tribler.dispersy.member.Member
-        """
-        return session.dispersy_member
 
 
 class IPv8CommunityLauncher(CommunityLauncher):
@@ -160,62 +121,6 @@ class IPv8CommunityLauncher(CommunityLauncher):
         It should be provided as a list of tuples with the class, kwargs and maximum number of peers.
         """
         return []
-
-
-# Dispersy communities
-
-
-class DiscoveryCommunityLauncher(DispersyCommunityLauncher):
-
-    def get_community_class(self):
-        from Tribler.dispersy.discovery.community import DiscoveryCommunity
-        return DiscoveryCommunity
-
-    def get_kwargs(self, session):
-        return self.community_kwargs
-
-
-class SearchCommunityLauncher(DispersyCommunityLauncher):
-
-    def should_launch(self, session):
-        return session.config.get_torrent_search_enabled()
-
-    def get_community_class(self):
-        from Tribler.community.search.community import SearchCommunity
-        return SearchCommunity
-
-
-class AllChannelCommunityLauncher(DispersyCommunityLauncher):
-
-    def should_launch(self, session):
-        return session.config.get_channel_search_enabled()
-
-    def get_community_class(self):
-        from Tribler.community.allchannel.community import AllChannelCommunity
-        return AllChannelCommunity
-
-
-class ChannelCommunityLauncher(DispersyCommunityLauncher):
-
-    def should_launch(self, session):
-        return session.config.get_channel_community_enabled()
-
-    def get_community_class(self):
-        from Tribler.community.channel.community import ChannelCommunity
-        return ChannelCommunity
-
-
-class PreviewChannelCommunityLauncher(DispersyCommunityLauncher):
-
-    def should_launch(self, session):
-        return session.config.get_preview_channel_community_enabled()
-
-    def get_community_class(self):
-        from Tribler.community.channel.preview import PreviewChannelCommunity
-        return PreviewChannelCommunity
-
-    def should_load_now(self, session):
-        return False
 
 
 # IPv8 communities
@@ -257,12 +162,12 @@ class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
     def get_kwargs(self, session):
         kwargs = super(TriblerTunnelCommunityLauncher, self).get_kwargs(session)
         if session.config.get_dht_enabled():
-            kwargs['dht_provider'] = DHTCommunityProvider(session.lm.dht_community, session.config.get_dispersy_port())
+            kwargs['dht_provider'] = DHTCommunityProvider(session.lm.dht_community, session.config.get_ipv8_port())
         kwargs['bandwidth_wallet'] = TrustchainWallet(session.lm.trustchain_community)
         return kwargs
 
-    def finalize(self, dispersy, session, community):
-        super(TriblerTunnelCommunityLauncher, self).finalize(dispersy, session, community)
+    def finalize(self, ipv8, session, community):
+        super(TriblerTunnelCommunityLauncher, self).finalize(ipv8, session, community)
         session.lm.tunnel_community = community
 
 
@@ -281,8 +186,8 @@ class TrustChainCommunityLauncher(IPv8CommunityLauncher):
     def get_kwargs(self, session):
         return {'working_directory': session.config.get_state_dir()}
 
-    def finalize(self, dispersy, session, community):
-        super(TrustChainCommunityLauncher, self).finalize(dispersy, session, community)
+    def finalize(self, ipv8, session, community):
+        super(TrustChainCommunityLauncher, self).finalize(ipv8, session, community)
         session.lm.trustchain_community = community
 
         # If we're using a memory DB, replace the existing one
@@ -331,8 +236,8 @@ class GigaChannelCommunityLauncher(IPv8CommunityLauncher):
     def get_my_peer(self, ipv8, session):
         return Peer(session.trustchain_keypair)
 
-    def finalize(self, dispersy, session, community):
-        super(GigaChannelCommunityLauncher, self).finalize(dispersy, session, community)
+    def finalize(self, ipv8, session, community):
+        super(GigaChannelCommunityLauncher, self).finalize(ipv8, session, community)
         session.lm.gigachannel_community = community
 
 
@@ -351,6 +256,6 @@ class DHTCommunityLauncher(IPv8CommunityLauncher):
     def get_kwargs(self, session):
         return {}
 
-    def finalize(self, dispersy, session, community):
-        super(DHTCommunityLauncher, self).finalize(dispersy, session, community)
+    def finalize(self, ipv8, session, community):
+        super(DHTCommunityLauncher, self).finalize(ipv8, session, community)
         session.lm.dht_community = community
