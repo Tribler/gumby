@@ -233,8 +233,18 @@ class GigaChannelCommunityLauncher(IPv8CommunityLauncher):
         from Tribler.community.gigachannel.community import GigaChannelCommunity
         return GigaChannelCommunity
 
+    def get_args(self, session):
+        return [session.lm.mds]
+
+    def get_kwargs(self, session):
+        return {}
+
     def get_my_peer(self, ipv8, session):
         return Peer(session.trustchain_keypair)
+
+    def get_walk_strategies(self):
+        from Tribler.community.gigachannel.sync_strategy import SyncChannels
+        return [(SyncChannels, {}, -1)]
 
     def finalize(self, ipv8, session, community):
         super(GigaChannelCommunityLauncher, self).finalize(ipv8, session, community)
