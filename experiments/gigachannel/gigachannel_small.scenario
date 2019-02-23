@@ -1,7 +1,5 @@
 &module gumby.modules.tribler_module.TriblerModule
-&module experiments.trustchain.trustchain_module.TrustchainModule
 &module experiments.gigachannel.gigachannel_module.GigaChannelModule
-&module gumby.modules.profile_module.ProfileModule
 
 @0:0 annotate start-experiment
 @0:1 isolate_ipv8_overlay GigaChannelCommunity
@@ -10,9 +8,10 @@
 @0:10 annotate create_channel
 @0:10 create_channel
 @0:15 add_torrents_to_channel 200
-@0:30 annotate start_sync
-@0:30 introduce_peers
-@0:30 add_walking_custom_strategy SyncChannels -1
-@0:80 annotate stop_session
-@0:80 stop_session
-@0:90 stop
+@0:45 annotate start_sync
+@0:45 introduce_peers
+@0:45 introduce_peers_gigachannels
+@0:168 write_overlay_statistics
+@0:170 annotate stop_session
+@0:170 stop_session
+@0:180 stop

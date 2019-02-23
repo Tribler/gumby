@@ -6,6 +6,7 @@ from random import Random
 
 import binascii
 from Tribler.pyipv8.ipv8.dht.provider import DHTCommunityProvider
+from pony.orm import db_session
 from twisted.internet import reactor
 
 from gumby.experiment import experiment_callback
@@ -177,6 +178,24 @@ class TriblerModule(BaseIPv8Module):
                               remove_state=True)
 
     @experiment_callback
+    def create_channel(self):
+        self.session.lm.mds.ChannelMetadata.create_channel('test' + ''.join(str(i) for i in range(100)), 'test')
+
+    @experiment_callback
+    def add_torrents_to_channel(self, amount):
+        amount = int(amount)
+
+        with db_session:
+            my_channel = self.session.lm.mds.ChannelMetadata.get_my_channel()
+            for ind in xrange(amount):
+                test_tdef = self.create_test_torrent("file%s.txt" % ind, 0, 1024)
+                my_channel.add_torrent_to_channel(test_tdef)
+
+            torrent_dict = my_channel.commit_channel_torrent()
+            if torrent_dict:
+                self.session.lm.gigachannel_manager.updated_my_channel(TorrentDef.load_from_dict(torrent_dict))
+
+    @experiment_callback
     def add_peer_to_downloads(self, peer_nr):
         self._logger.info("Adding peer %s to all downloads", peer_nr)
         host, port = self.experiment.get_peer_ip_port_by_id(peer_nr)
@@ -217,10 +236,11 @@ class TriblerModule(BaseIPv8Module):
         Write information about the IPv8 overlay networks to a file.
         """
         with open('overlays.txt', 'w', 0) as overlays_file:
-            overlays_file.write("name,pub_key\n")
+            overlays_file.write("name,pub_key,peers\n")
             for overlay in self.session.lm.ipv8.overlays:
-                overlays_file.write("%s,%s\n" % (overlay.__class__.__name__,
-                                                 overlay.my_peer.public_key.key_to_bin().encode('hex')))
+                overlays_file.write("%s,%s,%d\n" % (overlay.__class__.__name__,
+                                                    overlay.my_peer.public_key.key_to_bin().encode('hex'),
+                                                    len(overlay.get_peers())))
 
         # Write verified peers
         with open('verified_peers.txt', 'w', 0) as peers_file:
