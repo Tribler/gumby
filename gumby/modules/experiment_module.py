@@ -1,4 +1,6 @@
 import logging
+import os
+import time
 
 
 class ExperimentModule(object):
@@ -32,6 +34,37 @@ class ExperimentModule(object):
     @property
     def all_vars(self):
         return self.experiment.all_vars
+
+    def autoplot_create(self, statistic_name, column_name=None):
+        """
+        Create a new plot directive for a certain statistic. Call this function before `autoplot_add_point`.
+
+        :param statistic_name: the name of the statistic (this will also be the file name)
+        :type statistic_name: str
+        :param column_name: the name of the statistic in the plot (or None to use the file name)
+        :type column_name: str or None
+        :returns: None
+        """
+        with open('autoplot.txt', 'a') as output_file:
+            output_file.write('%s.csv\n' % statistic_name)
+        if not os.path.isdir('autoplot'):
+            os.mkdir('autoplot')
+        with open('autoplot/%s.csv' % statistic_name, 'w') as output_file:
+            output_file.write('time,pid,%s\n' % (column_name or statistic_name))
+
+    def autoplot_add_point(self, statistic_name, value):
+        """
+        Add a new point to our autoplot directive for a certain statistic.
+        Make sure that `autoplot_create` was previously called.
+
+        :param statistic_name: the name of the statistic (this will also be the file name)
+        :type statistic_name: str
+        :param value: the value to add to the plot
+        :type value: int or long or float
+        :returns: None
+        """
+        with open('autoplot/%s.csv' % statistic_name, 'a') as output_file:
+            output_file.write("%f,%d,%d\n" % (time.time(), self.my_id, value))
 
     def on_id_received(self):
         """

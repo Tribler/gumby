@@ -26,20 +26,10 @@ class GigaChannelModule(IPv8OverlayExperimentModule):
         self.tribler_config.set_chant_enabled(True)
         self.tribler_config.set_libtorrent_enabled(True)
 
-        with open('autoplot.txt', 'a') as output_file:
-            output_file.write('known_channels.csv\n')
-            output_file.write('downloading_channels.csv\n')
-            output_file.write('completed_channels.csv\n')
-            output_file.write('total_torrents.csv\n')
-        os.mkdir('autoplot')
-        with open('autoplot/known_channels.csv', 'w') as output_file:
-            output_file.write('time,pid,num_channels\n')
-        with open('autoplot/downloading_channels.csv', 'w') as output_file:
-            output_file.write('time,pid,num_channels\n')
-        with open('autoplot/completed_channels.csv', 'w') as output_file:
-            output_file.write('time,pid,num_channels\n')
-        with open('autoplot/total_torrents.csv', 'w') as output_file:
-            output_file.write('time,pid,num_torrents\n')
+        self.autoplot_create('known_channels', 'num_channels')
+        self.autoplot_create('downloading_channels', 'num_channels')
+        self.autoplot_create('completed_channels', 'num_channels')
+        self.autoplot_create('total_torrents', 'num_torrents')
 
     def on_ipv8_available(self, _):
         LoopingCall(self.write_channels).start(1.0, True)
@@ -55,28 +45,10 @@ class GigaChannelModule(IPv8OverlayExperimentModule):
         Write information about all discovered channels away.
         """
         with db_session:
-            with open('autoplot/known_channels.csv', 'a') as output_file:
-                chant_channels = list(self.session.lm.mds.ChannelMetadata.select())
-                output_file.write("%f,%d,%d\n" % (
-                    time(),
-                    self.my_id,
-                    len(chant_channels)))
-            with open('autoplot/total_torrents.csv', 'a') as output_file:
-                chant_torrents = list(self.session.lm.mds.TorrentMetadata.select())
-                output_file.write("%f,%d,%d\n" % (
-                    time(),
-                    self.my_id,
-                    len(chant_torrents)))
-        with open('autoplot/downloading_channels.csv', 'a') as output_file:
-            channel_downloads = [c for c in self.session.lm.get_downloads() if c.get_channel_download()]
-            output_file.write("%f,%d,%d\n" % (
-                time(),
-                self.my_id,
-                len(channel_downloads)))
-        with open('autoplot/completed_channels.csv', 'a') as output_file:
-            channel_downloads = [c for c in self.session.lm.get_downloads() if c.get_channel_download() and
-                                 c.get_state().get_status() == DLSTATUS_SEEDING]
-            output_file.write("%f,%d,%d\n" % (
-                time(),
-                self.my_id,
-                len(channel_downloads)))
+            self.autoplot_add_point('known_channels', len(list(self.session.lm.mds.ChannelMetadata.select())))
+            self.autoplot_add_point('total_torrents', len(list(self.session.lm.mds.TorrentMetadata.select())))
+        self.autoplot_add_point('downloading_channels',
+                                len([c for c in self.session.lm.get_downloads() if c.get_channel_download()]))
+        self.autoplot_add_point('completed_channels',
+                                len([c for c in self.session.lm.get_downloads() if c.get_channel_download() and
+                                     c.get_state().get_status() == DLSTATUS_SEEDING]))
