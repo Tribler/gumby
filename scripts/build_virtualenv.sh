@@ -270,7 +270,6 @@ qrcode
 service_identity
 six
 twisted
-validate
 " > ~/requirements.txt
 
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade -r ~/requirements.txt
