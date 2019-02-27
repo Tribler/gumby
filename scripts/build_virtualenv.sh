@@ -85,53 +85,26 @@ mkdir -p $VENV/src
 
 source $VENV/bin/activate
 
-# Build libboost
-BOOST_VERSION=1.58.0
-BOOST_MARKER=`build_marker boost $BOOST_VERSION`
-BOOST_PATHV=`echo $BOOST_VERSION | sed 's/\./_/g'`
-if [ ! -e $VENV/src/boost_$BOOST_PATHV/bjam -o ! -e $VENV/lib/libboost_python.so -o ! -e $BOOST_MARKER ]; then
-    pushd $VENV/src
-    BOOST_TAR=boost_$BOOST_PATHV.tar.bz2
-    if [ ! -e $BOOST_TAR ]; then
-        wget http://netcologne.dl.sourceforge.net/project/boost/boost/$BOOST_VERSION/$BOOST_TAR
-    fi
-    if [ ! -e boost_$BOOST_PATHV ]; then
-        tar xavf $BOOST_TAR
-    fi
-
-    cd boost_$BOOST_PATHV/
-
-    ./bootstrap.sh
-    ./b2 -j$CONCURRENCY_LEVEL --prefix=$VENV install
-    popd
-    touch $BOOST_MARKER
-fi
-
 #
 # Build Libtorrent and its python bindings
 #
 pushd $VENV/src
-LIBTORRENT_VERSION=1.1.0
+LIBTORRENT_VERSION=1.1.12
 LIBTORRENT_MARKER=`build_marker libtorrent $LIBTORRENT_VERSION`
 LIBTORRENT_PATHV=`echo $LIBTORRENT_VERSION | sed 's/\./_/g'`
 if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so  -o ! -e $LIBTORRENT_MARKER ]; then
     LIBTORRENT_SRC=libtorrent-rasterbar-$LIBTORRENT_VERSION
     LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
     if [ ! -e $LIBTORRENT_TAR ]; then
-        wget https://github.com/arvidn/libtorrent/releases/download/libtorrent-1_1/$LIBTORRENT_TAR
+        wget https://github.com/arvidn/libtorrent/releases/download/libtorrent_1_1_12/$LIBTORRENT_TAR
     fi
     if [ ! -d $LIBTORRENT_SRC ]; then
         tar xavf $LIBTORRENT_TAR
     fi
     pushd $LIBTORRENT_SRC
-    export BOOST_ROOT=$VENV/src/boost_$BOOST_PATHV
-    $BOOST_ROOT/bjam -j$CONCURRENCY_LEVEL --prefix=$VENV install
-    pushd bindings/python
-    $BOOST_ROOT/bjam -j$CONCURRENCY_LEVEL --prefix=$VENV
-    popd
-    pushd $VENV/lib
-    ln -fs libboost_python.so libboost_python-py27.so.$LIBTORRENT_VERSION
-    cp $VENV/src/libtorrent-rasterbar-$LIBTORRENT_VERSION/bindings/python/bin/*/*/libtorrent-python-*/*/libtorrent.so $VENV/lib/python2.7/site-packages/
+    ./configure --enable-python-binding --prefix=$VENV
+    make -j24
+    make install
     popd
     popd
     # Check that the modules work
