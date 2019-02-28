@@ -102,7 +102,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
             for line in h_records:
                 parts = line.split()
 
-                if start_timestamp == None:
+                if start_timestamp is None:
                     start_timestamp = float(parts[0])
                 max_timestamp = max(max_timestamp, float(parts[0]))
                 time = float(parts[0]) - start_timestamp

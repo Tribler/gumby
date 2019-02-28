@@ -5,6 +5,7 @@
 from __future__ import print_function
 import exceptions
 import json
+import os
 from glob import iglob
 from math import ceil
 from os import (R_OK, access, errno, getpgid, getpid, kill, killpg, makedirs, mkdir, path, setsid, sysconf,
@@ -96,47 +97,45 @@ class ResourceMonitor(object):
 
     def get_raw_stats(self):
         for pid in self.pid_list:
-            try:
-                if False:
-                    status = "9932 (bash) S 1 9932 9932 0 -1 8192 1330 25068 0 12 1 0 21 7 20 0 1 0 873934607 112930816 2 18446744073709551615 1 1 0 0 0 0 65536 4 65538 18446744073709551615 0 0 17 0 0 0 0 0 0"
-                    lines = [
-                        "rchar: 2012\n",
-                        "wchar: 0\n",
-                        "syscr: 7\n",
-                        "syscw: 0\n",
-                        "read_bytes: 0\n",
-                        "write_bytes: 0\n",
-                        "cancelled_write_bytes: 0\n",
-                    ]
-                else:
+            if not os.path.exists('/proc'):
+                dummy_status = "%s (sh) S 0 0 0 0 -1 8192 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 " \
+                               "0 0 0 0 0 0 0 0 0 0 0 0 0 0" % pid
+                dummy_status += " 0 0 0 0 0 0 0"
+                yield dummy_status
+            else:
+                try:
                     status = open('/proc/%s/stat' % pid, 'r').read()[:-1]  # Skip the newline
                     lines = open('/proc/%s/io' % pid, 'r').readlines()
 
-                stats = [status]
-                for line in lines:
-                    try:
-                        stats.append(line.split(': ')[1][:-1])  # Skip the newline
+                    stats = [status]
+                    for line in lines:
+                        try:
+                            stats.append(line.split(': ')[1][:-1])  # Skip the newline
 
-                    except Exception as e:
-                        print("Got exception while reading/splitting line:")
-                        print(e)
-                        print("Line contents are:", line)
-                yield ' '.join(stats)
+                        except Exception as e:
+                            print("Got exception while reading/splitting line:")
+                            print(e)
+                            print("Line contents are:", line)
+                    yield ' '.join(stats)
 
-            except IOError:
-                self.pid_list.remove(pid)
-                if not self.pid_list:
-                    self.last_died = True
+                except IOError:
+                    print("???")
+                    self.pid_list.remove(pid)
+                    if not self.pid_list:
+                        self.last_died = True
 
     def get_network_stats(self):
-        # Skip first two lines.
-        network = open('/proc/net/dev').readlines()[2:]
-        for line in network:
-            # Remove unnecessary whitespace within line.
-            shortline = ' '.join(line.split())
-            # Strip to remove leading space.
-            # and remove ':' after network device name.
-            yield shortline.replace(':', '').strip()
+        if not os.path.exists('/proc/net/dev'):
+            yield 'dummy 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0'
+        else:
+            # Skip first two lines.
+            network = open('/proc/net/dev').readlines()[2:]
+            for line in network:
+                # Remove unnecessary whitespace within line.
+                shortline = ' '.join(line.split())
+                # Strip to remove leading space.
+                # and remove ':' after network device name.
+                yield shortline.replace(':', '').strip()
 
     def is_everyone_dead(self):
         return self.last_died or not self.pid_list
