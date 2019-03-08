@@ -84,6 +84,11 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         return None
 
     @experiment_callback
+    def introduce_one_peer(self, peer_id):
+        self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
+
+
+    @experiment_callback
     def introduce_peers(self, max_peers=None, excluded_peers=None):
         """
         Introduce peers to each other.

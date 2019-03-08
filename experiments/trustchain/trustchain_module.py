@@ -1,6 +1,8 @@
 import json
-import time
+import os
 from random import randint, choice
+import csv
+from time import time
 
 from Tribler.Core import permid
 from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
@@ -15,16 +17,53 @@ from gumby.modules.community_experiment_module import IPv8OverlayExperimentModul
 from twisted.internet.task import LoopingCall
 
 
+class FakeBlockListener(BlockListener):
+    """
+    Block listener that only signs blocks
+    """
+
+    def should_sign(self, _):
+        return True
+
+    def received_block(self, block):
+        pass
+
+
+class GeneratedBlockListener(BlockListener):
+    """
+    This block listener to measure throughput.
+    This peer will not sign blocks
+    """
+
+    def __init__(self, mes_file):
+        # File to safe measurements
+        self.file_name = mes_file
+        self.start_time = None
+
+    def should_sign(self, _):
+        return False
+
+    def received_block(self, block):
+        # Add block to stat file
+        if not self.start_time:
+            # First block received
+            self.start_time = time()
+        t_file = open(self.file_name, "a")
+        writer = csv.DictWriter(t_file, ['time', 'transaction'])
+        writer.writerow({"time": time() - self.start_time, 'transaction': str(block.transaction)})
+        t_file.close()
+
+
 @static_module
-class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
+class TrustchainModule(IPv8OverlayExperimentModule):
     def __init__(self, experiment):
         super(TrustchainModule, self).__init__(experiment, TrustChainCommunity)
         self.request_signatures_lc = None
         self.num_blocks_in_db_lc = None
+        self.block_stat_file = None
 
     def on_id_received(self):
         super(TrustchainModule, self).on_id_received()
-
         # We need the trustchain key at this point. However, the configured session is not started yet. So we generate
         # the keys here and place them in the correct place. When the session starts it will load these keys.
         trustchain_keypair = permid.generate_keypair_trustchain()
@@ -43,8 +82,26 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
         return self.all_vars[peer_id]['trustchain_public_key']
 
     @experiment_callback
+    def turn_off_broadcast(self):
+        self.overlay.settings.broadcast_blocks = False
+
+    @experiment_callback
+    def init_leader_trustchain(self):
+        # Open projects output directory and save blocks arrival time
+        self.block_stat_file = os.path.join(os.environ['PROJECT_DIR'], 'output', 'leader_blocks_time.csv')
+        t_file = open(self.block_stat_file, "w")
+        writer = csv.DictWriter(t_file, ['time', 'transaction'])
+        writer.writeheader()
+        t_file.close()
+        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), ['test'])
+
+    @experiment_callback
     def init_trustchain(self):
-        self.overlay.add_listener(self, ['test'])
+        self.overlay.add_listener(FakeBlockListener(), ['test'])
+
+    @experiment_callback
+    def disable_max_peers(self):
+        self.overlay.max_peers = -1
 
     @experiment_callback
     def enable_trustchain_memory_db(self):
@@ -102,9 +159,30 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
         verified_peers = list(self.overlay.network.verified_peers)
         self.request_signature_from_peer(choice(verified_peers), rand_up * 1024 * 1024, rand_down * 1024 * 1024)
 
+    def send_to_leader_peer(self, block_num):
+        leader_peer = self.overlay.network.verified_peers[0]
+        for _ in range(block_num):
+            rand_up = randint(1, 1000)
+            rand_down = randint(1, 1000)
+            self.request_signature_from_peer(leader_peer, rand_up, rand_down)
+
+    @experiment_callback
+    def start_spamming_leader_peer(self, block_num=100):
+        """
+        Send block_num of blocks per second to leader peer per second.
+        NUM_TX environment variable will be used instead of block_num if defined
+        :param block_num: number of blocks per sec to send to leader peer
+        """
+        if os.getenv('NUM_TX'):
+            block_num = int(os.getenv('NUM_TX'))
+
+        self.request_signatures_lc = LoopingCall(self.send_to_leader_peer, int(block_num))
+        self.request_signatures_lc.start(1)
+
     def request_signature_from_peer(self, peer, up, down):
-        self._logger.info("%s: Requesting signature from peer: %s" % (self.my_id, peer))
-        transaction = {"up": up, "down": down}
+        peer_id = self.get_peer_id(peer.address[0], peer.address[1])
+        self._logger.info("%s: Requesting signature from peer: %s", self.my_id, peer_id)
+        transaction = {"up": up, "down": down, "from_peer": self.my_id, "to_peer": peer_id}
         self.overlay.sign_block(peer, peer.public_key.key_to_bin(), block_type='test', transaction=transaction)
 
     def check_num_blocks_in_db(self):
@@ -115,12 +193,6 @@ class TrustchainModule(IPv8OverlayExperimentModule, BlockListener):
         with open('num_trustchain_blocks.txt', 'a') as output_file:
             elapsed_time = time.time() - self.experiment.scenario_runner.exp_start_time
             output_file.write("%f,%d\n" % (elapsed_time, num_blocks))
-
-    def should_sign(self, block):
-        return True
-
-    def received_block(self, block):
-        pass
 
     @experiment_callback
     def commit_blocks_to_db(self):

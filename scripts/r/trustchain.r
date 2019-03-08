@@ -9,6 +9,18 @@ maxX <- as.integer(commandArgs(TRUE)[2])
 source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 df2 <- load_annotations()
 
+if(file.exists("leader_blocks_time.csv")) {
+    lead_csv <- read.csv("leader_blocks_time.csv", sep=',', header=T)
+    val <- qplot(lead_csv$time, geom="histogram", binwidth = 1.0,
+      xlab="\nTime into experiment (Seconds)",
+      ylab="Total TrustChain blocks count\n", main="Time of blocks arrived at leader node",
+      fill=I("blue"),
+      col=I("red"),
+      alpha=I(.2))
+    val
+    ggsave(file="leader_blocks_hist.png", width=8, height=6, dpi=100)
+}
+
 if(file.exists("trustchain.csv")) {
 	df <- read.csv("trustchain.csv", sep=";", header=T)
     df$freq <- 1
