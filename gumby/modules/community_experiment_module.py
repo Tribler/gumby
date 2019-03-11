@@ -71,7 +71,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
     @property
     def overlay(self):
-        #TODO: implement MultiCommunityExperimentModule.
+        # TODO: implement MultiCommunityExperimentModule.
         # If there are multiple instances of a community class there are basically 2 approaches to solving this. One
         # is to derive from CommunityExperimentModule and override this community property, then each instance of the
         # community class can get accessed by index or some such. All @experiment_callbacks in this case would require a
@@ -82,6 +82,10 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             if isinstance(overlay, self.community_class):
                 return overlay
         return None
+
+    @experiment_callback
+    def introduce_one_peer(self, peer_id):
+        self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
 
     @experiment_callback
     def introduce_peers(self, max_peers=None, excluded_peers=None):
