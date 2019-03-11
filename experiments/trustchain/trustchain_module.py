@@ -48,11 +48,9 @@ class GeneratedBlockListener(BlockListener):
         if not self.start_time:
             # First block received
             self.start_time = time()
-        t_file = open(self.file_name, "a")
-        writer = csv.DictWriter(t_file, ['time', 'transaction'])
-        writer.writerow({"time": time() - self.start_time, 'transaction': str(block.transaction)})
-        t_file.close()
-
+        with open(self.file_name, "a") as t_file:
+            writer = csv.DictWriter(t_file, ['time', 'transaction'])
+            writer.writerow({"time": time() - self.start_time, 'transaction': str(block.transaction)})
 
 @static_module
 class TrustchainModule(IPv8OverlayExperimentModule):
@@ -89,10 +87,9 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     def init_leader_trustchain(self):
         # Open projects output directory and save blocks arrival time
         self.block_stat_file = os.path.join(os.environ['PROJECT_DIR'], 'output', 'leader_blocks_time.csv')
-        t_file = open(self.block_stat_file, "w")
-        writer = csv.DictWriter(t_file, ['time', 'transaction'])
-        writer.writeheader()
-        t_file.close()
+        with open(self.block_stat_file, "w") as t_file:
+            writer = csv.DictWriter(t_file, ['time', 'transaction'])
+            writer.writeheader()
         self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), ['test'])
 
     @experiment_callback
