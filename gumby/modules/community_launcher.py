@@ -251,6 +251,25 @@ class GigaChannelCommunityLauncher(IPv8CommunityLauncher):
         session.lm.gigachannel_community = community
 
 
+class PopularityCommunityLauncher(IPv8CommunityLauncher):
+
+    def not_before(self):
+        return []
+
+    def should_launch(self, session):
+        return session.config.get_popularity_community_enabled()
+
+    def get_overlay_class(self):
+        from Tribler.community.popularity.community import PopularityCommunity
+        return PopularityCommunity
+
+    def get_my_peer(self, ipv8, session):
+        return Peer(session.trustchain_keypair)
+
+    def get_kwargs(self, session):
+        return {'metadata_store': session.lm.mds, 'torrent_checker': session.lm.torrent_checker}
+
+
 class DHTCommunityLauncher(IPv8CommunityLauncher):
 
     def should_launch(self, session):

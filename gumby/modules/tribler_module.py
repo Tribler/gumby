@@ -223,7 +223,6 @@ class TriblerModule(BaseIPv8Module):
 
         tdef = TorrentDef()
         tdef.add_content(file_name)
-        tdef.set_tracker("http://fake.net/announce")
         tdef.save()
         return tdef
 
