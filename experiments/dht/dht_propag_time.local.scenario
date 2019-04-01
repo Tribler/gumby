@@ -4,26 +4,27 @@
 @0:1 start_session
 @0:1 annotate start-experiment
 @0:5 introduce_peers
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {2}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {3}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {4}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {5}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {6}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {7}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {8}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {9}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {10}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {11}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {12}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {13}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {14}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {15}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {16}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {17}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {18}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {19}
-@0:10 start_queries 10d00d55231921911991e2f7fd538ec989a2df00 {20}
-@0:10 store 10d00d55231921911991e2f7fd538ec989a2df00 value_to_store {1}
+@! set key 10d00d55231921911991e2f7fd538ec989a2df00
+@0:10 start_queries $key {2}
+@0:10 start_queries $key {3}
+@0:10 start_queries $key {4}
+@0:10 start_queries $key {5}
+@0:10 start_queries $key {6}
+@0:10 start_queries $key {7}
+@0:10 start_queries $key {8}
+@0:10 start_queries $key {9}
+@0:10 start_queries $key {10}
+@0:10 start_queries $key {11}
+@0:10 start_queries $key {12}
+@0:10 start_queries $key {13}
+@0:10 start_queries $key {14}
+@0:10 start_queries $key {15}
+@0:10 start_queries $key {16}
+@0:10 start_queries $key {17}
+@0:10 start_queries $key {18}
+@0:10 start_queries $key {19}
+@0:10 start_queries $key {20}
+@0:10 store $key value_to_store {1}
 @0:50 annotate end-experiment
 @0:50 stop_session
 @0:55 stop
