@@ -37,6 +37,7 @@
 
 # Code:
 import time
+from binascii import unhexlify
 
 from Tribler.Core.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
 from Tribler.community.triblertunnel.community import TriblerTunnelCommunity
@@ -80,11 +81,23 @@ class TunnelModule(IPv8OverlayExperimentModule):
                 # Check the peers of this download every five seconds and add them to the payout manager when
                 # this peer runs a Tribler instance
                 if download.get_hops() == 0:
+                    peer_aggregate = {}
                     for peer in download.get_peerlist():
                         if 'Tribler' in peer["extended_version"]:
-                            self.session.lm.payout_manager.update_peer(peer["id"].decode('hex'),
-                                                                       download.get_def().get_infohash(),
-                                                                       peer["dtotal"])
+                            pid = unhexlify(peer["id"])
+                            infohash = download.get_def().get_infohash()
+                            if pid not in peer_aggregate:
+                                peer_aggregate[pid] = {}
+                            if infohash not in peer_aggregate[pid]:
+                                peer_aggregate[pid][infohash] = 0
+
+                            peer_aggregate[pid][infohash] += peer["dtotal"]
+                            self._logger.error("Received peers %s (%s, %s) down total: %s, upload: %s, version %s ",
+                                           peer["id"], peer["ip"], peer["port"], peer["dtotal"],
+                                           peer["utotal"], peer["extended_version"])
+                    for pid, hashes in peer_aggregate.iteritems():
+                        for infohash, balance in hashes.iteritems():
+                            self.session.lm.payout_manager.update_peer(pid, infohash, balance)
 
                 status_dict = {
                     "time": time.time() - self.experiment.scenario_runner.exp_start_time,

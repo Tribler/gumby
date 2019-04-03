@@ -75,6 +75,15 @@ class TriblerModule(BaseIPv8Module):
             ltsession.set_alert_mask(mask)
 
     @experiment_callback
+    def enable_bootstrap_download(self):
+        self.tribler_config.set_bootstrap_enabled(True)
+        self.tribler_config.set_libtorrent_enabled(True)
+
+    @experiment_callback
+    def setup_initial_bootstrap_seeder(self):
+        self.tribler_config.set_bootstrap_initial_seeder_enabled(True)
+
+    @experiment_callback
     def disable_lt_rc4_encryption(self):
         """
         Disable the RC4 encryption that the libtorrent session in Tribler uses by default.
