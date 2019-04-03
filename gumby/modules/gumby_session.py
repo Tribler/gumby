@@ -96,6 +96,7 @@ class IPv8CommunityLoader(CommunityLoader):
         self.set_launcher(TrustChainCommunityLauncher())
         self.set_launcher(TriblerTunnelCommunityLauncher())
         self.set_launcher(MarketCommunityLauncher())
+        self.set_launcher(PopularityCommunityLauncher())
         self.set_launcher(DHTCommunityLauncher())
         self.set_launcher(GigaChannelCommunityLauncher())
 
