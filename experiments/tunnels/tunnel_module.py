@@ -48,9 +48,9 @@ from gumby.modules.community_experiment_module import IPv8OverlayExperimentModul
 from gumby.modules.experiment_module import static_module
 
 try:
-    long           # Python 2
+    long  # Python 2
 except NameError:  # Python 3
-    long = int     # pylint: disable=redefined-builtin
+    long = int  # pylint: disable=redefined-builtin
 
 
 @static_module
@@ -92,9 +92,9 @@ class TunnelModule(IPv8OverlayExperimentModule):
                                 peer_aggregate[pid][infohash] = 0
 
                             peer_aggregate[pid][infohash] += peer["dtotal"]
-                            self._logger.error("Received peers %s (%s, %s) down total: %s, upload: %s, version %s ",
-                                           peer["id"], peer["ip"], peer["port"], peer["dtotal"],
-                                           peer["utotal"], peer["extended_version"])
+                            self._logger.debug("Received peers %s (%s, %s) down total: %s, upload: %s, version %s ",
+                                               peer["id"], peer["ip"], peer["port"], peer["dtotal"],
+                                               peer["utotal"], peer["extended_version"])
                     for pid, hashes in peer_aggregate.iteritems():
                         for infohash, balance in hashes.iteritems():
                             self.session.lm.payout_manager.update_peer(pid, infohash, balance)
@@ -112,6 +112,7 @@ class TunnelModule(IPv8OverlayExperimentModule):
                 self.download_states_history.append(status_dict)
 
             return []
+
         self.session.set_download_states_callback(monitor_downloads)
 
     # TunnelSettings should be obtained from tribler_config settings. But not all properties of the tunnel settings can
