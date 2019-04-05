@@ -1,0 +1,34 @@
+&module experiments.test_scenarios.for_loop.for_loop_test_module.ForLoopTestModule
+
+@0:4 write_to_logger 'Will perform a test call on each node, with its  ID as some of the parameters'
+@0:5 for i in 1 to 10 call test $i vval=$i cst=should_be_constant {$i}
+
+@! set i -1
+@0:7 write_to_logger 'The value of the variable i has been changed to -1 and will take higher precedence than the control variable in the for loops to follow. The peerspec should still work as intended'
+@0:10 for i in 1 to 10 call test $i vval=$i cst=should_be_constant {$i}
+
+@0:14 write_to_logger 'Will now store some values in the nodes local storage'
+@0:15 for j in 1 to 5 call store some_key $j {$j}
+@0:15 for j in 10 to 6 call store some_other_key $j {$j}
+
+@0:19 write_to_logger 'Will look for the opposite key in the opposite node'
+@0:20 for j in 1 to 5 call find some_other_key {$j}
+@0:20 for j in 10 to 6 call find some_key {$j}
+
+@0:24 write_to_logger 'Will look for the correct key in the correct node'
+@0:25 for j in 1 to 5 call find some_key {$j}
+@0:25 for j in 10 to 6 call find some_other_key {$j}
+
+@0:28 for j in 1 to 3 call write_to_logger 'This message will be written 3 times by each node'
+
+@0:30 for j in 1 to 3 call write_to_logger 'This message will be written 3 times by the node with id 3' {3}
+
+@0:34 write_to_logger 'Will change the value of the same variable, to see that this works'
+
+@! set my_variable firstValue
+@0:35 test $my_variable  vval=$my_variable  cst=should_be_constant
+
+@! set my_variable secondValue
+@0:35 test $my_variable  vval=$my_variable  cst=should_be_constant
+
+@0:40 stop
