@@ -1,5 +1,6 @@
 import glob
 import os
+import random
 
 from posix import environ
 from random import Random
@@ -8,6 +9,8 @@ import binascii
 from Tribler.pyipv8.ipv8.dht.provider import DHTCommunityProvider
 from pony.orm import db_session
 from twisted.internet import reactor
+
+from six.moves import xrange
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module
@@ -18,9 +21,9 @@ from Tribler.Core.simpledefs import dlstatus_strings
 from Tribler.Core.TorrentDef import TorrentDef
 
 try:
-    long           # Python 2
+    long  # Python 2
 except NameError:  # Python 3
-    long = int     # pylint: disable=redefined-builtin
+    long = int  # pylint: disable=redefined-builtin
 
 
 @static_module
@@ -73,6 +76,21 @@ class TriblerModule(BaseIPv8Module):
         self.session.lm.ltmgr.alert_callback = self._process_libtorrent_alert
         for ltsession in self.session.lm.ltmgr.ltsessions.itervalues():
             ltsession.set_alert_mask(mask)
+
+    @experiment_callback
+    def enable_bootstrap_download(self):
+        self.tribler_config.set_bootstrap_enabled(True)
+        self.tribler_config.set_libtorrent_enabled(True)
+
+    @experiment_callback
+    def setup_initial_bootstrap_seeder(self):
+        file_name = os.path.join(self.tribler_config.get_state_dir(), 'bootstrap.block')
+        bootstrap_size = 25
+        seed = 42
+        random.seed(seed)
+        if not os.path.exists(file_name):
+            with open(file_name, 'wb') as fp:
+                fp.write(bytearray(random.getrandbits(8) for _ in xrange(bootstrap_size * 1024 * 1024)))
 
     @experiment_callback
     def disable_lt_rc4_encryption(self):

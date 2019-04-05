@@ -113,6 +113,7 @@ class BaseIPv8Module(ExperimentModule):
         config.set_tunnel_community_enabled(False)
         config.set_dht_enabled(False)
         config.set_version_checker_enabled(False)
+        config.set_bootstrap_enabled(False)
         return config
 
     @classmethod
