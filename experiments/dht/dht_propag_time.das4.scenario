@@ -5,7 +5,7 @@
 @0:1 annotate start-experiment
 @0:5 introduce_peers
 @! set key 10d00d55231921911991e2f7fd538ec989a2df00
-@0:10 for i in 2 to 20 call start_queries $key {$i}
+@0:10 for i in 2 to 100 call start_queries $key {$i}
 @0:10 store $key value_to_store {1}
 @0:50 annotate end-experiment
 @0:50 stop_session
