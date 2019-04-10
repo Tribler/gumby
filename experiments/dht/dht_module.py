@@ -1,4 +1,3 @@
-import os
 import time
 from sys import getsizeof
 
@@ -27,11 +26,7 @@ class DHTModule(IPv8OverlayExperimentModule):
         super(DHTModule, self).on_id_received()
         self.tribler_config.set_dht_enabled(True)
 
-        with open('autoplot.txt', 'a') as output_file:
-            output_file.write('storage_size.csv\n')
-        os.mkdir('autoplot')
-        with open('autoplot/storage_size.csv', 'w') as output_file:
-            output_file.write('time,pid,storage_size_bytes\n')
+        self.autoplot_create('storage_size', 'storage_size_bytes')
 
         self.start_time = time.time()
 
@@ -90,15 +85,8 @@ class DHTModule(IPv8OverlayExperimentModule):
 
         :return: None
         """
-        time_stamp = time.time()
-        total_storage_size = 0
-
-        for key in self.overlay.storage.items:
-            for item in self.overlay.storage.get(key):
-                total_storage_size += getsizeof(item)
-
-        with open('autoplot/storage_size.csv', 'a') as output_file:
-            output_file.write("%f,%d,%d\n" % (time_stamp, self.my_id, total_storage_size))
+        self.autoplot_add_point('storage_size', sum([getsizeof(item) for key in self.overlay.storage.items
+                                                     for item in self.overlay.storage.get(key)]))
 
     def log_timing(self, deferred, op):
         ts = time.time() - self.start_time
@@ -109,4 +97,3 @@ class DHTModule(IPv8OverlayExperimentModule):
     def write_to_log(self, fn, string, *values):
         with open(fn, 'a') as fp:
             fp.write(string % values)
-
