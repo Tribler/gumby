@@ -1,10 +1,13 @@
 #!/usr/bin/env python2
 
 from __future__ import print_function
+
+import random
 from logging import debug, warning
-from twisted.internet import reactor
 from os import environ, path
-from sys import path as python_path, argv
+from sys import argv, path as python_path
+
+from twisted.internet import reactor
 
 from gumby.instrumentation import init_instrumentation
 from gumby.log import setupLogging
@@ -90,7 +93,7 @@ def main(self_service=False):
         reactor.listenTCP(int(environ['SYNC_PORT']), fact)
 
     debug("Connecting to: %s:%s", environ['SYNC_HOST'], int(environ['SYNC_PORT']))
-    reactor.callLater(1, reactor.connectTCP,
+    reactor.callLater(random.randint(1, 5), reactor.connectTCP,
                       environ['SYNC_HOST'], int(environ['SYNC_PORT']), ExperimentClientFactory())
     reactor.run()
     exit(reactor.exitCode)
