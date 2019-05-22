@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
-from Tribler.pyipv8.ipv8.dht.provider import DHTCommunityProvider
+from ipv8.dht.provider import DHTCommunityProvider
 from Tribler.pyipv8.ipv8.peer import Peer
 from Tribler.pyipv8.ipv8.peerdiscovery.discovery import RandomWalk
 
