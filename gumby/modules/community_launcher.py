@@ -181,6 +181,9 @@ class TrustChainCommunityLauncher(IPv8CommunityLauncher):
         return TrustChainCommunity
 
     def get_my_peer(self, ipv8, session):
+        import sys
+        print(sys.modules)
+        print(session.trustchain_keypair)
         return Peer(session.trustchain_keypair)
 
     def get_kwargs(self, session):
