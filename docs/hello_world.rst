@@ -173,7 +173,7 @@ The module code for our running example is given below:
     from gumby.modules.experiment_module import static_module
     from gumby.modules.isolated_community_loader import IsolatedCommunityLoader
 
-    from Tribler.pyipv8.ipv8.community import Community
+    from pyipv8.ipv8.community import Community
 
 
     class HelloWorldCommunityLoader(IsolatedCommunityLoader):

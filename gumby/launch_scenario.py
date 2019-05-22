@@ -57,7 +57,7 @@ def main(self_service=False):
     if "TRIBLER_DIR" not in environ:
         environ["TRIBLER_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "..", "tribler"))
     if "IPV8_DIR" not in environ:
-        environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "..", "tribler", "Tribler", "pyipv8"))
+        environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "..", "tribler", "Tribler"))
     if "SYNC_HOST" not in environ:
         environ["SYNC_HOST"] = "localhost"
     if "SYNC_PORT" not in environ:

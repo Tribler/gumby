@@ -2,19 +2,18 @@ import json
 import os
 import random
 
-from Tribler.community.market.community import MarketCommunity
-from Tribler.community.market.core.assetamount import AssetAmount
-from Tribler.community.market.core.assetpair import AssetPair
-from Tribler.community.market.core.order_manager import OrderManager
-from Tribler.community.market.core.order_repository import MemoryOrderRepository
-from Tribler.community.market.core.transaction_manager import TransactionManager
-from Tribler.community.market.core.transaction_repository import MemoryTransactionRepository
-from Tribler.Core.Modules.wallet.dummy_wallet import DummyWallet1, DummyWallet2
-from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
+from anydex.core.community import MarketCommunity
+from anydex.core.assetamount import AssetAmount
+from anydex.core.assetpair import AssetPair
+from anydex.core.message import TraderId
+from anydex.wallet.dummy_wallet import DummyWallet1, DummyWallet2
+from anydex.wallet.tc_wallet import TrustchainWallet
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
+
+from pyipv8.ipv8.peer import Peer
 
 
 @static_module
@@ -28,11 +27,6 @@ class MarketModule(IPv8OverlayExperimentModule):
         self.num_bids = 0
         self.num_asks = 0
         self.order_id_map = {}
-
-    def on_id_received(self):
-        super(MarketModule, self).on_id_received()
-        self.tribler_config.set_dht_enabled(True)
-        self.tribler_config.set_market_community_enabled(True)
 
     def on_ipv8_available(self, _):
         # Disable threadpool messages
@@ -57,18 +51,15 @@ class MarketModule(IPv8OverlayExperimentModule):
         tc_wallet.check_negative_balance = False
         self.overlay.wallets[tc_wallet.get_identifier()] = tc_wallet
 
-        # We use a memory repository in the market community
-        self.overlay.order_manager = OrderManager(MemoryOrderRepository(self.overlay.mid))
-        self.overlay.transaction_manager = TransactionManager(MemoryTransactionRepository(self.overlay.mid))
-
-        # Disable incremental payments
-        self.overlay.use_incremental_payments = False
-
     @experiment_callback
     def init_matchmakers(self):
         peer_num = self.experiment.scenario_runner._peernumber
         if peer_num > int(os.environ['NUM_MATCHMAKERS']):
             self.overlay.disable_matchmaker()
+
+    @experiment_callback
+    def disable_max_peers(self):
+        self.overlay.max_peers = -1
 
     @experiment_callback
     def connect_matchmakers(self, num_to_connect):
@@ -82,6 +73,25 @@ class MarketModule(IPv8OverlayExperimentModule):
         for peer_num in connect:
             self._logger.info("Connecting to matchmaker %d", peer_num)
             self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_num))
+
+    @experiment_callback
+    def init_trader_lookup_table(self):
+        """
+        Initialize the lookup table for all traders so we do not have to use the DHT.
+        """
+        num_total_matchmakers = int(os.environ['NUM_MATCHMAKERS'])
+        for peer_id in self.all_vars.iterkeys():
+            target = self.all_vars[peer_id]
+            address = (str(target['host']), target['port'])
+
+            if 'public_key' not in self.all_vars[peer_id]:
+                self._logger.error("Could not find public key of peer %s!", peer_id)
+            else:
+                peer = Peer(self.all_vars[peer_id]['public_key'].decode("base64"), address=address)
+                self.overlay.update_ip(TraderId(peer.mid), address)
+
+                if int(peer_id) <= num_total_matchmakers:
+                    self.overlay.matchmakers.add(peer)
 
     @experiment_callback
     def ask(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
@@ -106,10 +116,6 @@ class MarketModule(IPv8OverlayExperimentModule):
             return
 
         self.overlay.cancel_order(self.order_id_map[order_id])
-
-    @experiment_callback
-    def compute_reputation(self):
-        self.overlay.compute_reputation()
 
     @experiment_callback
     def write_stats(self):
@@ -165,7 +171,14 @@ class MarketModule(IPv8OverlayExperimentModule):
                           'fulfilled_asks': fulfilled_asks, 'fulfilled_bids': fulfilled_bids}
             stats_file.write(json.dumps(stats_dict))
 
-        # Write reputation
-        with open('reputation.log', 'w', 0) as rep_file:
-            for peer_id, reputation in self.overlay.reputation_dict.iteritems():
-                rep_file.write("%s,%s\n" % (peer_id.encode('hex'), reputation))
+        # Write mid register
+        with open('mid_register.log', 'w', 0) as mid_file:
+            for trader_id, host in self.overlay.mid_register.iteritems():
+                mid_file.write("%s,%s\n" % (trader_id.as_hex(), "%s:%d" % host))
+
+        # Write items in the matching queue
+        with open('match_queue.txt', 'w', 0) as queue_file:
+            for match_cache in self.overlay.get_match_caches():
+                for retries, price, other_order_id in match_cache.queue.queue:
+                    queue_file.write(
+                        "%s,%d,%s,%s\n" % (match_cache.order.order_id, retries, price, other_order_id))

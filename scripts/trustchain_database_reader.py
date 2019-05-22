@@ -1,9 +1,8 @@
 from __future__ import print_function
-import json
 import os
 from os import path
 
-from Tribler.pyipv8.ipv8.attestation.trustchain.database import TrustChainDB
+from pyipv8.ipv8.attestation.trustchain.database import TrustChainDB
 
 
 class DatabaseReader(object):

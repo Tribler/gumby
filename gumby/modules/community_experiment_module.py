@@ -1,13 +1,12 @@
 from random import sample
 
-from Tribler.Core import permid
-from Tribler.pyipv8.ipv8.peer import Peer
-from Tribler.pyipv8.ipv8.peerdiscovery.churn import RandomChurn
-from Tribler.pyipv8.ipv8.peerdiscovery.discovery import EdgeWalk, RandomWalk
-
 from gumby.experiment import experiment_callback
-from gumby.modules.base_ipv8_module import BaseIPv8Module
 from gumby.modules.experiment_module import ExperimentModule
+from gumby.util import generate_keypair_trustchain, save_keypair_trustchain, save_pub_key_trustchain
+
+from pyipv8.ipv8.peer import Peer
+from pyipv8.ipv8.peerdiscovery.churn import RandomChurn
+from pyipv8.ipv8.peerdiscovery.discovery import EdgeWalk, RandomWalk
 
 
 class IPv8OverlayExperimentModule(ExperimentModule):
@@ -35,12 +34,18 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         used as the source for the IPv8 instance, session, session config and custom community loader.
         :return: An instance of BaseIPv8Module that was loaded into the experiment.
         """
-        ret = BaseIPv8Module.get_ipv8_provider(self.experiment)
-        if ret:
-            return ret
+        provider = None
+
+        for module in self.experiment.experiment_modules:
+            if isinstance(module, ExperimentModule) and module.has_ipv8:
+                provider = module
+                break
+
+        if provider:
+            return provider
 
         raise Exception("No IPv8 provider module loaded. Load an implementation of BaseIPv8Module ("
-                        "IPv8Module or TriblerModule) before loading the %s module", self.__class__.__name__)
+                        "with has_ipv8 = True) before loading the %s module", self.__class__.__name__)
 
     @property
     def ipv8(self):
@@ -141,10 +146,10 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         # We need the IPv8 peer key at this point. However, the configured session is not started yet. So we
         # generate the keys here and place them in the correct place. When the session starts it will load these keys.
-        keypair = permid.generate_keypair_trustchain()
+        keypair = generate_keypair_trustchain()
         pairfilename = self.tribler_config.get_trustchain_keypair_filename()
-        permid.save_keypair_trustchain(keypair, pairfilename)
-        permid.save_pub_key_trustchain(keypair, "%s.pub" % pairfilename)
+        save_keypair_trustchain(keypair, pairfilename)
+        save_pub_key_trustchain(keypair, "%s.pub" % pairfilename)
 
         self.vars['public_key'] = str(keypair.pub().key_to_bin()).encode("base64")
 

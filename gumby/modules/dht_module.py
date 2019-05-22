@@ -4,8 +4,6 @@ The dht module aims to provide DHT isolation for experiments, and provide dht re
 from gumby.experiment import experiment_callback
 
 from gumby.modules.experiment_module import static_module, ExperimentModule
-from gumby.modules.base_ipv8_module import BaseIPv8Module
-from gumby.modules.tribler_module import TriblerModule
 
 import Tribler.Core.Libtorrent.LibtorrentMgr as lt
 
@@ -26,6 +24,9 @@ class DHTModule(ExperimentModule):
 
     @property
     def tribler(self):
+        from gumby.modules.base_ipv8_module import BaseIPv8Module
+        from gumby.modules.tribler_module import TriblerModule
+
         trib = BaseIPv8Module.get_ipv8_provider(self.experiment)
         if not trib or not isinstance(trib, TriblerModule):
             raise Exception("No TriblerModule loaded. Load an implementation of TriblerModule before loading the %s "

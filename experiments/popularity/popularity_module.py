@@ -5,7 +5,7 @@ from binascii import hexlify, unhexlify
 
 from Tribler.community.popularity.community import PopularityCommunity
 from Tribler.Core.Modules.MetadataStore.OrmBindings.channel_node import NEW
-from Tribler.pyipv8.ipv8.taskmanager import TaskManager
+from pyipv8.ipv8.taskmanager import TaskManager
 from pony.orm import db_session, count
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred

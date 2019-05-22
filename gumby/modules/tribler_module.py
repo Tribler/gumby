@@ -15,7 +15,7 @@ from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module
 from gumby.modules.base_ipv8_module import BaseIPv8Module
 
-from ipv8.dht.provider import DHTCommunityProvider
+from pyipv8.ipv8.dht.provider import DHTCommunityProvider
 
 from Tribler.Core.DownloadConfig import DefaultDownloadStartupConfig
 from Tribler.Core.simpledefs import dlstatus_strings

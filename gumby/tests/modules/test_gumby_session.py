@@ -1,7 +1,7 @@
 import unittest
 
 from gumby.modules.community_launcher import IPv8CommunityLauncher
-from gumby.modules.gumby_session import IPv8CommunityLoader
+from gumby.modules.community_loader import IPv8CommunityLoader
 from gumby.tests.mocking import MockOverlay, MockIPv8, MockSession
 
 

@@ -1,5 +1,6 @@
 from six.moves import xrange
-from Tribler.pyipv8.ipv8.attestation.trustchain.block import TrustChainBlock
+
+from pyipv8.ipv8.attestation.trustchain.block import TrustChainBlock
 
 
 class TrustchainMemoryDatabase(object):

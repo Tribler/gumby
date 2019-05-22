@@ -166,6 +166,9 @@ class ExperimentClient(object, LineReceiver):
     def proto_all_vars(self, line):
         self._logger.debug("Got experiment variables")
 
+        with open("all_vars.txt", "w") as output_file:
+            output_file.write(line)
+
         all_vars = json.loads(line)
         self.all_vars = all_vars["clients"]
         self.server_vars = all_vars["server"]
@@ -459,5 +462,6 @@ class ExperimentClient(object, LineReceiver):
         # If something has not been loaded previously.
         if stuff not in self.loaded_experiment_module_classes:
             self.loaded_experiment_module_classes.append(stuff)
+            self._logger.info("Loaded module: %s", line)
             if hasattr(stuff, "on_module_load") and callable(stuff.on_module_load):
                 stuff.on_module_load(self)

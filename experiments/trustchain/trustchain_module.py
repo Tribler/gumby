@@ -4,17 +4,14 @@ from random import randint, choice
 import csv
 from time import time
 
-from Tribler.Core import permid
-from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
-from Tribler.pyipv8.ipv8.attestation.trustchain.community import TrustChainCommunity
-from Tribler.pyipv8.ipv8.attestation.trustchain.listener import BlockListener
+from twisted.internet.task import LoopingCall
+
+from pyipv8.ipv8.attestation.trustchain.community import TrustChainCommunity
+from pyipv8.ipv8.attestation.trustchain.listener import BlockListener
 
 from gumby.experiment import experiment_callback
-
 from gumby.modules.experiment_module import static_module
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-
-from twisted.internet.task import LoopingCall
 
 
 class FakeBlockListener(BlockListener):
@@ -52,6 +49,7 @@ class GeneratedBlockListener(BlockListener):
             writer = csv.DictWriter(t_file, ['time', 'transaction'])
             writer.writerow({"time": time() - self.start_time, 'transaction': str(block.transaction)})
 
+
 @static_module
 class TrustchainModule(IPv8OverlayExperimentModule):
     def __init__(self, experiment):
@@ -59,17 +57,6 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.request_signatures_lc = None
         self.num_blocks_in_db_lc = None
         self.block_stat_file = None
-
-    def on_id_received(self):
-        super(TrustchainModule, self).on_id_received()
-        # We need the trustchain key at this point. However, the configured session is not started yet. So we generate
-        # the keys here and place them in the correct place. When the session starts it will load these keys.
-        trustchain_keypair = permid.generate_keypair_trustchain()
-        trustchain_pairfilename = self.tribler_config.get_trustchain_keypair_filename()
-        permid.save_keypair_trustchain(trustchain_keypair, trustchain_pairfilename)
-        permid.save_pub_key_trustchain(trustchain_keypair, "%s.pub" % trustchain_pairfilename)
-
-        self.vars['trustchain_public_key'] = trustchain_keypair.pub().key_to_bin().encode("base64")
 
     def on_ipv8_available(self, _):
         # Disable threadpool messages
@@ -198,6 +185,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def write_trustchain_statistics(self):
+        from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
         with open('trustchain.txt', 'w', 0) as trustchain_file:
             wallet = TrustchainWallet(self.overlay)
             trustchain_file.write(json.dumps(wallet.get_statistics()))

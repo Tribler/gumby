@@ -4,7 +4,7 @@ from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
 
-from Tribler.pyipv8.ipv8.dht.discovery import DHTDiscoveryCommunity
+from pyipv8.ipv8.dht.discovery import DHTDiscoveryCommunity
 
 
 @static_module

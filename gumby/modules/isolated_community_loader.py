@@ -1,9 +1,9 @@
 import logging
 
-from Tribler.pyipv8.ipv8.peer import Peer
-
 from gumby.modules.community_launcher import IPv8CommunityLauncher
-from gumby.modules.gumby_session import IPv8CommunityLoader
+from gumby.modules.community_loader import IPv8CommunityLoader
+
+from pyipv8.ipv8.peer import Peer
 
 
 class IsolatedIPv8LauncherWrapper(IPv8CommunityLauncher):
@@ -47,7 +47,7 @@ class IsolatedIPv8LauncherWrapper(IPv8CommunityLauncher):
         """
         We change the master peer of the created overlay.
         """
-        from Tribler.pyipv8.ipv8.keyvault.crypto import ECCrypto
+        from pyipv8.ipv8.keyvault.crypto import ECCrypto
         eccrypto = ECCrypto()
         unique_id = self.get_name() + self.session_id
         private_bin = "".join([unique_id[i] if i < len(unique_id) else "0" for i in range(68)])

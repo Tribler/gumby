@@ -1,10 +1,7 @@
-import random
-
-from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
 
-from Tribler.pyipv8.ipv8.peerdiscovery.community import DiscoveryCommunity
+from pyipv8.ipv8.peerdiscovery.community import DiscoveryCommunity
 
 
 @static_module
