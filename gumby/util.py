@@ -1,4 +1,7 @@
-from pyipv8.ipv8.keyvault.private.libnaclkey import LibNaCLSK
+try:
+    from Tribler.pyipv8.ipv8.keyvault.private.libnaclkey import LibNaCLSK
+except ImportError:
+    from pyipv8.ipv8.keyvault.private.libnaclkey import LibNaCLSK
 
 
 def generate_keypair_trustchain():
