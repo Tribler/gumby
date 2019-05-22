@@ -53,9 +53,9 @@ def main(self_service=False):
         else:
             environ["EXPERIMENT_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "experiments", "dummy"))
     if "OUTPUT_DIR" not in environ:
-        environ["OUTPUT_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "..", "output"))
+        environ["OUTPUT_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "output"))
     if "TRIBLER_DIR" not in environ:
-        environ["TRIBLER_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "..", "tribler"))
+        environ["TRIBLER_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler"))
     if "IPV8_DIR" not in environ:
         environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler", "Tribler", "pyipv8"))
     if "SYNC_HOST" not in environ:
