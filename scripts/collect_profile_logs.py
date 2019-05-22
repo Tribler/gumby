@@ -15,7 +15,7 @@ class ProfileCollector(StatisticsParser):
         if not os.path.exists('profile'):
             os.mkdir('profile')
 
-        for peer_nr, filename, dir in self.yield_files('yappi.stats'):
+        for peer_nr, filename, _ in self.yield_files('yappi.stats'):
             shutil.copyfile(filename, os.path.join("profile", "%s.stats" % peer_nr))
 
 # cd to the output directory

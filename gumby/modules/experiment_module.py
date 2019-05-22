@@ -15,6 +15,7 @@ class ExperimentModule(object):
         self._logger.info("Load experiment module %s", self.__class__.__name__)
         self.experiment = experiment
         self.experiment.register(self)
+        self.has_ipv8 = False  # Whether this module provides an instance of IPv8
 
     @classmethod
     def on_module_load(cls, experiment):

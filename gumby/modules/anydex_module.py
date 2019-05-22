@@ -5,31 +5,54 @@ import time
 from twisted.internet.defer import Deferred
 from twisted.internet.task import LoopingCall
 
+from gumby.anydex_config import AnyDexConfig
 from gumby.experiment import experiment_callback
-from gumby.gumby_tribler_config import GumbyTriblerConfig
-from gumby.modules.experiment_module import ExperimentModule
-from gumby.modules.community_launcher import *
-from gumby.modules.gumby_session import GumbySession
+from gumby.modules.community_launcher import TrustChainCommunityLauncher, MarketCommunityLauncher, DHTCommunityLauncher
+from gumby.modules.experiment_module import ExperimentModule, static_module
 from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
+from gumby.util import read_keypair_trustchain
+
+from ipv8_service import IPv8
 
 
-class BaseIPv8Module(ExperimentModule):
+class GumbyMinimalLm(object):
+    """
+    Minimal lm object, used to remain compatibility with Tribler-entangled code.
+    """
+    pass
+
+
+class GumbyMinimalSession(object):
+    """
+    Minimal Gumby session, with a configuration.
+    """
+
+    def __init__(self, config):
+        self.config = config
+        self.lm = GumbyMinimalLm()
+        self.trustchain_keypair = None
+
+
+@static_module
+class AnyDexModule(ExperimentModule):
+    """
+    This module starts an IPv8 instance and runs AnyDex.
+    """
+
     def __init__(self, experiment):
-        if BaseIPv8Module.get_ipv8_provider(experiment) is not None:
-            raise Exception("Unable to load multiple IPv8 providers in a single experiment")
-
-        super(BaseIPv8Module, self).__init__(experiment)
+        super(AnyDexModule, self).__init__(experiment)
         self.has_ipv8 = True
         self.session = None
-        self.tribler_config = None
         self.ipv8_port = None
+        self.tribler_config = None
         self.session_id = environ['SYNC_HOST'] + environ['SYNC_PORT']
         self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
         self.ipv8_available = Deferred()
         self.ipv8_statistics_monitor = LoopingCall(self.write_ipv8_statistics)
+        self.ipv8 = None
 
     def write_ipv8_statistics(self):
-        statistics = self.session.lm.ipv8.endpoint.statistics
+        statistics = self.ipv8.endpoint.statistics
 
         # Cleanup this dictionary
         time_elapsed = time.time() - self.experiment.scenario_runner.exp_start_time
@@ -44,23 +67,33 @@ class BaseIPv8Module(ExperimentModule):
             statistics_file.write(json.dumps(new_dict) + '\n')
 
     def on_id_received(self):
-        super(BaseIPv8Module, self).on_id_received()
+        super(AnyDexModule, self).on_id_received()
         self.tribler_config = self.setup_config()
 
     def create_ipv8_community_loader(self):
         loader = IsolatedIPv8CommunityLoader(self.session_id)
-        loader.set_launcher(IPv8DiscoveryCommunityLauncher())
         loader.set_launcher(TrustChainCommunityLauncher())
-        loader.set_launcher(TriblerTunnelCommunityLauncher())
-        loader.set_launcher(PopularityCommunityLauncher())
+        loader.set_launcher(MarketCommunityLauncher())
         loader.set_launcher(DHTCommunityLauncher())
-        loader.set_launcher(GigaChannelCommunityLauncher())
         return loader
 
     @experiment_callback
     def start_session(self):
-        self.session = GumbySession(config=self.tribler_config)
-        self.tribler_config = None
+        from ipv8.configuration import get_default_configuration
+
+        ipv8_config = get_default_configuration()
+        ipv8_config['port'] = self.tribler_config.get_ipv8_port()
+        ipv8_config['overlays'] = []
+        ipv8_config['keys'] = []  # We load the keys ourselves
+        self.ipv8 = IPv8(ipv8_config, enable_statistics=self.tribler_config.get_ipv8_statistics())
+
+        self.session = GumbyMinimalSession(self.tribler_config)
+        self.session.trustchain_keypair = read_keypair_trustchain(self.tribler_config.get_trustchain_keypair_filename())
+
+        # Load overlays
+        self.custom_ipv8_community_loader.load(self.ipv8, self.session)
+
+        self.ipv8_available.callback(self.ipv8)
 
     @experiment_callback
     def enable_ipv8_statistics(self):
@@ -77,6 +110,10 @@ class BaseIPv8Module(ExperimentModule):
     @experiment_callback
     def isolate_ipv8_overlay(self, name):
         self.custom_ipv8_community_loader.isolate(name)
+
+    @experiment_callback
+    def stop_session(self):
+        self.ipv8.stop()
 
     def setup_config(self):
         if self.ipv8_port is None:
@@ -107,28 +144,8 @@ class BaseIPv8Module(ExperimentModule):
                     continue
                 community._DNS_ADDRESSES.append((parts[0], int(parts[1])))
 
-        config = GumbyTriblerConfig()
+        config = AnyDexConfig()
         config.set_trustchain_keypair_filename("tc_keypair_" + str(self.experiment.my_id))
         config.set_state_dir(my_state_path)
-        config.set_torrent_checking_enabled(False)
-        config.set_market_community_enabled(False)
-        config.set_chant_enabled(False)
-        config.set_libtorrent_enabled(False)
-        config.set_credit_mining_enabled(False)
-        config.set_video_server_enabled(False)
-        config.set_http_api_enabled(False)
-        config.set_libtorrent_port(20000 + self.experiment.my_id * 10)
         config.set_ipv8_port(self.ipv8_port)
-        config.set_tunnel_community_enabled(False)
-        config.set_dht_enabled(False)
-        config.set_version_checker_enabled(False)
-        config.set_bootstrap_enabled(False)
-        config.set_popularity_community_enabled(False)
         return config
-
-    @classmethod
-    def get_ipv8_provider(cls, experiment):
-        for module in experiment.experiment_modules:
-            if isinstance(module, BaseIPv8Module):
-                return module
-        return None
