@@ -1,6 +1,7 @@
 import json
 import os
 import random
+from base64 import b64decode
 
 from anydex.core.community import MarketCommunity
 from anydex.core.assetamount import AssetAmount
@@ -80,14 +81,14 @@ class MarketModule(IPv8OverlayExperimentModule):
         Initialize the lookup table for all traders so we do not have to use the DHT.
         """
         num_total_matchmakers = int(os.environ['NUM_MATCHMAKERS'])
-        for peer_id in self.all_vars.iterkeys():
+        for peer_id in self.all_vars.keys():
             target = self.all_vars[peer_id]
             address = (str(target['host']), target['port'])
 
             if 'public_key' not in self.all_vars[peer_id]:
                 self._logger.error("Could not find public key of peer %s!", peer_id)
             else:
-                peer = Peer(self.all_vars[peer_id]['public_key'].decode("base64"), address=address)
+                peer = Peer(b64decode(self.all_vars[peer_id]['public_key']), address=address)
                 self.overlay.update_ip(TraderId(peer.mid), address)
 
                 if int(peer_id) <= num_total_matchmakers:
@@ -132,12 +133,12 @@ class MarketModule(IPv8OverlayExperimentModule):
                                      len(transaction.payments), scenario_runner._peernumber, partner_peer_id))
 
         # Write transactions
-        with open('transactions.log', 'w', 0) as transactions_file:
+        with open('transactions.log', 'w') as transactions_file:
             for transaction in transactions:
                 transactions_file.write("%s,%s,%s,%s,%s,%s\n" % transaction)
 
         # Write orders
-        with open('orders.log', 'w', 0) as orders_file:
+        with open('orders.log', 'w') as orders_file:
             for order in self.overlay.order_manager.order_repository.find_all():
                 order_data = (int(order.timestamp) / 1000.0, order.order_id, scenario_runner._peernumber,
                               'ask' if order.is_ask() else 'bid',
@@ -148,11 +149,11 @@ class MarketModule(IPv8OverlayExperimentModule):
                 orders_file.write("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % order_data)
 
         # Write ticks in order book
-        with open('orderbook.txt', 'w', 0) as orderbook_file:
+        with open('orderbook.txt', 'w') as orderbook_file:
             orderbook_file.write(str(self.overlay.order_book))
 
         # Write known matchmakers
-        with open('matchmakers.txt', 'w', 0) as matchmakers_file:
+        with open('matchmakers.txt', 'w') as matchmakers_file:
             for matchmaker in self.overlay.matchmakers:
                 matchmakers_file.write("%s,%d\n" % (matchmaker.address[0], matchmaker.address[1]))
 
@@ -166,18 +167,18 @@ class MarketModule(IPv8OverlayExperimentModule):
                 else:
                     fulfilled_bids += 1
 
-        with open('market_stats.log', 'w', 0) as stats_file:
+        with open('market_stats.log', 'w') as stats_file:
             stats_dict = {'asks': self.num_asks, 'bids': self.num_bids,
                           'fulfilled_asks': fulfilled_asks, 'fulfilled_bids': fulfilled_bids}
             stats_file.write(json.dumps(stats_dict))
 
         # Write mid register
-        with open('mid_register.log', 'w', 0) as mid_file:
-            for trader_id, host in self.overlay.mid_register.iteritems():
+        with open('mid_register.log', 'w') as mid_file:
+            for trader_id, host in self.overlay.mid_register.items():
                 mid_file.write("%s,%s\n" % (trader_id.as_hex(), "%s:%d" % host))
 
         # Write items in the matching queue
-        with open('match_queue.txt', 'w', 0) as queue_file:
+        with open('match_queue.txt', 'w') as queue_file:
             for match_cache in self.overlay.get_match_caches():
                 for retries, price, other_order_id in match_cache.queue.queue:
                     queue_file.write(

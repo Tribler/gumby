@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # config.py ---
 #
 # Filename: config.py
@@ -64,7 +64,7 @@ class _ConfigClientProtocol(LineReceiver):
         self.config = None
 
     def connectionMade(self):
-        self.sendLine("TIME " + str(time()))
+        self.sendLine(b"TIME " + str(time()))
 
         # goto recv MYCONFIG
         self.state = 1

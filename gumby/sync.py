@@ -106,7 +106,7 @@ class ExperimentServiceProto(LineReceiver):
 
     def sendAndWaitForReady(self):
         self.ready_d = Deferred()
-        self.sendLine("id:%s" % self.id)
+        self.sendLine(b"id:%s" % self.id)
         return self.ready_d
 
     def connectionLost(self, reason=connectionDone):
@@ -238,11 +238,11 @@ class ExperimentServiceFactory(Factory):
             vars[subscriber.id] = subscriber_vars
 
         vars = {
-            "server":
+            b"server":
                 {
-                    "global_random": randint(0, (2 ** 32) - 1)
+                    b"global_random": randint(0, (2 ** 32) - 1)
                 },
-            "clients": vars
+            b"clients": vars
         }
         json_vars = json.dumps(vars)
         del vars
@@ -283,7 +283,7 @@ class ExperimentServiceFactory(Factory):
         start_time = time() + self.experiment_start_delay
         for subscriber in self.connections_ready:
             # Sync the experiment start time among instances
-            subscriber.sendLine("go:%f" % (start_time + subscriber.vars['time_offset']))
+            subscriber.sendLine(b"go:%f" % (start_time + subscriber.vars['time_offset']))
 
         d = deferLater(reactor, 5, lambda: self._logger.info("Done, disconnecting all clients."))
         d.addCallback(lambda _: self.disconnectAll())

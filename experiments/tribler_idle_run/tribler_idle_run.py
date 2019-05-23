@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # tribler_idle_run.py ---
 #
 # Filename: tribler_idle_run.py

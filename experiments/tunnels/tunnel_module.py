@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # bartercast_client.py ---
 #
 # Filename: tunnel_module.py
@@ -95,8 +95,8 @@ class TunnelModule(IPv8OverlayExperimentModule):
                             self._logger.debug("Received peers %s (%s, %s) down total: %s, upload: %s, version %s ",
                                                peer["id"], peer["ip"], peer["port"], peer["dtotal"],
                                                peer["utotal"], peer["extended_version"])
-                    for pid, hashes in peer_aggregate.iteritems():
-                        for infohash, balance in hashes.iteritems():
+                    for pid, hashes in peer_aggregate.items():
+                        for infohash, balance in hashes.items():
                             self.session.lm.payout_manager.update_peer(pid, infohash, balance)
 
                 status_dict = {
@@ -160,19 +160,19 @@ class TunnelModule(IPv8OverlayExperimentModule):
         """
         Write information about established tunnels/introduction points/rendezvous points to files.
         """
-        with open('circuits.txt', 'w', 0) as circuits_file:
-            for circuit_id, circuit in self.overlay.circuits.iteritems():
+        with open('circuits.txt', 'w') as circuits_file:
+            for circuit_id, circuit in self.overlay.circuits.items():
                 circuits_file.write('%s,%s,%s,%s,%s,%s,%s,%s:%d\n' % (circuit_id, str(circuit.state), circuit.goal_hops,
                                                                       circuit.bytes_up, circuit.bytes_down,
                                                                       circuit.creation_time, circuit.ctype,
                                                                       circuit.peer.address[0], circuit.peer.address[1]))
 
-        with open('relays.txt', 'w', 0) as relays_file:
-            for circuit_id_1, relay in self.overlay.relay_from_to.iteritems():
+        with open('relays.txt', 'w') as relays_file:
+            for circuit_id_1, relay in self.overlay.relay_from_to.items():
                 relays_file.write('%s,%s,%s:%d,%s\n' % (circuit_id_1, relay.circuit_id, relay.peer.address[0],
                                                         relay.peer.address[1], relay.bytes_up))
 
-        with open('downloads_history.txt', 'w', 0) as downloads_file:
+        with open('downloads_history.txt', 'w') as downloads_file:
             for state_dict in self.download_states_history:
                 downloads_file.write('%f,%s,%f,%s,%f,%f,%f,%f\n' % (state_dict['time'], state_dict['infohash'],
                                                                     state_dict['progress'], state_dict['status'],

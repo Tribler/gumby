@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 from __future__ import print_function
 import json
 import os
@@ -96,7 +96,7 @@ class TrustchainStatisticsParser(StatisticsParser):
                 trustchain_interactions_file.write("%d,%d\n" % (peer_a, peer_b))
 
     def aggregate_trustchain_balances(self):
-        with open('trustchain_balances.csv', 'w', 0) as balances_file:
+        with open('trustchain_balances.csv', 'w') as balances_file:
             balances_file.write('peer,total_up,total_down,balance\n')
             for peer_nr, filename, dir in self.yield_files('trustchain.txt'):
                 with open(filename) as tc_file:

@@ -34,10 +34,10 @@ class BaseIPv8Module(ExperimentModule):
         # Cleanup this dictionary
         time_elapsed = time.time() - self.experiment.scenario_runner.exp_start_time
         new_dict = {"time": time_elapsed, "stats": {}}
-        for overlay_prefix, messages_dict in statistics.iteritems():
+        for overlay_prefix, messages_dict in statistics.items():
             hex_prefix = overlay_prefix.encode('hex')
             new_dict["stats"][hex_prefix] = {}
-            for msg_id, msg_stats in messages_dict.iteritems():
+            for msg_id, msg_stats in messages_dict.items():
                 new_dict["stats"][hex_prefix][msg_id] = msg_stats.to_dict()
 
         with open('ipv8_statistics.txt', 'a') as statistics_file:

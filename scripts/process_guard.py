@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Mircea Bardac
 # Rewritten by Elric Milon (Dec. 2012 and Aug. 2013)
 
@@ -73,7 +73,7 @@ class ResourceMonitor(object):
             else:
                 return True
         pids_to_remove = set()
-        for pid, popen in self.pid_dict.iteritems():
+        for pid, popen in self.pid_dict.items():
             if popen.poll() is not None:
                 pids_to_remove.add(pid)
 
@@ -274,7 +274,7 @@ class ProcessMonitor(object):
         self._rm.terminate()
         if failed:
             print("Some processes failed:")
-            for pid, (command, exit_code) in failed.iteritems():
+            for pid, (command, exit_code) in failed.items():
                 print("  %s (%d) exited value: %d" % (command, pid, exit_code))
             print("Process guard exiting with error")
             return COMMANDS_FAILED_EXIT_CODE

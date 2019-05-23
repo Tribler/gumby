@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 from __future__ import print_function
 import sys
 import os
@@ -25,7 +25,7 @@ def write_records(all_nodes, sum_records, output_directory, outputfile, diffoutp
             print('time', ' '.join(all_nodes), file=fp2)
 
         prev_records = {}
-        for time in sorted(sum_records.iterkeys()):
+        for time in sorted(sum_records.keys()):
             print(time, end=' ', file=fp)
             if fp2:
                 print(time, end=' ', file=fp2)
@@ -160,15 +160,15 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
     # some sanity checks
     nr_1utime = defaultdict(int)
     warn_utime = {}
-    for pid_dict in utimes.itervalues():
-        for pid, utime in pid_dict.iteritems():
+    for pid_dict in utimes.values():
+        for pid, utime in pid_dict.items():
             if isinstance(utime, float) and utime > 0.9:
                 nr_1utime[pid] += 1
 
             if nr_1utime[pid] > 5:
                 warn_utime[pid] = max(nr_1utime[pid], warn_utime.get(pid, nr_1utime[pid]))
 
-    for pid, times in warn_utime.iteritems():
+    for pid, times in warn_utime.items():
         print("A process with name (%s) was measured to have a utime larger than 0.9 for %d times"
               % (pid, times), file=sys.stderr)
 
@@ -185,7 +185,7 @@ def parse_resource_files(input_directory, output_directory, start_timestamp=None
 
     # calculate sum for all nodes
     for dictionary in [utimes, stimes, wchars, rchars, vsizes, rsizes, writebytes, readbytes]:
-        for time, values in dictionary.iteritems():
+        for time, values in dictionary.items():
             for node in all_nodes:
                 if node in values:
                     values[node] = sum(values[node])

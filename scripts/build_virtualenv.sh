@@ -63,10 +63,16 @@ fi
 
 export PATH=$PATH:$SCRIPTDIR
 
+if [[ $* == *--py3* ]]; then
+    DEFAULT_VENV_DIR_NAME="venv3"
+else
+    DEFAULT_VENV_DIR_NAME="venv"
+fi
+
 if [ ! -z "$VIRTUALENV_DIR" ]; then
     VENV=$VIRTUALENV_DIR
 else
-    VENV=$HOME/venv
+    VENV=$HOME/$DEFAULT_VENV_DIR_NAME
 fi
 
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
@@ -75,9 +81,33 @@ if [ -e $VENV/.completed.$SCRIPT_VERSION ]; then
     exit
 fi
 
+# If we compile for Python 3, we want to install a newer version since the version on the DAS5 is outdated.
+if [[ $* == *--py3* ]] && [ ! -e ~/python3/bin/python ]; then
+    pushd $HOME
+    wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tgz
+    tar -xzvf Python-3.7.3.tgz
+    pushd Python-3.7.3
+    ./configure --prefix=$PWD/../python3
+    make install -j24
+    popd
+    popd
+fi
+
+if [[ $* == *--py3* ]]; then
+    export PATH=$HOME/python3/bin:$PATH
+fi
+
+python -v
+
 if [ ! -e $VENV/bin/python ]; then
-    PYTHON_BIN=/usr/bin/python
-    virtualenv -p $PYTHON_BIN --no-site-packages --system-site-packages --clear $VENV
+    if [[ $* == *--py3* ]]; then
+        PYTHON_BIN=$HOME/python3/bin
+        python3 -m venv --system-site-packages --clear $VENV
+    else
+        PYTHON_BIN=/usr/bin/python
+        virtualenv -p $PYTHON_BIN --no-site-packages --system-site-packages --clear $VENV
+    fi
+
     $VENV/bin/easy_install --upgrade pip
 fi
 
@@ -87,29 +117,32 @@ source $VENV/bin/activate
 
 #
 # Build Libtorrent and its python bindings
+# TODO: make sure libtorrent compiles on Python 3
 #
-pushd $VENV/src
-LIBTORRENT_VERSION=1.1.12
-LIBTORRENT_MARKER=`build_marker libtorrent $LIBTORRENT_VERSION`
-LIBTORRENT_PATHV=`echo $LIBTORRENT_VERSION | sed 's/\./_/g'`
-if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so  -o ! -e $LIBTORRENT_MARKER ]; then
-    LIBTORRENT_SRC=libtorrent-rasterbar-$LIBTORRENT_VERSION
-    LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
-    if [ ! -e $LIBTORRENT_TAR ]; then
-        wget https://github.com/arvidn/libtorrent/releases/download/libtorrent_1_1_12/$LIBTORRENT_TAR
+if [[ ! $* == *--py3* ]]; then
+    pushd $VENV/src
+    LIBTORRENT_VERSION=1.1.12
+    LIBTORRENT_MARKER=`build_marker libtorrent $LIBTORRENT_VERSION`
+    LIBTORRENT_PATHV=`echo $LIBTORRENT_VERSION | sed 's/\./_/g'`
+    if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so  -o ! -e $LIBTORRENT_MARKER ]; then
+        LIBTORRENT_SRC=libtorrent-rasterbar-$LIBTORRENT_VERSION
+        LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
+        if [ ! -e $LIBTORRENT_TAR ]; then
+            wget https://github.com/arvidn/libtorrent/releases/download/libtorrent_1_1_12/$LIBTORRENT_TAR
+        fi
+        if [ ! -d $LIBTORRENT_SRC ]; then
+            tar xavf $LIBTORRENT_TAR
+        fi
+        pushd $LIBTORRENT_SRC
+        ./configure --enable-python-binding --prefix=$VENV
+        make -j24
+        make install
+        popd
+        popd
+        # Check that the modules work
+        #python -c "import libtorrent"
+        touch $LIBTORRENT_MARKER
     fi
-    if [ ! -d $LIBTORRENT_SRC ]; then
-        tar xavf $LIBTORRENT_TAR
-    fi
-    pushd $LIBTORRENT_SRC
-    ./configure --enable-python-binding --prefix=$VENV
-    make -j24
-    make install
-    popd
-    popd
-    # Check that the modules work
-    python -c "import libtorrent"
-    touch $LIBTORRENT_MARKER
 fi
 
 # recent libgmp needed by gmpy2 + pycrypto
@@ -250,13 +283,14 @@ CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --up
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade gmpy2
 
 echo "
+bcrypt
 configobj
 cryptography
 cython
 dnspython
 ecdsa
+libnacl
 lz4
-meliae
 netifaces
 networkx
 pony
@@ -265,12 +299,18 @@ psutil
 pyasn1 # for twisted
 pycrypto # Twisted needs it
 pynacl # New EC crypto stuff for tunnelcommunity
-pysqlite
 qrcode
 service_identity
 six
 twisted
 " > ~/requirements.txt
+
+# Meliae only works under Python 2
+if [[ ! $* == *--py3* ]]; then
+    echo "meliae
+pysqlite
+    " > ~/requirements.txt
+fi
 
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade -r ~/requirements.txt
 
