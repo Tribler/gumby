@@ -51,26 +51,26 @@ class DHTModule(ExperimentModule):
 
     def on_all_vars_received(self):
         super(DHTModule, self).on_id_received()
-        for node_dict in self.all_vars.itervalues():
+        for node_dict in self.all_vars.values():
             if "dht_node_port" in node_dict:
                 self.dht_nodes.append((str(node_dict["host"]), int(node_dict["dht_node_port"])))
 
     @experiment_callback
     def print_dht_table(self):
-        for ltsession in self.lm.ltmgr.ltsessions.itervalues():
+        for ltsession in self.lm.ltmgr.ltsessions.values():
             if hasattr(ltsession, 'post_dht_stats'):
                 ltsession.post_dht_stats()
 
     @experiment_callback
     def disable_libtorrent_dht(self):
-        for sess in self.lm.ltmgr.ltsessions.itervalues():
+        for sess in self.lm.ltmgr.ltsessions.values():
             settings = sess.get_settings()
             settings["enable_dht"] = False
             sess.set_settings(settings)
 
     @experiment_callback
     def enable_libtorrent_dht(self):
-        for sess in self.lm.ltmgr.ltsessions.itervalues():
+        for sess in self.lm.ltmgr.ltsessions.values():
             settings = sess.get_settings()
             settings["enable_dht"] = True
             sess.set_settings(settings)

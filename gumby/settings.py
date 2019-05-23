@@ -79,20 +79,20 @@ def loadConfig(file_path):
     # TODO: Find a better way to do this (If the default value for a list is an empty list, it just doesn't set the value at all)
     if 'head_nodes' not in config:
         config["head_nodes"] = []
-    for key, value in config.iteritems():
+    for key, value in config.items():
         # If any config option has the special value __unique_port__, compute a unique port for it by hashing the user
         # ID, the experiment name, the experiment execution dir and the config option name.
         if value == '__unique_port__':
             md5sum = md5()
-            md5sum.update(getuser())
-            md5sum.update(config['experiment_name'])
-            md5sum.update(path.abspath(curdir))
-            md5sum.update(key)
+            md5sum.update(getuser().encode('utf-8'))
+            md5sum.update(config['experiment_name'].encode('utf-8'))
+            md5sum.update(path.abspath(curdir).encode('utf-8'))
+            md5sum.update(key.encode('utf-8'))
             config[key] = int(md5sum.hexdigest()[-16:], 16) % 20000 + 20000
 
     # Override config options with env. variables.
     revalidate = False
-    for key, value in environ.iteritems():
+    for key, value in environ.items():
         if key.startswith("GUMBY_"):
             name = key[6:].lower()  # "GUMBY_".len()
             config[name] = value
@@ -107,7 +107,7 @@ def configToEnv(config):
     Processes a dictionary of config options so it can be exported as env. variables when running a subprocess.
     """
     env = {}
-    for name, val in config.iteritems():
+    for name, val in config.items():
         env[name.upper()] = path.expanduser(path.expandvars(str(val)))
     return env
 #

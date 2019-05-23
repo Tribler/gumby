@@ -46,7 +46,7 @@ def reduce(base_directory, nrlines, inputfile, outputfile, removeinputfile=True)
                 if (i + 1) % nrlines_to_merge == 0 or (i + 1 == len(lines)):
                     print(max_time, end=' ', file=ofp)
 
-                    for j, parts in to_be_merged_parts.iteritems():
+                    for j, parts in to_be_merged_parts.items():
                         mean = float_or_unknown_mean(parts)
                         print(mean, end=' ', file=ofp)
 

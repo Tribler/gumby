@@ -75,7 +75,7 @@ class TriblerModule(BaseIPv8Module):
     def set_libtorrentmgr_alert_mask(self, mask=0xffffffff):
         self.session.lm.ltmgr.default_alert_mask = mask
         self.session.lm.ltmgr.alert_callback = self._process_libtorrent_alert
-        for ltsession in self.session.lm.ltmgr.ltsessions.itervalues():
+        for ltsession in self.session.lm.ltmgr.ltsessions.values():
             ltsession.set_alert_mask(mask)
 
     @experiment_callback
@@ -253,7 +253,7 @@ class TriblerModule(BaseIPv8Module):
         """
         Write information about the IPv8 overlay networks to a file.
         """
-        with open('overlays.txt', 'w', 0) as overlays_file:
+        with open('overlays.txt', 'w') as overlays_file:
             overlays_file.write("name,pub_key,peers\n")
             for overlay in self.session.lm.ipv8.overlays:
                 overlays_file.write("%s,%s,%d\n" % (overlay.__class__.__name__,
@@ -261,12 +261,12 @@ class TriblerModule(BaseIPv8Module):
                                                     len(overlay.get_peers())))
 
         # Write verified peers
-        with open('verified_peers.txt', 'w', 0) as peers_file:
+        with open('verified_peers.txt', 'w') as peers_file:
             for peer in self.session.lm.ipv8.network.verified_peers:
                 peers_file.write('%d\n' % (peer.address[1] - 12000))
 
         # Write bandwidth statistics
-        with open('bandwidth.txt', 'w', 0) as bandwidth_file:
+        with open('bandwidth.txt', 'w') as bandwidth_file:
             bandwidth_file.write("%d,%d" % (self.session.lm.ipv8.endpoint.bytes_up,
                                             self.session.lm.ipv8.endpoint.bytes_down))
 
@@ -275,7 +275,7 @@ class TriblerModule(BaseIPv8Module):
         """
         Write away information about the downloads in Tribler.
         """
-        with open('downloads.txt', 'w', 0) as downloads_file:
+        with open('downloads.txt', 'w') as downloads_file:
             downloads_file.write('infohash,status,progress\n')
             for download in self.session.get_downloads():
                 state = download.get_state()

@@ -49,7 +49,7 @@ class TrustchainMemoryDatabase(object):
 
     def get_number_of_known_blocks(self, public_key=None):
         if public_key:
-            return len([pk for pk, _ in self.block_cache.iterkeys() if pk == public_key])
+            return len([pk for pk, _ in self.block_cache.keys() if pk == public_key])
         return len(self.block_cache.keys())
 
     def contains(self, block):
@@ -83,7 +83,7 @@ class TrustchainMemoryDatabase(object):
 
     def get_lowest_range_unknown(self, public_key):
         lowest_unknown = self.get_lowest_sequence_number_unknown(public_key)
-        known_block_nums = [seq_num for pk, seq_num in self.block_cache.iterkeys() if pk == public_key]
+        known_block_nums = [seq_num for pk, seq_num in self.block_cache.keys() if pk == public_key]
         filtered_block_nums = [seq_num for seq_num in known_block_nums if seq_num > lowest_unknown]
         if filtered_block_nums:
             return lowest_unknown, filtered_block_nums[0] - 1
@@ -120,7 +120,7 @@ class TrustchainMemoryDatabase(object):
         Commit all information to the original database.
         """
         if self.original_db:
-            my_blocks = [block for block in self.block_cache.itervalues() if block.public_key == my_pub_key]
+            my_blocks = [block for block in self.block_cache.values() if block.public_key == my_pub_key]
             for block in my_blocks:
                 self.original_db.add_block(block)
 

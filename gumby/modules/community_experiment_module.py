@@ -1,3 +1,4 @@
+from base64 import b64encode, b64decode
 from random import sample
 
 from gumby.experiment import experiment_callback
@@ -109,7 +110,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         if not max_peers:
             # bootstrap the peer introduction, ensuring everybody knows everybody to start off with.
-            for peer_id in self.all_vars.iterkeys():
+            for peer_id in self.all_vars.keys():
                 if int(peer_id) != self.my_id and int(peer_id) not in excluded_peers_list:
                     self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
         else:
@@ -133,10 +134,10 @@ class IPv8OverlayExperimentModule(ExperimentModule):
     def get_peer(self, peer_id):
         target = self.all_vars[peer_id]
         address = (str(target['host']), target['port'])
-        return Peer(self.get_peer_public_key(peer_id).decode("base64"), address=address)
+        return Peer(b64decode(self.get_peer_public_key(peer_id)), address=address)
 
     def get_peer_public_key(self, peer_id):
-        return self.all_vars[peer_id]['public_key']
+        return self.all_vars[peer_id][b'public_key']
 
     def on_id_received(self):
         # Since the IPv8 source module is loaded before any community module, the IPv8 on_id_received has
@@ -151,7 +152,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         save_keypair_trustchain(keypair, pairfilename)
         save_pub_key_trustchain(keypair, "%s.pub" % pairfilename)
 
-        self.vars['public_key'] = str(keypair.pub().key_to_bin()).encode("base64")
+        self.vars['public_key'] = b64encode(keypair.pub().key_to_bin()).decode('utf-8')
 
     def on_ipv8_available(self, ipv8):
         # The IPv8 object is now available. This means that the tribler_config has been copy constructed into the

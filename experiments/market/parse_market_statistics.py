@@ -42,7 +42,7 @@ class MarketStatisticsParser(StatisticsParser):
             total_transactions += 1
             transactions_cumulative_str += str(transaction_time) + "," + str(total_transactions) + "\n"
 
-        with open('transactions.log', 'w', 0) as transactions_file:
+        with open('transactions.log', 'w') as transactions_file:
             transactions_file.write("time,price,quantity,payments,peer1,peer2\n")
             transactions_file.write(transactions_str)
 
@@ -63,7 +63,7 @@ class MarketStatisticsParser(StatisticsParser):
                 orders_str += orders_data
                 orders_data_all += orders_data
 
-        with open('orders.log', 'w', 0) as orders_file:
+        with open('orders.log', 'w') as orders_file:
             orders_file.write(orders_str)
 
         # Calculate the average order latency
@@ -104,7 +104,7 @@ class MarketStatisticsParser(StatisticsParser):
                 fulfilled_asks += stats_dict['fulfilled_asks']
                 fulfilled_bids += stats_dict['fulfilled_bids']
 
-        with open('aggregated_market_stats.log', 'w', 0) as stats_file:
+        with open('aggregated_market_stats.log', 'w') as stats_file:
             stats_dict = {'asks': total_asks, 'bids': total_bids,
                           'fulfilled_asks': fulfilled_asks, 'fulfilled_bids': fulfilled_bids,
                           'total_quantity_traded': self.total_quantity_traded,

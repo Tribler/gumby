@@ -44,12 +44,11 @@ def experiment_callback(name=None):
         return experiment_callback_wrapper
 
 
-class ExperimentClient(object, LineReceiver):
+class ExperimentClient(LineReceiver):
     # Allow for 4MB long lines (for the json stuff)
     MAX_LENGTH = 2 ** 22
 
     def __init__(self, my_vars):
-        super(ExperimentClient, self).__init__()
         self._logger = logging.getLogger(self.__class__.__name__)
 
         self.state = "id"
@@ -84,7 +83,7 @@ class ExperimentClient(object, LineReceiver):
 
     def connectionMade(self):
         self._logger.debug("Connected to the experiment server")
-        self.sendLine("time:%f" % time())
+        self.sendLine(b"time:%f" % time())
 
         self.state = "id"
 
@@ -115,8 +114,8 @@ class ExperimentClient(object, LineReceiver):
             if module is not self:
                 module.on_id_received()
 
-        for key, val in self.vars.iteritems():
-            self.sendLine("set:%s:%s" % (key, val))
+        for key, val in self.vars.items():
+            self.sendLine(b"set:%s:%s" % (key.encode('utf-8'), val.encode('utf-8')))
 
     def on_all_vars_received(self):
         for module in self.experiment_modules:
@@ -128,7 +127,7 @@ class ExperimentClient(object, LineReceiver):
 
     def get_peer_id(self, ip, port):
         port = int(port)
-        for peer_id, peer_dict in self.all_vars.iteritems():
+        for peer_id, peer_dict in self.all_vars.items():
             if peer_dict['host'] == ip and int(peer_dict['port']) == port:
                 return peer_id
 
@@ -148,8 +147,8 @@ class ExperimentClient(object, LineReceiver):
     def proto_id(self, line):
         # We should get a line such as:
         # id:SOMETHING
-        maybe_id, id = line.strip().split(':', 1)
-        if maybe_id == "id":
+        maybe_id, id = line.strip().split(b':', 1)
+        if maybe_id == b"id":
             if "PEER_ID" in os.environ:
                 self.my_id = int(os.environ["PEER_ID"])
             else:
@@ -157,7 +156,7 @@ class ExperimentClient(object, LineReceiver):
 
             self._logger.debug('Got assigned id: %s', self.my_id)
             d = deferToThread(self.on_id_received)
-            d.addCallback(lambda _: self.sendLine("ready"))
+            d.addCallback(lambda _: self.sendLine(b"ready"))
             return "all_vars"
         else:
             self._logger.error("Received an unexpected string from the server, closing connection")
@@ -166,7 +165,7 @@ class ExperimentClient(object, LineReceiver):
     def proto_all_vars(self, line):
         self._logger.debug("Got experiment variables")
 
-        with open("all_vars.txt", "w") as output_file:
+        with open("all_vars.txt", "wb") as output_file:
             output_file.write(line)
 
         all_vars = json.loads(line)
@@ -180,13 +179,13 @@ class ExperimentClient(object, LineReceiver):
         self.time_offset = self.all_vars[str(self.my_id)]["time_offset"]
         self.on_all_vars_received()
 
-        self.sendLine("vars_received")
+        self.sendLine(b"vars_received")
         return "go"
 
     def proto_go(self, line):
         self._logger.debug("Got GO signal")
-        if line.strip().startswith("go:"):
-            start_delay = max(0, float(line.strip().split(":")[1]) - time())
+        if line.strip().startswith(b"go:"):
+            start_delay = max(0, float(line.strip().split(b":")[1]) - time())
             self._logger.info("Starting the experiment in %f secs.", start_delay)
             reactor.callLater(start_delay, self.start_experiment)
             self.factory.stopTrying()
@@ -256,7 +255,7 @@ class ExperimentClient(object, LineReceiver):
             new_values = {}
             changed_values = {}
             if cur_dict:
-                for key, value in cur_dict.iteritems():
+                for key, value in cur_dict.items():
                     # convert key to make it printable
                     if not isinstance(key, (six.string_types, six.integer_types, float)):
                         key = str(key)

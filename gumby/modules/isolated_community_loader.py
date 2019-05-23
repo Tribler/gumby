@@ -50,8 +50,9 @@ class IsolatedIPv8LauncherWrapper(IPv8CommunityLauncher):
         from ipv8.keyvault.crypto import ECCrypto
         eccrypto = ECCrypto()
         unique_id = self.get_name() + self.session_id
-        private_bin = "".join([unique_id[i] if i < len(unique_id) else "0" for i in range(68)])
-        eckey = eccrypto.key_from_private_bin("LibNaCLSK:" + private_bin)
+        unique_id = unique_id.encode('utf-8')
+        private_bin = b"".join([unique_id[i:i+1] if i < len(unique_id) else b"0" for i in range(68)])
+        eckey = eccrypto.key_from_private_bin(b"LibNaCLSK:" + private_bin)
         master_peer = Peer(eckey.pub().key_to_bin())
         overlay.master_peer = master_peer
 

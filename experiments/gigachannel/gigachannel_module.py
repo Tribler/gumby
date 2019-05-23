@@ -36,7 +36,7 @@ class GigaChannelModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def introduce_peers_gigachannels(self):
-        for peer_id in self.all_vars.iterkeys():
+        for peer_id in self.all_vars.keys():
             if int(peer_id) != self.my_id:
                 self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
 

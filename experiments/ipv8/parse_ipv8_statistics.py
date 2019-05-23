@@ -39,8 +39,8 @@ class IPv8StatisticsParser(StatisticsParser):
             # Aggregate statistics for all available overlays
             for stat_time, stat_dict in stat_dicts:
                 collapsed_stat_dict = {}
-                for _, msg_stats_dict in stat_dict.iteritems():
-                    for msg_id, specific_msg_stats_dict in msg_stats_dict.iteritems():
+                for _, msg_stats_dict in stat_dict.items():
+                    for msg_id, specific_msg_stats_dict in msg_stats_dict.items():
                         if msg_id not in collapsed_stat_dict:
                             collapsed_stat_dict[msg_id] = {'num_up': 0, 'num_down': 0, 'bytes_up': 0, 'bytes_down': 0}
                         collapsed_stat_dict[msg_id]['num_up'] += specific_msg_stats_dict['num_up']
@@ -54,11 +54,11 @@ class IPv8StatisticsParser(StatisticsParser):
         # Find the largest time across all the files + different messages we have
         msg_ids = set()
         largest_time = 0
-        for stat_lists in stats_per_peer.itervalues():
+        for stat_lists in stats_per_peer.values():
             for stat_time, stat_dict in stat_lists:
                 if stat_time > largest_time:
                     largest_time = stat_time
-                for msg_id in stat_dict.iterkeys():
+                for msg_id in stat_dict.keys():
                     msg_ids.add(msg_id)
 
         if not msg_ids:
@@ -78,14 +78,14 @@ class IPv8StatisticsParser(StatisticsParser):
         # We now actually fill in the results
         for ind in xrange(1, largest_time / 5 + 1):
             cur_time = ind * 5
-            for stats_list in stats_per_peer.itervalues():
+            for stats_list in stats_per_peer.values():
                 filtered_dicts = [stat_dict for stat_time, stat_dict in stats_list if stat_time <= cur_time]
                 if not filtered_dicts:
                     continue
                 required_dict = filtered_dicts[-1]
 
                 # We have to merge the information now
-                for msg_id, msg_stats in required_dict.iteritems():
+                for msg_id, msg_stats in required_dict.items():
                     results[ind][msg_id]['num_up'] += msg_stats['num_up']
                     results[ind][msg_id]['num_down'] += msg_stats['num_down']
                     results[ind][msg_id]['bytes_up'] += msg_stats['bytes_up']
@@ -96,7 +96,7 @@ class IPv8StatisticsParser(StatisticsParser):
             output_file.write("time,msg_id,num_up,num_down,bytes_up,bytes_down\n")
             for ind, stats in enumerate(results):
                 cur_time = ind * 5
-                for msg_id, msg_stats in stats.iteritems():
+                for msg_id, msg_stats in stats.items():
                     output_file.write("%d,%s,%d,%d,%d,%d\n" % (cur_time, msg_id, msg_stats['num_up'],
                                                                msg_stats['num_down'], msg_stats['bytes_up'],
                                                                msg_stats['bytes_down']))
@@ -109,7 +109,7 @@ class IPv8StatisticsParser(StatisticsParser):
             for peer_connection in peer_connections:
                 peers_connections.add((peer_nr, int(peer_connection)))
 
-        with open('peer_connections.log', 'w', 0) as connections_file:
+        with open('peer_connections.log', 'w') as connections_file:
             connections_file.write("peer_a,peer_b\n")
             for peer_a, peer_b in peers_connections:
                 connections_file.write("%d,%d\n" % (peer_a, peer_b))
@@ -122,7 +122,7 @@ class IPv8StatisticsParser(StatisticsParser):
                 total_up += int(parts[0])
                 total_down += int(parts[1])
 
-        with open('total_bandwidth.log', 'w', 0) as output_file:
+        with open('total_bandwidth.log', 'w') as output_file:
             output_file.write("%s,%s,%s\n" % (total_up, total_down, (total_up + total_down) / 2))
 
     def aggregate_autoplot(self):

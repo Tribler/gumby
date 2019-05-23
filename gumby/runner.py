@@ -375,8 +375,8 @@ class OneShotProcessProtocol(ProcessProtocol):
         self._logger = logging.getLogger(self.__class__.__name__)
 
         self.command = command
-        self._stdout_bytes = ''
-        self._stderr_bytes = ''
+        self._stdout_bytes = b''
+        self._stderr_bytes = b''
         self._d = Deferred()
 
     def processExited(self, reason):
@@ -391,11 +391,11 @@ class OneShotProcessProtocol(ProcessProtocol):
     def outReceived(self, data):
         # we could recv more than 1 line and/or a partial line.
         self._stdout_bytes += data
-        remainder = ""
+        remainder = b""
         for line in self._stdout_bytes.splitlines(True):
-            if line.endswith('\n'):
-                self._logger.info('[%s] OUT: %s', self.command[:20].strip() + "..." if len(self.command) >20 else "",
-                                  line.rstrip())
+            if line.endswith(b'\n'):
+                self._logger.info('[%s] OUT: %s', self.command[:20].strip() + "..." if len(self.command) > 20 else "",
+                                  line.rstrip().decode('utf-8'))
             else:
                 # It's a partial line (part of the last one), save it to the buffer instead
                 remainder = line
@@ -403,11 +403,11 @@ class OneShotProcessProtocol(ProcessProtocol):
 
     def errReceived(self, data):
         self._stderr_bytes += data
-        remainder = ""
+        remainder = b""
         for line in self._stderr_bytes.splitlines(True):
-            if line.endswith('\n'):
-                self._logger.info('[%s] ERR: %s', self.command[:20].strip() + "..." if len(self.command) >20 else "",
-                                  line.rstrip())
+            if line.endswith(b'\n'):
+                self._logger.info('[%s] ERR: %s', self.command[:20].strip() + "..." if len(self.command) > 20 else "",
+                                  line.rstrip().decode('utf-8'))
             else:
                 # It's a partial line (part of the last one), save it to the buffer instead
                 remainder = line

@@ -13,7 +13,7 @@ class DHTStatisticsParser(StatisticsParser):
     """
 
     def aggregate_dht_response_times(self):
-        with open('dht_response_times.csv', 'w', 0) as csv_fp:
+        with open('dht_response_times.csv', 'w') as csv_fp:
             csv_fp.write('peer time operation response_time\n')
             for peer_nr, filename, dir in self.yield_files('dht.log'):
                 with open(filename) as log_fp:

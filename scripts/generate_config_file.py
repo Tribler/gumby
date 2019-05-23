@@ -181,7 +181,7 @@ if __name__ == '__main__':
                             config_file.write('#\n')
                         if config_opts:
                             config_file.write('# Config options:\n#\n' )
-                            for config_opt in config_opts.iteritems():
+                            for config_opt in config_opts.items():
                                 config_file.write('# %s\n# %s = \n#\n' % tuple(reversed(config_opt)))
 
 #
