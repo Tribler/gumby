@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # bartercast_client.py ---
 #
 # Filename: tunnel_module.py

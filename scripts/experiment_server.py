@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # experiment_server.py ---
 #
 # Filename: experiment_server.py

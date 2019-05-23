@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # create_conf.py ---
 #
 # Filename: create_conf.py
