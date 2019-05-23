@@ -52,6 +52,7 @@ source $TEMPFILE
 rm $TEMPFILE
 
 reduce_statistics.py . 300
+collect_profile_logs.py .
 
 modify_annotations.py . $XSTART
 modify_autoplot.py . $XSTART

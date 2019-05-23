@@ -41,7 +41,7 @@ from binascii import unhexlify
 
 from Tribler.Core.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
 from Tribler.community.triblertunnel.community import TriblerTunnelCommunity
-from Tribler.pyipv8.ipv8.messaging.anonymization.community import TunnelSettings
+from ipv8.messaging.anonymization.community import TunnelSettings
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule

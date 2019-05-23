@@ -1,9 +1,8 @@
 from abc import ABCMeta, abstractmethod
 
-from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
-from Tribler.pyipv8.ipv8.dht.provider import DHTCommunityProvider
-from Tribler.pyipv8.ipv8.peer import Peer
-from Tribler.pyipv8.ipv8.peerdiscovery.discovery import RandomWalk
+from ipv8.dht.provider import DHTCommunityProvider
+from ipv8.peer import Peer
+from ipv8.peerdiscovery.discovery import RandomWalk
 
 
 class CommunityLauncher(object):
@@ -52,7 +51,7 @@ class CommunityLauncher(object):
         """
         Perform setup tasks before the community is loaded.
 
-        :type overlay_provider: Tribler.pyipv8.ipv8.IPv8
+        :type overlay_provider: ipv8.IPv8
         :type session: Tribler.Core.Session.Session
         """
         pass
@@ -61,7 +60,7 @@ class CommunityLauncher(object):
         """
         Perform cleanup tasks after the community has been loaded.
 
-        :type ipv8: Tribler.pyipv8.ipv8.IPv8
+        :type ipv8: ipv8.IPv8
         :type session: Tribler.Core.Session.Session
         :type community: IPv8 community
         """
@@ -104,7 +103,7 @@ class IPv8CommunityLauncher(CommunityLauncher):
         """
         Get the overlay class this launcher wants to load.
 
-        :rtype: Tribler.pyipv8.ipv8.overlay.Overlay
+        :rtype: ipv8.overlay.Overlay
         """
         pass
 
@@ -128,7 +127,7 @@ class IPv8CommunityLauncher(CommunityLauncher):
 class IPv8DiscoveryCommunityLauncher(IPv8CommunityLauncher):
 
     def get_overlay_class(self):
-        from Tribler.pyipv8.ipv8.peerdiscovery.community import DiscoveryCommunity
+        from ipv8.peerdiscovery.community import DiscoveryCommunity
         return DiscoveryCommunity
 
     def should_launch(self, session):
@@ -160,6 +159,7 @@ class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
         return Peer(session.trustchain_keypair)
 
     def get_kwargs(self, session):
+        from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
         kwargs = super(TriblerTunnelCommunityLauncher, self).get_kwargs(session)
         if session.config.get_dht_enabled():
             kwargs['dht_provider'] = DHTCommunityProvider(session.lm.dht_community, session.config.get_ipv8_port())
@@ -177,7 +177,7 @@ class TrustChainCommunityLauncher(IPv8CommunityLauncher):
         return session.config.get_trustchain_enabled()
 
     def get_overlay_class(self):
-        from Tribler.pyipv8.ipv8.attestation.trustchain.community import TrustChainCommunity
+        from ipv8.attestation.trustchain.community import TrustChainCommunity
         return TrustChainCommunity
 
     def get_my_peer(self, ipv8, session):
@@ -208,17 +208,14 @@ class MarketCommunityLauncher(IPv8CommunityLauncher):
         return session.config.get_market_community_enabled()
 
     def get_overlay_class(self):
-        from Tribler.community.market.community import MarketCommunity
+        from anydex.core.community import MarketCommunity
         return MarketCommunity
 
     def get_my_peer(self, ipv8, session):
         return Peer(session.trustchain_keypair)
 
     def get_kwargs(self, session):
-        kwargs = super(MarketCommunityLauncher, self).get_kwargs(session)
-        kwargs['trustchain'] = session.lm.trustchain_community
-        kwargs['dht'] = session.lm.dht_community
-        return kwargs
+        return {'trustchain': session.lm.trustchain_community, 'dht': session.lm.dht_community, 'use_database': False}
 
 
 class GigaChannelCommunityLauncher(IPv8CommunityLauncher):
@@ -276,7 +273,7 @@ class DHTCommunityLauncher(IPv8CommunityLauncher):
         return session.config.get_dht_enabled()
 
     def get_overlay_class(self):
-        from Tribler.pyipv8.ipv8.dht.discovery import DHTDiscoveryCommunity
+        from ipv8.dht.discovery import DHTDiscoveryCommunity
         return DHTDiscoveryCommunity
 
     def get_my_peer(self, ipv8, session):
