@@ -303,6 +303,7 @@ qrcode
 service_identity
 six
 twisted
+yappi
 " > ~/requirements.txt
 
 # Meliae only works under Python 2
