@@ -77,8 +77,8 @@ class TrustchainMemoryDatabase(object):
         if public_key not in self.latest_blocks:
             return 1
         latest_seq_num = self.latest_blocks[public_key].sequence_number
-        for ind in xrange(1, latest_seq_num + 1):
-            if (public_key, ind + 1) not in self.block_cache:
+        for ind in xrange(1, latest_seq_num + 2):
+            if (public_key, ind) not in self.block_cache:
                 return ind
 
     def get_lowest_range_unknown(self, public_key):
