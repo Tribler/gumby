@@ -159,7 +159,7 @@ class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
         return Peer(session.trustchain_keypair)
 
     def get_kwargs(self, session):
-        from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
+        from anydex.wallet.tc_wallet import TrustchainWallet
         kwargs = super(TriblerTunnelCommunityLauncher, self).get_kwargs(session)
         if session.config.get_dht_enabled():
             kwargs['dht_provider'] = DHTCommunityProvider(session.lm.dht_community, session.config.get_ipv8_port())
