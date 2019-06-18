@@ -185,7 +185,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def write_trustchain_statistics(self):
-        from Tribler.Core.Modules.wallet.tc_wallet import TrustchainWallet
+        from anydex.wallet.tc_wallet import TrustchainWallet
         with open('trustchain.txt', 'w') as trustchain_file:
             wallet = TrustchainWallet(self.overlay)
             trustchain_file.write(json.dumps(wallet.get_statistics()))
