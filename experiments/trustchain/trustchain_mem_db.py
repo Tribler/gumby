@@ -61,6 +61,23 @@ class TrustchainMemoryDatabase(object):
             return self.latest_blocks[public_key]
         return None
 
+    def get_latest_blocks(self, public_key, limit=25, block_types=None):
+        latest_block = self.get_latest(public_key)
+        if not latest_block:
+            return []  # We have no latest blocks
+
+        blocks = [latest_block]
+        cur_seq = latest_block.sequence_number - 1
+        while cur_seq > 0:
+            cur_block = self.get(public_key, cur_seq)
+            if cur_block and (not block_types or cur_block.type in block_types):
+                blocks.append(cur_block)
+                if len(blocks) >= limit:
+                    return blocks
+            cur_seq -= 1
+
+        return blocks
+
     def get_block_after(self, block, block_type=None):
         # TODO for now we assume block_type is None
         if (block.public_key, block.sequence_number + 1) in self.block_cache:
