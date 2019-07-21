@@ -69,10 +69,16 @@ shopt -u nocasematch
 
 echo Nose will run from $PWD
 
+if [ ${PYTHON_VERSION} == "py2" ]; then
+    NOSETESTS_CMD="nosetests"
+else
+    NOSETESTS_CMD="nosetests3"
+fi
+
 # TODO(emilon): Make the timeout configurable
 
 NOSEARGS_COMMON="--with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-tests --cover-inclusive "
-NOSECMD="nosetests -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml --xunit-file=$OUTPUT_DIR/nosetests.xml.part $NOSEARGS_COMMON"
+NOSECMD="$NOSETESTS_CMD -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml --xunit-file=$OUTPUT_DIR/nosetests.xml.part $NOSEARGS_COMMON"
 
 export NOSE_LOGFORMAT="%(levelname)-7s %(created)d %(module)15s:%(name)s:%(lineno)-4d %(message)s"
 
@@ -117,7 +123,7 @@ else
         TEST_RUNNER_OUT_DIR=$OUTPUT_DIR/test_runners_output
         if [ $(uname) == "Linux" ]; then
             for LINE in $LINES; do
-                echo -n "TEST_BUCKET=$COUNT COVERAGE_FILE=.coverage.$COUNT wrap_in_vnc.sh 'nosetests -v --with-xcoverage  " >> $NOSECMD_FILE
+                echo -n "TEST_BUCKET=$COUNT COVERAGE_FILE=.coverage.$COUNT wrap_in_vnc.sh '$NOSETESTS_CMD -v --with-xcoverage  " >> $NOSECMD_FILE
                 echo -n "--xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part " >> $NOSECMD_FILE
                 echo -n "$NOSEARGS_COMMON '" >> $NOSECMD_FILE
                 echo $LINE >> $NOSECMD_FILE
@@ -151,7 +157,7 @@ else
                 if [ $(uname) == "Darwin" ]; then
                     TIMEOUT_CMD="gtimeout"
                 fi
-                TEST_BUCKET=$COUNT COVERAGE_FILE=.coverage.$COUNT ${TIMEOUT_CMD} 600 $WORKSPACE/gumby/scripts/wrap_in_temp_home.sh nosetests -v --with-xcoverage --xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part $NOSEARGS_COMMON $LINE \
+                TEST_BUCKET=$COUNT COVERAGE_FILE=.coverage.$COUNT ${TIMEOUT_CMD} 600 $WORKSPACE/gumby/scripts/wrap_in_temp_home.sh $NOSETESTS_CMD -v --with-xcoverage --xunit-file=$OUTPUT_DIR/${COUNT}_nosetests.xml.part $NOSEARGS_COMMON $LINE \
                 > $TEST_RUNNER_OUT_DIR/${COUNT}.out 2> $TEST_RUNNER_OUT_DIR/${COUNT}.err &
                 let COUNT=1+$COUNT
             done
