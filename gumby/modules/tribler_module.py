@@ -17,7 +17,7 @@ from gumby.modules.base_ipv8_module import BaseIPv8Module
 
 from ipv8.dht.provider import DHTCommunityProvider
 
-from Tribler.Core.DownloadConfig import DefaultDownloadStartupConfig
+from Tribler.Core.Config.download_config import DownloadConfig
 from Tribler.Core.simpledefs import dlstatus_strings
 from Tribler.Core.TorrentDef import TorrentDef
 
@@ -138,7 +138,7 @@ class TriblerModule(BaseIPv8Module):
             length = self.transfer_size
 
         tdef = self.create_test_torrent(file_name, download_id, length)
-        dscfg = DefaultDownloadStartupConfig.getInstance().copy()
+        dscfg = DownloadConfig(state_dir=self.session.config.get_state_dir())
         if hops is not None:
             dscfg.set_hops(hops)
         dscfg.set_dest_dir(os.path.join(environ["OUTPUT_DIR"], str(self.my_id)))
