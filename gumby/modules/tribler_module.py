@@ -179,10 +179,7 @@ class TriblerModule(BaseIPv8Module):
         download = self.session.start_download_from_tdef(tdef, dscfg)
         download.set_state_callback(cb)
 
-        if action == 'seed':
-            # Announce to the DHT
-            self.dht_provider.announce(tdef.get_infohash())
-        elif action == 'download':
+        if action == 'download':
             # Schedule a DHT lookup to fetch peers to add to this download
             def on_peers(info):
                 _, peers, _ = info

@@ -80,7 +80,7 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
                 # Check the peers of this download every five seconds and add them to the payout manager when
                 # this peer runs a Tribler instance
-                if download.get_hops() == 0:
+                if download.config.get_hops() == 0:
                     peer_aggregate = {}
                     for peer in download.get_peerlist():
                         if 'Tribler' in peer["extended_version"]:
