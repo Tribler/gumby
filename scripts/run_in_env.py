@@ -100,6 +100,9 @@ extend_var(environ, "PYTHONPATH", path.join(project_dir, "gumby"))
 # Add tribler dir to PYTHONPATH
 extend_var(environ, "PYTHONPATH", path.join(project_dir, "tribler"))
 
+# Add IPv8 dir to PYTHONPATH
+extend_var(environ, "PYTHONPATH", path.join(project_dir, "tribler", "Tribler", "pyipv8"))
+
 # Add gumby scripts dir to PATH
 extend_var(environ, "PATH", scripts_dir)
 
