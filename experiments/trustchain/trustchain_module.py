@@ -73,7 +73,11 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.overlay.settings.broadcast_blocks = False
 
     @experiment_callback
-    def set_validation_range(self, value):
+    def set_validation_range(self, value=5):
+
+        if os.getenv('VALID_WINDOW'):
+            value = int(os.getenv('VALID_WINDOW'))
+
         self.overlay.settings.validation_range = int(value)
 
     @experiment_callback
