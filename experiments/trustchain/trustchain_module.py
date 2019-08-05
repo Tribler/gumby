@@ -38,7 +38,7 @@ class GeneratedBlockListener(BlockListener):
         self.start_time = None
 
     def should_sign(self, _):
-        return False
+        return True
 
     def received_block(self, block):
         # Add block to stat file
@@ -46,8 +46,10 @@ class GeneratedBlockListener(BlockListener):
             # First block received
             self.start_time = time()
         with open(self.file_name, "a") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction'])
-            writer.writerow({"time": time() - self.start_time, 'transaction': str(block.transaction)})
+            writer = csv.DictWriter(t_file, ['time', 'transaction', "seq_num", "link"])
+            writer.writerow({"time": time() - self.start_time, 'transaction': str(block.transaction),
+                             'seq_num': block.sequence_number, "link": block.link_sequence_number
+                             })
 
 
 @static_module
@@ -71,11 +73,16 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.overlay.settings.broadcast_blocks = False
 
     @experiment_callback
+    def set_validation_range(self, value):
+        self.overlay.settings.validation_range = int(value)
+
+    @experiment_callback
     def init_leader_trustchain(self):
         # Open projects output directory and save blocks arrival time
-        self.block_stat_file = os.path.join(os.environ['PROJECT_DIR'], 'output', 'leader_blocks_time.csv')
+        self.block_stat_file = os.path.join(os.environ['PROJECT_DIR'], 'output', 'leader_blocks_time_'
+                                            + str(self.my_id) + '.csv')
         with open(self.block_stat_file, "w") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction'])
+            writer = csv.DictWriter(t_file, ['time', 'transaction', "seq_num", "link"])
             writer.writeheader()
         self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'test'])
 

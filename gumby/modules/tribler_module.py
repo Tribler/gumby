@@ -85,7 +85,7 @@ class TriblerModule(BaseIPv8Module):
 
     @experiment_callback
     def setup_initial_bootstrap_seeder(self):
-        bootstrap_dir = os.path.join(self.tribler_config.get_state_dir(), 'bootstrap')
+        bootstrap_dir = os.path.join(self.tribler_config.get_state_dir(),'bootstrap')
         if not os.path.exists(bootstrap_dir):
             os.mkdir(bootstrap_dir)
         file_name = os.path.join(bootstrap_dir, 'bootstrap.block')

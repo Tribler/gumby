@@ -4,6 +4,7 @@
 @0:1 start_session
 @0:1 annotate start-experiment
 @0:2 start_ipv8_statistics_monitor
-@0:60 stop_session
-@0:65 write_overlay_statistics
-@0:67 stop
+@0:5 introduce_to_bootstrap_peers
+@0:140 stop_session
+@0:155 write_overlay_statistics
+@0:179 stop
