@@ -107,10 +107,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         """
         # Choose bootstrap peers
         import networkx as nx
-        if os.getenv('das4_instances_to_run'):
-            num_nodes = int(os.getenv('das4_instances_to_run'))
-        else:
-            num_nodes = 100
+        num_nodes = len(self.all_vars.keys())
         if os.getenv('AVG_DEG'):
             avg_degree = int(os.getenv('AVG_DEG'))
         else:

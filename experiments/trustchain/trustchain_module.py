@@ -73,15 +73,6 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.overlay.settings.broadcast_blocks = False
 
     @experiment_callback
-    def set_validation_range(self, value=5):
-
-        if os.getenv('VALID_WINDOW'):
-            value = int(os.getenv('VALID_WINDOW'))
-
-        self._logger.info("Setting validation range to %s", value)
-        self.overlay.settings.validation_range = int(value)
-
-    @experiment_callback
     def init_leader_trustchain(self):
         # Open projects output directory and save blocks arrival time
         self.block_stat_file = os.path.join(os.environ['PROJECT_DIR'], 'output', 'leader_blocks_time_'
@@ -105,6 +96,12 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def set_validation_range(self, value):
+
+        if os.getenv('VALID_WINDOW'):
+            value = int(os.getenv('VALID_WINDOW'))
+
+        self._logger.info("Setting validation range to %s", value)
+
         self.overlay.settings.validation_range = int(value)
 
     @experiment_callback
