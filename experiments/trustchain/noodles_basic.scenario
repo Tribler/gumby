@@ -5,8 +5,8 @@
 @0:2 start_session
 @0:5 init_leader_trustchain
 @0:9 disable_max_peers
-@0:10 set_validation_range 10
-@0:10 introduce_to_bootstrap_peers
+@0:10 set_validation_range
+@0:10 introduce_peers max_peers=30
 @0:60 annotate start-sharing-transactions
 @0:60 start_requesting_signatures
 @0:130 stop_requesting_signatures
