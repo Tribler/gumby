@@ -116,6 +116,8 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         else:
             avg_degree = 20
 
+        self._logger.info("Average degree is %s and number of nodes is %s", avg_degree, num_nodes)
+
         self.topology = nx.random_graphs.gnm_random_graph(num_nodes, num_nodes * avg_degree / 2, seed=42)
         for peer in self.topology.neighbors(int(self.my_id)):
             self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer))

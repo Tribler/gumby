@@ -78,6 +78,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         if os.getenv('VALID_WINDOW'):
             value = int(os.getenv('VALID_WINDOW'))
 
+        self._logger.info("Setting validation range to %s", value)
         self.overlay.settings.validation_range = int(value)
 
     @experiment_callback
