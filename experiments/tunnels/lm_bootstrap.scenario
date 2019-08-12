@@ -10,7 +10,6 @@
 @0:2 setup_initial_bootstrap_seeder {1}
 @0:4 start_session {1}
 @0:4 annotate start-experiment
-@0:6 disable_lt_rc4_encryption
 @0:20 annotate add-new-peers
 @0:20 start_session {2-8}
 @0:21 introduce_peers {1-8}
