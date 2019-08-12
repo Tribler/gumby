@@ -9,6 +9,7 @@
 @0:1 enable_bootstrap_download
 @0:2 setup_initial_bootstrap_seeder {1}
 @0:4 start_session {1}
+@0:4 start_bootstrap_download {1}
 @0:4 annotate start-experiment
 @0:6 disable_lt_rc4_encryption {1}
 @0:20 annotate add-new-peers
@@ -16,21 +17,25 @@
 @0:21 introduce_peers {1-8}
 @0:22 disable_lt_rc4_encryption {2-8}
 @0:26 do_dht_announce {1-8}
+@0:27 start_bootstrap_download {2-8}
 @0:80 annotate second-wave-peers
 @0:80 start_session {9-18}
 @0:81 introduce_peers {1-18}
 @0:82 disable_lt_rc4_encryption {9-18}
 @0:86 do_dht_announce {1-18}
+@0:87 start_bootstrap_download {9-18}
 @0:120 annotate third-wave-peers
 @0:120 start_session {19-27}
 @0:121 introduce_peers {1-27}
 @0:122 disable_lt_rc4_encryption {19-27}
 @0:124 do_dht_announce {1-27}
+@0:125 start_bootstrap_download {19-27}
 @0:180 annotate forth-wave-peers
 @0:180 start_session {28-36}
 @0:181 introduce_peers {1-36}
 @0:182 disable_lt_rc4_encryption {28-36}
 @0:185 do_dht_announce {1-36}
+@0:186 start_bootstrap_download {28-37}
 @0:350 write_tunnels_info
 @0:351 commit_blocks_to_db
 @0:355 write_trustchain_statistics
