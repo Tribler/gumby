@@ -35,7 +35,7 @@
 @0:181 introduce_peers {1-36}
 @0:182 disable_lt_rc4_encryption {28-36}
 @0:185 do_dht_announce {1-36}
-@0:186 start_bootstrap_download {28-37}
+@0:186 start_bootstrap_download {28-36}
 @0:350 write_tunnels_info
 @0:351 commit_blocks_to_db
 @0:355 write_trustchain_statistics
