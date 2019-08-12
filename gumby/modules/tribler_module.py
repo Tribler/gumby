@@ -85,13 +85,20 @@ class TriblerModule(BaseIPv8Module):
 
     @experiment_callback
     def setup_initial_bootstrap_seeder(self):
-        file_name = os.path.join(self.tribler_config.get_state_dir(), 'bootstrap.block')
+        bootstrap_dir = os.path.join(self.tribler_config.get_state_dir(), 'bootstrap')
+        if not os.path.exists(bootstrap_dir):
+            os.mkdir(bootstrap_dir)
+        file_name = os.path.join(bootstrap_dir, 'bootstrap.block')
         bootstrap_size = 25
         seed = 42
         random.seed(seed)
         if not os.path.exists(file_name):
             with open(file_name, 'wb') as fp:
                 fp.write(bytearray(random.getrandbits(8) for _ in xrange(bootstrap_size * 1024 * 1024)))
+
+    @experiment_callback
+    def start_bootstrap_download(self):
+        self.session.lm.start_bootstrap_download()
 
     @experiment_callback
     def disable_lt_rc4_encryption(self):

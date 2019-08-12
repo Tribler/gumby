@@ -44,7 +44,8 @@ class DHTModule(IPv8OverlayExperimentModule):
     @experiment_callback
     def do_dht_announce(self):
         def on_peer_stored(nodes):
-            self._logger.info("Stored this peer on %d nodes", len(nodes))
+            if nodes is not None:
+                self._logger.info("Stored this peer on %d nodes", len(nodes))
 
         def on_peer_store_error(failure):
             self._logger.error("Error when storing peer: %s", failure)
