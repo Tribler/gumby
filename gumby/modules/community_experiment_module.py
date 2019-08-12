@@ -1,5 +1,6 @@
+import os
 from base64 import b64encode, b64decode
-from random import sample
+from random import sample, seed
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import ExperimentModule
@@ -18,7 +19,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
     def __init__(self, experiment, community_class):
         super(IPv8OverlayExperimentModule, self).__init__(experiment)
         self.community_class = community_class
-
+        self.topology = None
         # To be sure that the module loading happens in the right order, this next line serves the dual purpose of
         # triggering the check for a loaded IPv8 provider
         self.ipv8_provider.ipv8_available.addCallback(self.on_ipv8_available)
@@ -90,8 +91,31 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         return None
 
     @experiment_callback
+    def set_max_peers(self):
+        self.overlay.max_peers = 30
+
+    @experiment_callback
     def introduce_one_peer(self, peer_id):
         self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
+
+    @experiment_callback
+    def introduce_to_bootstrap_peers(self):
+        """
+        Introduce to the bootstrap peers
+        """
+        # Choose bootstrap peers
+        import networkx as nx
+        num_nodes = len(self.all_vars.keys())
+        if os.getenv('AVG_DEG'):
+            avg_degree = int(os.getenv('AVG_DEG'))
+        else:
+            avg_degree = 20
+
+        self._logger.info("Average degree is %s and number of nodes is %s", avg_degree, num_nodes)
+
+        self.topology = nx.random_graphs.gnm_random_graph(num_nodes, num_nodes * avg_degree / 2, seed=42)
+        for peer in self.topology.neighbors(int(self.my_id)):
+            self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer))
 
     @experiment_callback
     def introduce_peers(self, max_peers=None, excluded_peers=None):

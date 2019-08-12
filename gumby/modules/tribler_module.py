@@ -85,7 +85,7 @@ class TriblerModule(BaseIPv8Module):
 
     @experiment_callback
     def setup_initial_bootstrap_seeder(self):
-        file_name = os.path.join(self.tribler_config.get_state_dir(), 'bootstrap.block')
+        file_name = os.path.join(self.tribler_config.get_state_dir(),'bootstrap.block')
         bootstrap_size = 25
         seed = 42
         random.seed(seed)

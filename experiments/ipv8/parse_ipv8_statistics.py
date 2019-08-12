@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import csv
 import json
 import os
 import sys
@@ -136,7 +137,7 @@ class IPv8StatisticsParser(StatisticsParser):
                         data = autoplot_src.read()
                         existing_data = autoplot_dict.get(input_filename)
                         if existing_data:
-                            autoplot_dict[input_filename] = autoplot_dict[input_filename] + data[data.find('\n')+1:]
+                            autoplot_dict[input_filename] = autoplot_dict[input_filename] + data[data.find('\n') + 1:]
                         else:
                             autoplot_dict[input_filename] = data
                     input_filename = directive_file.readline()[:-1]
@@ -169,12 +170,36 @@ class IPv8StatisticsParser(StatisticsParser):
                     print >> h_annotations, packed_values.get(node, '?'),
                 print >> h_annotations, ''
 
+    @staticmethod
+    def aggregate_transactions():
+        prefix = os.path.join(os.environ['PROJECT_DIR'], 'output')
+        postfix = 'leader_blocks_time_'
+        index = 1
+
+        block_stat_file = os.path.join(prefix, postfix + "agg.csv")
+        with open(block_stat_file, "w") as t_file:
+            writer = csv.DictWriter(t_file, ['time', 'transaction', "seq_num", "link", 'seen_by'])
+            writer.writeheader()
+            while os.path.exists(os.path.join(prefix, postfix + str(index) + '.csv')):
+                with open(os.path.join(prefix, postfix + str(index) + '.csv')) as read_file:
+                    csv_reader = csv.reader(read_file)
+                    first = True
+                    for row in csv_reader:
+                        if first:
+                            first = False
+                        else:
+                            writer.writerow({"time": row[0], 'transaction': row[1], 'seq_num': row[2],
+                                             'link': row[3], 'seen_by': index})
+                index += 1
+
     def run(self):
         self.aggregate_annotations()
         self.aggregate_messages()
         self.aggregate_peer_connections()
         self.aggregate_bandwidth()
         self.aggregate_autoplot()
+        self.aggregate_transactions()
+
 
 if __name__ == "__main__":
     # cd to the output directory

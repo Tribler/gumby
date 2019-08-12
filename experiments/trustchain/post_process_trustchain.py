@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
+import csv
 import json
 import os
 import sys
@@ -23,6 +25,27 @@ class TrustchainStatisticsParser(StatisticsParser):
             os.makedirs(aggregation_path)
 
         self.aggregator.combine_databases()
+
+    @staticmethod
+    def aggregate_transactions():
+        prefix = os.path.join(os.environ['PROJECT_DIR'], 'output')
+        postfix = 'leader_blocks_time_'
+        index = 1
+
+        block_stat_file = os.path.join(prefix, postfix + "agg.csv")
+        with open(block_stat_file, "w") as t_file:
+            writer = csv.DictWriter(t_file, ['time', 'transaction', 'seen_by'])
+            writer.writeheader()
+            while os.path.exists(os.path.join(prefix, postfix + str(index) + '.csv')):
+                index += 1
+                with open(os.path.join(prefix, postfix + str(index) + '.csv')) as read_file:
+                    csv_reader = csv.reader(read_file)
+                    first = True
+                    for row in csv_reader:
+                        if first:
+                            first = False
+                        else:
+                            writer.writerow({"time": row[0], 'transaction': row[1], 'seen_by': index})
 
     def write_blocks_to_file(self):
         # First, determine the experiment start time
@@ -111,13 +134,16 @@ class TrustchainStatisticsParser(StatisticsParser):
                     balances_file.write('%s,%d,%d,%d\n' % (peer_nr, total_up, total_down, balance))
 
     def run(self):
+        # self.aggregate_transactions()
         self.aggregate_databases()
         self.write_blocks_to_file()
         self.aggregate_trustchain_balances()
 
 
-# cd to the output directory
-os.chdir(os.environ['OUTPUT_DIR'])
+if __name__ == "__main__":
+    # cd to the output directory
+    # cd to the output directory
+    os.chdir(os.environ['OUTPUT_DIR'])
 
-parser = TrustchainStatisticsParser(sys.argv[1])
-parser.run()
+    parser = TrustchainStatisticsParser(sys.argv[1])
+    parser.run()
