@@ -1,0 +1,21 @@
+&module gumby.modules.tribler_module.TriblerModule
+&module experiments.trustchain.trustchain_module.TrustchainModule
+
+@0:1 isolate_ipv8_overlay TrustChainCommunity
+@0:2 start_session
+@0:5 init_leader_trustchain
+@0:9 disable_max_peers
+@0:10 set_validation_range 5
+@0:12 introduce_to_bootstrap_peers
+@0:15 turn_informed_broadcast
+@0:58 save_known_graph 58
+@0:60 annotate start-sharing-transactions
+@0:60 start_requesting_signatures
+@0:90 save_known_graph 90
+@0:120 save_known_graph 120
+@0:130 stop_requesting_signatures
+@0:135 write_overlay_statistics
+@0:135 write_trustchain_statistics
+@0:135 commit_blocks_to_db
+@0:150 stop_session
+@0:155 stop

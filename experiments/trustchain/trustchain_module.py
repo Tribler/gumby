@@ -4,6 +4,7 @@ from random import randint, choice
 import csv
 from time import time
 
+from binascii import hexlify
 from twisted.internet.task import LoopingCall
 
 from ipv8.attestation.trustchain.community import TrustChainCommunity
@@ -71,6 +72,37 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     @experiment_callback
     def turn_off_broadcast(self):
         self.overlay.settings.broadcast_blocks = False
+
+    @experiment_callback
+    def hide_blocks(self):
+        self.overlay.settings.self.is_hiding = True
+
+    @experiment_callback
+    def set_ttl(self, value):
+        self.overlay.settings.ttl = int(value)
+
+    @experiment_callback
+    def set_fanout(self, value):
+        self.overlay.settings.broadcast_fanout = int(value)
+
+    @experiment_callback
+    def turn_informed_broadcast(self):
+        self.overlay.settings.use_informed_broadcast = True
+        if os.getenv('IB_TTL'):
+            self.set_ttl(os.getenv('IB_TTL'))
+        if os.getenv('IB_FANOUT'):
+            self.set_fanout(os.getenv('IB_FANOUT'))
+
+    @experiment_callback
+    def save_known_graph(self, postfix):
+        peer_key = str(hexlify(self.overlay.my_peer.public_key.key_to_bin())[-8:])
+        graph_file = os.path.join(os.environ['PROJECT_DIR'], 'output',
+                                  'local_graph_' + peer_key + postfix + '.csv')
+        with open(graph_file, "w") as t_file:
+            writer = csv.DictWriter(t_file, ['p1', 'p2'])
+            writer.writeheader()
+            for edges in self.overlay.network.known_network.get_edge_list():
+                writer.writerow({'p1': edges[0], 'p2': edges[1]})
 
     @experiment_callback
     def init_leader_trustchain(self):
