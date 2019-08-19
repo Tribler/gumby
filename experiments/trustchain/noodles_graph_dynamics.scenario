@@ -8,11 +8,8 @@
 @0:10 set_validation_range 5
 @0:12 introduce_to_bootstrap_peers
 @0:15 turn_informed_broadcast
-@0:58 save_known_graph 58
 @0:60 annotate start-sharing-transactions
 @0:60 start_requesting_signatures
-@0:90 save_known_graph 90
-@0:120 save_known_graph 120
 @0:130 stop_requesting_signatures
 @0:135 write_overlay_statistics
 @0:135 write_trustchain_statistics

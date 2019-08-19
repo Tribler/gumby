@@ -94,17 +94,6 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self.set_fanout(os.getenv('IB_FANOUT'))
 
     @experiment_callback
-    def save_known_graph(self, postfix):
-        peer_key = str(hexlify(self.overlay.my_peer.public_key.key_to_bin())[-8:])
-        graph_file = os.path.join(os.environ['PROJECT_DIR'], 'output',
-                                  'local_graph_' + peer_key + postfix + '.csv')
-        with open(graph_file, "w") as t_file:
-            writer = csv.DictWriter(t_file, ['p1', 'p2'])
-            writer.writeheader()
-            for edges in self.overlay.network.known_network.get_edge_list():
-                writer.writerow({'p1': edges[0], 'p2': edges[1]})
-
-    @experiment_callback
     def init_leader_trustchain(self):
         # Open projects output directory and save blocks arrival time
         self.block_stat_file = os.path.join(os.environ['PROJECT_DIR'], 'output', 'leader_blocks_time_'
