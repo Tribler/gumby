@@ -80,10 +80,13 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     @experiment_callback
     def set_ttl(self, value):
         self.overlay.settings.ttl = int(value)
+        self._logger.info("Setting ttl for broadcast to %s", value)
 
     @experiment_callback
     def set_fanout(self, value):
         self.overlay.settings.broadcast_fanout = int(value)
+        self._logger.info("Setting broadcast to %s", value)
+
 
     @experiment_callback
     def turn_informed_broadcast(self):
