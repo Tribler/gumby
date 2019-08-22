@@ -202,7 +202,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self._logger.error("Cannot find last block of own peer")
             self.request_random_signature()
         else:
-            if random < chance:
+            if random() < chance:
                 self._logger.warn("Creating a double spend block %s", blk.sequence_number - 1)
                 for _ in range(num_ds):
                     self.request_random_signature(blk.sequence_number - 1)
