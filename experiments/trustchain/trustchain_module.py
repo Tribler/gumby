@@ -150,6 +150,8 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         if os.getenv('DS_CHANCE'):
             chance = float(os.getenv('DS_CHANCE'))
 
+        self._logger.info("Double spend batch is %s", batch)
+        self._logger.info("Double spend chance is %s", chance)
         self.request_ds_lc = LoopingCall(self.make_double_spend, batch, chance)
         self.request_ds_lc.start(1)
 
@@ -201,6 +203,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self.request_random_signature()
         else:
             if random < chance:
+                self._logger.warn("Creating a double spend block %s", blk.sequence_number - 1)
                 for _ in range(num_ds):
                     self.request_random_signature(blk.sequence_number - 1)
             else:
