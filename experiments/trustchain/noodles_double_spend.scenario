@@ -10,9 +10,8 @@
 @0:12 introduce_to_bootstrap_peers
 @0:60 annotate start-sharing-transactions
 @0:60 start_requesting_signatures {!1-5}
-@0:60 start_requesting_signatures {!1-5}
-@0:60 start_req_siqn_with_random_double_spends {1-5}
-@0:130 stop_req_siqn_with_random_double_spends {1-5}
+@0:60 start_req_sign_with_random_double_spends {1-5}
+@0:130 stop_req_sign_with_random_double_spends {1-5}
 @0:130 stop_requesting_signatures {!1-5}
 @0:135 write_overlay_statistics
 @0:135 write_trustchain_statistics

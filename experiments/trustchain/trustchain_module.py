@@ -154,7 +154,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.request_ds_lc.start(1)
 
     @experiment_callback
-    def stop_req_siqn_with_random_double_spends(self):
+    def stop_req_sign_with_random_double_spends(self):
         self.request_ds_lc.stop()
 
     @experiment_callback
