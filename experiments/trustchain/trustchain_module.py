@@ -1,6 +1,6 @@
 import json
 import os
-from random import randint, choice
+from random import randint, random, choice
 import csv
 from time import time
 
@@ -60,6 +60,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.request_signatures_lc = None
         self.num_blocks_in_db_lc = None
         self.block_stat_file = None
+        self.request_ds_lc = None
 
     def on_ipv8_available(self, _):
         # Disable threadpool messages
@@ -142,6 +143,21 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.request_signatures_lc.stop()
 
     @experiment_callback
+    def start_req_sign_with_random_double_spends(self, batch=1, chance=0.1):
+
+        if os.getenv('DS_BATCH'):
+            batch = int(os.getenv('DS_BATCH'))
+        if os.getenv('DS_CHANCE'):
+            chance = float(os.getenv('DS_CHANCE'))
+
+        self.request_ds_lc = LoopingCall(self.make_double_spend, batch, chance)
+        self.request_ds_lc.start(1)
+
+    @experiment_callback
+    def stop_req_siqn_with_random_double_spends(self):
+        self.request_ds_lc.stop()
+
+    @experiment_callback
     def start_monitor_num_blocks_in_db(self):
         self.num_blocks_in_db_lc = LoopingCall(self.check_num_blocks_in_db)
         self.num_blocks_in_db_lc.start(1)
@@ -162,7 +178,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
                                         int(sequence_number))
 
     @experiment_callback
-    def request_random_signature(self):
+    def request_random_signature(self, attach_to_block=None):
         """
         Request a random signature from one of your known verified peers
         """
@@ -173,8 +189,22 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self._logger.warning("No verified peers to request random signature from!")
             return
 
-        verified_peers = list(self.overlay.network.verified_peers)
-        self.request_signature_from_peer(choice(verified_peers), rand_up * 1024 * 1024, rand_down * 1024 * 1024)
+        self.request_signature_from_peer(choice(list(self.overlay.get_peers())),
+                                         rand_up * 1024 * 1024, rand_down * 1024 * 1024,
+                                         attached_block=attach_to_block)
+
+    @experiment_callback
+    def make_double_spend(self, num_ds=1, chance=0.3):
+        blk = self.overlay.persistence.get_latest(self.overlay.my_peer.public_key.key_to_bin())
+        if not blk:
+            self._logger.error("Cannot find last block of own peer")
+            self.request_random_signature()
+        else:
+            if random < chance:
+                for _ in range(num_ds):
+                    self.request_random_signature(blk.sequence_number - 1)
+            else:
+                self.request_random_signature()
 
     def send_to_leader_peer(self, block_num):
         leader_peer = self.overlay.network.verified_peers[0]
@@ -196,11 +226,13 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.request_signatures_lc = LoopingCall(self.send_to_leader_peer, int(block_num))
         self.request_signatures_lc.start(1)
 
-    def request_signature_from_peer(self, peer, up, down):
+    def request_signature_from_peer(self, peer, up, down, attached_block=None):
         peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
         self._logger.info("%s: Requesting signature from peer: %s", self.my_id, peer_id)
         transaction = {"up": up, "down": down, "from_peer": self.my_id, "to_peer": peer_id}
-        self.overlay.sign_block(peer, peer.public_key.key_to_bin(), block_type=b'test', transaction=transaction)
+        self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
+                                block_type=b'test', transaction=transaction,
+                                double_spend_block=attached_block)
 
     def check_num_blocks_in_db(self):
         """
