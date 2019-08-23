@@ -75,6 +75,10 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.overlay.settings.broadcast_blocks = False
 
     @experiment_callback
+    def turn_off_validation(self):
+        self.overlay.settings.ignore_validation = True
+
+    @experiment_callback
     def hide_blocks(self):
         self.overlay.settings.self.is_hiding = True
 
