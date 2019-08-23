@@ -80,7 +80,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def hide_blocks(self):
-        self.overlay.settings.self.is_hiding = True
+        self.overlay.settings.is_hiding = True
 
     @experiment_callback
     def set_ttl(self, value):
