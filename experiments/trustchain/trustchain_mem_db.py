@@ -16,6 +16,14 @@ class TrustchainMemoryDatabase(object):
         self.block_types = {}
         self.latest_blocks = {}
         self.original_db = None
+        self.double_spends = {}
+
+    def add_double_spend(self, block1, block2):
+
+        """
+        Add information about a double spend to the database.
+        """
+        self.double_spends[(block1.public_key, block1.sequence_number)] = (block1, block2)
 
     def get_block_class(self, block_type):
         """

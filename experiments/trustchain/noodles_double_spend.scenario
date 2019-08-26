@@ -16,8 +16,5 @@
 @0:60 start_req_sign_with_random_double_spends {1-5}
 @0:130 stop_req_sign_with_random_double_spends {1-5}
 @0:130 stop_requesting_signatures {!1-5}
-@0:135 write_overlay_statistics
-@0:135 write_trustchain_statistics
-@0:135 commit_blocks_to_db
 @0:150 stop_session
 @0:155 stop
