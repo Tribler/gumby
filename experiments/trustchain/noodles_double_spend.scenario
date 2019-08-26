@@ -2,6 +2,7 @@
 &module experiments.trustchain.trustchain_module.TrustchainModule
 
 @0:0 isolate_ipv8_overlay TrustChainCommunity
+@0:0 enable_trustchain_memory_db
 @0:2 start_session
 @0:5 init_leader_trustchain
 @0:9 disable_max_peers
@@ -17,5 +18,6 @@
 @0:130 stop_requesting_signatures {!1-5}
 @0:135 write_overlay_statistics
 @0:135 write_trustchain_statistics
+@0:135 commit_blocks_to_db
 @0:150 stop_session
 @0:155 stop
