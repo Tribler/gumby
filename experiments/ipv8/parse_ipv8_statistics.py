@@ -194,7 +194,6 @@ class IPv8StatisticsParser(StatisticsParser):
                         else:
                             writer.writerow({"time": row[0], 'transaction': row[1], 'seq_num': row[2],
                                              'link': row[3], 'seen_by': index})
-                os.remove(os.path.join(prefix, postfix + str(index) + '.csv'))
                 index += 1
 
     def run(self):
