@@ -100,6 +100,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self.set_ttl(os.getenv('IB_TTL'))
         if os.getenv('IB_FANOUT'):
             self.set_fanout(os.getenv('IB_FANOUT'))
+        self.overlay.settings.my_id = self.my_id
 
     @experiment_callback
     def init_leader_trustchain(self):
