@@ -96,11 +96,13 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     @experiment_callback
     def turn_informed_broadcast(self):
         self.overlay.settings.use_informed_broadcast = True
+        self._logger.info("Setting id to %s", self.my_id)
+        self.overlay.settings.my_id = self.my_id
         if os.getenv('IB_TTL'):
             self.set_ttl(os.getenv('IB_TTL'))
         if os.getenv('IB_FANOUT'):
             self.set_fanout(os.getenv('IB_FANOUT'))
-        self.overlay.settings.my_id = self.my_id
+
 
     @experiment_callback
     def init_leader_trustchain(self):
