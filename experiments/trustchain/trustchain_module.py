@@ -167,7 +167,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
         self._logger.info("%s: Requesting signature from peer: %s", self.my_id, peer_id)
         transaction = {"up": up, "down": down, "from_peer": self.my_id, "to_peer": peer_id}
-        self.overlay.sign_block(peer, peer.public_key.key_to_bin(), block_type='test', transaction=transaction)
+        self.overlay.sign_block(peer, peer.public_key.key_to_bin(), block_type=b'test', transaction=transaction)
 
     def check_num_blocks_in_db(self):
         """
