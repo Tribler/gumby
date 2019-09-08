@@ -47,8 +47,7 @@ class GigaChannelModule(IPv8OverlayExperimentModule):
         with db_session:
             self.autoplot_add_point('known_channels', len(list(self.session.lm.mds.ChannelMetadata.select())))
             self.autoplot_add_point('total_torrents', len(list(self.session.lm.mds.TorrentMetadata.select())))
-        self.autoplot_add_point('downloading_channels',
-                                len([c for c in self.session.lm.get_downloads() if c.get_channel_download()]))
+        self.autoplot_add_point('downloading_channels', len(self.session.lm.get_downloads()))
         self.autoplot_add_point('completed_channels',
-                                len([c for c in self.session.lm.get_downloads() if c.get_channel_download() and
-                                     c.get_state().get_status() == DLSTATUS_SEEDING]))
+                                len([c for c in self.session.lm.get_downloads()
+                                     if c.get_state().get_status() == DLSTATUS_SEEDING]))
