@@ -116,33 +116,63 @@ mkdir -p $VENV/src
 source $VENV/bin/activate
 
 #
-# Build Libtorrent and its python bindings
-# TODO: make sure libtorrent compiles on Python 3
+# Build boost (if using Python 3, otherwise use system boost)
 #
-if [[ ! $* == *--py3* ]]; then
+if [[ $* == *--py3* ]]; then
     pushd $VENV/src
-    LIBTORRENT_VERSION=1.1.12
-    LIBTORRENT_MARKER=`build_marker libtorrent $LIBTORRENT_VERSION`
-    LIBTORRENT_PATHV=`echo $LIBTORRENT_VERSION | sed 's/\./_/g'`
-    if [ ! -e $VENV/lib/python*/site-packages/libtorrent.so  -o ! -e $LIBTORRENT_MARKER ]; then
-        LIBTORRENT_SRC=libtorrent-rasterbar-$LIBTORRENT_VERSION
-        LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
-        if [ ! -e $LIBTORRENT_TAR ]; then
-            wget https://github.com/arvidn/libtorrent/releases/download/libtorrent_1_1_12/$LIBTORRENT_TAR
+    BOOST_VERSION=1.68.0
+    BOOST_MARKER=`build_marker boost $BOOST_VERSION`
+    BOOST_PATHV=`echo $BOOST_VERSION | sed 's/\./_/g'`
+    if [ ! -e $VENV/lib/libboost_system.so -o ! -e $BOOST_MARKER ]; then
+        BOOST_SRC=boost_$BOOST_PATHV
+        BOOST_TAR=$BOOST_SRC.tar.gz
+        if [ ! -e $BOOST_TAR ]; then
+            wget https://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION/$BOOST_TAR
         fi
-        if [ ! -d $LIBTORRENT_SRC ]; then
-            tar xavf $LIBTORRENT_TAR
+        if [ ! -d $BOOST_SRC ]; then
+            tar -xzvf $BOOST_TAR
         fi
-        pushd $LIBTORRENT_SRC
-        ./configure --enable-python-binding --prefix=$VENV
-        make -j24
-        make install
+        pushd $BOOST_SRC
+        ./bootstrap.sh
+        export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:$HOME/python3/include/python3.7m"
+        ./b2 variant=debug -j24 --prefix=$VENV install
+        rm -rf bin.v2
         popd
         popd
-        # Check that the modules work
-        #python -c "import libtorrent"
-        touch $LIBTORRENT_MARKER
+        touch $BOOST_MARKER
     fi
+fi
+
+#
+# Build Libtorrent and its python bindings
+#
+pushd $VENV/src
+LIBTORRENT_VERSION=1.2.1
+LIBTORRENT_MARKER=`build_marker libtorrent $LIBTORRENT_VERSION`
+LIBTORRENT_PATHV=`echo $LIBTORRENT_VERSION | sed 's/\./_/g'`
+if [ ! -e $VENV/lib/python*/site-packages/libtorrent*.so  -o ! -e $LIBTORRENT_MARKER ]; then
+    LIBTORRENT_SRC=libtorrent-rasterbar-$LIBTORRENT_VERSION
+    LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
+    if [ ! -e $LIBTORRENT_TAR ]; then
+        wget https://github.com/arvidn/libtorrent/releases/download/libtorrent-$LIBTORRENT_PATHV/$LIBTORRENT_TAR
+    fi
+    if [ ! -d $LIBTORRENT_SRC ]; then
+        tar xavf $LIBTORRENT_TAR
+    fi
+    pushd $LIBTORRENT_SRC
+
+    # The configuration of libtorrent highly depends on whether we are using Python 2 or Python 3
+    if [[ ! $* == *--py3* ]]; then
+        ./configure --enable-python-binding --prefix=$VENV
+    else
+        PYTHON=$VENV/bin/python CPPFLAGS="-I$VENV/include" LDFLAGS="-L$VENV/lib" ./configure PYTHON_LDFLAGS="-lpython3.7m -lpthread -ldl -lutil -lm" --enable-python-binding --with-boost-python=boost_python37 --with-boost-libdir=$VENV/lib --with-boost=$VENV --prefix=$VENV
+    fi
+
+    make -j24
+    make install
+    popd
+    popd
+    touch $LIBTORRENT_MARKER
 fi
 
 # recent libgmp needed by gmpy2 + pycrypto
@@ -329,11 +359,10 @@ deactivate
 
 virtualenv --relocatable $VENV
 
-#rm -fR venv
-#mv $VENV $VENV/../venv
-rm -fR build-tmp
-
 touch $VENV/.completed.$SCRIPT_VERSION
+
+# Clear some space
+rm -rf $VENV/src
 
 echo "Done, you can use this virtualenv with:
 	source venv/bin/activate
