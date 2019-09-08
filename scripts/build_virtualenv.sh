@@ -82,7 +82,7 @@ if [ -e $VENV/.completed.$SCRIPT_VERSION ]; then
 fi
 
 # If we compile for Python 3, we want to install a newer version since the version on the DAS5 is outdated.
-if [[ $* == *--py3* ]] && [ ! -e ~/python3/bin/python ]; then
+if [[ $* == *--py3* ]] && [ ! -e ~/python3/bin/python3 ]; then
     pushd $HOME
     wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tgz
     tar -xzvf Python-3.7.3.tgz
