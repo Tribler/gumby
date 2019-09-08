@@ -131,7 +131,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         strategy = self.strategies[name]
 
-        self.session.lm.ipv8.strategies.append((strategy(self.overlay, **kwargs), max_peers))
+        self.session.lm.ipv8.strategies.append((strategy(self.overlay, **kwargs), int(max_peers)))
 
     def get_peer(self, peer_id):
         target = self.all_vars[peer_id]
