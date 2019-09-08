@@ -284,6 +284,8 @@ CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --up
 
 echo "
 bcrypt
+chardet
+cherrypy
 configobj
 cryptography
 cython
@@ -299,6 +301,7 @@ psutil
 pyasn1 # for twisted
 pycrypto # Twisted needs it
 pynacl # New EC crypto stuff for tunnelcommunity
+pyOpenSSL
 qrcode
 service_identity
 six
