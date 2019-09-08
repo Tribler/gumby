@@ -1,4 +1,5 @@
 import time
+from binascii import unhexlify
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
@@ -35,11 +36,11 @@ class DHTModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def store(self, key, value):
-        self.log_timing(self.overlay.store_value(key.decode('hex'), value), 'store')
+        self.log_timing(self.overlay.store_value(unhexlify(key), value), 'store')
 
     @experiment_callback
     def find(self, key):
-        self.log_timing(self.overlay.find_values(key.decode('hex')), 'find')
+        self.log_timing(self.overlay.find_values(unhexlify(key)), 'find')
 
     @experiment_callback
     def do_dht_announce(self):
