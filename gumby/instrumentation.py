@@ -88,7 +88,11 @@ def start_memory_dumper():
     Initiates the memory profiler.
     """
     logger.info("starting memory dump looping call")
-    from meliae import scanner
+    try:
+        from meliae import scanner
+    except ImportError:
+        logger.error("Meliae is not available on Python 3!")
+
     # Setup the whole thing
     start = time()
     memdump_dir = path.join(environ["OUTPUT_DIR"], "memprof", str(PID))
