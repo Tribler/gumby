@@ -77,11 +77,11 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         with open(self.block_stat_file, "w") as t_file:
             writer = csv.DictWriter(t_file, ['time', 'transaction'])
             writer.writeheader()
-        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), ['test'])
+        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'test'])
 
     @experiment_callback
     def init_trustchain(self):
-        self.overlay.add_listener(FakeBlockListener(), ['test'])
+        self.overlay.add_listener(FakeBlockListener(), [b'test'])
 
     @experiment_callback
     def disable_max_peers(self):
