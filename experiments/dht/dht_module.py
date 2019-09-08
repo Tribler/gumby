@@ -36,7 +36,7 @@ class DHTModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def store(self, key, value):
-        self.log_timing(self.overlay.store_value(unhexlify(key), value), 'store')
+        self.log_timing(self.overlay.store_value(unhexlify(key), value.encode('utf-8')), 'store')
 
     @experiment_callback
     def find(self, key):
