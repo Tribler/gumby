@@ -190,7 +190,7 @@ class TriblerModule(BaseIPv8Module):
         if action == 'download':
             # Schedule a DHT lookup to fetch peers to add to this download
             def on_peers(info):
-                _, peers, _ = info
+                _, peers = info
                 self._logger.debug("Received peers for seeder lookup: %s", str(peers))
                 for peer in peers:
                     download.add_peer(peer)
