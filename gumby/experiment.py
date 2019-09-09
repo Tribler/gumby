@@ -296,6 +296,7 @@ class ExperimentClient(LineReceiver):
         """
         if module_name in sys.modules and sys.modules[module_name]:
             return sys.modules[module_name]
+        import_exception = None
         try:
             # Can raise ImportError when module_name cannot be imported
             __import__(module_name, level=0)
@@ -303,12 +304,12 @@ class ExperimentClient(LineReceiver):
             if sys.modules[module_name]:
                 # The module can still be unloaded
                 return sys.modules[module_name]
-        except AttributeError:
-            pass # Fall into the error message
-        except ImportError:
-            pass # Fall into the error message
+        except AttributeError as exc:
+            import_exception = exc
+        except ImportError as exc:
+            import_exception = exc
         if logger:
-            logger.info("Unable to load %s as a local module", module_name)
+            logger.info("Unable to load %s as a local module, exception: %s", module_name, import_exception)
         return None
 
     @staticmethod
