@@ -2,7 +2,6 @@ import glob
 import os
 import random
 
-from posix import environ
 from random import Random
 
 import binascii
@@ -126,7 +125,7 @@ class TriblerModule(BaseIPv8Module):
         """
         assert action in ("download", "seed"), "Invalid transfer kind"
 
-        file_name = os.path.basename(environ["SCENARIO_FILE"])
+        file_name = os.path.basename(os.environ["SCENARIO_FILE"])
         if download_id:
             download_id = int(download_id)
         else:
@@ -149,7 +148,7 @@ class TriblerModule(BaseIPv8Module):
         dscfg = DownloadConfig(state_dir=self.session.config.get_state_dir())
         if hops is not None:
             dscfg.set_hops(hops)
-        dscfg.set_dest_dir(os.path.join(environ["OUTPUT_DIR"], str(self.my_id)))
+        dscfg.set_dest_dir(os.path.join(os.environ["OUTPUT_DIR"], str(self.my_id)))
         if action == "download":
             os.remove(os.path.join(dscfg.get_dest_dir(), file_name))
 
@@ -228,7 +227,7 @@ class TriblerModule(BaseIPv8Module):
 
     @experiment_callback
     def remove_download_data(self):
-        for f in glob.glob(environ["SCENARIO_FILE"] + "*"):
+        for f in glob.glob(os.environ["SCENARIO_FILE"] + "*"):
             os.remove(f)
 
     @staticmethod
