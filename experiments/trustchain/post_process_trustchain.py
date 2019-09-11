@@ -105,13 +105,9 @@ class TrustchainStatisticsParser(StatisticsParser):
             for peer_nr, filename, dir in self.yield_files('trustchain.txt'):
                 with open(filename) as tc_file:
                     tc_json = json.loads(tc_file.read())
-                    total_up = 0
-                    total_down = 0
-                    balance = 0
-                    if 'latest_block' in tc_json and tc_json['latest_block']['type'] == 'tribler_bandwidth':
-                        total_up = tc_json['latest_block']['transaction']['total_up']
-                        total_down = tc_json['latest_block']['transaction']['total_down']
-                        balance = total_up - total_down
+                    total_up = tc_json['total_up']
+                    total_down = tc_json['total_down']
+                    balance = total_up - total_down
                     balances_file.write('%s,%d,%d,%d\n' % (peer_nr, total_up, total_down, balance))
 
     def run(self):
