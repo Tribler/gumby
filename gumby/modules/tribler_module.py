@@ -2,7 +2,6 @@ import glob
 import os
 import random
 
-from posix import environ
 from random import Random
 
 import binascii
@@ -18,6 +17,7 @@ from gumby.modules.base_ipv8_module import BaseIPv8Module
 from ipv8.dht.provider import DHTCommunityProvider
 
 from Tribler.Core.Config.download_config import DownloadConfig
+from Tribler.Core.Utilities.unicode import hexlify
 from Tribler.Core.simpledefs import dlstatus_strings
 from Tribler.Core.TorrentDef import TorrentDef
 
@@ -125,7 +125,7 @@ class TriblerModule(BaseIPv8Module):
         """
         assert action in ("download", "seed"), "Invalid transfer kind"
 
-        file_name = os.path.basename(environ["SCENARIO_FILE"])
+        file_name = os.path.basename(os.environ["SCENARIO_FILE"])
         if download_id:
             download_id = int(download_id)
         else:
@@ -148,14 +148,14 @@ class TriblerModule(BaseIPv8Module):
         dscfg = DownloadConfig(state_dir=self.session.config.get_state_dir())
         if hops is not None:
             dscfg.set_hops(hops)
-        dscfg.set_dest_dir(os.path.join(environ["OUTPUT_DIR"], str(self.my_id)))
+        dscfg.set_dest_dir(os.path.join(os.environ["OUTPUT_DIR"], str(self.my_id)))
         if action == "download":
             os.remove(os.path.join(dscfg.get_dest_dir(), file_name))
 
         def cb(ds):
             self._logger.info('transfer: %s infohash=%s, hops=%d, down=%d, up=%d, progress=%s, status=%s, seeds=%s',
                               action,
-                              tdef.get_infohash().encode('hex')[:5],
+                              hexlify(tdef.get_infohash())[:5],
                               hops if hops else 0,
                               ds.get_current_speed('down'),
                               ds.get_current_speed('up'),
@@ -189,7 +189,7 @@ class TriblerModule(BaseIPv8Module):
         if action == 'download':
             # Schedule a DHT lookup to fetch peers to add to this download
             def on_peers(info):
-                _, peers, _ = info
+                _, peers = info
                 self._logger.debug("Received peers for seeder lookup: %s", str(peers))
                 for peer in peers:
                     download.add_peer(peer)
@@ -227,7 +227,7 @@ class TriblerModule(BaseIPv8Module):
 
     @experiment_callback
     def remove_download_data(self):
-        for f in glob.glob(environ["SCENARIO_FILE"] + "*"):
+        for f in glob.glob(os.environ["SCENARIO_FILE"] + "*"):
             os.remove(f)
 
     @staticmethod
@@ -261,7 +261,7 @@ class TriblerModule(BaseIPv8Module):
             overlays_file.write("name,pub_key,peers\n")
             for overlay in self.session.lm.ipv8.overlays:
                 overlays_file.write("%s,%s,%d\n" % (overlay.__class__.__name__,
-                                                    overlay.my_peer.public_key.key_to_bin().encode('hex'),
+                                                    hexlify(overlay.my_peer.public_key.key_to_bin()),
                                                     len(overlay.get_peers())))
 
         # Write verified peers
@@ -284,6 +284,6 @@ class TriblerModule(BaseIPv8Module):
             for download in self.session.get_downloads():
                 state = download.get_state()
                 downloads_file.write("%s,%s,%f\n" % (
-                    download.get_def().get_infohash().encode('hex'),
+                    hexlify(download.get_def().get_infohash()),
                     dlstatus_strings[state.get_status()],
                     state.get_progress()))

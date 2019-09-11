@@ -1,4 +1,5 @@
 import json
+from binascii import hexlify
 from os import environ, makedirs, symlink, path, getpid
 from socket import gethostbyname
 
@@ -36,7 +37,7 @@ class BaseIPv8Module(ExperimentModule):
         time_elapsed = time.time() - self.experiment.scenario_runner.exp_start_time
         new_dict = {"time": time_elapsed, "stats": {}}
         for overlay_prefix, messages_dict in statistics.items():
-            hex_prefix = overlay_prefix.encode('hex')
+            hex_prefix = hexlify(overlay_prefix).decode('utf-8')
             new_dict["stats"][hex_prefix] = {}
             for msg_id, msg_stats in messages_dict.items():
                 new_dict["stats"][hex_prefix][msg_id] = msg_stats.to_dict()

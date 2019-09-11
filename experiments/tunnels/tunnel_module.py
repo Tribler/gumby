@@ -39,8 +39,10 @@
 import time
 from binascii import unhexlify
 
+from Tribler.Core.Utilities.unicode import hexlify
 from Tribler.Core.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
 from Tribler.community.triblertunnel.community import TriblerTunnelCommunity
+
 from ipv8.messaging.anonymization.community import TunnelSettings
 
 from gumby.experiment import experiment_callback
@@ -101,7 +103,7 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
                 status_dict = {
                     "time": time.time() - self.experiment.scenario_runner.exp_start_time,
-                    "infohash": download.get_def().get_infohash().encode('hex'),
+                    "infohash": hexlify(download.get_def().get_infohash()),
                     "progress": state.get_progress(),
                     "status": dlstatus_strings[state.get_status()],
                     "total_up": state.get_total_transferred(UPLOAD),
