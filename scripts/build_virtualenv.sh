@@ -147,14 +147,25 @@ fi
 # Build Libtorrent and its python bindings
 #
 pushd $VENV/src
-LIBTORRENT_VERSION=1.2.1
+if [[ $* == *--py3* ]]; then
+    LIBTORRENT_VERSION=1.2.1
+else
+    # For Python 2, we use an older version of libtorrent so we do not have to compile a newer version of Boost ourselves.
+    LIBTORRENT_VERSION=1.1.12
+fi
 LIBTORRENT_MARKER=`build_marker libtorrent $LIBTORRENT_VERSION`
 LIBTORRENT_PATHV=`echo $LIBTORRENT_VERSION | sed 's/\./_/g'`
 if [ ! -e $VENV/lib/python*/site-packages/libtorrent*.so  -o ! -e $LIBTORRENT_MARKER ]; then
     LIBTORRENT_SRC=libtorrent-rasterbar-$LIBTORRENT_VERSION
     LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
     if [ ! -e $LIBTORRENT_TAR ]; then
-        wget https://github.com/arvidn/libtorrent/releases/download/libtorrent-$LIBTORRENT_PATHV/$LIBTORRENT_TAR
+        if [[ $* == *--py3* ]]; then
+            LIBTORRENT_DOWNLOAD_URL=https://github.com/arvidn/libtorrent/releases/download/libtorrent-$LIBTORRENT_PATHV/$LIBTORRENT_TAR
+        else
+            # Slightly different format of the download URL for older version of libtorrent...
+            LIBTORRENT_DOWNLOAD_URL=https://github.com/arvidn/libtorrent/releases/download/libtorrent_$LIBTORRENT_PATHV/$LIBTORRENT_TAR
+        fi
+        wget $LIBTORRENT_DOWNLOAD_URL
     fi
     if [ ! -d $LIBTORRENT_SRC ]; then
         tar xavf $LIBTORRENT_TAR
