@@ -51,6 +51,8 @@ from re import compile as re_compile
 from threading import RLock
 from time import time
 
+from six.moves import xrange
+
 from twisted.internet import reactor
 
 

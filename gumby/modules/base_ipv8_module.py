@@ -1,5 +1,7 @@
 import json
+from binascii import hexlify
 from os import environ, makedirs, symlink, path, getpid
+from socket import gethostbyname
 
 import time
 from twisted.internet.defer import Deferred
@@ -35,7 +37,7 @@ class BaseIPv8Module(ExperimentModule):
         time_elapsed = time.time() - self.experiment.scenario_runner.exp_start_time
         new_dict = {"time": time_elapsed, "stats": {}}
         for overlay_prefix, messages_dict in statistics.items():
-            hex_prefix = overlay_prefix.encode('hex')
+            hex_prefix = hexlify(overlay_prefix).decode('utf-8')
             new_dict["stats"][hex_prefix] = {}
             for msg_id, msg_stats in messages_dict.items():
                 new_dict["stats"][hex_prefix][msg_id] = msg_stats.to_dict()
@@ -83,29 +85,31 @@ class BaseIPv8Module(ExperimentModule):
             self.ipv8_port = 12000 + self.experiment.my_id
         self._logger.info("IPv8 port set to %d", self.ipv8_port)
 
+        # We manually update the IPv8 bootstrap servers since IPv8 does not use the bootstraptribler.txt file.
+        from ipv8 import community
+        community._DEFAULT_ADDRESSES = []
+        community._DNS_ADDRESSES = []
+        head_host = gethostbyname(environ['HEAD_HOST']) if 'HEAD_HOST' in environ else "127.0.0.1"
+
         my_state_path = path.abspath(path.join(environ["OUTPUT_DIR"], ".%s-%d-%d" % (self.__class__.__name__,
                                                                                      getpid(), self.my_id)))
         makedirs(my_state_path)
         bootstrap_file = path.join(environ['OUTPUT_DIR'], 'bootstraptribler.txt')
         if path.exists(bootstrap_file):
             symlink(bootstrap_file, path.join(my_state_path, 'bootstraptribler.txt'))
-        else:
-            base_tracker_port = int(environ['TRACKER_PORT'])
-            port_range = range(base_tracker_port, base_tracker_port + 4)
-            with open(path.join(my_state_path, 'bootstraptribler.txt'), "w+") as f:
-                f.write("\n".join(["%s %d" % (environ['HEAD_HOST'], port) for port in port_range]))
-            bootstrap_file = path.join(my_state_path, 'bootstraptribler.txt')
 
-        # We manually update the IPv8 bootstrap servers since IPv8 does not use the bootstraptribler.txt file.
-        from ipv8 import community
-        community._DEFAULT_ADDRESSES = []
-        community._DNS_ADDRESSES = []
-        with open(bootstrap_file, 'r') as bfile:
-            for line in bfile.readlines():
-                parts = line.split(" ")
-                if not parts:
-                    continue
-                community._DNS_ADDRESSES.append((parts[0], int(parts[1])))
+            with open(bootstrap_file, 'r') as bfile:
+                for line in bfile.readlines():
+                    parts = line.split(" ")
+                    if not parts:
+                        continue
+                    community._DNS_ADDRESSES.append((parts[0], int(parts[1])))
+
+        base_tracker_port = int(environ['TRACKER_PORT'])
+        port_range = range(base_tracker_port, base_tracker_port + 4)
+        with open(path.join(my_state_path, 'bootstraptribler.txt'), "w+") as f:
+            f.write("\n".join(["%s %d" % (head_host, port) for port in port_range]))
+        community._DEFAULT_ADDRESSES = [(head_host, port) for port in port_range]
 
         config = GumbyTriblerConfig()
         config.set_trustchain_keypair_filename("tc_keypair_" + str(self.experiment.my_id))

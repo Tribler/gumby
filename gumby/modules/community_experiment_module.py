@@ -1,5 +1,7 @@
 from base64 import b64encode, b64decode
+from os import environ
 from random import sample
+from socket import gethostbyname
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import ExperimentModule
@@ -129,7 +131,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         strategy = self.strategies[name]
 
-        self.session.lm.ipv8.strategies.append((strategy(self.overlay, **kwargs), max_peers))
+        self.session.lm.ipv8.strategies.append((strategy(self.overlay, **kwargs), int(max_peers)))
 
     def get_peer(self, peer_id):
         target = self.all_vars[peer_id]
@@ -158,4 +160,8 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         # The IPv8 object is now available. This means that the tribler_config has been copy constructed into the
         # session object. Using the tribler_config object after this is useless. The community is also guaranteed to be
         # available.
-        pass
+        base_tracker_port = int(environ['TRACKER_PORT'])
+        port_range = range(base_tracker_port, base_tracker_port + 4)
+        head_host = gethostbyname(environ['HEAD_HOST']) if 'HEAD_HOST' in environ else "127.0.0.1"
+        for port in port_range:
+            self.overlay.network.blacklist.append((head_host, port))

@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 import json
 import os
 import sys
 
 from gumby.statsparser import StatisticsParser
+
+from Tribler.Core.Utilities.unicode import hexlify
+
 from scripts.trustchain_database_reader import GumbyDatabaseAggregator
 
 
@@ -60,27 +64,27 @@ class TrustchainStatisticsParser(StatisticsParser):
 
             # Write blocks
             for block in blocks:
-                if block.link_public_key.encode('hex') not in key_map:
+                if hexlify(block.link_public_key) not in key_map:
                     link_peer = 0
                 else:
-                    link_peer = key_map[block.link_public_key.encode('hex')]
+                    link_peer = key_map[hexlify(block.link_public_key)]
 
-                if block.public_key.encode('hex') not in key_map:
-                    print("Public key %s cannot be mapped to a peer!" % block.public_key.encode('hex'))
+                if hexlify(block.public_key) not in key_map:
+                    print("Public key %s cannot be mapped to a peer!" % hexlify(block.public_key))
                     continue
 
-                peer = key_map[block.public_key.encode('hex')]
+                peer = key_map[hexlify(block.public_key)]
                 trustchain_file.write(
                     "%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s\n" % (
                         peer,
-                        block.public_key.encode('hex'),
+                        hexlify(block.public_key),
                         block.sequence_number,
                         link_peer,
-                        block.link_public_key.encode('hex'),
+                        hexlify(block.link_public_key),
                         block.link_sequence_number,
-                        block.previous_hash.encode('hex'),
-                        block.signature.encode('hex'),
-                        block.hash.encode('hex'),
+                        hexlify(block.previous_hash),
+                        hexlify(block.signature),
+                        hexlify(block.hash),
                         block.type,
                         block.timestamp,
                         block.timestamp - start_time,
@@ -101,13 +105,9 @@ class TrustchainStatisticsParser(StatisticsParser):
             for peer_nr, filename, dir in self.yield_files('trustchain.txt'):
                 with open(filename) as tc_file:
                     tc_json = json.loads(tc_file.read())
-                    total_up = 0
-                    total_down = 0
-                    balance = 0
-                    if 'latest_block' in tc_json and tc_json['latest_block']['type'] == 'tribler_bandwidth':
-                        total_up = tc_json['latest_block']['transaction']['total_up']
-                        total_down = tc_json['latest_block']['transaction']['total_down']
-                        balance = total_up - total_down
+                    total_up = tc_json['total_up']
+                    total_down = tc_json['total_down']
+                    balance = total_up - total_down
                     balances_file.write('%s,%d,%d,%d\n' % (peer_nr, total_up, total_down, balance))
 
     def run(self):
