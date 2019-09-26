@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 import sys
 import os
 from sys import argv, exit
@@ -17,8 +18,8 @@ def write_records(all_nodes, sum_records, output_directory, outputfile, diffoutp
     if len(sum_records) > 0:
         all_nodes.sort()
 
-        fp = open(os.path.join(output_directory, outputfile), 'wb')
-        fp2 = open(os.path.join(output_directory, diffoutputfile), 'wb') if diffoutputfile else None
+        fp = open(os.path.join(output_directory, outputfile), 'w')
+        fp2 = open(os.path.join(output_directory, diffoutputfile), 'w') if diffoutputfile else None
 
         print('time', ' '.join(all_nodes), file=fp)
         if fp2:

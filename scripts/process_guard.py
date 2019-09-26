@@ -3,13 +3,13 @@
 # Rewritten by Elric Milon (Dec. 2012 and Aug. 2013)
 
 from __future__ import print_function
-import exceptions
+
+import errno
 import json
 import os
 from glob import iglob
 from math import ceil
-from os import (R_OK, access, errno, getpgid, getpid, kill, killpg, makedirs, mkdir, path, setsid, sysconf,
-                sysconf_names)
+from os import (R_OK, access, getpgid, getpid, kill, killpg, makedirs, mkdir, path, setsid, sysconf, sysconf_names)
 from signal import SIGKILL, SIGTERM, signal
 from subprocess import Popen
 from time import sleep, time
@@ -193,7 +193,7 @@ class ResourceMonitor(object):
                 try:
                     with open("/proc/%d/cmdline" % pid, 'r') as cmd:
                         print(" - %s" % cmd.read())
-                except exceptions.IOError:
+                except IOError:
                     pass
             killpg(id, SIGTERM)  # kill the entire process group, we are ignoring the SIGTERM.
 

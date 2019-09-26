@@ -106,11 +106,11 @@ class ExperimentServiceProto(LineReceiver):
 
     def sendAndWaitForReady(self):
         self.ready_d = Deferred()
-        self.sendLine(b"id:%s" % self.id)
+        self.sendLine(b"id:%d" % self.id)
         return self.ready_d
 
     def connectionLost(self, reason=connectionDone):
-        self._logger.debug("Lost connection with: %s with ID %s", str(self.transport.getPeer()), self.id)
+        self._logger.debug("Lost connection with: %s with ID %d", str(self.transport.getPeer()), self.id)
         self.factory.unregisterConnection(self)
         LineReceiver.connectionLost(self, reason)
 
@@ -119,21 +119,21 @@ class ExperimentServiceProto(LineReceiver):
     #
 
     def proto_init(self, line):
-        if line.startswith("time"):
-            self.vars["time_offset"] = float(line.strip().split(':')[1]) - time()
+        if line.startswith(b"time"):
+            self.vars["time_offset"] = float(line.strip().split(b':')[1]) - time()
             if abs(self.vars['time_offset']) < 0.5:  # ignore time_offset if smaller than +0.5/-0.5
                 self.vars['time_offset'] = 0
 
             self._logger.debug("Time offset is %s", self.vars["time_offset"])
             return 'init'
 
-        elif line.startswith('set:'):
-            _, key, value = line.strip().split(':', 2)
+        elif line.startswith(b"set:"):
+            _, key, value = line.strip().split(b':', 2)
             self._logger.debug("This subscriber sets %s to %s", key, value)
             self.vars[key] = value
             return 'init'
 
-        elif line.strip() == 'ready':
+        elif line.strip() == b"ready":
             self._logger.debug("This subscriber is ready now.")
             self.ready = True
             self.factory.setConnectionReady(self)
@@ -146,7 +146,7 @@ class ExperimentServiceProto(LineReceiver):
             return 'done'
 
     def proto_vars_received(self, line):
-        if line.strip() == 'vars_received':
+        if line.strip() == b"vars_received":
             self.factory.setConnectionReceived(self)
             return "wait"
         self._logger.error('Unexpected command received "%s"', line)
@@ -238,18 +238,18 @@ class ExperimentServiceFactory(Factory):
             vars[subscriber.id] = subscriber_vars
 
         vars = {
-            b"server":
+            "server":
                 {
-                    b"global_random": randint(0, (2 ** 32) - 1)
+                    "global_random": randint(0, (2 ** 32) - 1)
                 },
-            b"clients": vars
+            "clients": vars
         }
         json_vars = json.dumps(vars)
         del vars
         self._logger.info("Pushing a %d bytes long json doc.", len(json_vars))
 
         # Send the json doc to the subscribers
-        cooperate(self._sendLineToAllGenerator(json_vars))
+        cooperate(self._sendLineToAllGenerator(json_vars.encode()))
 
     def _sendLineToAllGenerator(self, line):
         for subscriber in self.connections_ready:
