@@ -32,8 +32,10 @@
 # <- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1": {"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"}, "2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
 # -> vars_received
 # <- go:1388665322.478153
-# [Connection is closed by the server]
 #
+# After the initial time synchronization and experiment metainfo exchange, peers can send messages to each
+# other using the synchronization server. This command looks like msg:<peer_id>:<message> where peer_id is the
+# peer to which the message should be forwarded to.
 
 # Change Log:
 #
@@ -101,8 +103,8 @@ class ExperimentServiceProto(LineReceiver):
             stop_reactor()
         else:
             self.state = statehandler(line)
-            if self.state == 'done':
-                self.transport.loseConnection()
+            #if self.state == 'done':
+            #    self.transport.loseConnection()
 
     def sendAndWaitForReady(self):
         self.ready_d = Deferred()
@@ -157,6 +159,18 @@ class ExperimentServiceProto(LineReceiver):
         self._logger.error('Unexpected command received "%s" while in ready state. Closing connection', line)
         return 'done'
 
+    def proto_running(self, line):
+        if line.startswith(b"msg"):
+            _, peer_id, msg_type, msg = line.strip().split(b':', 3)
+            self._logger.debug("Received message with type %s for peer %s: %s", msg_type.decode(), int(peer_id), msg.decode())
+
+            # Forward the message to the appropriate peer
+            self.factory.forwardMessage(self.id, int(peer_id), msg_type, msg)
+        else:
+            self._logger.error('Unexpected command received "%s" while in running state.', line)
+
+        return "running"
+
 
 class ExperimentServiceFactory(Factory):
     protocol = ExperimentServiceProto
@@ -171,6 +185,7 @@ class ExperimentServiceFactory(Factory):
         self.connections_made = []
         self.connections_ready = []
         self.vars_received = []
+        self.id_to_connection = {}
 
         self._made_looping_call = None
         self._subscriber_looping_call = None
@@ -314,10 +329,18 @@ class ExperimentServiceFactory(Factory):
         for subscriber in self.connections_ready:
             # Sync the experiment start time among instances
             subscriber.sendLine(b"go:%f" % (start_time + subscriber.vars['time_offset']))
+            subscriber.state = "running"
+            self.id_to_connection[subscriber.id] = subscriber
 
-        d = deferLater(reactor, 5, lambda: self._logger.info("Done, disconnecting all clients."))
-        d.addCallback(lambda _: self.disconnectAll())
-        d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
+        #d = deferLater(reactor, 5, lambda: self._logger.info("Done, disconnecting all clients."))
+        #d.addCallback(lambda _: self.disconnectAll())
+        #d.addCallbacks(self.onExperimentStarted, self.onExperimentStartError)
+
+    def forwardMessage(self, from_id, to_id, msg_type, msg):
+        if to_id not in self.id_to_connection:
+            self._logger.error("Error while forwarding message: peer with id %d not found!", to_id)
+
+        self.id_to_connection[to_id].sendLine(b"msg:%d:%s:%s" % (from_id, msg_type, msg))
 
     def disconnectAll(self):
         reactor.runUntilCurrent()
