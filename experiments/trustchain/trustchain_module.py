@@ -142,8 +142,14 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def start_requesting_signatures(self):
+
+        if os.getenv('TX_SEC'):
+            value = float(os.getenv('TX_SEC'))
+        else:
+            value = 0.001
+
         self.request_signatures_lc = LoopingCall(self.request_random_signature)
-        self.request_signatures_lc.start(1)
+        self.request_signatures_lc.start(value)
 
     @experiment_callback
     def stop_requesting_signatures(self):
