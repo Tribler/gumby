@@ -284,6 +284,12 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         # check the balance first
         total_spends = sum(self.overlay.persistence.get_spend_set(self.overlay.my_peer.public_key).values())
         total_claims = sum(self.overlay.persistence.get_claim_set(self.overlay.my_peer.public_key).values())
+
+        transaction = {"value": 1, "from_peer": self.my_id, "to_peer": peer_id}
+        self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
+                                block_type=b'spend', transaction=transaction)
+
+        """
         if total_claims - total_spends < 1:
             transaction = {"value": 100, "mint_proof": True, "from_peer": self.my_id, "to_peer": self.my_id}
             self.overlay.sign_block(self.overlay.my_peer, self.overlay.my_peer.public_key.key_to_bin(),
@@ -292,6 +298,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             transaction = {"value": 1, "from_peer": self.my_id, "to_peer": peer_id}
             self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
                                     block_type=b'spend', transaction=transaction)
+        """
 
     def check_num_blocks_in_db(self):
         """
