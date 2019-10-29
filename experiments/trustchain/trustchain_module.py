@@ -110,6 +110,8 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             writer.writeheader()
         self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'spend'])
         self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'claim'])
+        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'test'])
+        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), ['test'])
 
     @experiment_callback
     def init_trustchain(self):
