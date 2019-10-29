@@ -59,8 +59,8 @@ class TrustchainMemoryDatabase(object):
     def add_claim(self, claim):
         if claim.public_key not in self.claims.keys():
             self.claims[claim.public_key] = {}
-        if claim.link_public_key not in self.spends[claim.public_key].keys():
-            self.spends[claim.public_key][claim.link_public_key] = 0
+        if claim.link_public_key not in self.claims[claim.public_key].keys():
+            self.claims[claim.public_key][claim.link_public_key] = 0
         self.claims[claim.public_key][claim.link_public_key] += claim.transaction["value"]
 
     def get_spend_set(self, pub_key):
