@@ -64,10 +64,16 @@ class TrustchainMemoryDatabase(object):
         self.claims[claim.public_key][claim.link_public_key] += claim.transaction["value"]
 
     def get_spend_set(self, pub_key):
-        return self.spends[pub_key]
+        if pub_key in self.spends:
+            return self.spends[pub_key]
+        else:
+            return {}
 
     def get_claim_set(self, pub_key):
-        return self.claims[pub_key]
+        if pub_key in self.claims:
+            return self.claims[pub_key]
+        else:
+            return {}
 
     def remove_block(self, block):
         self.block_cache.pop((block.public_key, block.sequence_number), None)
