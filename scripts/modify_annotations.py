@@ -1,30 +1,35 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import sys
+
 import os
+import sys
+
 
 def main(input_directory, start_timestamp):
-    inputfile = os.path.join(input_directory, 'annotations.txt')
-    if os.path.exists(inputfile):
-        f = open(inputfile, 'r')
-        lines = f.readlines()
-        f.close()
+    print("Modifying annotations with start timestamp %s" % start_timestamp)
+    annotations_file_path = os.path.join(input_directory, 'annotations.txt')
+    if os.path.exists(annotations_file_path):
+        with open(annotations_file_path, 'r') as annotations_file:
+            lines = annotations_file.readlines()
+
+        # Write the old content to another file
+        with open(os.path.join(input_directory, 'old_annotations.txt'), "w") as old_annotations_file:
+            old_annotations_file.writelines(lines)
 
         header = False
-        f = open(inputfile, 'w')
-        for line in lines:
-            if not header:
-                print(line, file=f)
-                header = True
-                continue
+        with open(annotations_file_path, "w") as annotations_file:
+            for line in lines:
+                if not header:
+                    annotations_file.write(line)
+                    header = True
+                    continue
 
-            parts = line.split()
-            for i in range(1, len(parts)):
-                parts[i] = float(parts[i]) - start_timestamp
+                parts = line.split()
+                for i in range(1, len(parts)):
+                    parts[i] = float(parts[i]) - start_timestamp
 
-            print(" ".join(map(str, parts)), file=f)
+                annotations_file.write(" ".join(map(str, parts)) + "\n")
 
-        f.close()
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
