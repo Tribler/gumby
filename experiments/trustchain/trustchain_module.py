@@ -108,7 +108,8 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         with open(self.block_stat_file, "w") as t_file:
             writer = csv.DictWriter(t_file, ['time', 'transaction', "seq_num", "link"])
             writer.writeheader()
-        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'test'])
+        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'spend'])
+        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'claim'])
 
     @experiment_callback
     def init_trustchain(self):
@@ -272,7 +273,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     def noodle_mint(self):
         transaction = {"value": 100, "mint_proof": True}
         self.overlay.sign_block(self.overlay.my_peer, self.overlay.my_peer.public_key.key_to_bin(),
-                                block_type=b"claim", transaction=transaction)
+                                block_type="claim", transaction=transaction)
 
     def noodle_random_spend(self, peer, attached_block=None):
         peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
@@ -282,9 +283,9 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         total_spends = sum(self.overlay.persistence.get_spend_set(self.overlay.my_peer.public_key).values())
         total_claims = sum(self.overlay.persistence.get_claim_set(self.overlay.my_peer.public_key).values())
         if total_claims - total_spends < 1:
-            transaction = {"value": 100, "mint_proof": True}
+            transaction = {"value": 100, "mint_proof": True, "from_peer": self.my_id, "to_peer": self.my_id}
             self.overlay.sign_block(self.overlay.my_peer, self.overlay.my_peer.public_key.key_to_bin(),
-                                    block_type=b"claim", transaction=transaction)
+                                    block_type=b'claim', transaction=transaction)
         else:
             transaction = {"value": 1, "from_peer": self.my_id, "to_peer": peer_id}
             self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
