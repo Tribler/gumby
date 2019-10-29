@@ -17,6 +17,8 @@ class TrustchainMemoryDatabase(object):
         self.latest_blocks = {}
         self.original_db = None
         self.double_spends = {}
+        self.spends = {}
+        self.claims = {}
 
     def add_double_spend(self, block1, block2):
 
@@ -42,6 +44,30 @@ class TrustchainMemoryDatabase(object):
             self.latest_blocks[block.public_key] = block
         elif self.latest_blocks[block.public_key].sequence_number < block.sequence_number:
             self.latest_blocks[block.public_key] = block
+        if block.type == b"spend":
+            self.add_spend(block)
+        if block.type == b"claim":
+            self.add_claim(block)
+
+    def add_spend(self, spend):
+        if spend.public_key not in self.spends.keys():
+            self.spends[spend.public_key] = {}
+        if spend.link_public_key not in self.spends[spend.public_key].keys():
+            self.spends[spend.public_key][spend.link_public_key] = 0
+        self.spends[spend.public_key][spend.link_public_key] += spend.transaction["value"]
+
+    def add_claim(self, claim):
+        if claim.public_key not in self.claims.keys():
+            self.claims[claim.public_key] = {}
+        if claim.link_public_key not in self.spends[claim.public_key].keys():
+            self.spends[claim.public_key][claim.link_public_key] = 0
+        self.claims[claim.public_key][claim.link_public_key] += claim.transaction["value"]
+
+    def get_spend_set(self, pub_key):
+        return self.spends[pub_key]
+
+    def get_claim_set(self, pub_key):
+        return self.claims[pub_key]
 
     def remove_block(self, block):
         self.block_cache.pop((block.public_key, block.sequence_number), None)

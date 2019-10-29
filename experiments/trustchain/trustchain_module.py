@@ -1,18 +1,16 @@
+import csv
 import json
 import os
 from random import randint, random, choice
-import csv
 from time import time
 
-from binascii import hexlify
 from twisted.internet.task import LoopingCall
 
+from gumby.experiment import experiment_callback
+from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
+from gumby.modules.experiment_module import static_module
 from ipv8.attestation.trustchain.community import TrustChainCommunity
 from ipv8.attestation.trustchain.listener import BlockListener
-
-from gumby.experiment import experiment_callback
-from gumby.modules.experiment_module import static_module
-from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 
 
 class FakeBlockListener(BlockListener):
@@ -92,7 +90,6 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.overlay.settings.broadcast_fanout = int(value)
         self._logger.info("Setting broadcast to %s", value)
 
-
     @experiment_callback
     def turn_informed_broadcast(self):
         self.overlay.settings.use_informed_broadcast = True
@@ -102,7 +99,6 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self.set_ttl(os.getenv('IB_TTL'))
         if os.getenv('IB_FANOUT'):
             self.set_fanout(os.getenv('IB_FANOUT'))
-
 
     @experiment_callback
     def init_leader_trustchain(self):
@@ -127,6 +123,10 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.tribler_config.set_trustchain_memory_db(True)
 
     @experiment_callback
+    def enable_trustchain_pex(self):
+        self.tribler_config.set_pex_discovery(True)
+
+    @experiment_callback
     def set_validation_range(self, value):
 
         if os.getenv('VALID_WINDOW'):
@@ -149,6 +149,17 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             value = 0.001
 
         self.request_signatures_lc = LoopingCall(self.request_random_signature)
+        self.request_signatures_lc.start(value)
+
+    @experiment_callback
+    def start_requesting_noodle_signatures(self):
+
+        if os.getenv('TX_SEC'):
+            value = float(os.getenv('TX_SEC'))
+        else:
+            value = 0.001
+
+        self.request_signatures_lc = LoopingCall(self.request_noodle_random_signature)
         self.request_signatures_lc.start(value)
 
     @experiment_callback
@@ -191,6 +202,14 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.overlay.send_crawl_request(self.get_peer(peer_id),
                                         self.get_peer(peer_id).public_key.key_to_bin(),
                                         int(sequence_number))
+
+    @experiment_callback
+    def request_noodle_random_signature(self, attach_to_block=None):
+        """
+        Request a random signature from one of your known verified peers
+        """
+        self.noodle_random_spend(choice(list(self.overlay.get_peers())),
+                                 attached_block=attach_to_block)
 
     @experiment_callback
     def request_random_signature(self, attach_to_block=None):
@@ -249,6 +268,27 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
                                 block_type=b'test', transaction=transaction,
                                 double_spend_block=attached_block)
+
+    def noodle_mint(self):
+        transaction = {"value": 100, "mint_proof": True}
+        self.overlay.sign_block(self.overlay.my_peer, self.overlay.my_peer.public_key.key_to_bin(),
+                                block_type=b"claim", transaction=transaction)
+
+    def noodle_random_spend(self, peer, attached_block=None):
+        peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
+        self._logger.info("%s: Requesting signature from peer: %s", self.my_id, peer_id)
+
+        # check the balance first
+        total_spends = sum(self.overlay.persistence.get_spend_set(self.overlay.my_peer.public_key).values())
+        total_claims = sum(self.overlay.persistence.get_claim_set(self.overlay.my_peer.public_key).values())
+        if total_claims - total_spends < 1:
+            transaction = {"value": 100, "mint_proof": True}
+            self.overlay.sign_block(self.overlay.my_peer, self.overlay.my_peer.public_key.key_to_bin(),
+                                    block_type=b"claim", transaction=transaction)
+        else:
+            transaction = {"value": 1, "from_peer": self.my_id, "to_peer": peer_id}
+            self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
+                                    block_type=b'spend', transaction=transaction)
 
     def check_num_blocks_in_db(self):
         """

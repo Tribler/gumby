@@ -4,13 +4,13 @@
 @0:0 isolate_ipv8_overlay TrustChainCommunity
 @0:0 enable_trustchain_memory_db
 @0:2 start_session
+@0:4 enable_trustchain_pex
 @0:5 init_leader_trustchain
 @0:9 disable_max_peers
 @0:10 set_validation_range 5
 @0:12 introduce_to_bootstrap_peers
-@0:10 turn_informed_broadcast
 @0:60 annotate start-sharing-transactions
-@0:60 start_requesting_signatures
+@0:60 start_requesting_noodle_signatures
 @0:130 stop_requesting_signatures
 @0:135 write_overlay_statistics
 @0:135 write_trustchain_statistics

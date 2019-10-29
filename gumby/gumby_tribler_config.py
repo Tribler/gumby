@@ -25,3 +25,9 @@ class GumbyTriblerConfig(TriblerConfig):
 
     def use_trustchain_memory_db(self):
         return self.config['trustchain']['memory_db']
+
+    def set_pex_discovery(self, value):
+        self.config['trustchain']['pex'] = value
+
+    def use_pex_discovery(self):
+        return self.config['trustchain']['pex']
