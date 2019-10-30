@@ -130,7 +130,7 @@ class ExperimentServiceProto(LineReceiver):
         elif line.startswith(b"set:"):
             _, key, value = line.strip().split(b':', 2)
             self._logger.debug("This subscriber sets %s to %s", key, value)
-            self.vars[key] = value
+            self.vars[key.decode()] = value.decode()
             return 'init'
 
         elif line.strip() == b"ready":
