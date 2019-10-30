@@ -101,6 +101,14 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
 
     @experiment_callback
+    def introduce_all_peers(self):
+        """
+        Introduce to all peers
+        """
+        for peer in self.all_vars.keys():
+            self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer))
+
+    @experiment_callback
     def introduce_to_bootstrap_peers(self):
         """
         Introduce to the bootstrap peers
