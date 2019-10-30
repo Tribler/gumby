@@ -126,9 +126,12 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         self.topology = nx.random_graphs.gnm_random_graph(num_nodes+1,
                                                           (num_nodes+1) * avg_degree / 2, seed=42)
         for peer in self.topology.neighbors(int(self.my_id)):
-            self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer))
+            val = self.experiment.get_peer_ip_port_by_id(peer)
+            self._logger.info("Peer %s with value %s", peer, val)
+            self.overlay.walk_to(val)
         if self.my_id != 2:
             for overlay in self.ipv8.overlays[1:]:
+                    self._logger.info("Forming a suboverlay for peer %s", peer, val)
                     overlay.walk_to(self.experiment.get_peer_ip_port_by_id(2))
 
     @experiment_callback
