@@ -126,8 +126,9 @@ class IPv8OverlayExperimentModule(ExperimentModule):
                                                           (num_nodes+1) * avg_degree / 2, seed=42)
         self.overlay.bootstrap_master = self.experiment.get_peer_ip_port_by_id(1)
         for peer in self.topology.neighbors(int(self.my_id)):
-            val = self.experiment.get_peer_ip_port_by_id(peer+1)
-            self._logger.info("Peer %s with value %s", peer+1, val)
+            peer = peer if peer > 0 else peer+1
+            val = self.experiment.get_peer_ip_port_by_id(peer)
+            self._logger.info("Peer %s with value %s", peer, val)
             self.overlay.walk_to(val)
 
 
