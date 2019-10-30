@@ -133,7 +133,7 @@ class TrustchainStatisticsParser(StatisticsParser):
                     balances_file.write('%s,%d,%d,%d\n' % (peer_nr, total_up, total_down, balance))
 
     def run(self):
-        # self.aggregate_transactions()
+        self.aggregate_transactions()
         self.aggregate_databases()
         self.write_blocks_to_file()
         self.aggregate_trustchain_balances()
