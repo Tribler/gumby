@@ -271,7 +271,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
                                 double_spend_block=attached_block)
 
     def noodle_mint(self):
-        transaction = {"value": 100, "mint_proof": True, "peer": self.my_id}
+        transaction = {"value": 10, "mint_proof": True, "peer": self.my_id}
         self.overlay.self_sign_block(block_type=b'claim', transaction=transaction)
 
     def noodle_random_spend(self, peer, attached_block=None):
@@ -287,7 +287,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self.noodle_mint()
         else:
             self._logger.info("%s: Requesting signature from peer: %s", self.my_id, peer_id)
-            transaction = {"value": 1, "from_peer": self.my_id, "to_peer": peer_id, "total_spends": total_spends,
+            transaction = {"value": random(), "from_peer": self.my_id, "to_peer": peer_id, "total_spends": total_spends,
                            "total_claims": total_claims}
             self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
                                     block_type=b'spend', transaction=transaction)

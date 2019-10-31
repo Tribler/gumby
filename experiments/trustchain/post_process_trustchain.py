@@ -37,7 +37,7 @@ class TrustchainStatisticsParser(StatisticsParser):
 
         block_stat_file = os.path.join(prefix, postfix + "agg.csv")
         with open(block_stat_file, "w") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', 'seen_by'])
+            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', 'seq_num', 'seen_by'])
             writer.writeheader()
             while os.path.exists(os.path.join(prefix, postfix + str(index) + '.csv')):
                 with open(os.path.join(prefix, postfix + str(index) + '.csv')) as read_file:
@@ -47,8 +47,10 @@ class TrustchainStatisticsParser(StatisticsParser):
                         if first:
                             first = False
                         else:
-                            type_val = 'claim' if int(row[4]) != 0 else 'spend'
-                            writer.writerow({"time": row[0], 'transaction': row[1], 'type': type_val, 'seen_by': index})
+                            type_val = row[2]
+                            seq_num = (row[3], row[4])
+                            writer.writerow({"time": row[0], 'transaction': row[1], 'type': type_val, 'seq_num':seq_num,
+                                             'seen_by': index})
                 index += 1
 
     def write_blocks_to_file(self):
