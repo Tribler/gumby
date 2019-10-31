@@ -282,9 +282,13 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         total_spends = sum(self.overlay.persistence.get_spend_set(self.overlay.my_peer.public_key).values())
         total_claims = sum(self.overlay.persistence.get_claim_set(self.overlay.my_peer.public_key).values())
 
-        transaction = {"value": 1, "from_peer": self.my_id, "to_peer": peer_id}
-        self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
-                                block_type=b'claim', transaction=transaction)
+        if total_claims - total_spends < 1:
+            self.noodle_mint()
+        else:
+            transaction = {"value": 1, "from_peer": self.my_id, "to_peer": peer_id, "total_spends": total_spends,
+                           "total_claims": total_claims}
+            self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
+                                    block_type=b'spend', transaction=transaction)
 
         """
         if total_claims - total_spends < 1:

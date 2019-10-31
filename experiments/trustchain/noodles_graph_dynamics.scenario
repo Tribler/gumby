@@ -11,9 +11,9 @@
 @0:12 introduce_to_bootstrap_peers
 @0:120 annotate start-sharing-transactions
 @0:120 start_requesting_noodle_signatures
-@0:130 stop_requesting_signatures
-@0:135 write_overlay_statistics
-@0:136 write_trustchain_statistics
-@0:137 commit_blocks_to_db
-@0:150 stop_session
-@0:155 stop
+@0:150 stop_requesting_signatures
+@0:165 write_overlay_statistics
+@0:166 write_trustchain_statistics
+@0:177 commit_blocks_to_db
+@0:180 stop_session
+@0:185 stop
