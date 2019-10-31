@@ -271,7 +271,11 @@ class TrustchainModule(IPv8OverlayExperimentModule):
                                 double_spend_block=attached_block)
 
     def noodle_mint(self):
-        transaction = {"value": 10, "mint_proof": True, "peer": self.my_id}
+        mint_val = 10000
+        if os.getenv('INIT_MINT'):
+            mint_val = float(os.getenv('INIT_MINT'))
+
+        transaction = {"value": mint_val, "mint_proof": True, "peer": self.my_id}
         self.overlay.self_sign_block(block_type=b'claim', transaction=transaction)
 
     def noodle_random_spend(self, peer, attached_block=None):
