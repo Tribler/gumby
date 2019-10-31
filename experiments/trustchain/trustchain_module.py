@@ -278,8 +278,9 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
 
         # check the balance first
-        total_spends = sum(self.overlay.persistence.get_spend_set(self.overlay.my_peer.public_key).values())
-        total_claims = sum(self.overlay.persistence.get_claim_set(self.overlay.my_peer.public_key).values())
+        pk = str(self.overlay.my_peer.public_key.key_to_bin())
+        total_spends = sum(self.overlay.persistence.get_spend_set(pk).values())
+        total_claims = sum(self.overlay.persistence.get_claim_set(pk).values())
 
         if total_claims - total_spends < 1:
             self._logger.info("Minting new value %s  %s ", total_claims, total_spends)

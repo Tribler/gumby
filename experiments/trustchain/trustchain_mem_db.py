@@ -50,18 +50,22 @@ class TrustchainMemoryDatabase(object):
             self.add_claim(block)
 
     def add_spend(self, spend):
-        if spend.public_key not in self.spends.keys():
-            self.spends[spend.public_key] = {}
-        if spend.link_public_key not in self.spends[spend.public_key].keys():
-            self.spends[spend.public_key][spend.link_public_key] = 0
-        self.spends[spend.public_key][spend.link_public_key] += float(spend.transaction["value"])
+        pk = str(spend.public_key.key_to_bin())
+        lpk = str(spend.link_public_key.key_to_bin())
+        if pk not in self.spends.keys():
+            self.spends[pk] = {}
+        if lpk not in self.spends[pk].keys():
+            self.spends[pk][lpk] = 0
+        self.spends[pk][lpk] += float(spend.transaction["value"])
 
     def add_claim(self, claim):
-        if claim.public_key not in self.claims.keys():
-            self.claims[claim.public_key] = {}
-        if claim.link_public_key not in self.claims[claim.public_key].keys():
-            self.claims[claim.public_key][claim.link_public_key] = 0
-        self.claims[claim.public_key][claim.link_public_key] += float(claim.transaction["value"])
+        pk = str(claim.public_key.key_to_bin())
+        lpk = str(claim.link_public_key.key_to_bin())
+        if pk not in self.claims.keys():
+            self.claims[pk] = {}
+        if lpk not in self.claims[pk].keys():
+            self.claims[pk][lpk] = 0
+        self.claims[pk][lpk] += float(claim.transaction["value"])
 
     def get_spend_set(self, pub_key):
         if pub_key in self.spends:
