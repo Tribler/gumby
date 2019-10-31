@@ -109,10 +109,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         with open(self.block_stat_file, "w") as t_file:
             writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link"])
             writer.writeheader()
-        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'spend'])
-        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'claim'])
-        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'test'])
-        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), ['test'])
+        self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'claim', b'spend', b'test'])
 
     @experiment_callback
     def init_trustchain(self):
@@ -275,8 +272,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     def noodle_mint(self):
         transaction = {"value": 100, "mint_proof": True}
-        self.overlay.sign_block(self.overlay.my_peer, self.overlay.my_peer.public_key.key_to_bin(),
-                                block_type="claim", transaction=transaction)
+        self.overlay.self_sign_block(block_type=b'claim', transaction=transaction)
 
     def noodle_random_spend(self, peer, attached_block=None):
         peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
