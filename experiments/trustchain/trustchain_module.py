@@ -45,8 +45,9 @@ class GeneratedBlockListener(BlockListener):
             # First block received
             self.start_time = time()
         with open(self.file_name, "a") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction', "seq_num", "link"])
+            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link"])
             writer.writerow({"time": time() - self.start_time, 'transaction': str(block.transaction),
+                             'type': str(block.type),
                              'seq_num': block.sequence_number, "link": block.link_sequence_number
                              })
 
@@ -106,7 +107,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.block_stat_file = os.path.join(os.environ['PROJECT_DIR'], 'output', 'leader_blocks_time_'
                                             + str(self.my_id) + '.csv')
         with open(self.block_stat_file, "w") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction', "seq_num", "link"])
+            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link"])
             writer.writeheader()
         self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'spend'])
         self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'claim'])
