@@ -50,8 +50,8 @@ class TrustchainMemoryDatabase(object):
             self.add_claim(block)
 
     def add_spend(self, spend):
-        pk = str(spend.public_key.key_to_bin())
-        lpk = str(spend.link_public_key.key_to_bin())
+        pk = spend.public_key
+        lpk = spend.link_public_key
         if pk not in self.spends.keys():
             self.spends[pk] = {}
         if lpk not in self.spends[pk].keys():
@@ -59,8 +59,8 @@ class TrustchainMemoryDatabase(object):
         self.spends[pk][lpk] += float(spend.transaction["value"])
 
     def add_claim(self, claim):
-        pk = str(claim.public_key.key_to_bin())
-        lpk = str(claim.link_public_key.key_to_bin())
+        pk = claim.public_key
+        lpk = claim.link_public_key
         if pk not in self.claims.keys():
             self.claims[pk] = {}
         if lpk not in self.claims[pk].keys():
