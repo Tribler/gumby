@@ -284,7 +284,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
         transaction = {"value": 1, "from_peer": self.my_id, "to_peer": peer_id}
         self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
-                                block_type=b'spend', transaction=transaction)
+                                block_type=b'claim', transaction=transaction)
 
         """
         if total_claims - total_spends < 1:
