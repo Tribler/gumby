@@ -124,7 +124,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         self.topology = nx.random_graphs.gnm_random_graph(num_nodes,
                                                           num_nodes * avg_degree / 2, seed=42)
-        self.overlay.bootstrap_master = self.experiment.get_peer_ip_port_by_id(1)
+        self.overlay.bootstrap_master = [self.experiment.get_peer_ip_port_by_id(k) for k in self.all_vars.keys()]
         for peer in self.topology.neighbors(int(self.my_id)):
             peer = peer + 1
             val = self.experiment.get_peer_ip_port_by_id(peer)
