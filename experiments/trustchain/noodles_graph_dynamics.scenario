@@ -15,6 +15,5 @@
 @0:150 stop_requesting_signatures
 @0:165 write_overlay_statistics
 @0:166 write_trustchain_statistics
-@0:177 commit_blocks_to_db
 @0:180 stop_session
 @0:185 stop

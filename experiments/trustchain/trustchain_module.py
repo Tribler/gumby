@@ -148,6 +148,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             value = float(os.getenv('TX_SEC'))
         else:
             value = 0.001
+        self._logger.info("Setting transaction rate to %s", 1/value)
 
         self.request_signatures_lc = LoopingCall(self.request_random_signature)
         self.request_signatures_lc.start(value)
