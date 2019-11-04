@@ -18,5 +18,5 @@
 @0:165 write_overlay_statistics
 @0:166 write_trustchain_statistics
 @0:180 stop_session
-@0:180 start_yappi {2}
+@0:180 stop_yappi {2}
 @0:185 stop
