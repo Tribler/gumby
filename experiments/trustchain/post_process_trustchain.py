@@ -165,6 +165,8 @@ class TrustchainStatisticsParser(StatisticsParser):
                     seq_num_tuple = ast.literal_eval(row[3])
 
                     tx = ast.literal_eval(row[1])
+                    if 'mint_proof' in tx:
+                        continue
                     if str(tx) not in tx_map:
                         tx_map[str(tx)] = index
                         index += 1
@@ -226,7 +228,7 @@ class TrustchainStatisticsParser(StatisticsParser):
 
         for t in tx_stats:
             if 'round_time' not in tx_stats[t]:
-                pass
+                errs.append(t)
             else:
                 val = tx_stats[t]
                 if 'first_seen' not in val:
@@ -258,6 +260,8 @@ class TrustchainStatisticsParser(StatisticsParser):
                 w_file.write("Peer fanout: %d\n" % value)
 
             w_file.write("Peak throughput: %d\n" % max(throughput.values()))
+            w_file.write("Min throughput: %d\n" % min(throughput.values()))
+            w_file.write("Median throughput: %d\n" % np.median(throughput.values()))
             w_file.write("Est system throughput: %f\n" % (len(tx_seen) / (max_time - min_time)))
             w_file.write("\n")
             w_file.write("Median round latency: %f\n" % np.median(latency_round))
