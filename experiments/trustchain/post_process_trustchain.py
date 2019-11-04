@@ -217,7 +217,7 @@ class TrustchainStatisticsParser(StatisticsParser):
                         elif tx_stats[tx_map_ind]['last_time'] < time:
                             tx_stats[tx_map_ind]['last_time'] = time
         import math
-        import numpy as np
+        import statistics as np
 
         latency_round = []
         latency_all = []
@@ -256,22 +256,21 @@ class TrustchainStatisticsParser(StatisticsParser):
             w_file.write("Median round latency: %f\n" % np.median(latency_round))
             w_file.write("Median all received latency: %f\n" % np.median(latency_all))
             w_file.write("\n")
-            w_file.write("Median from transactions: %d\n" % np.median([d['from_count'] for k, d in peer_counts.items()]))
+            w_file.write(
+                "Median from transactions: %d\n" % np.median([d['from_count'] for k, d in peer_counts.items()]))
             w_file.write(
                 "Median to transactions: %d\n" % np.median([d['to_count'] for k, d in peer_counts.items()]))
             w_file.write(
                 "Median other transactions: %d\n" % np.median([d['others'] for k, d in peer_counts.items()]))
 
             w_file.write(
-                "Min transaction seen: %d\n" % np.min([d for k, d in tx_seen.items()]))
+                "Min transaction seen: %d\n" % min([d for k, d in tx_seen.items()]))
             w_file.write(
                 "Median to transactions: %d\n" % np.median([d for k, d in tx_seen.items()]))
             w_file.write(
-                "Median other transactions: %d\n" %  np.max([d for k, d in tx_seen.items()]))
+                "Median other transactions: %d\n" % max([d for k, d in tx_seen.items()]))
 
             w_file.write("Errors: %d\n" % len(errs))
-
-
 
     def run(self):
         self.aggregate_transactions()
