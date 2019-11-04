@@ -245,6 +245,8 @@ class TrustchainStatisticsParser(StatisticsParser):
                 if all_seen > 10:
                     print(t, tx_stats[t])
 
+        thrg = {x:y for x,y in throughput.items() if y}
+
         # Write performance results in a file
         res_file = os.path.join(prefix, "perf_results.txt")
         with open(res_file, 'w') as w_file:
@@ -259,9 +261,9 @@ class TrustchainStatisticsParser(StatisticsParser):
                 value = int(os.getenv('IB_FANOUT'))
                 w_file.write("Peer fanout: %d\n" % value)
 
-            w_file.write("Peak throughput: %d\n" % max(throughput.values()))
-            w_file.write("Min throughput: %d\n" % min(throughput.values()))
-            w_file.write("Median throughput: %d\n" % np.median(throughput.values()))
+            w_file.write("Peak throughput: %d\n" % max(thrg.values()))
+            w_file.write("Min throughput: %d\n" % min(thrg.values()))
+            w_file.write("Median throughput: %d\n" % np.median(thrg.values()))
             w_file.write("Est system throughput: %f\n" % (len(tx_seen) / (max_time - min_time)))
             w_file.write("\n")
             w_file.write("Median round latency: %f\n" % np.median(latency_round))
