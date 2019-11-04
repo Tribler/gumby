@@ -182,7 +182,7 @@ class IPv8StatisticsParser(StatisticsParser):
 
         block_stat_file = os.path.join(prefix, postfix + "agg.csv")
         with open(block_stat_file, "w") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction', "seq_num", "link", 'seen_by'])
+            writer = csv.DictWriter(t_file, ['time', 'transaction', "type", "seq_num", 'seen_by'])
             writer.writeheader()
             while os.path.exists(os.path.join(prefix, postfix + str(index) + '.csv')):
                 with open(os.path.join(prefix, postfix + str(index) + '.csv')) as read_file:
@@ -192,8 +192,8 @@ class IPv8StatisticsParser(StatisticsParser):
                         if first:
                             first = False
                         else:
-                            writer.writerow({"time": row[0], 'transaction': row[1], 'seq_num': row[2],
-                                             'link': row[3], 'seen_by': index})
+                            writer.writerow({"time": row[0], 'transaction': row[1], 'type': row[2],
+                                             'seq_num': (row[3], row[4]), 'seen_by': index})
                 index += 1
 
     def run(self):
