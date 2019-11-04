@@ -202,7 +202,7 @@ class IPv8StatisticsParser(StatisticsParser):
         self.aggregate_peer_connections()
         self.aggregate_bandwidth()
         self.aggregate_autoplot()
-        self.aggregate_transactions()
+        #self.aggregate_transactions()
 
 
 
