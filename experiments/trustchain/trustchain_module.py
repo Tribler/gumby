@@ -156,18 +156,19 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def start_requesting_noodle_signatures(self):
+        if os.getenv('TX_SEC'):
+            value = float(os.getenv('TX_SEC'))
+        else:
+            value = 0.001
 
-        def start_sig_req():
-            if os.getenv('TX_SEC'):
-                value = float(os.getenv('TX_SEC'))
-            else:
-                value = 0.001
+        self.request_signatures_lc = LoopingCall(self.request_noodle_random_signature)
+        self.request_signatures_lc.start(value)
 
-            self.request_signatures_lc = LoopingCall(self.request_noodle_random_signature)
-            self.request_signatures_lc.start(value)
+        #def start_sig_req():
 
-        sleep_offset = (self.my_id-1)/len(self.all_vars)
-        self.overlay.register_anonymous_task("init_delay", reactor.callLater(sleep_offset, start_sig_req))
+
+        #sleep_offset = (self.my_id-1)/len(self.all_vars)
+        #self.overlay.register_anonymous_task("init_delay", reactor.callLater(sleep_offset, start_sig_req))
 
     @experiment_callback
     def stop_requesting_signatures(self):
