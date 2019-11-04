@@ -250,6 +250,13 @@ class TrustchainStatisticsParser(StatisticsParser):
             w_file.write("Number of peers: %d\n" % len(peer_counts))
             w_file.write("Total round time: %f\n" % (max_time - min_time))
             w_file.write("\n")
+            if os.getenv('TX_SEC'):
+                value = 1 / float(os.getenv('TX_SEC'))
+                w_file.write("System transaction rate %d\n" % (len(peer_counts) * value))
+            if os.getenv('IB_FANOUT'):
+                value = int(os.getenv('IB_FANOUT'))
+                w_file.write("Peer fanout %d\n" % value)
+
             w_file.write("Peak throughput: %d\n" % max(throughput.values()))
             w_file.write("Est system throughput: %f\n" % (len(tx_seen) / (max_time - min_time)))
             w_file.write("\n")
