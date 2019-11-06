@@ -39,7 +39,7 @@ class TrustchainMemoryDatabase(object):
 
     def add_peer(self, peer):
         if peer.mid not in self.peer_map:
-            self.peer_map[peer.mid] = peer.public_key
+            self.peer_map[peer.mid] = peer.public_key.key_to_bin()
 
     def get_latest_peer_block(self, peer_mid):
         if peer_mid in self.peer_map:
