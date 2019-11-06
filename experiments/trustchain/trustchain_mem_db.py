@@ -19,6 +19,7 @@ class TrustchainMemoryDatabase(object):
         self.double_spends = {}
         self.spends = {}
         self.claims = {}
+        self.peer_map = {}
 
     def add_double_spend(self, block1, block2):
 
@@ -35,6 +36,15 @@ class TrustchainMemoryDatabase(object):
             return TrustChainBlock
 
         return self.block_types[block_type]
+
+    def add_peer(self, peer):
+        if peer.mid not in self.peer_map:
+            self.peer_map[peer.mid] = peer.public_key
+
+    def get_latest_peer_block(self, peer_mid):
+        if peer_mid in self.peer_map:
+            pub_key = self.peer_map[peer_mid]
+            return self.get_latest(pub_key)
 
     def add_block(self, block):
         self.block_cache[(block.public_key, block.sequence_number)] = block
