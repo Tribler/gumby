@@ -83,6 +83,11 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.overlay.settings.is_hiding = True
 
     @experiment_callback
+    def set_sync_time(self, value):
+        self.overlay.settings.sync_time = float(value)
+        self._logger.info("Setting sync time to %s", value)
+
+    @experiment_callback
     def set_ttl(self, value):
         self.overlay.settings.ttl = int(value)
         self._logger.info("Setting ttl for broadcast to %s", value)
@@ -101,6 +106,8 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self.set_ttl(os.getenv('IB_TTL'))
         if os.getenv('IB_FANOUT'):
             self.set_fanout(os.getenv('IB_FANOUT'))
+        if os.getenv('IB_SYNC_TIME'):
+            self.set_sync_time(os.getenv('IB_SYNC_TIME'))
 
     @experiment_callback
     def init_leader_trustchain(self):
