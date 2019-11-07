@@ -180,6 +180,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     @experiment_callback
     def stop_requesting_signatures(self):
         self.request_signatures_lc.stop()
+        self.overlay.all_sync_stop()
 
     @experiment_callback
     def start_req_sign_with_random_double_spends(self, batch=1, chance=0.1):
