@@ -1,6 +1,6 @@
 from six.moves import xrange
 
-from ipv8.attestation.trustchain.block import TrustChainBlock
+from ipv8.attestation.trustchain.block import TrustChainBlock, EMPTY_PK
 
 
 class TrustchainMemoryDatabase(object):
@@ -19,6 +19,7 @@ class TrustchainMemoryDatabase(object):
         self.double_spends = {}
         self.spends = {}
         self.claims = {}
+        self.verified_claims = {}
         self.peer_map = {}
 
     def add_double_spend(self, block1, block2):
@@ -68,6 +69,15 @@ class TrustchainMemoryDatabase(object):
             self.spends[pk][lpk] = 0
         self.spends[pk][lpk] += float(spend.transaction["value"])
 
+    def add_verified_claim(self, claim):
+        pk = claim.public_key
+        lpk = claim.link_public_key
+        if pk not in self.verified_claims.keys():
+            self.verified_claims[pk] = {}
+        if lpk not in self.verified_claims[pk].keys():
+            self.verified_claims[pk][lpk] = 0
+        self.verified_claims[pk][lpk] += float(claim.transaction["value"])
+
     def add_claim(self, claim):
         pk = claim.public_key
         lpk = claim.link_public_key
@@ -76,6 +86,9 @@ class TrustchainMemoryDatabase(object):
         if lpk not in self.claims[pk].keys():
             self.claims[pk][lpk] = 0
         self.claims[pk][lpk] += float(claim.transaction["value"])
+
+        if lpk == EMPTY_PK or self.get_verf_balance(lpk) >= 0:
+            self.add_verified_claim(claim)
 
     def get_spend_set(self, pub_key):
         if pub_key in self.spends:
@@ -88,6 +101,18 @@ class TrustchainMemoryDatabase(object):
             return self.claims[pub_key]
         else:
             return {}
+
+    def get_verified_claim_set(self, pub_key):
+        if pub_key in self.verified_claims:
+            return self.verified_claims[pub_key]
+        else:
+            return {}
+
+    def get_balance(self, pub_key):
+        return sum(self.get_claim_set(pub_key).values()) - sum(self.get_spend_set(pub_key).values())
+
+    def get_verf_balance(self, pub_key):
+        return sum(self.get_verified_claim_set(pub_key).values()) - sum(self.get_spend_set(pub_key).values())
 
     def remove_block(self, block):
         self.block_cache.pop((block.public_key, block.sequence_number), None)
