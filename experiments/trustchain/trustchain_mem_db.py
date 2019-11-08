@@ -16,10 +16,11 @@ class TrustchainMemoryDatabase(object):
         self.block_types = {}
         self.latest_blocks = {}
         self.original_db = None
+
+        self.interactions = {}
+        self.peer_connections = {}
+
         self.double_spends = {}
-        self.spends = {}
-        self.claims = {}
-        self.verified_claims = {}
         self.peer_map = {}
 
     def add_double_spend(self, block1, block2):
@@ -50,7 +51,6 @@ class TrustchainMemoryDatabase(object):
     def add_block(self, block):
         self.block_cache[(block.public_key, block.sequence_number)] = block
         self.linked_block_cache[(block.link_public_key, block.link_sequence_number)] = block
-
         if block.public_key not in self.latest_blocks:
             self.latest_blocks[block.public_key] = block
         elif self.latest_blocks[block.public_key].sequence_number < block.sequence_number:
@@ -63,56 +63,90 @@ class TrustchainMemoryDatabase(object):
     def add_spend(self, spend):
         pk = spend.public_key
         lpk = spend.link_public_key
-        if pk not in self.spends.keys():
-            self.spends[pk] = {}
-        if lpk not in self.spends[pk].keys():
-            self.spends[pk][lpk] = 0
-        self.spends[pk][lpk] += float(spend.transaction["value"])
-
-    def add_verified_claim(self, claim):
-        pk = claim.public_key
-        lpk = claim.link_public_key
-        if pk not in self.verified_claims.keys():
-            self.verified_claims[pk] = {}
-        if lpk not in self.verified_claims[pk].keys():
-            self.verified_claims[pk][lpk] = 0
-        self.verified_claims[pk][lpk] += float(claim.transaction["value"])
+        if pk not in self.interactions.keys():
+            self.interactions[pk] = {}
+        if lpk not in self.interactions[pk].keys():
+            self.interactions[pk][lpk] = {}
+        if 'total_spend' not in self.interactions[pk][lpk] or \
+                self.interactions[pk][lpk]["total_spend"] < float(spend.transaction["total_spend"]):
+            self.interactions[pk][lpk]["total_spend"] = float(spend.transaction["total_spend"])
+            self.interactions[pk][lpk]["block"] = {'spend': spend}
+        else:
+            self.interactions[pk][lpk]["block"]['spend'] = spend
 
     def add_claim(self, claim):
         pk = claim.public_key
         lpk = claim.link_public_key
-        if pk not in self.claims.keys():
-            self.claims[pk] = {}
-        if lpk not in self.claims[pk].keys():
-            self.claims[pk][lpk] = 0
-        self.claims[pk][lpk] += float(claim.transaction["value"])
-
-        if lpk == EMPTY_PK or self.get_verf_balance(lpk) >= 0:
-            self.add_verified_claim(claim)
-
-    def get_spend_set(self, pub_key):
-        if pub_key in self.spends:
-            return self.spends[pub_key]
+        if lpk not in self.interactions.keys():
+            self.interactions[lpk] = {}
+        if pk not in self.interactions[lpk].keys():
+            self.interactions[lpk][pk] = {}
+        if 'total_spend' not in self.interactions[lpk][pk] or \
+                self.interactions[lpk][pk]["total_spend"] < float(claim.transaction["total_spend"]):
+            self.interactions[lpk][pk]["total_spend"] = float(claim.transaction["total_spend"])
+            self.interactions[lpk][pk]["block"] = {'claim': claim}
         else:
-            return {}
+            self.interactions[lpk][pk]["block"]['claim'] = claim
 
-    def get_claim_set(self, pub_key):
-        if pub_key in self.claims:
-            return self.claims[pub_key]
+        if pk not in self.peer_connections.keys():
+            self.peer_connections[pk] = {}
+
+        if lpk not in self.peer_connections[pk]:
+            self.peer_connections[pk][lpk] = False
+        if lpk == EMPTY_PK or (not self.peer_connections[pk][lpk] and self.get_balance(lpk, True) >= 0):
+            self.peer_connections[pk][lpk] = True
+            self.update_chain_dependency(pk)
+
+    def update_chain_dependency(self, pk):
+        if self.get_balance(pk, verified=True) >= 0:
+            if pk not in self.interactions:
+                return
+            for lpk in self.interactions[pk]:
+                self.peer_connections[lpk][pk] = True
+            for lpk in self.interactions[pk]:
+                self.update_chain_dependency(lpk)
+
+    def get_total_spends(self, pub_key):
+        if pub_key not in self.interactions:
+            return 0
         else:
-            return {}
+            return sum(lpk_val["total_spend"] for pk, lpk_val in self.interactions[pub_key].items())
 
-    def get_verified_claim_set(self, pub_key):
-        if pub_key in self.verified_claims:
-            return self.verified_claims[pub_key]
-        else:
-            return {}
+    def get_specific_spend(self, pub_key, pub_key2):
+        if pub_key not in self.interactions or pub_key2 not in self.interactions[pub_key]:
+            return 0
+        return self.interactions[pub_key][pub_key2]["total_spend"]
 
-    def get_balance(self, pub_key):
-        return sum(self.get_claim_set(pub_key).values()) - sum(self.get_spend_set(pub_key).values())
+    def get_total_claims(self, pub_key, only_verified=True):
+        if pub_key not in self.peer_connections:
+            # No claim seen by the peer
+            return 0
+        return sum(self.get_specific_spend(key, pub_key) for key, is_verified in self.peer_connections[pub_key].items()
+                   if is_verified or not only_verified)
 
-    def get_verf_balance(self, pub_key):
-        return sum(self.get_verified_claim_set(pub_key).values()) - sum(self.get_spend_set(pub_key).values())
+    def get_spends_proofs(self, pub_key):
+        if pub_key not in self.interactions:
+            return []
+        p = set()
+        for v in self.interactions[pub_key].values():
+            if 'spend' in self.interactions[pub_key][v]["block"]:
+                p.add(self.interactions[pub_key][v]["block"]['spend'])
+            else:
+                p.add(self.interactions[pub_key][v]["block"]['claim'])
+        return p
+
+    def get_claims_proofs(self, pub_key):
+        if pub_key not in self.peer_connections:
+            return set()
+        claim_set = set()
+        for lpk in self.peer_connections[pub_key]:
+            if lpk in self.interactions and pub_key in self.interactions[lpk] and 'claim' in self.interactions[lpk][pub_key]['block']:
+                claim_set.add(self.interactions[lpk][pub_key]['block']['claim'])
+        return claim_set
+
+    def get_balance(self, pub_key, verified=True):
+        # Sum of claims(verified/or not) - Sum of spends(all known)
+        return self.get_total_claims(pub_key, only_verified=verified) - self.get_total_spends(pub_key)
 
     def remove_block(self, block):
         self.block_cache.pop((block.public_key, block.sequence_number), None)

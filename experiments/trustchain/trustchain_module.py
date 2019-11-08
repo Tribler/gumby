@@ -298,11 +298,10 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
         # check the balance first
         pk = self.overlay.my_peer.public_key.key_to_bin()
-        total_spends = sum(self.overlay.persistence.get_spend_set(pk).values())
-        total_claims = sum(self.overlay.persistence.get_claim_set(pk).values())
+        balance = self.overlay.persistence.get_balance(pk)
 
-        if total_claims - total_spends < 1:
-            self._logger.info("Minting new value %s  %s ", total_claims, total_spends)
+        if balance < 1:
+            self._logger.info("Minting new value  current balance is %s ", balance)
             self.noodle_mint()
         else:
             self._logger.info("%s: Requesting signature from peer: %s", self.my_id, peer_id)
