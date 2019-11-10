@@ -1,3 +1,6 @@
+from binascii import hexlify
+
+import networkx as nx
 from six.moves import xrange
 
 from ipv8.attestation.trustchain.block import TrustChainBlock, EMPTY_PK
@@ -17,11 +20,14 @@ class TrustchainMemoryDatabase(object):
         self.latest_blocks = {}
         self.original_db = None
 
-        self.interactions = {}
-        self.peer_connections = {}
-
         self.double_spends = {}
         self.peer_map = {}
+
+        self.work_graph = nx.DiGraph()
+        self.known_chains = {}
+
+    def key_to_id(self, key):
+        return str(hexlify(key)[-8:])[2:-1]
 
     def add_double_spend(self, block1, block2):
 
@@ -63,90 +69,134 @@ class TrustchainMemoryDatabase(object):
     def add_spend(self, spend):
         pk = spend.public_key
         lpk = spend.link_public_key
-        if pk not in self.interactions.keys():
-            self.interactions[pk] = {}
-        if lpk not in self.interactions[pk].keys():
-            self.interactions[pk][lpk] = {}
-        if 'total_spend' not in self.interactions[pk][lpk] or \
-                self.interactions[pk][lpk]["total_spend"] < float(spend.transaction["total_spend"]):
-            self.interactions[pk][lpk]["total_spend"] = float(spend.transaction["total_spend"])
-            self.interactions[pk][lpk]["block"] = {'spend': spend}
+        id_from = self.key_to_id(pk)
+        id_to = self.key_to_id(lpk)
+        if id_from not in self.work_graph or \
+                id_to not in self.work_graph[id_from] or \
+                'total_spend' not in self.work_graph[id_from][id_to] or \
+                self.work_graph[id_from][id_to]["total_spend"] < float(spend.transaction["total_spend"]):
+            self.work_graph.add_edge(id_from, id_to,
+                                     total_spend=float(spend.transaction["total_spend"]),
+                                     proof={'spend': spend})
         else:
-            self.interactions[pk][lpk]["block"]['spend'] = spend
+            self.work_graph[id_from][id_to]["proof"]['spend'] = spend
 
     def add_claim(self, claim):
         pk = claim.public_key
         lpk = claim.link_public_key
-        if lpk not in self.interactions.keys():
-            self.interactions[lpk] = {}
-        if pk not in self.interactions[lpk].keys():
-            self.interactions[lpk][pk] = {}
-        if 'total_spend' not in self.interactions[lpk][pk] or \
-                self.interactions[lpk][pk]["total_spend"] < float(claim.transaction["total_spend"]):
-            self.interactions[lpk][pk]["total_spend"] = float(claim.transaction["total_spend"])
-            self.interactions[lpk][pk]["block"] = {'claim': claim}
+        id_from = self.key_to_id(lpk)
+        id_to = self.key_to_id(pk)
+
+        if id_from not in self.work_graph or \
+                id_to not in self.work_graph[id_from] or \
+                'total_spend' not in self.work_graph[id_from][id_to] or \
+                self.work_graph[id_from][id_to]["total_spend"] < float(claim.transaction["total_spend"]):
+            self.work_graph.add_edge(id_from, id_to,
+                                     total_spend=float(claim.transaction["total_spend"]),
+                                     proof={'claim': claim})
         else:
-            self.interactions[lpk][pk]["block"]['claim'] = claim
+            self.work_graph[id_from][id_to]["proof"]['claim'] = claim
 
-        if pk not in self.peer_connections.keys():
-            self.peer_connections[pk] = {}
+        if 'verified' not in self.work_graph[id_from][id_to]:
+            self.work_graph[id_from][id_to]['verified'] = False
+        if lpk == EMPTY_PK or (not self.work_graph[id_from][id_to]['verified'] and
+                               self.get_balance(id_from, True) >= 0):
+            self.work_graph[id_from][id_to]['verified'] = True
+            self.update_chain_dependency(id_to)
 
-        if lpk not in self.peer_connections[pk]:
-            self.peer_connections[pk][lpk] = False
-        if lpk == EMPTY_PK or (not self.peer_connections[pk][lpk] and self.get_balance(lpk, True) >= 0):
-            self.peer_connections[pk][lpk] = True
-            self.update_chain_dependency(pk)
+    def update_chain_dependency(self, peer_id):
+        if self.get_balance(peer_id, verified=True) >= 0:
+            for k in self.work_graph.successors(peer_id):
+                self.work_graph[peer_id][k]['verified'] = True
+            for k in self.work_graph.successors(peer_id):
+                self.update_chain_dependency(k)
 
-    def update_chain_dependency(self, pk):
-        if self.get_balance(pk, verified=True) >= 0:
-            if pk not in self.interactions:
-                return
-            for lpk in self.interactions[pk]:
-                self.peer_connections[lpk][pk] = True
-            for lpk in self.interactions[pk]:
-                self.update_chain_dependency(lpk)
-
-    def get_total_spends(self, pub_key):
-        if pub_key not in self.interactions:
+    def get_total_spends(self, peer_id):
+        if peer_id not in self.work_graph:
             return 0
         else:
-            return sum(lpk_val["total_spend"] for pk, lpk_val in self.interactions[pub_key].items())
+            return sum(self.work_graph[peer_id][k]["total_spend"] for k in self.work_graph.successors(peer_id))
 
-    def get_specific_spend(self, pub_key, pub_key2):
-        if pub_key not in self.interactions or pub_key2 not in self.interactions[pub_key]:
+    def is_verified(self, p1, p2):
+        return 'verified' in self.work_graph[p1][p2] and self.work_graph[p1][p2]['verified']
+
+    def get_total_claims(self, peer_id, only_verified=True):
+        if peer_id not in self.work_graph:
+            # Peer not known
             return 0
-        return self.interactions[pub_key][pub_key2]["total_spend"]
+        return sum(self.work_graph[k][peer_id]['total_spend'] for k in self.work_graph.predecessors(peer_id)
+                   if self.is_verified(k, peer_id) or not only_verified)
 
-    def get_total_claims(self, pub_key, only_verified=True):
-        if pub_key not in self.peer_connections:
-            # No claim seen by the peer
-            return 0
-        return sum(self.get_specific_spend(key, pub_key) for key, is_verified in self.peer_connections[pub_key].items()
-                   if is_verified or not only_verified)
-
-    def get_spends_proofs(self, pub_key):
-        if pub_key not in self.interactions:
+    def get_spends_proofs(self, peer_id):
+        if not self.work_graph.has_node(peer_id):
             return []
-        p = set()
-        for v in self.interactions[pub_key].values():
-            if 'spend' in self.interactions[pub_key][v]["block"]:
-                p.add(self.interactions[pub_key][v]["block"]['spend'])
+        p = list()
+        for v in self.work_graph.successors(peer_id):
+            if 'spend' in self.work_graph[peer_id][v]["proof"]:
+                p.append(self.work_graph[peer_id][v]["proof"]['spend'])
             else:
-                p.add(self.interactions[pub_key][v]["block"]['claim'])
+                p.append(self.work_graph[peer_id][v]["proof"]['claim'])
         return p
 
-    def get_claims_proofs(self, pub_key):
-        if pub_key not in self.peer_connections:
-            return set()
-        claim_set = set()
-        for lpk in self.peer_connections[pub_key]:
-            if lpk in self.interactions and pub_key in self.interactions[lpk] and 'claim' in self.interactions[lpk][pub_key]['block']:
-                claim_set.add(self.interactions[lpk][pub_key]['block']['claim'])
+    def get_claims_proofs(self, peer_id):
+        if not self.work_graph.has_node(peer_id):
+            return []
+        claim_set = list()
+        for v in self.work_graph.predecessors(peer_id):
+            if 'claim' in self.work_graph[v][peer_id]["proof"]:
+                claim_set.append(self.work_graph[v][peer_id]['proof']['claim'])
         return claim_set
 
-    def get_balance(self, pub_key, verified=True):
+    def _construct_path_id(self, path):
+        res_id = ""
+        res_id = res_id + str(len(path))
+        for k in path[1:-1]:
+            res_id = res_id + str(k[-3:-1])
+        val = self.work_graph[path[-2]][path[-1]]["total_spend"]
+        res_id = res_id+"{0:.2f}".format(val)
+        return res_id
+
+    def get_known_chains(self, peer_id):
+        return (k[0] for k in self.get_peer_chain(peer_id))
+
+    def dump_chain(self, peer_id, chain):
+        for p in chain:
+            path_id = p[0]
+            paths = p[1]
+            vals = p[2]
+            id_from = self.key_to_id(EMPTY_PK)
+            for k in range(len(vals)):
+                if k == len(vals) - 1:
+                    id_to = peer_id
+                else:
+                    id_to = paths[k]
+                self.work_graph.add_edge(id_from, id_to,
+                                         total_spend=float(vals[k]),
+                                         verified=True)
+                id_from = id_to
+            self.update_chain_dependency(id_to)
+
+    def get_peer_chain(self, peer_id, seq_num=None, pack_except=set()):
+        genesis = self.key_to_id(EMPTY_PK)
+        if self.work_graph.has_node(genesis) and self.work_graph.has_node(peer_id):
+            for p in nx.all_simple_paths(self.work_graph, genesis, peer_id):
+                val_path = []
+                last_k = 0
+                path_id = self._construct_path_id(p)
+                if path_id in pack_except:
+                    continue
+                for k in p:
+                    if last_k == 0:
+                        pass
+                    else:
+                        val_path.append(self.work_graph[last_k][k]['total_spend'])
+                    last_k = k
+                yield (path_id, p[1:-1], val_path)
+
+
+    def get_balance(self, peer_id, verified=True):
         # Sum of claims(verified/or not) - Sum of spends(all known)
-        return self.get_total_claims(pub_key, only_verified=verified) - self.get_total_spends(pub_key)
+        return self.get_total_claims(peer_id, only_verified=verified) - self.get_total_spends(peer_id)
 
     def remove_block(self, block):
         self.block_cache.pop((block.public_key, block.sequence_number), None)
@@ -167,6 +217,16 @@ class TrustchainMemoryDatabase(object):
 
     def contains(self, block):
         return (block.public_key, block.sequence_number) in self.block_cache
+
+    def get_last_pairwise_block(self, peer_a, peer_b):
+        # get last claim of peer_b by peer_a
+        a_id = self.key_to_id(peer_a)
+        b_id = self.key_to_id(peer_b)
+        if not self.work_graph.has_edge(a_id, b_id) or 'claim' not in self.work_graph[a_id][b_id]['proof']:
+            return None
+        else:
+            blk = self.work_graph[a_id][b_id]['proof']['claim']
+            return self.get_linked(blk), self.work_graph[a_id][b_id]['proof']['claim']
 
     def get_latest(self, public_key, block_type=None):
         # TODO for now we assume block_type is None
