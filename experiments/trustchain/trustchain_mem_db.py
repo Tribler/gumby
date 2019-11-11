@@ -79,6 +79,8 @@ class TrustchainMemoryDatabase(object):
                                      total_spend=float(spend.transaction["total_spend"]),
                                      proof={'spend': spend})
         else:
+            if 'proof' not in self.work_graph[id_from][id_to]:
+                self.work_graph[id_from][id_to]['proof'] = {}
             self.work_graph[id_from][id_to]["proof"]['spend'] = spend
 
     def add_claim(self, claim):
@@ -95,6 +97,8 @@ class TrustchainMemoryDatabase(object):
                                      total_spend=float(claim.transaction["total_spend"]),
                                      proof={'claim': claim})
         else:
+            if 'proof' not in self.work_graph[id_from][id_to]:
+                self.work_graph[id_from][id_to]['proof'] = {}
             self.work_graph[id_from][id_to]["proof"]['claim'] = claim
 
         if 'verified' not in self.work_graph[id_from][id_to]:
