@@ -111,6 +111,12 @@ class TrustchainMemoryDatabase(object):
             for k in self.work_graph.successors(peer_id):
                 self.update_chain_dependency(k)
 
+    def get_total_pairwise_spends(self, peer_a, peer_b):
+        if not self.work_graph.has_edge(peer_a, peer_b):
+            return 0
+        else:
+            return self.work_graph[peer_a][peer_b]["total_spend"]
+
     def get_total_spends(self, peer_id):
         if peer_id not in self.work_graph:
             return 0
