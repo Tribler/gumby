@@ -209,6 +209,10 @@ class TrustchainMemoryDatabase(object):
         return (k[0] for k in self.get_peer_chain(peer_id))
 
     def dump_peer_status(self, peer_id, status):
+        if 'spends' not in status or 'claims' not in status:
+            # Status is illformed
+            return False
+
         for (p, v) in status['spends'].items():
             self.work_graph.add_edge(peer_id, p,
                                      total_spend=float(v),
@@ -219,6 +223,7 @@ class TrustchainMemoryDatabase(object):
                                      total_spend=float(v),
                                      verified=True)
         self.update_chain_dependency(peer_id)
+        return True
 
     def get_peer_chain(self, peer_id, seq_num=None, pack_except=set()):
         """
