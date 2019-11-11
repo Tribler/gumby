@@ -6,6 +6,7 @@ from six.moves import xrange
 
 from ipv8.attestation.trustchain.block import TrustChainBlock, EMPTY_PK
 
+KEY_LEN = 8
 
 class TrustchainMemoryDatabase(object):
     """
@@ -31,7 +32,16 @@ class TrustchainMemoryDatabase(object):
 
 
     def key_to_id(self, key):
-        return str(hexlify(key)[-8:])[2:-1]
+        return str(hexlify(key)[-KEY_LEN:])[2:-1]
+
+    def id_to_int(self, id):
+        return int(id, 16)
+
+    def int_to_id(self, int_val):
+        val = hex(int_val)[2:]
+        if len(val) < KEY_LEN:
+            val = "0"+val
+        return val
 
     def add_connections(self, peer_a, peer_b):
         self.known_connections.add_edge(peer_a, peer_b)
