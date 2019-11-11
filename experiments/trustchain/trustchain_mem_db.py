@@ -39,8 +39,8 @@ class TrustchainMemoryDatabase(object):
 
     def int_to_id(self, int_val):
         val = hex(int_val)[2:]
-        if len(val) < KEY_LEN:
-            val = "0"+val
+        while len(val) < KEY_LEN:
+            val = "0" + val
         return val
 
     def add_connections(self, peer_a, peer_b):
