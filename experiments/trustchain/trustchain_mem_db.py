@@ -108,7 +108,7 @@ class TrustchainMemoryDatabase(object):
         if self.get_balance(peer_id, verified=True) >= 0:
             next_vals = []
             for k in self.work_graph.successors(peer_id):
-                if not self.work_graph[peer_id][k]['verified']:
+                if 'verified' in self.work_graph[peer_id][k] and not self.work_graph[peer_id][k]['verified']:
                     self.work_graph[peer_id][k]['verified'] = True
                     next_vals.append(k)
             for k in next_vals:
