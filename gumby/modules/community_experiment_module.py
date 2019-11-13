@@ -108,7 +108,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer))
 
     def set_pub_key(self):
-        self.all_vars[self.my_id][b'public_key'] = b64encode(self.overlay.my_peer.public_key.key_to_bin()).decode()
+        self.all_vars[str(self.my_id)][b'public_key'] = b64encode(self.overlay.my_peer.public_key.key_to_bin()).decode()
 
     @experiment_callback
     def introduce_to_bootstrap_peers(self):
