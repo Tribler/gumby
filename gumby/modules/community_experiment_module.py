@@ -199,7 +199,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         save_keypair_trustchain(keypair, pairfilename)
         save_pub_key_trustchain(keypair, "%s.pub" % pairfilename)
 
-        self.vars[b'public_key'] = b64encode(keypair.pub().key_to_bin()).decode('utf-8')
+        self.vars['public_key'] = b64encode(keypair.pub().key_to_bin()).decode('utf-8')
 
     def on_ipv8_available(self, ipv8):
         # The IPv8 object is now available. This means that the tribler_config has been copy constructed into the
