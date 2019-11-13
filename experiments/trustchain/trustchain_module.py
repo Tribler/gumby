@@ -247,7 +247,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
         eligible_peers = set(self.experiment.get_peers()) - {self.my_id}
         peer_id = choice(list(eligible_peers))
-        self.noodle_random_spend(self.experiment.get_peer(peer_id),
+        self.noodle_random_spend(self.get_peer(peer_id),
                                  attached_block=attach_to_block)
 
     @experiment_callback
