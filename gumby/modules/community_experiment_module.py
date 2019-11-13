@@ -107,6 +107,9 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         for peer in self.all_vars.keys():
             self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer))
 
+    def set_pub_key(self):
+        self.all_vars[self.my_id][b'public_key'] = b64encode(self.overlay.my_peer.public_key.key_to_bin()).decode()
+
     @experiment_callback
     def introduce_to_bootstrap_peers(self):
         """
@@ -115,6 +118,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         # Choose bootstrap peers
         import networkx as nx
         num_nodes = len(self.all_vars.keys())
+        self.set_pub_key()
         if os.getenv('AVG_DEG'):
             avg_degree = int(os.getenv('AVG_DEG'))
         else:
@@ -195,7 +199,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         save_keypair_trustchain(keypair, pairfilename)
         save_pub_key_trustchain(keypair, "%s.pub" % pairfilename)
 
-        self.vars['public_key'] = b64encode(keypair.pub().key_to_bin()).decode('utf-8')
+        self.vars[b'public_key'] = b64encode(keypair.pub().key_to_bin()).decode('utf-8')
 
     def on_ipv8_available(self, ipv8):
         # The IPv8 object is now available. This means that the tribler_config has been copy constructed into the
