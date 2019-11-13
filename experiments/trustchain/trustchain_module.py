@@ -220,11 +220,22 @@ class TrustchainModule(IPv8OverlayExperimentModule):
                                         int(sequence_number))
 
     @experiment_callback
-    def request_noodle_random_signature(self, attach_to_block=None):
+    def request_noodle_1hop_random_signature(self, attach_to_block=None):
         """
         Request a random signature from one of your known verified peers
         """
         self.noodle_random_spend(choice(list(self.overlay.get_peers())),
+                                 attached_block=attach_to_block)
+
+    @experiment_callback
+    def request_noodle_all_random_signature(self, attach_to_block=None):
+        """
+        Request a random signature from one of your known verified peers
+        """
+        # choose a random peer in the overlay, except yourself
+        eligible_peers = set(self.all_vars.keys()) - {self.my_id}
+        peer_id = choice(list(eligible_peers))
+        self.noodle_random_spend(self.get_peer(peer_id),
                                  attached_block=attach_to_block)
 
     @experiment_callback
@@ -311,12 +322,16 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self._logger.info("Minting new value  current balance is %s ", balance)
             self.noodle_mint(peer_id)
         else:
-            pw_total = self.overlay.persistence.get_total_pairwise_spends(my_pk, peer_pk)
-            self._logger.info("%s: Requesting signature from peer: %s", self.my_id, peer_id)
+            if peer in self.overlay.get_peers():
+                # Peer is directly connected => Should accept minted tokens
+                # Send direct block
+                pw_total = self.overlay.persistence.get_total_pairwise_spends(my_pk, peer_pk)
+                self._logger.info("%s: Requesting signature from peer: %s", self.my_id, peer_id)
 
-            transaction = {"value": val, "from_peer": self.my_id, "to_peer": peer_id, "total_spend": pw_total+val}
-            self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
-                                    block_type=b'spend', transaction=transaction)
+                transaction = {"value": val, "from_peer": self.my_id, "to_peer": peer_id, "total_spend": pw_total + val}
+                self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
+                                        block_type=b'spend', transaction=transaction)
+            elif
 
     def check_num_blocks_in_db(self):
         """

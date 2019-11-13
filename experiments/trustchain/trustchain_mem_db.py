@@ -29,6 +29,7 @@ class TrustchainMemoryDatabase(object):
         self.known_connections = nx.Graph()
 
         self.claim_proofs = {}
+        self.nonces = {}
 
 
     def key_to_id(self, key):
@@ -165,6 +166,12 @@ class TrustchainMemoryDatabase(object):
 
     def is_verified(self, p1, p2):
         return 'verified' in self.work_graph[p1][p2] and self.work_graph[p1][p2]['verified']
+
+    def get_new_peer_nonce(self, peer_id):
+        if peer_id not in self.nonces:
+            self.nonces[peer_id] = 0
+        else:
+            self.nonces[peer_id] += 1
 
     def get_peer_status(self, peer_id):
         status = {}
