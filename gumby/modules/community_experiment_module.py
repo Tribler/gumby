@@ -107,9 +107,6 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         for peer in self.all_vars.keys():
             self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer))
 
-    def set_pub_key(self):
-        self.all_vars[str(self.my_id)][b'public_key'] = b64encode(self.overlay.my_peer.public_key.key_to_bin()).decode()
-
     @experiment_callback
     def introduce_to_bootstrap_peers(self):
         """
@@ -118,7 +115,6 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         # Choose bootstrap peers
         import networkx as nx
         num_nodes = len(self.all_vars.keys())
-        self.set_pub_key()
         if os.getenv('AVG_DEG'):
             avg_degree = int(os.getenv('AVG_DEG'))
         else:
@@ -184,7 +180,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         return Peer(b64decode(self.get_peer_public_key(peer_id)), address=address)
 
     def get_peer_public_key(self, peer_id):
-        return self.all_vars[peer_id][b'public_key']
+        return self.all_vars[peer_id]['public_key']
 
     def on_id_received(self):
         # Since the IPv8 source module is loaded before any community module, the IPv8 on_id_received has
