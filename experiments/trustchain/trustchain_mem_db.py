@@ -8,6 +8,7 @@ from ipv8.attestation.trustchain.block import TrustChainBlock, EMPTY_PK
 
 KEY_LEN = 8
 
+
 class TrustchainMemoryDatabase(object):
     """
     This class defines an optimized memory database for TrustChain.
@@ -30,7 +31,6 @@ class TrustchainMemoryDatabase(object):
 
         self.claim_proofs = {}
         self.nonces = {}
-
 
     def key_to_id(self, key):
         return str(hexlify(key)[-KEY_LEN:])[2:-1]
@@ -95,11 +95,9 @@ class TrustchainMemoryDatabase(object):
                 self.work_graph[id_from][id_to]["total_spend"] < float(spend.transaction["total_spend"]):
             self.work_graph.add_edge(id_from, id_to,
                                      total_spend=float(spend.transaction["total_spend"]),
-                                     proof={'spend': spend})
+                                     spend_num=spend.sequence_number)
         else:
-            if 'proof' not in self.work_graph[id_from][id_to]:
-                self.work_graph[id_from][id_to]['proof'] = {}
-            self.work_graph[id_from][id_to]["proof"]['spend'] = spend
+            self.work_graph[id_from][id_to]["spend_num"] = spend.sequence_number
 
     def add_claim(self, claim):
         pk = claim.public_key
@@ -113,22 +111,20 @@ class TrustchainMemoryDatabase(object):
                 self.work_graph[id_from][id_to]["total_spend"] < float(claim.transaction["total_spend"]):
             self.work_graph.add_edge(id_from, id_to,
                                      total_spend=float(claim.transaction["total_spend"]),
-                                     proof={'claim': claim})
+                                     spend_num=claim.link_sequence_number,
+                                     claim_num=claim.sequence_number,
+                                     claim_key=claim.public_key)
         else:
-            if 'proof' not in self.work_graph[id_from][id_to]:
-                self.work_graph[id_from][id_to]['proof'] = {}
-            self.work_graph[id_from][id_to]["proof"]['claim'] = claim
+            self.work_graph[id_from][id_to]["claim_num"] = claim.sequence_number
+            self.work_graph[id_from][id_to]["claim_key"] = claim.public_key
 
         if 'verified' not in self.work_graph[id_from][id_to]:
             self.work_graph[id_from][id_to]['verified'] = False
 
-
-
-
         if lpk == EMPTY_PK or (not self.work_graph[id_from][id_to]['verified'] and
                                self.get_balance(id_from, True) >= 0):
             self.work_graph[id_from][id_to]['verified'] = True
-            self.update_claim_proof(id_to, id_from)
+            # self.update_claim_proof(id_to, id_from)
             self.update_chain_dependency(id_to)
 
     def update_claim_proof(self, peer_a, peer_b):
@@ -147,7 +143,7 @@ class TrustchainMemoryDatabase(object):
             for k in self.work_graph.successors(peer_id):
                 if 'verified' in self.work_graph[peer_id][k] and not self.work_graph[peer_id][k]['verified']:
                     self.work_graph[peer_id][k]['verified'] = True
-                    self.update_claim_proof(k, peer_id)
+                    # self.update_claim_proof(k, peer_id)
                     next_vals.append(k)
             for k in next_vals:
                 self.update_chain_dependency(k)
@@ -167,11 +163,12 @@ class TrustchainMemoryDatabase(object):
     def is_verified(self, p1, p2):
         return 'verified' in self.work_graph[p1][p2] and self.work_graph[p1][p2]['verified']
 
-    def get_new_peer_nonce(self, peer_id):
+    def get_new_peer_nonce(self, peer_pk):
+        peer_id = self.key_to_id(peer_pk)
         if peer_id not in self.nonces:
-            self.nonces[peer_id] = 0
+            self.nonces[peer_id] = '1'
         else:
-            self.nonces[peer_id] += 1
+            self.nonces[peer_id] = str(int(self.nonces[peer_id]) + 1)
 
     def get_peer_status(self, peer_id):
         status = {}
@@ -193,33 +190,13 @@ class TrustchainMemoryDatabase(object):
         return sum(self.work_graph[k][peer_id]['total_spend'] for k in self.work_graph.predecessors(peer_id)
                    if self.is_verified(k, peer_id) or not only_verified)
 
-    def get_spends_proofs(self, peer_id):
-        if not self.work_graph.has_node(peer_id):
-            return []
-        p = list()
-        for v in self.work_graph.successors(peer_id):
-            if 'spend' in self.work_graph[peer_id][v]["proof"]:
-                p.append(self.work_graph[peer_id][v]["proof"]['spend'])
-            else:
-                p.append(self.work_graph[peer_id][v]["proof"]['claim'])
-        return p
-
-    def get_claims_proofs(self, peer_id):
-        if not self.work_graph.has_node(peer_id):
-            return []
-        claim_set = list()
-        for v in self.work_graph.predecessors(peer_id):
-            if 'claim' in self.work_graph[v][peer_id]["proof"]:
-                claim_set.append(self.work_graph[v][peer_id]['proof']['claim'])
-        return claim_set
-
     def _construct_path_id(self, path):
         res_id = ""
         res_id = res_id + str(len(path))
         for k in path[1:-1]:
             res_id = res_id + str(k[-3:-1])
         val = self.work_graph[path[-2]][path[-1]]["total_spend"]
-        res_id = res_id+"{0:.2f}".format(val)
+        res_id = res_id + "{0:.2f}".format(val)
         return res_id
 
     def get_known_chains(self, peer_id):
@@ -271,8 +248,6 @@ class TrustchainMemoryDatabase(object):
         if len(vals) > 0:
             self.claim_proofs[peer_id] = list(heapq.merge(self.claim_proofs[peer_id], vals))
 
-
-
     def get_balance(self, peer_id, verified=True):
         # Sum of claims(verified/or not) - Sum of spends(all known)
         return self.get_total_claims(peer_id, only_verified=verified) - self.get_total_spends(peer_id)
@@ -301,11 +276,11 @@ class TrustchainMemoryDatabase(object):
         # get last claim of peer_b by peer_a
         a_id = self.key_to_id(peer_a)
         b_id = self.key_to_id(peer_b)
-        if not self.work_graph.has_edge(a_id, b_id) or 'claim' not in self.work_graph[a_id][b_id]['proof']:
+        if not self.work_graph.has_edge(a_id, b_id) or 'claim_num' not in self.work_graph[a_id][b_id]:
             return None
         else:
-            blk = self.work_graph[a_id][b_id]['proof']['claim']
-            return self.get_linked(blk), self.work_graph[a_id][b_id]['proof']['claim']
+            blk = self.get(self.work_graph[a_id][b_id]['claim_key'], self.work_graph[a_id][b_id]['claim_num'])
+            return self.get_linked(blk), blk
 
     def get_latest(self, public_key, block_type=None):
         # TODO for now we assume block_type is None

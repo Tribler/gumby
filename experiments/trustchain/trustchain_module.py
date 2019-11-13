@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+from binascii import hexlify
 from random import randint, random, choice
 from time import time
 
@@ -163,13 +164,23 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.request_signatures_lc.start(value)
 
     @experiment_callback
-    def start_requesting_noodle_signatures(self):
+    def start_multihop_noodle_transactions(self):
         if os.getenv('TX_SEC'):
             value = float(os.getenv('TX_SEC'))
         else:
             value = 0.001
 
-        self.request_signatures_lc = LoopingCall(self.request_noodle_random_signature)
+        self.request_signatures_lc = LoopingCall(self.request_noodle_all_random_signature)
+        self.request_signatures_lc.start(value)
+
+    @experiment_callback
+    def start_direct_noodle_transactions(self):
+        if os.getenv('TX_SEC'):
+            value = float(os.getenv('TX_SEC'))
+        else:
+            value = 0.001
+
+        self.request_signatures_lc = LoopingCall(self.request_noodle_1hop_random_signature)
         self.request_signatures_lc.start(value)
 
         # def start_sig_req():
@@ -296,42 +307,27 @@ class TrustchainModule(IPv8OverlayExperimentModule):
                                 block_type=b'test', transaction=transaction,
                                 double_spend_block=attached_block)
 
-    def noodle_mint(self, peer_id):
-        mint_val = 10000
-        if os.getenv('INIT_MINT'):
-            mint_val = float(os.getenv('INIT_MINT'))
-
-        minter = self.overlay.persistence.key_to_id(EMPTY_PK)
-
-        total = self.overlay.persistence.get_total_pairwise_spends(minter, peer_id)
-
-        transaction = {"value": mint_val, "mint_proof": True, "peer": self.my_id, "total_spend": total + mint_val}
-        self.overlay.self_sign_block(block_type=b'claim', transaction=transaction)
-
     def noodle_random_spend(self, peer, attached_block=None):
-        peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
 
-        # check the balance first
-        pk = self.overlay.my_peer.public_key.key_to_bin()
-        my_pk = self.overlay.persistence.key_to_id(pk)
-        peer_pk = self.overlay.persistence.key_to_id(peer.public_key.key_to_bin())
-        balance = self.overlay.persistence.get_balance(my_pk)
-        val = random()
+        dest_peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
+        spend_value = random()
 
-        if balance < val:
-            self._logger.info("Minting new value  current balance is %s ", balance)
-            self.noodle_mint(peer_id)
+        val = self.overlay.prepare_spend_transaction(peer.public_key.key_to_bin(), spend_value,
+                                                     from_peer=self.my_id, to_peer=dest_peer_id)
+        if not val:
+            self._logger.info("Minting new tokens ")
+            mint = self.overlay.prepare_mint_transaction()
+            self.overlay.self_sign_block(block_type=b'claim', transaction=mint)
         else:
-            if peer in self.overlay.get_peers():
-                # Peer is directly connected => Should accept minted tokens
-                # Send direct block
-                pw_total = self.overlay.persistence.get_total_pairwise_spends(my_pk, peer_pk)
-                self._logger.info("%s: Requesting signature from peer: %s", self.my_id, peer_id)
-
-                transaction = {"value": val, "from_peer": self.my_id, "to_peer": peer_id, "total_spend": pw_total + val}
-                self.overlay.sign_block(peer, peer.public_key.key_to_bin(),
-                                        block_type=b'spend', transaction=transaction)
-            elif
+            next_hop_peer, tx = val
+            next_hop_peer_id = self.experiment.get_peer_id(next_hop_peer.address[0], next_hop_peer.address[1])
+            if next_hop_peer_id != dest_peer_id:
+                nonce = self.overlay.persistence.get_new_peer_nonce(peer.public_key.key_to_bin())
+                condition = hexlify(peer.public_key.key_to_bin()).decode()
+                tx.update({'nonce': nonce, 'condition': condition})
+            self._logger.info("%s: Requesting signature from peer: %s", self.my_id, next_hop_peer_id)
+            self.overlay.sign_block(next_hop_peer, next_hop_peer.public_key.key_to_bin(),
+                                    block_type=b'spend', transaction=tx)
 
     def check_num_blocks_in_db(self):
         """

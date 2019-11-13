@@ -13,10 +13,10 @@
 @0:10 set_validation_range 5
 @0:12 introduce_to_bootstrap_peers
 @0:120 annotate start-sharing-transactions
-@0:120 start_requesting_noodle_signatures
-@0:150 stop_requesting_signatures
-@0:165 write_overlay_statistics
-@0:166 write_trustchain_statistics
-@0:180 stop_session
-@0:180 stop_yappi {2}
-@0:185 stop
+@0:120 start_direct_noodle_transactions
+@0:180 stop_requesting_signatures
+@0:210 write_overlay_statistics
+@0:212 write_trustchain_statistics
+@0:220 stop_session
+@0:221 stop_yappi {2}
+@0:230 stop

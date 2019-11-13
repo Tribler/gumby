@@ -25,8 +25,8 @@ class TestMemDB(unittest.TestCase):
         self.db.add_block(block)
         self.assertEqual(transaction["total_spend"],
                          self.db.work_graph[from_id][to_id]["total_spend"])
-        self.assertTrue('spend' in
-                        self.db.work_graph[from_id][to_id]["proof"])
+        self.assertTrue('spend_num' in
+                        self.db.work_graph[from_id][to_id])
 
         return block
 
@@ -58,7 +58,7 @@ class TestMemDB(unittest.TestCase):
         to_id = self.db.key_to_id(block.link_public_key)
 
         if linked:
-            self.assertTrue('spend' in self.db.work_graph[to_id][from_id]['proof'])
+            self.assertTrue('spend_num' in self.db.work_graph[to_id][from_id])
         self.assertEqual(transaction["total_spend"],
                          self.db.work_graph[to_id][from_id]["total_spend"])
         self.assertEqual(transaction["total_spend"],
@@ -104,7 +104,6 @@ class TestMemDB(unittest.TestCase):
         # Test chain dumps
         self.db3 = TrustchainMemoryDatabase('q1', 'a1')
         status = self.db2.get_peer_status(lid_claim)
-
 
         self.db3.dump_peer_status(lid_claim, status)
         c = self.db3.get_known_chains(pid_claim)
