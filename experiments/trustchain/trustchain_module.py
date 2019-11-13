@@ -5,13 +5,11 @@ from binascii import hexlify
 from random import randint, random, choice
 from time import time
 
-from twisted.internet import reactor
 from twisted.internet.task import LoopingCall
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
-from ipv8.attestation.trustchain.block import EMPTY_PK
 from ipv8.attestation.trustchain.community import TrustChainCommunity
 from ipv8.attestation.trustchain.listener import BlockListener
 
@@ -67,10 +65,6 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     def on_ipv8_available(self, _):
         # Disable threadpool messages
         self.overlay._use_main_thread = True
-
-    def get_peer_public_key(self, peer_id):
-        # override the default implementation since we use the trustchain key here.
-        return self.all_vars[peer_id]['trustchain_public_key']
 
     @experiment_callback
     def turn_off_broadcast(self):
