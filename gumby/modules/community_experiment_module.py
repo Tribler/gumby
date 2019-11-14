@@ -124,20 +124,20 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         self.topology = nx.random_graphs.gnm_random_graph(num_nodes,
                                                           num_nodes * avg_degree / 2, seed=42)
+        nx.relabel_nodes(self.topology, {k: k + 1 for k in range(num_nodes)}, copy=False)
         # 1. Everybody knows everyone
         # self.overlay.bootstrap_master = [self.experiment.get_peer_ip_port_by_id(k) for k in self.all_vars.keys()]
         self.overlay.bootstrap_master = []
         # 2. Perfect knowledge of 2-hop peers
         for peer in self.topology.neighbors(int(self.my_id)):
             self.overlay.bootstrap_master.extend(
-                (self.experiment.get_peer_ip_port_by_id(k+1) for k in self.topology[peer]))
-            peer = peer + 1
+                (self.experiment.get_peer_ip_port_by_id(k) for k in self.topology[peer]))
             val = self.experiment.get_peer_ip_port_by_id(peer)
             self._logger.info("Peer %s with value %s", peer, val)
             self.overlay.walk_to(val)
 
         # Assume perfect knowledge of the world
-        label_map = {k: b64decode(v['public_key']) for k,v in self.all_vars.items()}
+        label_map = {k: b64decode(v['public_key']) for k, v in self.all_vars.items()}
         self.overlay.known_graph = nx.relabel_nodes(self.topology, label_map)
 
     @experiment_callback
