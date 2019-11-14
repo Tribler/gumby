@@ -136,6 +136,10 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             self._logger.info("Peer %s with value %s", peer, val)
             self.overlay.walk_to(val)
 
+        # Assume perfect knowledge of the world
+        label_map = {k: b64decode(v['public_key']) for k,v in self.all_vars.items()}
+        self.overlay.known_graph = nx.relabel_nodes(self.topology, label_map)
+
     @experiment_callback
     def introduce_peers(self, max_peers=None, excluded_peers=None):
         """
