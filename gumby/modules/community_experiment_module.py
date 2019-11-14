@@ -137,7 +137,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             self.overlay.walk_to(val)
 
         # Assume perfect knowledge of the world
-        label_map = {k: b64decode(v['public_key']) for k, v in self.all_vars.items()}
+        label_map = {k: v['public_key'] for k, v in self.all_vars.items()}
         self.overlay.known_graph = nx.relabel_nodes(self.topology, label_map)
 
     @experiment_callback
