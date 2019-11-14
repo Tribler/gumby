@@ -37,7 +37,7 @@ class TrustchainStatisticsParser(StatisticsParser):
 
         block_stat_file = os.path.join(prefix, postfix + "agg.csv")
         with open(block_stat_file, "w") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', 'seq_num', 'seen_by'])
+            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', 'seq_num', 'peer_ids' 'seen_by'])
             writer.writeheader()
             while os.path.exists(os.path.join(prefix, postfix + str(index) + '.csv')):
                 with open(os.path.join(prefix, postfix + str(index) + '.csv')) as read_file:
@@ -49,8 +49,10 @@ class TrustchainStatisticsParser(StatisticsParser):
                         else:
                             type_val = row[2]
                             seq_num = (row[3], row[4])
+                            peer_ids = (row[5], row[6])
                             writer.writerow(
                                 {"time": row[0], 'transaction': row[1], 'type': type_val, 'seq_num': seq_num,
+                                 'peer_ids': peer_ids,
                                  'seen_by': index})
                 index += 1
 
@@ -144,7 +146,7 @@ class TrustchainStatisticsParser(StatisticsParser):
         postfix = 'leader_blocks_time_'
         f_name = os.path.join(prefix, postfix + "agg.csv")
         peer_counts = {}
-        tx_seen = dict()
+        tx_ops = dict()
         tx_stats = dict()
         min_time = None
         max_time = None
@@ -160,51 +162,61 @@ class TrustchainStatisticsParser(StatisticsParser):
                     first = False
                 else:
                     time = float(row[0])
-                    peer_id = int(row[-1])
+                    seen_by = int(row[-1])  # seen_by by peer
                     type_val = row[2]
-                    seq_num_tuple = ast.literal_eval(row[3])
+                    seq_num_tuple = ast.literal_eval(row[3])  # seq_num, link_num
+                    peer_ids = ast.literal_eval(row[4])  # from_peer, to_peer
 
                     tx = ast.literal_eval(row[1])
                     if 'mint_proof' in tx:
                         continue
+                    if 'proof' in tx:
+                        # Tx with/without proofs are the same
+                        del tx['proof']
+                    if 'condition' in tx:
+                        del tx['total_spend']
+
                     if str(tx) not in tx_map:
                         tx_map[str(tx)] = index
                         index += 1
 
                     tx_map_ind = tx_map[str(tx)]
+                    # The peer that initiated the transaction
                     from_peer = int(tx['peer']) if 'peer' in tx else int(tx['from_peer'])
+                    # The peer that should receive the transaction
                     to_peer = int(tx['to_peer']) if 'to_peer' in tx else None
-                    tx_id = str(tx_map_ind) + str(seq_num_tuple)
+                    # When it was claimed - seq number
+                    tx_id = str(tx_map_ind) + str(peer_ids) + str(seq_num_tuple)
 
+                    # Calculate the total runtime
                     if not min_time or time < min_time:
                         min_time = time
                     if not max_time or time > max_time:
                         max_time = time
-
-                        # Transaction seen by how many times
-                    if tx_id not in tx_seen:
-                        tx_seen[tx_id] = 1
-                        if tx_map_ind not in tx_stats:
-                            tx_stats[tx_map_ind] = dict()
+                    # Transaction seen by how many times
+                    if tx_map_ind not in tx_stats:
+                        tx_stats[tx_map_ind] = dict()
+                    if tx_map_ind not in tx_ops:
+                        tx_ops[tx_map_ind] = {tx_id}
                     else:
-                        tx_seen[tx_id] += 1
+                        tx_ops[tx_map_ind].add(tx_id)
 
-                    # Init peer info
-                    if peer_id not in peer_counts:
-                        peer_counts[peer_id] = {"from_count": 0, "to_count": 0, "others": 0}
+                        # Init peer info
+                    if seen_by not in peer_counts:
+                        peer_counts[seen_by] = {"from_count": 0, "to_count": 0, "others": 0}
 
-                    if from_peer == peer_id:
-                        # If this is a source transaction
-                        peer_counts[peer_id]["from_count"] += 1
+                    if from_peer == seen_by:
+                        # If this is a source operation
+                        peer_counts[seen_by]["from_count"] += 1
                         if int(seq_num_tuple[1]) == 0 and 'first_create' not in tx_stats[tx_map_ind]:
                             # This is creation block
                             tx_stats[tx_map_ind]['first_create'] = time
                         elif int(seq_num_tuple[1]) != 0 and 'round_time' not in tx_stats[tx_map_ind]:
                             # The source peer sees the claim confirmation
                             tx_stats[tx_map_ind]['round_time'] = time
-                    elif to_peer == peer_id:
-                        # Dest transaction
-                        peer_counts[peer_id]["to_count"] += 1
+                    elif to_peer == seen_by:
+                        # Dest operation
+                        peer_counts[seen_by]["to_count"] += 1
                         if int(seq_num_tuple[1]) == 0 and 'first_seen' not in tx_stats[tx_map_ind]:
                             # Spend first seen by the counterparty
                             tx_stats[tx_map_ind]['first_seen'] = time
@@ -212,8 +224,8 @@ class TrustchainStatisticsParser(StatisticsParser):
                             # The transaction claimed
                             tx_stats[tx_map_ind]['claim_time'] = time
                     else:
-                        # Other transactions
-                        peer_counts[peer_id]["others"] += 1
+                        # Other operations seen
+                        peer_counts[seen_by]["others"] += 1
                         if 'last_time' not in tx_stats[tx_map_ind]:
                             tx_stats[tx_map_ind]['last_time'] = time
                         elif tx_stats[tx_map_ind]['last_time'] < time:
@@ -224,33 +236,35 @@ class TrustchainStatisticsParser(StatisticsParser):
         latency_round = []
         latency_all = []
         throughput = {l: 0 for l in range(int(max_time) + 1)}
-        errs = []
+        errs = 0
+        failed = 0
+        ops = []
 
         for t in tx_stats:
             if 'round_time' not in tx_stats[t]:
-                errs.append(t)
+                # The confirmation was never seen by the source
+                failed += 1
             else:
                 val = tx_stats[t]
                 if 'first_seen' not in val:
-                    errs.append(t)
+                    # The transaction was not seen by the counterparty
+                    errs += 1
                     continue
                 round_trip = abs(val['round_time'] - val['first_create'])
                 latency_round.append(round_trip)
-                throughput[math.floor(val['first_seen'])] += 1
+                throughput[math.floor(val['round_time'])] += 1
                 if 'last_time' not in val:
                     val['last_time'] = val['round_time']
                 all_seen = abs(val['last_time'] - val['first_seen'])
                 latency_all.append(all_seen)
+                ops.append(tx_ops[t])
 
-                if all_seen > 10:
-                    print(t, tx_stats[t])
-
-        thrg = {x:y for x,y in throughput.items() if y}
+        thrg = {x: y for x, y in throughput.items() if y}
 
         # Write performance results in a file
         res_file = os.path.join(prefix, "perf_results.txt")
         with open(res_file, 'w') as w_file:
-            w_file.write("Total txs: %d\n" % len(tx_seen))
+            w_file.write("Total txs: %d\n" % len(tx_stats))
             w_file.write("Number of peers: %d\n" % len(peer_counts))
             w_file.write("Total round time: %f\n" % (max_time - min_time))
             w_file.write("\n")
@@ -264,7 +278,11 @@ class TrustchainStatisticsParser(StatisticsParser):
             w_file.write("Peak throughput: %d\n" % max(thrg.values()))
             w_file.write("Min throughput: %d\n" % min(thrg.values()))
             w_file.write("Median throughput: %d\n" % np.median(thrg.values()))
-            w_file.write("Est system throughput: %f\n" % (len(tx_seen) / (max_time - min_time)))
+            w_file.write("Est transaction throughput: %f\n" % (len(tx_stats) / (max_time - min_time)))
+            w_file.write("\n")
+            w_file.write("Median operations per transaction: %d\n" % np.median(ops))
+            w_file.write("Min operations per transaction: %d\n" % min(ops))
+            w_file.write("Max operations per transaction: %d\n" % max(ops))
             w_file.write("\n")
             w_file.write("Median round latency: %f\n" % np.median(latency_round))
             w_file.write("Median last received latency: %f\n" % np.median(latency_all))
@@ -275,15 +293,10 @@ class TrustchainStatisticsParser(StatisticsParser):
                 "Median to transactions: %d\n" % np.median([d['to_count'] for k, d in peer_counts.items()]))
             w_file.write(
                 "Median other transactions: %d\n" % np.median([d['others'] for k, d in peer_counts.items()]))
+            w_file.write("\n")
 
-            w_file.write(
-                "Min transaction visibility: %d\n" % min([d for k, d in tx_seen.items()]))
-            w_file.write(
-                "Median transaction visibility: %d\n" % np.median([d for k, d in tx_seen.items()]))
-            w_file.write(
-                "Max transaction visibility: %d\n" % max([d for k, d in tx_seen.items()]))
-
-            w_file.write("Errors: %d\n" % len(errs))
+            w_file.write("Network/Relay transactions Not seen by the counterparty: %d\n" % errs)
+            w_file.write("Failed transactions/ Not seen by the source: %d\n" % failed)
 
     def run(self):
         self.aggregate_transactions()

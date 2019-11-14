@@ -46,10 +46,13 @@ class GeneratedBlockListener(BlockListener):
             # First block received
             self.start_time = time()
         with open(self.file_name, "a") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link"])
+            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link", 'from_id', 'to_id'])
+            from_id = str(hexlify(block.public_key)[-8:])[2:-1]
+            to_id = str(hexlify(block.link_public_key)[-8:])[2:-1]
             writer.writerow({"time": time() - self.start_time, 'transaction': str(block.transaction),
                              'type': str(block.type),
-                             'seq_num': block.sequence_number, "link": block.link_sequence_number
+                             'seq_num': block.sequence_number, "link": block.link_sequence_number,
+                             'from_id': from_id, 'to_id': to_id
                              })
 
 
