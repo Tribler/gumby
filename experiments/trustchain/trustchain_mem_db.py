@@ -169,6 +169,7 @@ class TrustchainMemoryDatabase(object):
             self.nonces[peer_id] = '1'
         else:
             self.nonces[peer_id] = str(int(self.nonces[peer_id]) + 1)
+        return self.nonces[peer_id]
 
     def get_peer_status(self, peer_id):
         status = {}
