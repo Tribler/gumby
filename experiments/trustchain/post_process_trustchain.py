@@ -256,7 +256,7 @@ class TrustchainStatisticsParser(StatisticsParser):
                     val['last_time'] = val['round_time']
                 all_seen = abs(val['last_time'] - val['first_seen'])
                 latency_all.append(all_seen)
-                ops.append(tx_ops[t])
+                ops.append(len(tx_ops[t]))
 
         thrg = {x: y for x, y in throughput.items() if y}
 
