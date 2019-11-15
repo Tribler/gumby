@@ -154,6 +154,7 @@ class TrustchainStatisticsParser(StatisticsParser):
         min_time = None
         max_time = None
         tx_map = dict()
+        seen_by_map = dict()
         # time,transaction,type,seq_num,seen_by
 
         index = 0
@@ -231,7 +232,8 @@ class TrustchainStatisticsParser(StatisticsParser):
                         peer_counts[seen_by]["others"] += 1
                         if 'last_time' not in tx_stats[tx_map_ind]:
                             tx_stats[tx_map_ind]['last_time'] = time
-                        elif tx_stats[tx_map_ind]['last_time'] < time:
+                            seen_by_map[tx_map_ind] = {seen_by}
+                        elif seen_by not in seen_by_map[tx_map_ind] and tx_stats[tx_map_ind]['last_time'] < time:
                             tx_stats[tx_map_ind]['last_time'] = time
         if self.do_cleanup:
             os.remove(f_name)
@@ -274,6 +276,7 @@ class TrustchainStatisticsParser(StatisticsParser):
             w_file.write("Number of peers: %d\n" % len(peer_counts))
             w_file.write("Total round time: %f\n" % (max_time - min_time))
             w_file.write("\n")
+
             if os.getenv('TX_SEC'):
                 value = 1 / float(os.getenv('TX_SEC'))
                 w_file.write("System transaction rate: %d\n" % (len(peer_counts) * value))
@@ -282,23 +285,56 @@ class TrustchainStatisticsParser(StatisticsParser):
                 w_file.write("Peer fanout: %d\n" % value)
 
             w_file.write("Peak throughput: %d\n" % max(thrg.values()))
+            w_file.write("Avg throughput: %d\n" % np.mean(thrg.values()))
+            w_file.write("St dev throughput: %d\n" % np.stdev(thrg.values()))
             w_file.write("Min throughput: %d\n" % min(thrg.values()))
-            w_file.write("Median throughput: %d\n" % np.median(thrg.values()))
-            w_file.write("Est transaction throughput: %f\n" % (len(tx_stats) / (max_time - min_time)))
             w_file.write("\n")
+
             w_file.write("Median operations per transaction: %d\n" % np.median(ops))
             w_file.write("Min operations per transaction: %d\n" % min(ops))
             w_file.write("Max operations per transaction: %d\n" % max(ops))
             w_file.write("\n")
-            w_file.write("Median round latency: %f\n" % np.median(latency_round))
-            w_file.write("Median last received latency: %f\n" % np.median(latency_all))
+
+            w_file.write("Min round latency: %f\n" % min(latency_round))
+            w_file.write("Mean round latency: %f\n" % np.mean(latency_round))
+            w_file.write("St dev round latency: %f\n" % np.stdev(latency_round))
+            w_file.write("Max round latency: %f\n" % max(latency_round))
             w_file.write("\n")
+
+            w_file.write("Min other received latency: %f\n" % min(latency_all))
+            w_file.write("Mean other received latency: %f\n" % np.mean(latency_all))
+            w_file.write("St dev other received latency: %f\n" % np.stdev(latency_all))
+            w_file.write("Max other received latency: %f\n" % max(latency_all))
+            w_file.write("\n")
+
             w_file.write(
-                "Median from transactions: %d\n" % np.median([d['from_count'] for k, d in peer_counts.items()]))
+                "Min from ops: %d\n" % min([d['from_count'] for k, d in peer_counts.items()]))
             w_file.write(
-                "Median to transactions: %d\n" % np.median([d['to_count'] for k, d in peer_counts.items()]))
+                "Average from ops: %d\n" % np.mean([d['from_count'] for k, d in peer_counts.items()]))
             w_file.write(
-                "Median other transactions: %d\n" % np.median([d['others'] for k, d in peer_counts.items()]))
+                "St dev from ops: %d\n" % np.stdev([d['from_count'] for k, d in peer_counts.items()]))
+            w_file.write(
+                "Max from ops: %d\n" % max([d['from_count'] for k, d in peer_counts.items()]))
+            w_file.write("\n")
+
+            w_file.write(
+                "Min to ops: %d\n" % min([d['to_count'] for k, d in peer_counts.items()]))
+            w_file.write(
+                "Average to ops: %d\n" % np.mean([d['to_count'] for k, d in peer_counts.items()]))
+            w_file.write(
+                "St dev to ops: %d\n" % np.stdev([d['to_count'] for k, d in peer_counts.items()]))
+            w_file.write(
+                "Max to ops: %d\n" % max([d['to_count'] for k, d in peer_counts.items()]))
+            w_file.write("\n")
+
+            w_file.write(
+                "Min other ops: %d\n" % min([d['others'] for k, d in peer_counts.items()]))
+            w_file.write(
+                "Average other ops: %d\n" % np.mean([d['others'] for k, d in peer_counts.items()]))
+            w_file.write(
+                "St dev other ops: %d\n" % np.stdev([d['others'] for k, d in peer_counts.items()]))
+            w_file.write(
+                "Max other ops: %d\n" % max([d['others'] for k, d in peer_counts.items()]))
             w_file.write("\n")
 
             w_file.write("Network/Relay transactions Not seen by the counterparty: %d\n" % errs)
