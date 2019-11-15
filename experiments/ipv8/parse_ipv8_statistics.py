@@ -174,35 +174,12 @@ class IPv8StatisticsParser(StatisticsParser):
                     counter += 1
                 h_annotations.write("\n")
 
-    @staticmethod
-    def aggregate_transactions():
-        prefix = os.path.join(os.environ['PROJECT_DIR'], 'output')
-        postfix = 'leader_blocks_time_'
-        index = 1
-
-        block_stat_file = os.path.join(prefix, postfix + "agg.csv")
-        with open(block_stat_file, "w") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction', "type", "seq_num", 'seen_by'])
-            writer.writeheader()
-            while os.path.exists(os.path.join(prefix, postfix + str(index) + '.csv')):
-                with open(os.path.join(prefix, postfix + str(index) + '.csv')) as read_file:
-                    csv_reader = csv.reader(read_file)
-                    first = True
-                    for row in csv_reader:
-                        if first:
-                            first = False
-                        else:
-                            writer.writerow({"time": row[0], 'transaction': row[1], 'type': row[2],
-                                             'seq_num': (row[3], row[4]), 'seen_by': index})
-                index += 1
-
     def run(self):
         self.aggregate_annotations()
         self.aggregate_messages()
         self.aggregate_peer_connections()
         self.aggregate_bandwidth()
         self.aggregate_autoplot()
-        #self.aggregate_transactions()
 
 
 

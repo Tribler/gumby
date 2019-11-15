@@ -21,6 +21,9 @@ class TrustchainStatisticsParser(StatisticsParser):
     def __init__(self, node_directory):
         super(TrustchainStatisticsParser, self).__init__(node_directory)
         self.aggregator = GumbyDatabaseAggregator(os.path.join(os.environ['PROJECT_DIR'], 'output'))
+        self.do_cleanup = False
+        if os.getenv('CLEAN_UP'):
+            self.do_cleanup = bool(os.getenv('CLEAN_UP'))
 
     def aggregate_databases(self):
         aggregation_path = os.path.join(os.environ['PROJECT_DIR'], 'output', 'sqlite')
@@ -29,8 +32,7 @@ class TrustchainStatisticsParser(StatisticsParser):
 
         self.aggregator.combine_databases()
 
-    @staticmethod
-    def aggregate_transactions():
+    def aggregate_transactions(self):
         prefix = os.path.join(os.environ['PROJECT_DIR'], 'output')
         postfix = 'leader_blocks_time_'
         index = 1
@@ -53,6 +55,8 @@ class TrustchainStatisticsParser(StatisticsParser):
                             writer.writerow(
                                 {"time": row[0], 'transaction': row[1], 'type': type_val,
                                  'seq_num': seq_num, 'peer_ids': peer_ids, 'seen_by': index})
+                if self.do_cleanup:
+                    os.remove(os.path.join(prefix, postfix + str(index) + '.csv'))
                 index += 1
 
     def write_blocks_to_file(self):
@@ -229,6 +233,9 @@ class TrustchainStatisticsParser(StatisticsParser):
                             tx_stats[tx_map_ind]['last_time'] = time
                         elif tx_stats[tx_map_ind]['last_time'] < time:
                             tx_stats[tx_map_ind]['last_time'] = time
+        if self.do_cleanup:
+            os.remove(f_name)
+
         import math
         import statistics as np
 
@@ -299,10 +306,10 @@ class TrustchainStatisticsParser(StatisticsParser):
 
     def run(self):
         self.aggregate_transactions()
+        self.write_perf_results()
         self.aggregate_databases()
         self.write_blocks_to_file()
         self.aggregate_trustchain_balances()
-        self.write_perf_results()
 
 
 if __name__ == "__main__":
