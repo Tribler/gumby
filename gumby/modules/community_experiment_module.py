@@ -4,6 +4,8 @@ from os import environ
 from random import sample
 from socket import gethostbyname
 
+from twisted.internet import reactor
+
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import generate_keypair_trustchain, save_keypair_trustchain, save_pub_key_trustchain
@@ -114,6 +116,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         Introduce to the bootstrap peers
         """
         # Choose bootstrap peers
+        delta = 2
         import networkx as nx
         num_nodes = len(self.all_vars.keys())
         if os.getenv('AVG_DEG'):
@@ -126,6 +129,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         self.topology = nx.random_graphs.gnm_random_graph(num_nodes,
                                                           num_nodes * avg_degree / 2, seed=42)
         nx.relabel_nodes(self.topology, {k: k + 1 for k in range(num_nodes)}, copy=False)
+
         # 1. Everybody knows everyone
         # self.overlay.bootstrap_master = [self.experiment.get_peer_ip_port_by_id(k) for k in self.all_vars.keys()]
         self.overlay.bootstrap_master = []
@@ -135,12 +139,14 @@ class IPv8OverlayExperimentModule(ExperimentModule):
                 (self.experiment.get_peer_ip_port_by_id(k) for k in self.topology[peer]))
             val = self.experiment.get_peer_ip_port_by_id(peer)
             self._logger.info("Peer %s with value %s", peer, val)
-            self.overlay.walk_to(val)
-
         # Assume perfect knowledge of the world
         label_map = {int(k): b64decode(v['public_key']) for k, v in self.all_vars.items()}
         self.inverted_map = {v:k for k, v in label_map.items()}
         self.overlay.known_graph = nx.relabel_nodes(self.topology, label_map)
+
+        # Register the introduction walk tasks with waves by 100
+        self.overlay.register_anonymous_task("intro_delay", reactor.callLater(delta*(self.my_id // 100),
+                                                                              self.recheck_connections))
 
     @experiment_callback
     def recheck_connections(self):
@@ -154,7 +160,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
                 if not peer and self.inverted_map:
                     peer_id = self.inverted_map[p]
                     peer_val = self.experiment.get_peer_ip_port_by_id(str(peer_id))
-                    self._logger.error("Peer %s not connected/Reconnecting with value %s", peer_id, peer_val)
+                    self._logger.info("Peer %s not connected/Reconnecting with value %s", peer_id, peer_val)
                     self.overlay.walk_to(peer_val)
 
     @experiment_callback
