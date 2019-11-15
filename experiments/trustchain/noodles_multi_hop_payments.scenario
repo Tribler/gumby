@@ -10,6 +10,9 @@
 @0:9 disable_max_peers
 @0:10 set_validation_range 5
 @0:12 introduce_to_bootstrap_peers
+@0:50 recheck_connections
+@0:80 recheck_connections
+@0:100 recheck_connections
 @0:120 annotate start-sharing-transactions
 @0:120 start_multihop_noodle_transactions
 @0:180 stop_requesting_signatures

@@ -21,6 +21,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         super(IPv8OverlayExperimentModule, self).__init__(experiment)
         self.community_class = community_class
         self.topology = None
+        self.inverted_map = None
         # To be sure that the module loading happens in the right order, this next line serves the dual purpose of
         # triggering the check for a loaded IPv8 provider
         self.ipv8_provider.ipv8_available.addCallback(self.on_ipv8_available)
@@ -138,7 +139,23 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         # Assume perfect knowledge of the world
         label_map = {int(k): b64decode(v['public_key']) for k, v in self.all_vars.items()}
+        self.inverted_map = {v:k for k, v in label_map.items()}
         self.overlay.known_graph = nx.relabel_nodes(self.topology, label_map)
+
+    @experiment_callback
+    def recheck_connections(self):
+        """
+        Recheck if all peer in known graph are connected/ reconnect otherwise
+        """
+        if self.overlay.known_graph:
+            my_key = self.overlay.my_peer.public_key.key_to_bin()
+            for p in self.overlay.known_graph.neighbors(my_key):
+                peer = self.overlay.get_peer_by_pub_key(p)
+                if not peer and self.inverted_map:
+                    peer_id = self.inverted_map[p]
+                    peer_val = self.experiment.get_peer_ip_port_by_id(str(peer_id))
+                    self._logger.info("Peer %s not connected/Reconnecting with value %s", peer_id, peer_val)
+                    self.overlay.walk_to(peer_val)
 
     @experiment_callback
     def introduce_peers(self, max_peers=None, excluded_peers=None):
