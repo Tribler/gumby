@@ -154,7 +154,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
                 if not peer and self.inverted_map:
                     peer_id = self.inverted_map[p]
                     peer_val = self.experiment.get_peer_ip_port_by_id(str(peer_id))
-                    self._logger.info("Peer %s not connected/Reconnecting with value %s", peer_id, peer_val)
+                    self._logger.error("Peer %s not connected/Reconnecting with value %s", peer_id, peer_val)
                     self.overlay.walk_to(peer_val)
 
     @experiment_callback
