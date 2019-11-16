@@ -1,5 +1,7 @@
+import csv
 import heapq
 from binascii import hexlify
+from time import time
 
 import networkx as nx
 from six.moves import xrange
@@ -31,6 +33,10 @@ class TrustchainMemoryDatabase(object):
 
         self.claim_proofs = {}
         self.nonces = {}
+
+        self.block_time = {}
+        self.start_time = None
+        self.block_file = None
 
     def key_to_id(self, key):
         return str(hexlify(key)[-KEY_LEN:])[2:-1]
@@ -83,6 +89,11 @@ class TrustchainMemoryDatabase(object):
             self.add_spend(block)
         if block.type == b"claim":
             self.add_claim(block)
+        # Add block to stat file
+        if not self.start_time:
+            # First block received
+            self.start_time = time()
+        self.block_time[(block.public_key, block.sequence_number)] = time() - self.start_time
 
     def add_spend(self, spend):
         pk = spend.public_key
@@ -359,6 +370,20 @@ class TrustchainMemoryDatabase(object):
                 break
 
         return blocks
+
+    def commit_block_times(self):
+        with open(self.block_file, "a") as t_file:
+            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link", 'from_id', 'to_id'])
+            for block_id in self.block_cache:
+                block = self.block_cache[block_id]
+                time = self.block_time[block_id]
+                from_id = str(hexlify(block.public_key)[-8:])[2:-1]
+                to_id = str(hexlify(block.link_public_key)[-8:])[2:-1]
+                writer.writerow({"time": time, 'transaction': str(block.transaction),
+                                 'type': str(block.type),
+                                 'seq_num': block.sequence_number, "link": block.link_sequence_number,
+                                 'from_id': from_id, 'to_id': to_id
+                                 })
 
     def commit(self, my_pub_key):
         """

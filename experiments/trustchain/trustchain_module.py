@@ -42,18 +42,7 @@ class GeneratedBlockListener(BlockListener):
 
     def received_block(self, block):
         # Add block to stat file
-        if not self.start_time:
-            # First block received
-            self.start_time = time()
-        with open(self.file_name, "a") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link", 'from_id', 'to_id'])
-            from_id = str(hexlify(block.public_key)[-8:])[2:-1]
-            to_id = str(hexlify(block.link_public_key)[-8:])[2:-1]
-            writer.writerow({"time": time() - self.start_time, 'transaction': str(block.transaction),
-                             'type': str(block.type),
-                             'seq_num': block.sequence_number, "link": block.link_sequence_number,
-                             'from_id': from_id, 'to_id': to_id
-                             })
+        pass
 
 
 @static_module
@@ -114,8 +103,9 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.block_stat_file = os.path.join(os.environ['PROJECT_DIR'], 'output', 'leader_blocks_time_'
                                             + str(self.my_id) + '.csv')
         with open(self.block_stat_file, "w") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link"])
+            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link", 'from_id', 'to_id'])
             writer.writeheader()
+        self.overlay.persistence.block_file = self.block_stat_file
         self.overlay.add_listener(GeneratedBlockListener(self.block_stat_file), [b'claim', b'spend', b'test'])
 
     @experiment_callback
@@ -340,6 +330,11 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     def commit_blocks_to_db(self):
         if self.session.config.use_trustchain_memory_db():
             self.overlay.persistence.commit(self.overlay.my_peer.public_key.key_to_bin())
+
+    @experiment_callback
+    def commit_block_times(self):
+        if self.session.config.use_trustchain_memory_db():
+            self.overlay.persistence.commit_block_times()
 
     @experiment_callback
     def write_trustchain_statistics(self):
