@@ -333,6 +333,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def commit_block_times(self):
+        self._logger.error("Commit block times to the file %s", self.overlay.persistence.block_file)
         if self.session.config.use_trustchain_memory_db():
             self._logger.error("Commit block times to the file %s", self.overlay.persistence.block_file)
             self.overlay.persistence.commit_block_times()
