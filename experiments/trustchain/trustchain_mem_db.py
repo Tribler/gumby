@@ -374,7 +374,7 @@ class TrustchainMemoryDatabase(object):
     def commit_block_times(self):
         with open(self.block_file, "a") as t_file:
             writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link", 'from_id', 'to_id'])
-            for block_id in self.block_cache:
+            for block_id in self.block_time:
                 block = self.block_cache[block_id]
                 time = self.block_time[block_id]
                 from_id = str(hexlify(block.public_key)[-8:])[2:-1]
@@ -384,6 +384,7 @@ class TrustchainMemoryDatabase(object):
                                  'seq_num': block.sequence_number, "link": block.link_sequence_number,
                                  'from_id': from_id, 'to_id': to_id
                                  })
+            self.block_time.clear()
 
     def commit(self, my_pub_key):
         """
