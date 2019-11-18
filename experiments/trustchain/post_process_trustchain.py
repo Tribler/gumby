@@ -241,6 +241,10 @@ class TrustchainStatisticsParser(StatisticsParser):
         import math
         import statistics as np
 
+        total_run = max_time
+        if os.getenv('TOTAL_RUN'):
+            total_run = float(os.getenv('TOTAL_RUN'))
+
         latency_round = []
         latency_all = []
         throughput = {l: 0 for l in range(int(max_time) + 1)}
@@ -267,7 +271,7 @@ class TrustchainStatisticsParser(StatisticsParser):
                 latency_all.append(all_seen)
                 ops.append(len(tx_ops[t]))
 
-        thrg = {x: y for x, y in throughput.items() if y}
+        thrg = {x: y for x, y in throughput.items() if y and x < total_run+1}
 
         # Write performance results in a file
         res_file = os.path.join(prefix, "perf_results.txt")
