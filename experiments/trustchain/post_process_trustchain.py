@@ -278,7 +278,8 @@ class TrustchainStatisticsParser(StatisticsParser):
         with open(res_file, 'w') as w_file:
             w_file.write("Total txs: %d\n" % len(tx_stats))
             w_file.write("Number of peers: %d\n" % len(peer_counts))
-            w_file.write("Total round time: %f\n" % (max_time - min_time))
+            w_file.write("Total experiment time: %f\n" % (max_time - min_time))
+            w_file.write("Total planned experiment time: %f\n" % total_run)
             w_file.write("\n")
 
             if os.getenv('TX_SEC'):
