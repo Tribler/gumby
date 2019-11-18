@@ -151,6 +151,14 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.request_signatures_lc.start(value)
 
     @experiment_callback
+    def start_periodic_mem_flush(self):
+        value = 1
+        if os.getenv('FLUSH_TIME'):
+            value = float(os.getenv('FLUSH_TIME'))
+
+        self.overlay.init_mem_db_flush(value)
+
+    @experiment_callback
     def start_multihop_noodle_transactions(self):
         if os.getenv('TX_SEC'):
             value = float(os.getenv('TX_SEC'))

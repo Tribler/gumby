@@ -13,6 +13,7 @@
 @0:100 recheck_connections
 @0:120 annotate start-sharing-transactions
 @0:120 start_multihop_noodle_transactions
+@0:121 start_periodic_mem_flush
 @0:180 stop_requesting_signatures
 @0:210 commit_block_times
 @0:215 write_overlay_statistics
