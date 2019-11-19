@@ -8,14 +8,14 @@ maxX <- as.integer(args[2])
 source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 df3 <- load_annotations()
 
-if(file.exists("utimes_reduced.txt")){
-	df <- read.table("utimes_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
+if(file.exists("utimes.txt")){
+	df <- read.table("utimes.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	df <- mean_max_min(num_columns, df)
 	df$type <- 'Process'
 
-	if(file.exists("utimes_node_reduced.txt")){
-		df2 <- read.table("utimes_node_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
+	if(file.exists("utimes.txt")){
+		df2 <- read.table("utimes_node.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 		df2 <- mean_max_min(num_columns, df2)
 		df2$type <- 'Node'
 	
@@ -42,14 +42,14 @@ if(file.exists("utimes_reduced.txt")){
 	ggsave(file="utimes.png", width=12, height=6, dpi=100)
 }
 
-if(file.exists("stimes_reduced.txt")){
-	df <- read.table("stimes_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
+if(file.exists("stimes.txt")){
+	df <- read.table("stimes.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 	num_columns <- ncol(df) - 1
 	df <- mean_max_min(num_columns, df)
 	df$type <- 'Process'
 	
-	if(file.exists("stimes_node_reduced.txt")){
-		df2 <- read.table("stimes_node_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
+	if(file.exists("stimes_node.txt")){
+		df2 <- read.table("stimes_node.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 		df2 <- mean_max_min(num_columns, df2)
 		df2$type <- 'Node'
 	

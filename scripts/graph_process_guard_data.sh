@@ -46,12 +46,10 @@ fi
 cd $OUTPUT_DIR
 
 TEMPFILE=$(mktemp)
-extract_process_guard_stats.py . .  > $TEMPFILE
+process_guard_stats_parser.py . .
 #Get the XMIN XMAX vars from the extracted data
-source $TEMPFILE
-rm $TEMPFILE
+source axis_stats.txt
 
-reduce_statistics.py . 300
 collect_profile_logs.py .
 
 modify_annotations.py . $XSTART
@@ -65,6 +63,7 @@ memtimes.r
 writebytes.r
 readbytes.r
 network.r
+threads.r
 "
 export XMIN
 export XMAX

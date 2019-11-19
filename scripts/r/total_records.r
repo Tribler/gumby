@@ -7,8 +7,8 @@ maxX <- as.integer(commandArgs(TRUE)[2])
 source(paste(Sys.getenv('R_SCRIPTS_PATH'), 'annotation.r', sep='/'))
 df2 <- load_annotations()
 
-if(file.exists("sum_total_records_reduced.txt")){
-	df <- read.table("sum_total_records_reduced.txt", header = TRUE, check.names = FALSE, na.strings = "?")
+if(file.exists("sum_total_records.txt")){
+	df <- read.table("sum_total_records.txt", header = TRUE, check.names = FALSE, na.strings = "?")
 	df <- melt(df, id="time")
 	df <- na.omit(df)
 	
