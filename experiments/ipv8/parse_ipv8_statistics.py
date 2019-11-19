@@ -162,12 +162,16 @@ class IPv8StatisticsParser(StatisticsParser):
                     tuple_dict[extracted[1]] = extracted[0]
                     annotation_dict[message] = tuple_dict
         with open(os.path.join(self.node_directory, "annotations.txt"), "w+") as h_annotations:
-            print >> h_annotations, "annotation", " ".join(map(str, sorted(peer_set)))
+            h_annotations.write("annotation %s\n" % " ".join(map(str, sorted(peer_set))))
             for message, packed_values in annotation_dict.items():
-                print >> h_annotations, '"%s"' % message,
+                h_annotations.write('"%s" ' % message)
+                counter = 0
                 for node in sorted(packed_values.keys()):
-                    print >> h_annotations, packed_values.get(node, '?'),
-                print >> h_annotations, ''
+                    h_annotations.write(packed_values.get(node, '?'))
+                    if counter != len(packed_values.keys()) - 1:
+                        h_annotations.write(" ")
+                    counter += 1
+                h_annotations.write("\n")
 
     def run(self):
         self.aggregate_annotations()
@@ -175,6 +179,7 @@ class IPv8StatisticsParser(StatisticsParser):
         self.aggregate_peer_connections()
         self.aggregate_bandwidth()
         self.aggregate_autoplot()
+
 
 if __name__ == "__main__":
     # cd to the output directory
