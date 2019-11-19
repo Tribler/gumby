@@ -1,0 +1,5 @@
+&module gumby.modules.experiment_module.ExperimentModule
+&module experiments.dummy.dummy_module.DummyModule
+
+@0:1 write_peer_id
+@0:5 stop
