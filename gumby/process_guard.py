@@ -96,6 +96,10 @@ class ResourceMonitor(object):
             self.last_died = True
 
     def get_raw_stats(self):
+        """
+        Get raw statistics as reported by procfs.
+        First, get statistics from /proc/.../stat. Next, append the statistics from /proc/.../io.
+        """
         for pid in self.pid_list:
             if not os.path.exists('/proc'):
                 dummy_status = "%s (sh) S 0 0 0 0 -1 8192 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 " \
@@ -119,7 +123,7 @@ class ResourceMonitor(object):
                     yield ' '.join(stats)
 
                 except IOError:
-                    print("???")
+                    print("IOError occurred - could not get procfs statistics")
                     self.pid_list.remove(pid)
                     if not self.pid_list:
                         self.last_died = True
@@ -224,20 +228,11 @@ class ProcessMonitor(object):
         self._rm = ResourceMonitor(output_dir, commands)
         self.monitor_file = None
         self.network_monitor_file = None
-        self.fd_file = None
-        self.threads_file = None
         self.psutil_process = Process()
 
         if monitor_dir:
-            self.monitor_file = open(monitor_dir + "/resource_usage.log", "w", (1024 ** 2) * 10)  # Set the file's buffering to 10MB
-            if not path.exists(monitor_dir + "/autoplot"):
-                mkdir(monitor_dir + "/autoplot")
             # Set the file's buffering to 10MB
-            self.fd_file = open(monitor_dir + "/autoplot/fd_usage.csv", "w", (1024 ** 2) * 10)
-            self.fd_file.write("time,pid,Number of file descriptors\n")
-            # Set the file's buffering to 10MB
-            self.threads_file = open(monitor_dir + "/autoplot/thread_count.csv", "w", (1024 ** 2) * 10)
-            self.threads_file.write("time,pid,Number of threads\n")
+            self.monitor_file = open(os.path.join(monitor_dir, "resource_usage.log"), "w", (1024 ** 2) * 10)
             # We read the jiffie -> second conversion rate from the os, by dividing the utime
             # and stime values by this conversion rate we will get the actual cpu seconds spend during this second.
             try:
@@ -264,10 +259,6 @@ class ProcessMonitor(object):
         self.stopping = True
         if self.monitor_file:
             self.monitor_file.close()
-        if self.fd_file:
-            self.fd_file.close()
-        if self.threads_file:
-            self.threads_file.close()
 
         # Check if any process exited with an error code before killing the remaining ones
         failed = self._rm.get_failed_commands()
@@ -320,37 +311,6 @@ class ProcessMonitor(object):
             if self.network_monitor_file:
                 for line in self._rm.get_network_stats():
                     self.network_monitor_file.write("%.1f %s\n" % (r_timestamp, line))
-
-            if hasattr(self.psutil_process, 'children'):
-                p_children = self.psutil_process.children(recursive=True)
-            else:
-                p_children = self.psutil_process.get_children(recursive=True)
-
-            if self.fd_file:
-                for child_process in p_children:
-                    try:
-                        if hasattr(self.psutil_process, 'num_fds'):
-                            self.fd_file.write("%.1f,%s,%d\n" %
-                                               (r_timestamp, child_process.pid, child_process.num_fds()))
-                        else:
-                            self.fd_file.write("%.1f,%s,%d\n" %
-                                               (r_timestamp, child_process.pid, child_process.get_num_fds()))
-                    except (AccessDenied, NoSuchProcess):
-                        pass  # Just ignore the file descriptors of this invalid process
-
-            if self.threads_file:
-                for child_process in p_children:
-                    try:
-                        # Supports: Linux, Windows, OSX, SunOS
-                        # Unsupported: BSD
-                        if hasattr(self.psutil_process, 'num_threads'):
-                            self.threads_file.write("%.1f,%s,%d\n" %
-                                                    (r_timestamp, child_process.pid, child_process.num_threads()))
-                        elif hasattr(self.psutil_process, 'get_num_threads'):
-                            self.threads_file.write("%.1f,%s,%d\n" %
-                                                    (r_timestamp, child_process.pid, child_process.get_num_threads()))
-                    except (AccessDenied, NoSuchProcess):
-                        pass  # Just ignore the number of threads of this invalid process
 
             if self.end_time and timestamp > self.end_time:  # if self.end_time == 0 the time out is disabled.
                 print("Time out, killing monitored processes.")
