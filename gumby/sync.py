@@ -194,17 +194,34 @@ class ExperimentServiceFactory(Factory):
                 self._made_looping_call.stop()
 
             # Assign IDs to the connected subscribers, based on their address
+            host_dict = {}
+            for connection in self.connections_made:
+                connection_host = connection.transport.getPeer().host
+                if connection_host not in host_dict:
+                    host_dict[connection_host] = []
+                host_dict[connection_host].append(connection)
+
+            # Sort them on IP
             def split_ip(ip):
                 return tuple(int(part) for part in ip.split('.'))
 
-            def ip_addr_key(connection):
-                return split_ip(connection.transport.getPeer().host)
+            def ip_addr_key(ip_addr):
+                return split_ip(ip_addr)
 
-            self.connections_made = sorted(self.connections_made, key=ip_addr_key)
-            peer_index = 1
-            for connection in self.connections_made:
-                connection.id = peer_index
-                peer_index += 1
+            sorted_hosts = sorted(list(host_dict.keys()), key=ip_addr_key)
+
+            # Assign
+            cur_peer_index = 1
+            cur_host_index = 0
+            while cur_peer_index <= len(self.connections_made):
+                # Get the next connection
+                if host_dict[sorted_hosts[cur_host_index]]:
+                    connection = host_dict[sorted_hosts[cur_host_index]].pop(0)
+                    connection.id = cur_peer_index
+
+                cur_host_index += 1
+                cur_host_index %= len(sorted_hosts)
+                cur_peer_index += 1
 
             self.pushIdToSubscribers()
         else:
