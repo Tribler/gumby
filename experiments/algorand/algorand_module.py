@@ -5,15 +5,18 @@ import shutil
 import subprocess
 import time
 from binascii import hexlify
+from threading import Thread
 
 import six
+
 from algosdk import transaction
 from algosdk.algod import AlgodClient
+from algosdk.error import KMDHTTPError, AlgodHTTPError
 from algosdk.kmd import KMDClient
 from algosdk.wallet import Wallet
+
 from twisted.internet import reactor
 from twisted.internet.defer import fail
-from twisted.internet.task import LoopingCall, deferLater
 from twisted.web import http
 from twisted.web.client import readBody, WebClientContextFactory, Agent
 from twisted.web.http_headers import Headers
@@ -279,25 +282,34 @@ class AlgorandModule(BlockchainModule):
                     self.sender_key = wallet_key
                     break
 
-            self.receiver_key = self.wallet.generate_key()
+        if not self.receiver_key:
+            try:
+                self.receiver_key = self.wallet.generate_key()
+            except KMDHTTPError:
+                self._logger.warning("Failed to generate receiver key - will try again later!")
+                return
 
             self._logger.info("Sender key: %s", self.sender_key)
             self._logger.info("Receiver key: %s", self.receiver_key)
 
-        # create transaction
-        txn = transaction.PaymentTxn(self.sender_key, fee, last_round, last_round + 300, gh, self.receiver_key, 100000 + self.tx_counter, gen=gen)
-        signed = self.wallet.sign_transaction(txn)
-        submit_time = int(round(time.time() * 1000))
-        tx_id = self.algod_client.send_transaction(signed)
-        self.transactions[tx_id] = (submit_time, -1)
-        self.tx_counter += 1
+        def create_and_submit_tx():
+            txn = transaction.PaymentTxn(self.sender_key, 10000, last_round, last_round + 300, gh, self.receiver_key, 100000 + self.tx_counter, gen=gen, flat_fee=True)
+            signed = self.wallet.sign_transaction(txn)
+            submit_time = int(round(time.time() * 1000))
+            try:
+                tx_id = self.algod_client.send_transaction(signed)
+                self.transactions[tx_id] = (submit_time, -1)
+                self.tx_counter += 1
+                self._logger.info("Submitted transaction with ID %s", tx_id)
+            except AlgodHTTPError as e:
+                self._logger.error("Failed to submit transaction! %s", str(e))
 
-        # print("TX ID: " + tx_id)
-        # self.algod_client.status_after_block(last_round + 2)
-        # print("Transaction info:", self.algod_client.transaction_info(keys[0], tx_id))
-        #
-        # print("BALANCE 0: ", self.algod_client.account_info(keys[0]))
-        # print("BALANCE 1: ", self.algod_client.account_info(keys[1]))
+                # Update the fees
+                self.suggested_parameters = self.algod_client.suggested_params()
+
+        t = Thread(target=create_and_submit_tx)
+        t.daemon = True
+        t.start()
 
     @experiment_callback
     def print_status(self):
