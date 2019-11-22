@@ -1,0 +1,13 @@
+&module gumby.modules.experiment_module.ExperimentModule
+&module experiments.hyperledger.hyperledger_module.HyperledgerModule
+
+@0:1 generate_config {1}
+@0:3 generate_artifacts {1}
+@0:5 start_network
+@0:15 deploy_chaincode {1}
+@0:25 start_monitor {1}
+@0:30 start_creating_transactions
+@0:150 stop_creating_transactions
+@0:180 stop_monitor {1}
+@0:180 stop_network
+@0:190 stop
