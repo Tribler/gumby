@@ -73,7 +73,7 @@ done
 rm $CMDFILE
 
 # Now, lets send the generated data back to the head node
-rsync -a --delete-before "$OUTPUT_DIR/" "$OUTPUT_DIR_URI/$(hostname)/" 2>&1
+rsync -a --delete-before "$OUTPUT_DIR/" "$OUTPUT_DIR_URI/$(hostname)/" 2>&1 ||:
 
 #
 # das4_node_run_job.sh ends here
