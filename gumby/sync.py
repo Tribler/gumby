@@ -193,6 +193,19 @@ class ExperimentServiceFactory(Factory):
             if self._made_looping_call and self._made_looping_call.running:
                 self._made_looping_call.stop()
 
+            # Assign IDs to the connected subscribers, based on their address
+            def split_ip(ip):
+                return tuple(int(part) for part in ip.split('.'))
+
+            def ip_addr_key(connection):
+                return split_ip(connection.transport.getPeer().host)
+
+            self.connections_made = sorted(self.connections_made, key=ip_addr_key)
+            peer_index = 1
+            for connection in self.connections_made:
+                connection.id = peer_index
+                peer_index += 1
+
             self.pushIdToSubscribers()
         else:
             if not self._made_looping_call:
