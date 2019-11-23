@@ -249,7 +249,10 @@ class BitsharesModule(BlockchainModule):
 
         t = Thread(target=send_transaction, args=("user%d" % (my_peer_id + 1), ))
         t.daemon = True
-        t.start()
+        try:
+            t.start()
+        except RuntimeError:
+            self._logger.warning("Unable to submit transaction - cannot start new thread!")
 
     @experiment_callback
     def dump_blockchain(self):
@@ -273,6 +276,13 @@ class BitsharesModule(BlockchainModule):
 
     @experiment_callback
     def write_stats(self):
+        self._logger.info("Writing BitShares statistics...")
+
+        # Write a map with tx info
+        with open("tx_submit_times.txt", "w") as created_tx_files:
+            for order_tup in self.tx_info:
+                created_tx_files.write("%d,%s\n" % (order_tup[0], order_tup[1]))
+
         with open("balances.txt", "w") as balances_file:
             balances_file.write(json.dumps(self.wallet_rpc.list_account_balances(self.username)))
         with open("global_settings.txt", "w") as settings_file:
@@ -287,11 +297,6 @@ class BitsharesModule(BlockchainModule):
             history_file.write(json.dumps(self.wallet_rpc.get_account_history(self.username, 1000)))
         with open("witnesses.txt", "w") as witnesses_file:
             witnesses_file.write(json.dumps(self.wallet_rpc.list_witnesses("", 1000)))
-
-        # Write a map with tx info
-        with open("tx_submit_times.txt", "w") as created_tx_files:
-            for order_tup in self.tx_info:
-                created_tx_files.write("%d,%s\n" % (order_tup[0], order_tup[1]))
 
         # Write a map of the order info
         with open("created_orders.txt", "w") as created_orders_file:
