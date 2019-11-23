@@ -21,7 +21,7 @@ class StellarStatisticsParser(BlockchainTransactionsParser):
 
                     parts = line.split(",")
                     tx_id = parts[0]
-                    submit_time = int(parts[1])
+                    submit_time = int(parts[1]) - self.avg_start_time
                     tx_info[tx_id] = (peer_nr, submit_time, -1)
 
         for peer_nr, filename, dir in self.yield_files('tx_finalized_times.txt'):
@@ -40,7 +40,7 @@ class StellarStatisticsParser(BlockchainTransactionsParser):
                         continue
 
                     peer_id = tx_info[tx_id][0]
-                    submit_time = tx_info[tx_id][1] - self.avg_start_time
+                    submit_time = tx_info[tx_id][1]
                     tx_info[tx_id] = (peer_id, submit_time, confirm_time)
 
         for tx_id, tx_info in tx_info.items():
