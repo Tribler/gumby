@@ -21,9 +21,10 @@ class AlgorandStatisticsParser(BlockchainTransactionsParser):
                     parts = line.split(",")
                     tx_id = parts[0]
                     submit_time = int(parts[1]) - self.avg_start_time
-                    confirm_time = int(parts[2]) - self.avg_start_time
+                    confirm_time = int(parts[2])
 
                     if confirm_time != -1:
+                        confirm_time -= self.avg_start_time
                         tx_latency = confirm_time - submit_time
                     else:
                         tx_latency = -1
