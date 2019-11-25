@@ -1,13 +1,19 @@
+import asyncio
+import json
 import os
 import subprocess
 import time
+from threading import Thread
 
 from ruamel.yaml import YAML, RoundTripDumper, round_trip_dump
 from ruamel.yaml.comments import CommentedMap
 from twisted.internet import reactor
+from twisted.internet.task import LoopingCall, deferLater
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module, ExperimentModule
+
+from hfc.fabric import Client
 
 
 @static_module
@@ -20,11 +26,17 @@ class HyperledgerModule(ExperimentModule):
     def __init__(self, experiment):
         super(HyperledgerModule, self).__init__(experiment)
         self.config_path = "/home/pouwelse/hyperledger-network-template"
-        self.num_validators = int(os.environ["NUM_VALIDATORS"])
-        self.tx_rate = int(os.environ["TX_RATE"])
-        self.tx_lc = None
         self.monitor_process = None
+        self.fabric_client = None
+        self.num_validators = int(os.environ["NUM_VALIDATORS"])
+        self.num_clients = int(os.environ["NUM_CLIENTS"])
+        self.tx_rate = int(os.environ["TX_RATE"])
         self.did_write_start_time = False
+        self.spawner = None
+
+    def is_client(self):
+        my_peer_id = self.experiment.scenario_runner._peernumber
+        return my_peer_id > self.num_validators
 
     @experiment_callback
     def generate_config(self):
@@ -208,16 +220,6 @@ class HyperledgerModule(ExperimentModule):
         with open(os.path.join(self.config_path, "docker-compose-peers.yaml"), "w") as composer_file:
             yaml.dump(config, composer_file)
 
-        # Add extra_hosts to docker-composer for cli
-        yaml = YAML()
-        with open(os.path.join(self.config_path, "docker-compose-cli-template.yaml"), "r") as composer_file:
-            config = yaml.load(composer_file)
-
-        config["services"]["cli"]["extra_hosts"] = list(extra_hosts)
-
-        with open(os.path.join(self.config_path, "docker-compose-cli.yaml"), "w") as composer_file:
-            yaml.dump(config, composer_file)
-
         # Change docker-composer for couchdb
         yaml = YAML()
         with open(os.path.join(self.config_path, "docker-compose-couch-template.yaml"), "r") as composer_file:
@@ -243,12 +245,80 @@ class HyperledgerModule(ExperimentModule):
             yaml.dump(config, composer_file)
 
     @experiment_callback
+    def generate_client_config(self):
+        my_peer_id = self.experiment.scenario_runner._peernumber
+
+        # Generate network.json which specifies the necessary information for the client.
+        with open(os.path.join(self.config_path, "network-template.json"), "r") as network_template_file:
+            network_config = json.loads(network_template_file.read())
+
+        network_config["client"]["credentialStore"]["path"] = "/tmp/hfc-kvs-%d" % my_peer_id
+        network_config["client"]["credentialStore"]["cryptoStore"]["path"] = "/tmp/hfc-kvs-%d" % my_peer_id
+
+        # Fill in 'organizations'
+        for organization_index in range(1, self.num_validators + 1):
+            # Get the PK filename
+            keystore_path = os.path.join(self.config_path, "crypto-config/peerOrganizations/org%d.example.com/users/Admin@org%d.example.com/msp/keystore" % (organization_index, organization_index))
+            pk_file_path = os.listdir(keystore_path)[0]
+
+            info = {
+                "mspid": "Org%dMSP" % organization_index,
+                "peers": ["peer0.org%d.example.com" % organization_index],
+                "users": {
+                    "Admin": {
+                        "cert": os.path.join(self.config_path, "crypto-config/peerOrganizations/org%d.example.com/users/Admin@org%d.example.com/msp/signcerts/Admin@org%d.example.com-cert.pem" %
+                                (organization_index, organization_index, organization_index)),
+                        "private_key": os.path.join(keystore_path, pk_file_path)
+                    }
+                }
+            }
+            network_config["organizations"]["org%d.example.com" % organization_index] = info
+
+        # Fill in 'orderers'
+        for orderer_index in range(1, self.num_validators + 1):
+            orderer_port = (7050 + 1000 * (orderer_index - 1))
+            host, _ = self.experiment.get_peer_ip_port_by_id(orderer_index)
+            info = {
+                "url": "%s:%d" % (host, orderer_port),
+                "grpcOptions": {
+                    "grpc.ssl_target_name_override": "orderer%d.example.com" % orderer_index,
+                    "grpc-max-send-message-length": 15
+                },
+                "tlsCACerts": {
+                    "path": os.path.join(self.config_path, "crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem")
+                }
+            }
+            network_config["orderers"]["orderer%d.example.com" % orderer_index] = info
+
+        # Fill in 'peers'
+        for peer_index in range(1, self.num_validators + 1):
+            peer_port = (7051 + 1000 * (peer_index - 1))
+            host, _ = self.experiment.get_peer_ip_port_by_id(peer_index)
+            info = {
+                "url": "%s:%d" % (host, peer_port),
+                "grpcOptions": {
+                    "grpc.ssl_target_name_override": "peer0.org%d.example.com" % peer_index,
+                    "grpc.http2.keepalive_time": 15
+                },
+                "tlsCACerts": {
+                    "path": os.path.join(self.config_path, "crypto-config/peerOrganizations/org%d.example.com/peers/peer0.org%d.example.com/msp/tlscacerts/tlsca.org%d.example.com-cert.pem" % (peer_index, peer_index, peer_index))
+                }
+            }
+            network_config["peers"]["peer0.org%d.example.com" % peer_index] = info
+
+        with open("network.json", "w") as network_file:
+            network_file.write(json.dumps(network_config))
+
+    @experiment_callback
     def generate_artifacts(self):
         self._logger.info("Generating artifacts...")
         os.system("/home/pouwelse/hyperledger-network-template/generate.sh")
 
     @experiment_callback
     def start_network(self):
+        if self.is_client():
+            return
+
         self._logger.info("Starting network...")
         my_peer_id = self.experiment.scenario_runner._peernumber
         os.system("/home/pouwelse/hyperledger-network-template/start_containers.sh %d" % my_peer_id)
@@ -259,11 +329,18 @@ class HyperledgerModule(ExperimentModule):
         Create the channel, add peers and instantiate chaincode.
         """
         self._logger.info("Deploying chaincode...")
-        os.system("/home/pouwelse/hyperledger-network-template/deploy.sh %d" % self.num_validators)
-        self._logger.info("Chaincode deployed and instantiated!")
+        network_file_path = os.path.join(os.getcwd(), "network.json")
+        channel_config_path = os.path.join(self.config_path, "channel-artifacts", "channel.tx")
+        cmd = "python /home/pouwelse/hyperledger-network-template/scripts/deploy.py %s %s > deploy.out 2>&1" % (network_file_path, channel_config_path)
+        my_env = os.environ.copy()
+        my_env["GOPATH"] = "/home/pouwelse/gocode"
+        subprocess.Popen(cmd, env=my_env, shell=True)
 
     @experiment_callback
     def stop_network(self):
+        if self.is_client():
+            return
+
         self._logger.info("Stopping network...")
         os.system("/home/pouwelse/hyperledger-network-template/stop_all.sh")
 
@@ -279,6 +356,35 @@ class HyperledgerModule(ExperimentModule):
         self.monitor_process = subprocess.Popen(cmd, env=my_env, shell=True)
 
     @experiment_callback
+    def print_block(self):
+        loop = asyncio.get_event_loop()
+        org1_admin = self.fabric_client.get_user(org_name='org1.example.com', name='Admin')
+
+        # Query Block by block number
+        response = loop.run_until_complete(self.fabric_client.query_block(
+            requestor=org1_admin,
+            channel_name='mychannel',
+            peers=['peer0.org1.example.com'],
+            block_number='1',
+            decode=True
+        ))
+        print(response)
+
+    @experiment_callback
+    def print_chain_info(self):
+        loop = asyncio.get_event_loop()
+        org1_admin = self.fabric_client.get_user(org_name='org1.example.com', name='Admin')
+
+        # Query Block by block number
+        response = loop.run_until_complete(self.fabric_client.query_info(
+            requestor=org1_admin,
+            channel_name='mychannel',
+            peers=['peer0.org1.example.com'],
+            decode=True
+        ))
+        print(response)
+
+    @experiment_callback
     def stop_monitor(self):
         """
         Stop monitoring the blocks.
@@ -288,13 +394,25 @@ class HyperledgerModule(ExperimentModule):
             self.monitor_process.kill()
 
     @experiment_callback
-    def start_creating_transactions(self):
+    def start_client(self):
+        if not self.is_client():
+            return
+
+        self.fabric_client = Client(net_profile="network.json")
+
+    @experiment_callback
+    def start_creating_transactions(self, duration):
+        self.start_creating_transactions_with_rate(self.tx_rate, float(duration))
+
+    @experiment_callback
+    def start_creating_transactions_with_rate(self, tx_rate, duration):
         """
-        Start with submitting transactions to the peer running on the same server.
+        Start with submitting transactions.
         """
-        my_peer_id = self.experiment.scenario_runner._peernumber
-        tx_rate_client = self.tx_rate / self.num_validators
-        sleep_time = 1.0 / tx_rate_client
+        if not self.is_client():
+            return
+
+        duration = float(duration)
 
         if not self.did_write_start_time:
             # Write the start time to a file
@@ -302,27 +420,14 @@ class HyperledgerModule(ExperimentModule):
             with open("submit_tx_start_time.txt", "w") as out_file:
                 out_file.write("%d" % submit_tx_start_time)
             self.did_write_start_time = True
-        
-        self._logger.info("Starting transactions (tx rate: %f, sleep time: %f..." % (tx_rate_client, sleep_time))
-        cmd = 'docker exec peer0.org%d.example.com bash /etc/hyperledger/scripts/transact.sh %f &' % (my_peer_id, sleep_time)
-        subprocess.Popen(cmd, shell=True)
 
-    @experiment_callback
-    def transfer(self):
+        individual_tx_rate = int(tx_rate) / self.num_clients
         my_peer_id = self.experiment.scenario_runner._peernumber
-        target_organization_id = ((my_peer_id - 1) % self.num_validators) + 1
-        cmd = 'docker exec peer0.org%d.example.com peer chaincode invoke -n sacc -c \'{"Args":["set", "a", "20"]}\' -C mychannel -o orderer%d.example.com:7050 --tls true --cafile /etc/hyperledger/orderers/orderer%d.example.com/tls/ca.crt' % (target_organization_id, target_organization_id, target_organization_id)
-        subprocess.Popen(cmd, shell=True)
 
-    @experiment_callback
-    def stop_creating_transactions(self):
-        """
-        Stop with submitting transactions.
-        """
-        self._logger.info("Stopping transactions...")
-        my_peer_id = self.experiment.scenario_runner._peernumber
-        cmd = 'docker exec peer0.org%d.example.com pkill -f transact' % my_peer_id
-        subprocess.Popen(cmd, shell=True)
+        # Spawn the process
+        script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tx_spawner.py")
+        cmd = "python %s network.json %d %d %d %d %f > spawner.out 2>&1" % (script_path, individual_tx_rate, self.num_clients, self.num_validators, my_peer_id, duration)
+        self.spawner = subprocess.Popen(cmd, shell=True)
 
     @experiment_callback
     def stop(self):

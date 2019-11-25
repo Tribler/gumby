@@ -3,11 +3,13 @@
 
 @0:1 generate_config {1}
 @0:3 generate_artifacts {1}
+@0:5 generate_client_config
 @0:5 start_network
-@0:15 deploy_chaincode {1}
+@0:20 deploy_chaincode {1}
 @0:25 start_monitor {1}
-@0:30 start_creating_transactions
-@0:50 stop_creating_transactions
-@0:70 stop_monitor {1}
-@0:72 stop_network
-@0:90 stop
+@0:30 start_client
+@0:50 start_creating_transactions 60
+#@0:70 print_chain_info {3}
+@0:120 stop_monitor {1}
+@0:122 stop_network
+@0:140 stop
