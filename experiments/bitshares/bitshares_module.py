@@ -187,7 +187,7 @@ class BitsharesModule(BlockchainModule):
     @experiment_callback
     def transfer_asset_to_all_peers(self, asset_name):
         for peer_id in self.experiment.get_peers():
-            response = self.wallet_rpc.transfer("nathan", "user%d" % (int(peer_id) - 1), 100000, asset_name, "transferral", True)
+            response = self.wallet_rpc.transfer("nathan", "user%d" % (int(peer_id) - 1), 10000, asset_name, "transferral", True)
             print("Transferred %s assets to peer %d, response: %s" % (asset_name, int(peer_id), response))
 
     def post_order(self, order_type, spend_asset_name, receive_asset_name, price, amount):
