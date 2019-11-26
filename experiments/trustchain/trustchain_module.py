@@ -335,15 +335,16 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
         dest_peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
         self._logger.info("%s: Sending spend to: %s", self.my_id, dest_peer_id)
-        spend_value = random()
+        minters = set(nx.get_node_attributes(self.overlay.known_graph, 'minter').keys())
+        my_key = self.overlay.my_peer.public_key.key_to_bin()
+        is_minter = my_key in minters
+        spend_value = 20*random() if is_minter else random()
 
         val = self.overlay.prepare_spend_transaction(peer.public_key.key_to_bin(), spend_value,
                                                      from_peer=self.my_id, to_peer=dest_peer_id)
         if not val:
             # Cannot make a spend to the peer
-            minters = set(nx.get_node_attributes(self.overlay.known_graph, 'minter').keys())
-            my_key = self.overlay.my_peer.public_key.key_to_bin()
-            if os.getenv('ALL_MINT') or my_key in minters:
+            if os.getenv('ALL_MINT') or is_minter:
                 self._logger.info("Minting new tokens")
                 mint = self.overlay.prepare_mint_transaction()
                 self.overlay.self_sign_block(block_type=b'claim', transaction=mint)
