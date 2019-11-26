@@ -13,6 +13,7 @@ from gumby.modules.community_experiment_module import IPv8OverlayExperimentModul
 from gumby.modules.experiment_module import static_module
 from ipv8.attestation.trustchain.community import TrustChainCommunity
 from ipv8.attestation.trustchain.listener import BlockListener
+from ipv8.attestation.trustchain.settings import SecurityMode
 
 
 class FakeBlockListener(BlockListener):
@@ -97,6 +98,12 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self.set_fanout(os.getenv('IB_FANOUT'))
         if os.getenv('IB_SYNC_TIME'):
             self.set_sync_time(os.getenv('IB_SYNC_TIME'))
+        if os.getenv('IB_NUM_WIT'):
+            self.overlay.settings.com_size = int(os.getenv('IB_NUM_WIT'))
+        if os.getenv('IB_AUDIT_ON'):
+            self.overlay.settings.security_mode = SecurityMode.AUDIT
+        if os.getenv('IB_RISK'):
+            self.overlay.settings.risk = float(os.getenv('IB_RISK'))
 
     @experiment_callback
     def init_leader_trustchain(self):
