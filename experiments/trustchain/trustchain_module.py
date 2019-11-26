@@ -5,6 +5,7 @@ from binascii import hexlify
 from random import randint, random, choice
 from time import time
 
+import networkx as nx
 from twisted.internet.task import LoopingCall
 
 from gumby.experiment import experiment_callback
@@ -169,6 +170,16 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.request_signatures_lc.start(value)
 
     @experiment_callback
+    def start_noodle_community_transactions(self):
+        if os.getenv('TX_SEC'):
+            value = float(os.getenv('TX_SEC'))
+        else:
+            value = 0.001
+
+        self.request_signatures_lc = LoopingCall(self.request_noodle_community_signature)
+        self.request_signatures_lc.start(value)
+
+    @experiment_callback
     def start_direct_noodle_transactions(self):
         if os.getenv('TX_SEC'):
             value = float(os.getenv('TX_SEC'))
@@ -232,6 +243,15 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         """
         self.noodle_random_spend(choice(list(self.overlay.get_peers())),
                                  attached_block=attach_to_block)
+
+    def request_noodle_community_signature(self):
+        """
+        Request signature from peer that is either directly connected or is part of my community.
+        """
+        minters = set(self.overlay.get_peers())
+        peers = self.overlay.get_all_communities_peers()
+        peers.update(minters)
+        self.noodle_random_spend(choice(list(peers)))
 
     @experiment_callback
     def request_noodle_all_random_signature(self, attach_to_block=None):
@@ -311,9 +331,15 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         val = self.overlay.prepare_spend_transaction(peer.public_key.key_to_bin(), spend_value,
                                                      from_peer=self.my_id, to_peer=dest_peer_id)
         if not val:
-            self._logger.info("Minting new tokens ")
-            mint = self.overlay.prepare_mint_transaction()
-            self.overlay.self_sign_block(block_type=b'claim', transaction=mint)
+            # Cannot make a spend to the peer
+            minters = set(nx.get_node_attributes(self.overlay.known_graph, 'minter').keys())
+            my_key = self.overlay.my_peer.public_key.key_to_bin()
+            if my_key in minters:
+                self._logger.info("Minting new tokens")
+                mint = self.overlay.prepare_mint_transaction()
+                self.overlay.self_sign_block(block_type=b'claim', transaction=mint)
+            else:
+                self._logger.warning("No tokens to spend. Waiting for tokens")
         else:
             next_hop_peer, tx = val
             next_hop_peer_id = self.experiment.get_peer_id(next_hop_peer.address[0], next_hop_peer.address[1])

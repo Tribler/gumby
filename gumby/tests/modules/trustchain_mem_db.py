@@ -103,7 +103,7 @@ class TestMemDB(unittest.TestCase):
 
         # Test chain dumps
         self.db3 = TrustchainMemoryDatabase('q1', 'a1')
-        status = self.db2.get_peer_status(lid_claim)
+        status = self.db2.get_peer_status(claim.link_public_key)
 
         self.db3.dump_peer_status(lid_claim, status)
         c = self.db3.get_known_chains(pid_claim)

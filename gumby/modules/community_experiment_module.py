@@ -4,6 +4,7 @@ from os import environ
 from random import sample
 from socket import gethostbyname
 
+import networkx as nx
 from twisted.internet import reactor
 
 from gumby.experiment import experiment_callback
@@ -22,8 +23,6 @@ class IPv8OverlayExperimentModule(ExperimentModule):
     def __init__(self, experiment, community_class):
         super(IPv8OverlayExperimentModule, self).__init__(experiment)
         self.community_class = community_class
-        self.topology = None
-        self.inverted_map = None
         # To be sure that the module loading happens in the right order, this next line serves the dual purpose of
         # triggering the check for a loaded IPv8 provider
         self.ipv8_provider.ipv8_available.addCallback(self.on_ipv8_available)
@@ -32,6 +31,8 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             'EdgeWalk': EdgeWalk,
             'RandomChurn': RandomChurn
         }
+
+        self.inverted_map = None
 
     @property
     def ipv8_provider(self):
@@ -111,13 +112,31 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer))
 
     @experiment_callback
+    def introduce_community_topology(self):
+        """
+        Build a community around a one peer
+        """
+        num_com = 1
+        if os.getenv('NUM_COM'):
+            num_com = int(os.getenv('NUM_COM'))
+        # Choose random peers as minters
+        num_nodes = len(self.all_vars.keys())
+        minters = sample(self.all_vars.keys(), min(num_com, num_nodes))
+        # Work a graph where all peers are connected to minters
+        topology = nx.Graph()
+        for m in minters:
+            topology.add_node(m, minter=True)
+            for k in self.all_vars.keys():
+                if k != m:
+                    topology.add_edge(m, k)
+        self.build_network(topology)
+
+    @experiment_callback
     def introduce_to_bootstrap_peers(self):
         """
         Introduce to the bootstrap peers
         """
         # Choose bootstrap peers
-        delta = 2
-        import networkx as nx
         num_nodes = len(self.all_vars.keys())
         if os.getenv('AVG_DEG'):
             avg_degree = int(os.getenv('AVG_DEG'))
@@ -126,26 +145,36 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         self._logger.info("Average degree is %s and number of nodes is %s", avg_degree, num_nodes)
 
-        self.topology = nx.random_graphs.gnm_random_graph(num_nodes,
-                                                          num_nodes * avg_degree / 2, seed=42)
-        nx.relabel_nodes(self.topology, {k: k + 1 for k in range(num_nodes)}, copy=False)
-
+        topology = nx.random_graphs.gnm_random_graph(num_nodes,
+                                                     num_nodes * avg_degree / 2, seed=42)
+        nx.relabel_nodes(topology, {k: k + 1 for k in range(num_nodes)}, copy=False)
+        # Everyone can mint
+        bb = {k: True for k in topology.nodes()}
+        nx.set_node_attributes(topology, bb, 'minter')
         # 1. Everybody knows everyone
         # self.overlay.bootstrap_master = [self.experiment.get_peer_ip_port_by_id(k) for k in self.all_vars.keys()]
+        # Assume perfect knowledge of the world
+        self.build_network(topology)
+
+    def build_network(self, topology):
+        '''
+        Given a topology build a network
+        :return:
+        '''
         self.overlay.bootstrap_master = []
-        # 2. Perfect knowledge of 2-hop peers
-        for peer in self.topology.neighbors(int(self.my_id)):
+        # We create a perfect knowledge of 2-hop peers
+        for peer in topology.neighbors(int(self.my_id)):
             self.overlay.bootstrap_master.extend(
-                (self.experiment.get_peer_ip_port_by_id(k) for k in self.topology[peer]))
+                (self.experiment.get_peer_ip_port_by_id(k) for k in topology[peer]))
             val = self.experiment.get_peer_ip_port_by_id(peer)
             self._logger.info("Peer %s with value %s", peer, val)
-        # Assume perfect knowledge of the world
-        label_map = {int(k): b64decode(v['public_key']) for k, v in self.all_vars.items()}
-        self.inverted_map = {v:k for k, v in label_map.items()}
-        self.overlay.known_graph = nx.relabel_nodes(self.topology, label_map)
 
+        delta = 2
+        label_map = {int(k): b64decode(v['public_key']) for k, v in self.all_vars.items()}
+        self.inverted_map = {v: k for k, v in label_map.items()}
+        self.overlay.known_graph = nx.relabel_nodes(topology, label_map)
         # Register the introduction walk tasks with waves by 100
-        self.overlay.register_anonymous_task("intro_delay", reactor.callLater(delta*(self.my_id // 100),
+        self.overlay.register_anonymous_task("intro_delay", reactor.callLater(delta * (self.my_id // 100),
                                                                               self.recheck_connections))
 
     @experiment_callback

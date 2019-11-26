@@ -107,7 +107,8 @@ class TrustchainMemoryDatabase(object):
             self.work_graph.add_edge(id_from, id_to,
                                      total_spend=float(spend.transaction["total_spend"]),
                                      spend_num=spend.sequence_number)
-        else:
+        elif 'spend_num' not in self.work_graph[id_from][id_to] or \
+                self.work_graph[id_from][id_to]["spend_num"] < spend.sequence_number:
             self.work_graph[id_from][id_to]["spend_num"] = spend.sequence_number
 
     def add_claim(self, claim):
@@ -125,7 +126,8 @@ class TrustchainMemoryDatabase(object):
                                      spend_num=claim.link_sequence_number,
                                      claim_num=claim.sequence_number,
                                      claim_key=claim.public_key)
-        else:
+        elif 'claim_num' not in self.work_graph[id_from][id_to] or \
+                self.work_graph[id_from][id_to]["claim_num"] < claim.sequence_number:
             self.work_graph[id_from][id_to]["claim_num"] = claim.sequence_number
             self.work_graph[id_from][id_to]["claim_key"] = claim.public_key
 
@@ -182,7 +184,8 @@ class TrustchainMemoryDatabase(object):
             self.nonces[peer_id] = str(int(self.nonces[peer_id]) + 1)
         return self.nonces[peer_id]
 
-    def get_peer_status(self, peer_id):
+    def get_peer_status(self, public_key):
+        peer_id = self.key_to_id(public_key)
         status = {}
         if peer_id not in self.work_graph:
             return status
@@ -193,6 +196,7 @@ class TrustchainMemoryDatabase(object):
         status['claims'] = {}
         for v in self.work_graph.predecessors(peer_id):
             status['claims'][v] = self.get_total_pairwise_spends(v, peer_id)
+        status['seq_num'] = self.get_latest(public_key).sequence_number
         return status
 
     def get_total_claims(self, peer_id, only_verified=True):
@@ -214,6 +218,21 @@ class TrustchainMemoryDatabase(object):
     def get_known_chains(self, peer_id):
         return (k[0] for k in self.get_peer_chain(peer_id))
 
+    def add_peer_proofs(self, peer_id, seq_num, proofs):
+        if peer_id not in self.claim_proofs or self.claim_proofs[peer_id][0] < seq_num:
+            self.claim_proofs[peer_id] = (seq_num, proofs)
+
+    def get_peer_proofs(self, peer_id, seq_num):
+        if peer_id not in self.claim_proofs or seq_num > self.claim_proofs[peer_id][0]:
+            return None
+        return self.claim_proofs[peer_id]
+
+    def get_last_seq_num(self, peer_id):
+        if peer_id not in self.claim_proofs:
+            return 0
+        else:
+            return self.claim_proofs[peer_id][0]
+
     def dump_peer_status(self, peer_id, status):
         if 'spends' not in status or 'claims' not in status:
             # Status is illformed
@@ -222,12 +241,14 @@ class TrustchainMemoryDatabase(object):
         for (p, v) in status['spends'].items():
             self.work_graph.add_edge(peer_id, p,
                                      total_spend=float(v),
-                                     verified=True)
+                                     verified=True,
+                                     spend_num=status['seq_num'])
 
         for p, v in status['claims'].items():
             self.work_graph.add_edge(p, peer_id,
                                      total_spend=float(v),
-                                     verified=True)
+                                     verified=True,
+                                     claim_num=status['seq_num'])
         self.update_chain_dependency(peer_id)
         return True
 
