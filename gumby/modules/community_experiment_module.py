@@ -1,7 +1,7 @@
 import os
 from base64 import b64encode, b64decode
 from os import environ
-from random import sample
+from random import sample, seed
 from socket import gethostbyname
 
 import networkx as nx
@@ -121,6 +121,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             num_com = int(os.getenv('NUM_COM'))
         # Choose random peers as minters
         num_nodes = len(self.all_vars.keys())
+        seed(42)
         minters = sample(self.all_vars.keys(), min(num_com, num_nodes))
         # Work a graph where all peers are connected to minters
         topology = nx.Graph()
