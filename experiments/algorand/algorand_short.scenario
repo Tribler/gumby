@@ -3,12 +3,12 @@
 &module experiments.algorand.algorand_module.AlgorandModule
 
 @0:1 create_network {1}
-@0:38 init_config
-@0:41 start_algorand_node {1}
-@0:45 start_algorand_node {2-100}
-@0:140 start_client
-@0:150 start_creating_transactions
-@0:160 stop_creating_transactions
-@0:190 write_info
-@0:195 stop_algorand
-@0:200 stop
+@0:88 init_config
+@0:91 start_algorand_node {1}
+@0:95 start_algorand_node {2-100}
+@0:190 start_client
+@0:200 start_creating_transactions
+@0:220 stop_creating_transactions
+@0:240 write_info
+@0:245 stop_algorand
+@0:250 stop
