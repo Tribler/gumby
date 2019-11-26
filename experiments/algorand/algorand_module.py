@@ -17,6 +17,7 @@ from algosdk.wallet import Wallet
 
 from twisted.internet import reactor
 from twisted.internet.defer import fail
+from twisted.internet.task import deferLater
 from twisted.web import http
 from twisted.web.client import readBody, WebClientContextFactory, Agent
 from twisted.web.http_headers import Headers
@@ -200,8 +201,16 @@ class AlgorandModule(BlockchainModule):
         if self.is_client():
             return
 
-        self._logger.info("Starting Algorand node...")
         my_peer_id = self.experiment.scenario_runner._peernumber
+
+        def start_node(node_cmd):
+            self._logger.info("Starting Algorand node...")
+            self.node_process = subprocess.Popen([node_cmd], shell=True)
+
+            kmd_cmd = "/home/pouwelse/gocode/bin/goal kmd start -d %s" % self.get_data_dir(my_peer_id)
+            self.kmd_process = subprocess.Popen([kmd_cmd], shell=True)
+
+        self._logger.info("Starting Algorand node...")
         if my_peer_id == 1:
             cmd = "/home/pouwelse/gocode/bin/goal node start -d %s" % self.get_data_dir(my_peer_id)
         else:
@@ -209,10 +218,8 @@ class AlgorandModule(BlockchainModule):
             peer_str = "%s:13001" % ip
             cmd = "/home/pouwelse/gocode/bin/goal node start -d %s -p %s" % (self.get_data_dir(my_peer_id), peer_str)
 
-        self.node_process = subprocess.Popen([cmd], shell=True)
-
-        cmd = "/home/pouwelse/gocode/bin/goal kmd start -d %s" % self.get_data_dir(my_peer_id)
-        self.kmd_process = subprocess.Popen([cmd], shell=True)
+        # Wait a bit, depending on the node number
+        deferLater(reactor, (my_peer_id - 1) * 0.5, start_node, cmd)
 
     @experiment_callback
     def start_client(self):
