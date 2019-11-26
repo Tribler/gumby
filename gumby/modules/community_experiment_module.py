@@ -125,10 +125,10 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         # Work a graph where all peers are connected to minters
         topology = nx.Graph()
         for m in minters:
-            topology.add_node(m, minter=True)
+            topology.add_node(int(m), minter=True)
             for k in self.all_vars.keys():
                 if k != m:
-                    topology.add_edge(m, k)
+                    topology.add_edge(int(m), int(k))
         self.build_network(topology)
 
     @experiment_callback
