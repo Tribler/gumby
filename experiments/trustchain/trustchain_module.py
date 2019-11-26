@@ -341,7 +341,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             # Cannot make a spend to the peer
             minters = set(nx.get_node_attributes(self.overlay.known_graph, 'minter').keys())
             my_key = self.overlay.my_peer.public_key.key_to_bin()
-            if my_key in minters:
+            if os.getenv('ALL_MINT') or my_key in minters:
                 self._logger.info("Minting new tokens")
                 mint = self.overlay.prepare_mint_transaction()
                 self.overlay.self_sign_block(block_type=b'claim', transaction=mint)

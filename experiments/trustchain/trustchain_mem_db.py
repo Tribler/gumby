@@ -218,9 +218,9 @@ class TrustchainMemoryDatabase(object):
     def get_known_chains(self, peer_id):
         return (k[0] for k in self.get_peer_chain(peer_id))
 
-    def add_peer_proofs(self, peer_id, seq_num, proofs):
+    def add_peer_proofs(self, peer_id, seq_num, status, proofs):
         if peer_id not in self.claim_proofs or self.claim_proofs[peer_id][0] < seq_num:
-            self.claim_proofs[peer_id] = (seq_num, proofs)
+            self.claim_proofs[peer_id] = (seq_num, status, proofs)
 
     def get_peer_proofs(self, peer_id, seq_num):
         if peer_id not in self.claim_proofs or seq_num > self.claim_proofs[peer_id][0]:
