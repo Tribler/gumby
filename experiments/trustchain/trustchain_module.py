@@ -258,6 +258,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         minters = set(self.overlay.get_peers())
         peers = self.overlay.get_all_communities_peers()
         peers.update(minters)
+        self._logger.info("Choosing a peer from %s peers", len(peers))
         self.noodle_random_spend(choice(list(peers)))
 
     @experiment_callback
@@ -333,6 +334,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     def noodle_random_spend(self, peer, attached_block=None):
 
         dest_peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
+        self._logger.info("%s: Sending spend to: %s", self.my_id, dest_peer_id)
         spend_value = random()
 
         val = self.overlay.prepare_spend_transaction(peer.public_key.key_to_bin(), spend_value,
