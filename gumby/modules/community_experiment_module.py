@@ -175,7 +175,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             self._logger.info("Building own minter community ")
             self.overlay.init_minter_community()
 
-        delta = 2 * random.random()
+        delta = 2 * random()
         label_map = {int(k): b64decode(v['public_key']) for k, v in self.all_vars.items()}
         self.inverted_map = {v: k for k, v in label_map.items()}
         self.overlay.known_graph = nx.relabel_nodes(topology, label_map)
