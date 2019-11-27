@@ -7,8 +7,7 @@ import time
 from binascii import hexlify
 from threading import Thread
 
-import six
-
+import requests
 from algosdk import transaction
 from algosdk.algod import AlgodClient
 from algosdk.error import KMDHTTPError, AlgodHTTPError
@@ -16,44 +15,11 @@ from algosdk.kmd import KMDClient
 from algosdk.wallet import Wallet
 
 from twisted.internet import reactor
-from twisted.internet.defer import fail
 from twisted.internet.task import deferLater
-from twisted.web import http
-from twisted.web.client import readBody, WebClientContextFactory, Agent
-from twisted.web.http_headers import Headers
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
 from gumby.modules.experiment_module import static_module
-
-
-def http_request(uri, method, headers=None):
-    """
-    Performs a HTTP request
-    :param uri: The URL to perform a HTTP request to
-    :return: A deferred firing the body of the response.
-    :raises HttpError: When the HTTP response code is not OK (i.e. not the HTTP Code 200)
-    """
-    def _on_response(response):
-        if response.code == http.OK:
-            return readBody(response)
-        print(response.code)
-        raise Exception(response)
-
-    try:
-        uri = six.ensure_binary(uri)
-    except AttributeError:
-        pass
-    try:
-        contextFactory = WebClientContextFactory()
-        agent = Agent(reactor, contextFactory)
-        headers_dict = headers or {}
-        headers = Headers(headers_dict)
-        deferred = agent.request(method, uri, headers, None)
-        deferred.addCallback(_on_response)
-        return deferred
-    except:
-        return fail()
 
 
 @static_module
@@ -186,6 +152,7 @@ class AlgorandModule(BlockchainModule):
 
         # Generate and persist the algod/kmd REST tokens
         rest_token = self.get_rest_token(my_peer_id)
+        self.algod_token = rest_token
 
         with open(os.path.join(data_dir, "algod.token"), "w") as algod_token_file:
             algod_token_file.write(rest_token)
@@ -223,9 +190,6 @@ class AlgorandModule(BlockchainModule):
 
     @experiment_callback
     def start_client(self):
-        if not self.is_client():
-            return
-
         # Find out to which validator we should connect
         my_peer_id = self.experiment.scenario_runner._peernumber
         validator_peer_id = ((my_peer_id - 1) % self.num_validators) + 1
@@ -240,28 +204,6 @@ class AlgorandModule(BlockchainModule):
 
         # Start the kmd client
         self.kmd_client = KMDClient(rest_token, "http://%s:%d" % (host, 21000 + validator_peer_id))
-
-    def get_suggested_params(self):
-        """
-        Get the suggested tx parameters from algod.
-        """
-        def on_response(response):
-            return json.loads(response.decode('utf-8'))
-
-        my_peer_id = self.experiment.scenario_runner._peernumber
-        url = "http://127.0.0.1:%d/v1/transactions/params" % (18500 + my_peer_id)
-        return http_request(url, b"GET", headers={'X-Algo-API-Token': [self.algod_token]}).addCallback(on_response)
-
-    def get_wallets(self):
-        """
-        Get the wallets from the kmd daemon.
-        """
-        def on_response(response):
-            return json.loads(response.decode('utf-8'))
-
-        my_peer_id = self.experiment.scenario_runner._peernumber
-        url = "http://127.0.0.1:%d/v1/wallets" % (21000 + my_peer_id)
-        return http_request(url, b"GET", headers={'X-KMD-API-Token': [self.kmd_token]}).addCallback(on_response)
 
     @experiment_callback
     def transfer(self):
@@ -322,13 +264,15 @@ class AlgorandModule(BlockchainModule):
     def print_status(self):
         self._logger.info("Getting Algorand status...")
 
-        def on_response(response):
-            json_response = json.loads(response.decode('utf-8'))
-            print(json_response)
-
         my_peer_id = self.experiment.scenario_runner._peernumber
-        url = "http://127.0.0.1:%d/v1/status" % (18500 + my_peer_id)
-        http_request(url, b"GET", headers={'X-Algo-API-Token': [self.algod_token]}).addCallback(on_response)
+        validator_peer_id = ((my_peer_id - 1) % self.num_validators) + 1
+
+        self._logger.info("Starting Algorand client...")
+
+        rest_token = self.get_rest_token(validator_peer_id)
+        host, _ = self.experiment.get_peer_ip_port_by_id(validator_peer_id)
+        response = requests.get("http://%s:%d/metrics" % (host, 18500 + validator_peer_id), headers={"X-Algo-API-Token": rest_token})
+        print(response.text)
 
     @experiment_callback
     def write_info(self):

@@ -10,5 +10,6 @@
 @0:200 start_creating_transactions
 @0:220 stop_creating_transactions
 @0:240 write_info
+@0:240 print_status
 @0:245 stop_algorand
 @0:250 stop
