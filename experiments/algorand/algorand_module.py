@@ -213,6 +213,7 @@ class AlgorandModule(BlockchainModule):
         if not self.suggested_parameters:
             # get suggested parameters and fee
             self.suggested_parameters = self.algod_client.suggested_params()
+            self.suggested_parameters["fee"] = 1000  # start with 1000 fee
 
         gen = self.suggested_parameters["genesisID"]
         gh = self.suggested_parameters["genesishashb64"]
@@ -242,19 +243,24 @@ class AlgorandModule(BlockchainModule):
             self._logger.info("Receiver key: %s", self.receiver_key)
 
         def create_and_submit_tx():
-            txn = transaction.PaymentTxn(self.sender_key, 10000, last_round, last_round + 300, gh, self.receiver_key, 100000 + self.tx_counter, gen=gen, flat_fee=True)
+            txn = transaction.PaymentTxn(self.sender_key, fee, last_round, last_round + 300, gh, self.receiver_key, 100000 + self.tx_counter, gen=gen, flat_fee=True)
             signed = self.wallet.sign_transaction(txn)
             submit_time = int(round(time.time() * 1000))
             try:
+                self.tx_counter += 1
                 tx_id = self.algod_client.send_transaction(signed)
                 self.transactions[tx_id] = (submit_time, -1)
-                self.tx_counter += 1
-                self._logger.info("Submitted transaction with ID %s", tx_id)
+                self._logger.info("Submitted transaction with ID %s (fee: %d)", tx_id, fee)
             except AlgodHTTPError as e:
-                self._logger.error("Failed to submit transaction! %s", str(e))
+                msg = str(e)
+                self._logger.error("Failed to submit transaction! %s", msg)
 
-                # Update the fees
-                self.suggested_parameters = self.algod_client.suggested_params()
+                if "below threshold" in msg:
+                    parts = msg.split(" ")
+                    new_fee = int(int(parts[-7]) * 1.2)
+                    if new_fee <= 100000000:  # Surge pricing check
+                        self.suggested_parameters["fee"] = new_fee
+                        self._logger.info("Fixing fee to %d", self.suggested_parameters["fee"])
 
         t = Thread(target=create_and_submit_tx)
         t.daemon = True
