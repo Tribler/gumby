@@ -426,7 +426,7 @@ class HyperledgerModule(ExperimentModule):
 
         # Spawn the process
         script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tx_spawner.py")
-        cmd = "python %s network.json %d %d %d %d %f > spawner.out 2>&1" % (script_path, individual_tx_rate, self.num_clients, self.num_validators, my_peer_id, duration)
+        cmd = "python %s network.json %f %d %d %d %f > spawner.out 2>&1" % (script_path, individual_tx_rate, self.num_clients, self.num_validators, my_peer_id, duration)
         self.spawner = subprocess.Popen(cmd, shell=True)
 
     @experiment_callback
