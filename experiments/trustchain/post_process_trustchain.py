@@ -215,6 +215,8 @@ class TrustchainStatisticsParser(StatisticsParser):
                         if int(seq_num_tuple[1]) == 0 and 'first_create' not in tx_stats[tx_map_ind]:
                             # This is creation block
                             tx_stats[tx_map_ind]['first_create'] = time
+                            tx_stats[tx_map_ind]['creator'] = from_peer
+                            tx_stats[tx_map_ind]['partner'] = to_peer
                         elif int(seq_num_tuple[1]) != 0 and 'round_time' not in tx_stats[tx_map_ind]:
                             # The source peer sees the claim confirmation
                             tx_stats[tx_map_ind]['round_time'] = time
@@ -237,6 +239,23 @@ class TrustchainStatisticsParser(StatisticsParser):
                             tx_stats[tx_map_ind]['last_time'] = time
         if self.do_cleanup:
             os.remove(f_name)
+
+        tx_latencies = os.path.join(prefix, "tx_latencies.csv")
+        with open(tx_latencies, "w") as t_file:
+            writer = csv.DictWriter(t_file, ['peer_id', 'tx_id', 'submit_time', 'confirm_time', 'latency', 'part_id'])
+            writer.writeheader()
+            # Write file with transaction submit and confirm times
+            tx_index = 1
+            for tx_id in tx_stats:
+                created = int(1000 * tx_stats[tx_id]['first_create'])
+                round = int(1000 * tx_stats[tx_id]['round_time']) if 'round_time' in tx_stats[tx_id] else -1
+                latency = round - created if round > 0 else -1
+                peer_id = tx_stats[tx_id]['creator']
+                part_id = tx_stats[tx_id]['partner']
+                writer.writerow(
+                                {"peer_id": peer_id, 'tx_id': tx_index, 'submit_time': created,
+                                 'confirm_time': round, 'latency': latency, 'part_id': part_id})
+                tx_index += 1
 
         import math
         import statistics as np
