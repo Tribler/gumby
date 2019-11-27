@@ -1,7 +1,7 @@
 import os
 from base64 import b64encode, b64decode
 from os import environ
-from random import sample, seed
+from random import sample, seed, random
 from socket import gethostbyname
 
 import networkx as nx
@@ -170,7 +170,12 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             val = self.experiment.get_peer_ip_port_by_id(peer)
             self._logger.info("Peer %s with value %s", peer, val)
 
-        delta = 2
+        known_minters = set(nx.get_node_attributes(topology, 'minter').keys())
+        if self.my_id in known_minters:
+            self._logger.info("Building own minter community ")
+            self.overlay.init_minter_community()
+
+        delta = 2 * random.random()
         label_map = {int(k): b64decode(v['public_key']) for k, v in self.all_vars.items()}
         self.inverted_map = {v: k for k, v in label_map.items()}
         self.overlay.known_graph = nx.relabel_nodes(topology, label_map)
