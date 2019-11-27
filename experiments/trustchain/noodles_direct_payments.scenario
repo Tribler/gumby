@@ -13,9 +13,10 @@
 @0:120 annotate start-sharing-transactions
 @0:120 start_direct_noodle_transactions
 @0:121 start_periodic_mem_flush
-@0:180 stop_requesting_signatures
-@0:210 commit_block_times
-@0:215 write_overlay_statistics
-@0:220 write_trustchain_statistics
-@0:230 stop_session
-@0:250 stop
+@0:300 stop_requesting_signatures
+@0:300 annotate stop-sharing-transactions
+@0:330 commit_block_times
+@0:335 write_overlay_statistics
+@0:340 write_trustchain_statistics
+@0:350 stop_session
+@0:370 stop
