@@ -7,6 +7,7 @@ import os
 import sys
 
 from gumby.statsparser import StatisticsParser
+import matplotlib.pyplot as plt
 
 from Tribler.Core.Utilities.unicode import hexlify
 
@@ -141,6 +142,53 @@ class TrustchainStatisticsParser(StatisticsParser):
                     balance = total_up - total_down
                     balances_file.write('%s,%d,%d,%d\n' % (peer_nr, total_up, total_down, balance))
 
+    def draw_latency_dist(self):
+        prefix = os.path.join(os.environ['PROJECT_DIR'], 'output')
+        f_name = os.path.join(prefix, "tx_latencies.csv")
+        first = True
+        input_workload = []
+        output_workload = []
+        latencies = []
+        max_val = (3 * 60) * 1000 + 10
+
+        with open(f_name, 'r') as f:
+            for line in f.readlines():
+                if first:
+                    first = False
+                    continue
+                row = line.split(',')
+                input_workload.append(int(row[2]))
+                output_workload.append(int(row[3]) if int(row[3]) != -1 else max_val)
+                latencies.append(int(row[4]) if int(row[4]) != -1 else max_val)
+
+        fig = plt.figure(3, figsize=(15, 8))
+        num_bins = 50
+        n, bins, patches = plt.hist(latencies, num_bins, facecolor='blue', alpha=0.5)
+        plt.ylabel('Number of transactions')
+        plt.xlabel('Latency (ms)')
+        plt.title("Latency distribution")
+        title = "lat_dist"
+        fig.savefig(os.path.join(prefix, title+".png"))
+        fig.clf()
+
+        # Create Input/Output latency dist
+        fig = plt.figure(3, figsize=(15, 8))
+        title = "in_out_dist"
+        plt.title("Input/Output workloads " + title)
+        plt.ylabel('Number of transactions')
+        plt.xlabel('Time (ms)')
+        x_points = sorted(input_workload)
+        y_points = range(1, len(input_workload) + 1)
+        plt.scatter(x_points, y_points, s=0.01)
+        x_points = sorted(output_workload)
+        y_points = range(1, len(output_workload) + 1)
+        plt.scatter(x_points, y_points, s=0.01)
+        delta = len(input_workload) / (3 * 60 * 1000)
+        x_points = [i / delta for i in range(1, len(input_workload) + 1)]
+        y_points = range(1, len(input_workload) + 1)
+        plt.scatter(x_points, y_points, s=0.0001)
+        fig.savefig(os.path.join(prefix, title + ".png"))
+
     def write_perf_results(self):
         import ast
         import csv
@@ -256,6 +304,8 @@ class TrustchainStatisticsParser(StatisticsParser):
                                 {"peer_id": peer_id, 'tx_id': tx_index, 'submit_time': created,
                                  'confirm_time': round, 'latency': latency, 'part_id': part_id})
                 tx_index += 1
+
+        self.draw_latency_dist()
 
         import math
         import statistics as np
