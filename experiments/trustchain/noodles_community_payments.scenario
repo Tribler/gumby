@@ -12,7 +12,7 @@
 @0:12 introduce_community_topology
 @0:100 recheck_connections
 @0:120 annotate start-sharing-transactions
-@0:120 start_noodle_community_transactions
+@0:120 start_creating_transactions
 @0:121 start_periodic_mem_flush
 @0:300 stop_requesting_signatures
 @0:300 annotate stop-sharing-transactions

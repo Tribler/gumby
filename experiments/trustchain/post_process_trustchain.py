@@ -54,8 +54,8 @@ class TrustchainStatisticsParser(BlockchainTransactionsParser):
                             block_type = row[2]
                             from_seq_num = int(row[3])
                             to_seq_num = int(row[4])
-                            from_peer_id = int(row[5])
-                            to_peer_id = int(row[6])
+                            from_peer_id = row[5]
+                            to_peer_id = row[6]
 
                             writer.writerow({
                                 "time": block_time,
@@ -71,17 +71,17 @@ class TrustchainStatisticsParser(BlockchainTransactionsParser):
                             if block_type == "spend" or block_type == "claim":
                                 tx_id = "%s.%s.%d" % (from_peer_id, to_peer_id, from_seq_num)
                                 if block_type == "spend":
-                                    if tx_id in tx_info:
-                                        # Update the submit time
-                                        tx_info[tx_id][0] = block_time
-                                    else:
-                                        tx_info[tx_id] = (block_time, -1)
+                                    if tx_id not in tx_info:
+                                        tx_info[tx_id] = [-1, -1]
+
+                                    # Update the submit time
+                                    tx_info[tx_id][0] = block_time - self.avg_start_time
                                 elif block_type == "claim":
-                                    if tx_id in tx_info:
-                                        # Update the confirm time
-                                        tx_info[tx_id][1] = block_time
-                                    else:
-                                        tx_info[tx_id] = (-1, block_time)
+                                    if tx_id not in tx_info:
+                                        tx_info[tx_id] = [-1, -1]
+
+                                    # Update the confirm time
+                                    tx_info[tx_id][1] = block_time - self.avg_start_time
 
             for tx_id, individual_tx_info in tx_info.items():
                 tx_latency = -1
@@ -310,9 +310,9 @@ class TrustchainStatisticsParser(BlockchainTransactionsParser):
             w_file.write("Total planned experiment time: %f\n" % total_run)
             w_file.write("\n")
 
-            if os.getenv('TX_SEC'):
-                value = 1 / float(os.getenv('TX_SEC'))
-                w_file.write("System transaction rate: %d\n" % (len(peer_counts) * value))
+            if os.getenv('TX_RATE'):
+                tx_rate = int(os.getenv('TX_RATE'))
+                w_file.write("System transaction rate: %d\n" % tx_rate)
             if os.getenv('IB_FANOUT'):
                 value = int(os.getenv('IB_FANOUT'))
                 w_file.write("Peer fanout: %d\n" % value)

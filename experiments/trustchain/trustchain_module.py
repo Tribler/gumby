@@ -1,12 +1,13 @@
 import csv
 import json
 import os
+import time
 from binascii import hexlify
 from random import randint, random, choice
-from time import time
 
 import networkx as nx
-from twisted.internet.task import LoopingCall
+from twisted.internet import reactor
+from twisted.internet.task import LoopingCall, deferLater
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
@@ -55,6 +56,13 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.num_blocks_in_db_lc = None
         self.block_stat_file = None
         self.request_ds_lc = None
+        self.did_write_start_time = False
+        self.tx_lc = None
+
+        if os.getenv('TX_RATE'):
+            self.tx_rate = int(os.getenv('TX_RATE'))
+        else:
+            self.tx_rate = 64
 
     def on_ipv8_available(self, _):
         # Disable threadpool messages
@@ -176,14 +184,34 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.request_signatures_lc.start(value)
 
     @experiment_callback
-    def start_noodle_community_transactions(self):
-        if os.getenv('TX_SEC'):
-            value = float(os.getenv('TX_SEC'))
-        else:
-            value = 0.001
+    def start_creating_transactions(self):
+        if not self.did_write_start_time:
+            # Write the start time to a file
+            submit_tx_start_time = int(round(time.time() * 1000))
+            with open("submit_tx_start_time.txt", "w") as out_file:
+                out_file.write("%d" % submit_tx_start_time)
+            self.did_write_start_time = True
 
-        self.request_signatures_lc = LoopingCall(self.request_noodle_community_signature)
-        self.request_signatures_lc.start(value)
+        self._logger.info("Starting transactions...")
+        total_peers = len(self.all_vars.keys())
+        self.tx_lc = LoopingCall(self.request_noodle_community_signature)
+
+        # Depending on the tx rate and number of clients, wait a bit
+        individual_tx_rate = int(self.tx_rate) / total_peers
+        self._logger.info("Individual tx rate: %f" % individual_tx_rate)
+
+        def start_lc():
+            self._logger.info("Starting tx lc...")
+            self.tx_lc.start(1.0 / individual_tx_rate)
+
+        my_peer_id = self.experiment.scenario_runner._peernumber
+        deferLater(reactor, (1.0 / total_peers) * (my_peer_id - 1), start_lc)
+
+    @experiment_callback
+    def stop_creating_transactions(self):
+        self._logger.info("Stopping transactions...")
+        self.tx_lc.stop()
+        self.tx_lc = None
 
     @experiment_callback
     def start_direct_noodle_transactions(self):
