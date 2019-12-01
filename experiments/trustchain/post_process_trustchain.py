@@ -7,6 +7,7 @@ import json
 import os
 import sys
 
+from gumby.post_process_blockchain import BlockchainTransactionsParser
 from gumby.statsparser import StatisticsParser
 
 from Tribler.Core.Utilities.unicode import hexlify
@@ -14,7 +15,7 @@ from Tribler.Core.Utilities.unicode import hexlify
 from scripts.trustchain_database_reader import GumbyDatabaseAggregator
 
 
-class TrustchainStatisticsParser(StatisticsParser):
+class TrustchainStatisticsParser(BlockchainTransactionsParser):
     """
     Parse TrustChain statistics after an experiment has been completed.
     """
@@ -30,10 +31,16 @@ class TrustchainStatisticsParser(StatisticsParser):
 
         self.aggregator.combine_databases()
 
-    def aggregate_transactions(self):
-        with open("transactions.csv", "w") as t_file:
-            writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', 'seq_num', 'peer_ids', 'seen_by'])
+    def parse_transactions(self):
+        """
+        Parse all transactions, based on the info in the blocks.
+        """
+        tx_info = {}  # Keep track of the submit time and confirmation times for each transaction we see.
+
+        with open("blocks.csv", "w") as blocks_file:
+            writer = csv.DictWriter(blocks_file, ['time', 'type', 'from_seq_num', 'to_seq_num', 'from_peer_id', 'to_peer_id', 'seen_by', 'transaction'])
             writer.writeheader()
+
             for peer_nr, filename, dir in self.yield_files('blocks.csv'):
                 with open(filename) as read_file:
                     csv_reader = csv.reader(read_file)
@@ -42,12 +49,45 @@ class TrustchainStatisticsParser(StatisticsParser):
                         if first:
                             first = False
                         else:
-                            type_val = row[2]
-                            seq_num = (row[3], row[4])
-                            peer_ids = (row[5], row[6])
-                            writer.writerow(
-                                {"time": row[0], 'transaction': row[1], 'type': type_val,
-                                 'seq_num': seq_num, 'peer_ids': peer_ids, 'seen_by': peer_nr})
+                            block_time = int(row[0])
+                            transaction = row[1]
+                            block_type = row[2]
+                            from_seq_num = int(row[3])
+                            to_seq_num = int(row[4])
+                            from_peer_id = int(row[5])
+                            to_peer_id = int(row[6])
+
+                            writer.writerow({
+                                "time": block_time,
+                                'type': block_type,
+                                'from_seq_num': from_seq_num,
+                                'to_seq_num': to_seq_num,
+                                'from_peer_id': from_peer_id,
+                                'to_peer_id': to_peer_id,
+                                'seen_by': peer_nr,
+                                'transaction': transaction
+                            })
+
+                            if block_type == "spend" or block_type == "claim":
+                                tx_id = "%s.%s.%d" % (from_peer_id, to_peer_id, from_seq_num)
+                                if block_type == "spend":
+                                    if tx_id in tx_info:
+                                        # Update the submit time
+                                        tx_info[tx_id][0] = block_time
+                                    else:
+                                        tx_info[tx_id] = (block_time, -1)
+                                elif block_type == "claim":
+                                    if tx_id in tx_info:
+                                        # Update the confirm time
+                                        tx_info[tx_id][1] = block_time
+                                    else:
+                                        tx_info[tx_id] = (-1, block_time)
+
+            for tx_id, individual_tx_info in tx_info.items():
+                tx_latency = -1
+                if individual_tx_info[0] != -1 and individual_tx_info[1] != -1:
+                    tx_latency = individual_tx_info[1] - individual_tx_info[0]
+                self.transactions.append((1, tx_id, individual_tx_info[0], individual_tx_info[1], tx_latency))
 
     def write_blocks_to_file(self):
         # First, determine the experiment start time
@@ -119,17 +159,6 @@ class TrustchainStatisticsParser(StatisticsParser):
             trustchain_interactions_file.write("peer_a,peer_b\n")
             for peer_a, peer_b in interactions:
                 trustchain_interactions_file.write("%d,%d\n" % (peer_a, peer_b))
-
-    def aggregate_trustchain_balances(self):
-        with open('trustchain_balances.csv', 'w') as balances_file:
-            balances_file.write('peer,total_up,total_down,balance\n')
-            for peer_nr, filename, dir in self.yield_files('trustchain.txt'):
-                with open(filename) as tc_file:
-                    tc_json = json.loads(tc_file.read())
-                    total_up = tc_json['total_up']
-                    total_down = tc_json['total_down']
-                    balance = total_up - total_down
-                    balances_file.write('%s,%d,%d,%d\n' % (peer_nr, total_up, total_down, balance))
 
     def write_perf_results(self):
         peer_counts = {}
@@ -345,11 +374,10 @@ class TrustchainStatisticsParser(StatisticsParser):
             w_file.write("Failed transactions/ Not seen by the source: %d\n" % failed)
 
     def run(self):
-        self.aggregate_transactions()
+        self.parse()
         self.write_perf_results()
         self.aggregate_databases()
         self.write_blocks_to_file()
-        self.aggregate_trustchain_balances()
 
 
 if __name__ == "__main__":
