@@ -52,7 +52,10 @@ class BlockchainTransactionsParser(StatisticsParser):
                 avg_latency += transaction[4]
                 num_comfirmed += 1
 
-        self.avg_latency = avg_latency / num_comfirmed
+        if num_comfirmed == 0:
+            self.avg_latency = -1
+        else:
+            self.avg_latency = avg_latency / num_comfirmed
 
     def compute_tx_cumulative_stats(self):
         """
