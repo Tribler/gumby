@@ -69,14 +69,15 @@ class TrustchainStatisticsParser(BlockchainTransactionsParser):
                             })
 
                             if block_type == "spend" or block_type == "claim":
-                                tx_id = "%s.%s.%d" % (from_peer_id, to_peer_id, from_seq_num)
                                 if block_type == "spend":
+                                    tx_id = "%s.%s.%d" % (from_peer_id, to_peer_id, from_seq_num)
                                     if tx_id not in tx_info:
                                         tx_info[tx_id] = [-1, -1]
 
                                     # Update the submit time
                                     tx_info[tx_id][0] = block_time - self.avg_start_time
                                 elif block_type == "claim":
+                                    tx_id = "%s.%s.%d" % (to_peer_id, from_peer_id, to_seq_num)
                                     if tx_id not in tx_info:
                                         tx_info[tx_id] = [-1, -1]
 
@@ -171,7 +172,7 @@ class TrustchainStatisticsParser(BlockchainTransactionsParser):
         # time,transaction,type,seq_num,seen_by
 
         index = 0
-        with open("transactions.csv") as read_file:
+        with open("transactions.txt") as read_file:
             csv_reader = csv.reader(read_file)
             first = True
             for row in csv_reader:

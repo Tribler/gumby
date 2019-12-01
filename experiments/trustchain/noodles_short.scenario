@@ -10,11 +10,9 @@
 @0:9 disable_max_peers
 @0:10 set_validation_range 5
 @0:12 introduce_community_topology
-@0:20 annotate start-transactions
 @0:20 start_creating_transactions
 @0:21 start_periodic_mem_flush
 @0:30 stop_creating_transactions
-@0:30 annotate stop-transactions
 @0:35 commit_block_times
 @0:40 write_overlay_statistics
 @0:50 stop_session
