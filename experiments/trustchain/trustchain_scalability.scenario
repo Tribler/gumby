@@ -3,7 +3,7 @@
 
 @0:1 isolate_ipv8_overlay TrustChainCommunity
 @0:2 start_session
-@0:5 init_leader_trustchain {1}
+@0:5 init_block_writer {1}
 @0:5 init_trustchain {!1}
 @0:9 disable_max_peers {1}
 @0:10 introduce_one_peer 1 {!1}

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
+import ast
 import csv
 import json
 import os
@@ -21,9 +22,6 @@ class TrustchainStatisticsParser(StatisticsParser):
     def __init__(self, node_directory):
         super(TrustchainStatisticsParser, self).__init__(node_directory)
         self.aggregator = GumbyDatabaseAggregator(os.path.join(os.environ['PROJECT_DIR'], 'output'))
-        self.do_cleanup = False
-        if os.getenv('CLEAN_UP'):
-            self.do_cleanup = bool(os.getenv('CLEAN_UP'))
 
     def aggregate_databases(self):
         aggregation_path = os.path.join(os.environ['PROJECT_DIR'], 'output', 'sqlite')
@@ -33,16 +31,11 @@ class TrustchainStatisticsParser(StatisticsParser):
         self.aggregator.combine_databases()
 
     def aggregate_transactions(self):
-        prefix = os.path.join(os.environ['PROJECT_DIR'], 'output')
-        postfix = 'leader_blocks_time_'
-        index = 1
-
-        block_stat_file = os.path.join(prefix, postfix + "agg.csv")
-        with open(block_stat_file, "w") as t_file:
+        with open("transactions.csv", "w") as t_file:
             writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', 'seq_num', 'peer_ids', 'seen_by'])
             writer.writeheader()
-            while os.path.exists(os.path.join(prefix, postfix + str(index) + '.csv')):
-                with open(os.path.join(prefix, postfix + str(index) + '.csv')) as read_file:
+            for peer_nr, filename, dir in self.yield_files('blocks.csv'):
+                with open(filename) as read_file:
                     csv_reader = csv.reader(read_file)
                     first = True
                     for row in csv_reader:
@@ -54,10 +47,7 @@ class TrustchainStatisticsParser(StatisticsParser):
                             peer_ids = (row[5], row[6])
                             writer.writerow(
                                 {"time": row[0], 'transaction': row[1], 'type': type_val,
-                                 'seq_num': seq_num, 'peer_ids': peer_ids, 'seen_by': index})
-                if self.do_cleanup:
-                    os.remove(os.path.join(prefix, postfix + str(index) + '.csv'))
-                index += 1
+                                 'seq_num': seq_num, 'peer_ids': peer_ids, 'seen_by': peer_nr})
 
     def write_blocks_to_file(self):
         # First, determine the experiment start time
@@ -142,12 +132,6 @@ class TrustchainStatisticsParser(StatisticsParser):
                     balances_file.write('%s,%d,%d,%d\n' % (peer_nr, total_up, total_down, balance))
 
     def write_perf_results(self):
-        import ast
-        import csv
-
-        prefix = os.path.join(os.environ['PROJECT_DIR'], 'output')
-        postfix = 'leader_blocks_time_'
-        f_name = os.path.join(prefix, postfix + "agg.csv")
         peer_counts = {}
         tx_ops = dict()
         tx_stats = dict()
@@ -158,7 +142,7 @@ class TrustchainStatisticsParser(StatisticsParser):
         # time,transaction,type,seq_num,seen_by
 
         index = 0
-        with open(f_name) as read_file:
+        with open("transactions.csv") as read_file:
             csv_reader = csv.reader(read_file)
             first = True
             for row in csv_reader:
@@ -237,11 +221,8 @@ class TrustchainStatisticsParser(StatisticsParser):
                             seen_by_map[tx_map_ind] = {seen_by}
                         elif seen_by not in seen_by_map[tx_map_ind] and tx_stats[tx_map_ind]['last_time'] < time:
                             tx_stats[tx_map_ind]['last_time'] = time
-        if self.do_cleanup:
-            os.remove(f_name)
 
-        tx_latencies = os.path.join(prefix, "tx_latencies.csv")
-        with open(tx_latencies, "w") as t_file:
+        with open("tx_latencies.csv", "w") as t_file:
             writer = csv.DictWriter(t_file, ['peer_id', 'tx_id', 'submit_time', 'confirm_time', 'latency', 'part_id'])
             writer.writeheader()
             # Write file with transaction submit and confirm times
@@ -293,8 +274,7 @@ class TrustchainStatisticsParser(StatisticsParser):
         thrg = {x: y for x, y in throughput.items() if y and x < total_run+1}
 
         # Write performance results in a file
-        res_file = os.path.join(prefix, "perf_results.txt")
-        with open(res_file, 'w') as w_file:
+        with open("perf_results.txt", 'w') as w_file:
             w_file.write("Total txs: %d\n" % len(tx_stats))
             w_file.write("Number of peers: %d\n" % len(peer_counts))
             w_file.write("Total experiment time: %f\n" % (max_time - min_time))

@@ -106,10 +106,9 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             self.overlay.settings.risk = float(os.getenv('IB_RISK'))
 
     @experiment_callback
-    def init_leader_trustchain(self):
+    def init_block_writer(self):
         # Open projects output directory and save blocks arrival time
-        self.block_stat_file = os.path.join(os.environ['PROJECT_DIR'], 'output', 'leader_blocks_time_'
-                                            + str(self.my_id) + '.csv')
+        self.block_stat_file = 'blocks.csv'
         with open(self.block_stat_file, "w") as t_file:
             writer = csv.DictWriter(t_file, ['time', 'transaction', 'type', "seq_num", "link", 'from_id', 'to_id'])
             writer.writeheader()
