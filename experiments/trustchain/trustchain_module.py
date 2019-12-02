@@ -221,8 +221,10 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
         self._logger.info("Sending initial value to all peers...")
 
-        for peer in self.overlay.get_all_communities_peers():
-            self.transfer(peer, 1000)
+        peers = self.overlay.get_all_communities_peers()
+        for peer in peers:
+            delay = (1.0 / len(peers)) * int(self.experiment.get_peer_id(peer.address[0], peer.address[1]))
+            deferLater(reactor, delay, self.transfer, peer, 1000)
 
     @experiment_callback
     def start_creating_transactions(self):
