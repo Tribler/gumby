@@ -366,8 +366,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         is_minter = my_key in minters
         spend_value = random()
 
-        val = self.overlay.prepare_spend_transaction(peer.public_key.key_to_bin(), spend_value,
-                                                     from_peer=self.my_id, to_peer=dest_peer_id)
+        val = self.overlay.prepare_spend_transaction(peer.public_key.key_to_bin(), spend_value)
         if not val:
             # No sufficient balance -> mint
             if is_minter:
