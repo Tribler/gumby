@@ -116,17 +116,14 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         """
         Build a community around a one peer
         """
-        num_com = 1
-        if os.getenv('NUM_COM'):
-            num_com = int(os.getenv('NUM_COM'))
-
-        num_nodes = len(self.all_vars.keys())
-        if os.getenv("ALL_MINT"):
-            num_com = num_nodes
+        num_minters = 1
+        if os.getenv('NUM_MINTERS'):
+            num_minters = int(os.getenv('NUM_MINTERS'))
 
         # Choose random peers as minters
         seed(42)
-        minters = sample(self.all_vars.keys(), min(num_com, num_nodes))
+        num_nodes = len(self.all_vars.keys())
+        minters = sample(self.all_vars.keys(), min(num_minters, num_nodes))
         # Work a graph where all peers are connected to minters
         topology = nx.Graph()
         for m in minters:
