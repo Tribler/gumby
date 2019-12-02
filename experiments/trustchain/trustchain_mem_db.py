@@ -92,11 +92,9 @@ class TrustchainMemoryDatabase(object):
             self.add_claim(block)
         self.block_time[(block.public_key, block.sequence_number)] = int(round(time.time() * 1000))
 
-    def update_total_spend(self, peer_id):
+    def update_balance(self, peer_id):
         self.total_spend_sum[peer_id] = sum(self.work_graph[peer_id][k]["total_spend"] for k in self.work_graph.successors(peer_id))
-
-    def update_total_claim(self, peer_id):
-        self.total_claim_sum[peer_id] = sum(self.work_graph[k][peer_id]['total_spend'] for k in self.work_graph.predecessors(peer_id))
+        self.total_claim_sum[peer_id] = sum(self.work_graph[k][peer_id]["total_spend"] for k in self.work_graph.predecessors(peer_id))
 
     def add_spend(self, spend):
         pk = spend.public_key
@@ -110,7 +108,8 @@ class TrustchainMemoryDatabase(object):
             self.work_graph.add_edge(id_from, id_to,
                                      total_spend=float(spend.transaction["total_spend"]),
                                      spend_num=spend.sequence_number)
-            self.update_total_spend(id_from)
+            self.update_balance(id_from)
+            self.update_balance(id_to)
         elif 'spend_num' not in self.work_graph[id_from][id_to] or \
                 self.work_graph[id_from][id_to]["spend_num"] < spend.sequence_number:
             self.work_graph[id_from][id_to]["spend_num"] = spend.sequence_number
@@ -130,8 +129,8 @@ class TrustchainMemoryDatabase(object):
                                      spend_num=claim.link_sequence_number,
                                      claim_num=claim.sequence_number,
                                      claim_key=claim.public_key)
-            self.update_total_claim(id_from)
-            self.update_total_spend(id_to)
+            self.update_balance(id_from)
+            self.update_balance(id_to)
         elif 'claim_num' not in self.work_graph[id_from][id_to] or \
                 self.work_graph[id_from][id_to]["claim_num"] < claim.sequence_number:
             self.work_graph[id_from][id_to]["claim_num"] = claim.sequence_number
@@ -246,14 +245,15 @@ class TrustchainMemoryDatabase(object):
                                      total_spend=float(v),
                                      verified=True,
                                      spend_num=status['seq_num'])
-            self.update_total_spend(peer_id)
+            self.update_balance(p)
 
         for p, v in status['claims'].items():
             self.work_graph.add_edge(p, peer_id,
                                      total_spend=float(v),
                                      verified=True,
                                      claim_num=status['seq_num'])
-            self.update_total_claim(peer_id)
+            self.update_balance(p)
+        self.update_balance(peer_id)
         self.update_chain_dependency(peer_id)
         return True
 
