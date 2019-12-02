@@ -314,8 +314,8 @@ class TrustchainStatisticsParser(BlockchainTransactionsParser):
             if os.getenv('TX_RATE'):
                 tx_rate = int(os.getenv('TX_RATE'))
                 w_file.write("System transaction rate: %d\n" % tx_rate)
-            if os.getenv('IB_FANOUT'):
-                value = int(os.getenv('IB_FANOUT'))
+            if os.getenv('FANOUT'):
+                value = int(os.getenv('FANOUT'))
                 w_file.write("Peer fanout: %d\n" % value)
 
             w_file.write("Peak throughput: %d\n" % max(thrg.values()))

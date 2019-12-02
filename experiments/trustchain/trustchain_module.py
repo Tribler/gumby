@@ -69,6 +69,23 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.overlay._use_main_thread = True
 
     @experiment_callback
+    def init_trustchain_settings(self):
+        self._logger.info("Setting id to %s", self.my_id)
+        self.overlay.settings.my_id = self.my_id
+        if os.getenv('TTL'):
+            self.set_ttl(os.getenv('TTL'))
+        if os.getenv('FANOUT'):
+            self.set_fanout(os.getenv('FANOUT'))
+        if os.getenv('SYNC_TIME'):
+            self.set_sync_time(os.getenv('SYNC_TIME'))
+        if os.getenv('NUM_WIT'):
+            self.overlay.settings.com_size = int(os.getenv('NUM_WIT'))
+        if os.getenv('AUDIT_ON'):
+            self.overlay.settings.security_mode = SecurityMode.AUDIT
+        if os.getenv('RISK'):
+            self.overlay.settings.risk = float(os.getenv('RISK'))
+
+    @experiment_callback
     def turn_off_broadcast(self):
         self.overlay.settings.broadcast_blocks = False
 
@@ -98,20 +115,6 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     @experiment_callback
     def turn_informed_broadcast(self):
         self.overlay.settings.use_informed_broadcast = True
-        self._logger.info("Setting id to %s", self.my_id)
-        self.overlay.settings.my_id = self.my_id
-        if os.getenv('IB_TTL'):
-            self.set_ttl(os.getenv('IB_TTL'))
-        if os.getenv('IB_FANOUT'):
-            self.set_fanout(os.getenv('IB_FANOUT'))
-        if os.getenv('IB_SYNC_TIME'):
-            self.set_sync_time(os.getenv('IB_SYNC_TIME'))
-        if os.getenv('IB_NUM_WIT'):
-            self.overlay.settings.com_size = int(os.getenv('IB_NUM_WIT'))
-        if os.getenv('IB_AUDIT_ON'):
-            self.overlay.settings.security_mode = SecurityMode.AUDIT
-        if os.getenv('IB_RISK'):
-            self.overlay.settings.risk = float(os.getenv('IB_RISK'))
 
     @experiment_callback
     def init_block_writer(self):
