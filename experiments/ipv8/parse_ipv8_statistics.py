@@ -162,6 +162,10 @@ class IPv8StatisticsParser(StatisticsParser):
                     tuple_dict = annotation_dict.get(message, {})
                     tuple_dict[extracted[1]] = extracted[0]
                     annotation_dict[message] = tuple_dict
+
+        if not annotation_dict:
+            return
+
         with open(os.path.join(self.node_directory, "annotations.txt"), "w+") as h_annotations:
             h_annotations.write("annotation %s\n" % " ".join(map(str, sorted(peer_set))))
             for message, packed_values in annotation_dict.items():
