@@ -285,7 +285,6 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         minters = set(self.overlay.get_peers())
         peers = self.overlay.get_all_communities_peers()
         peers.update(minters)
-        self._logger.info("Choosing a peer from %s peers", len(peers))
         self.noodle_random_spend(choice(list(peers)))
 
     @experiment_callback
@@ -365,13 +364,13 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         minters = set(nx.get_node_attributes(self.overlay.known_graph, 'minter').keys())
         my_key = self.overlay.my_peer.public_key.key_to_bin()
         is_minter = my_key in minters
-        spend_value = 20*random() if is_minter else random()
+        spend_value = random()
 
         val = self.overlay.prepare_spend_transaction(peer.public_key.key_to_bin(), spend_value,
                                                      from_peer=self.my_id, to_peer=dest_peer_id)
         if not val:
-            # Cannot make a spend to the peer
-            if os.getenv('ALL_MINT') or is_minter:
+            # No sufficient balance -> mint
+            if is_minter:
                 self._logger.info("Minting new tokens")
                 mint = self.overlay.prepare_mint_transaction()
                 self.overlay.self_sign_block(block_type=b'claim', transaction=mint)
@@ -381,10 +380,11 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             next_hop_peer, tx = val
             next_hop_peer_id = self.experiment.get_peer_id(next_hop_peer.address[0], next_hop_peer.address[1])
             if next_hop_peer_id != dest_peer_id:
+                # Multi-hop payment, add condition + nonce
                 nonce = self.overlay.persistence.get_new_peer_nonce(peer.public_key.key_to_bin())
                 condition = hexlify(peer.public_key.key_to_bin()).decode()
                 tx.update({'nonce': nonce, 'condition': condition})
-            self._logger.info("%s: Requesting signature from peer: %s", self.my_id, next_hop_peer_id)
+            self._logger.debug("Making spend to peer %s (value: %f)", next_hop_peer_id, spend_value)
             self.overlay.sign_block(next_hop_peer, next_hop_peer.public_key.key_to_bin(),
                                     block_type=b'spend', transaction=tx)
 

@@ -76,7 +76,7 @@ class TrustchainStatisticsParser(BlockchainTransactionsParser):
 
                                     # Update the submit time
                                     tx_info[tx_id][0] = block_time - self.avg_start_time
-                                elif block_type == "claim":
+                                elif block_type == "claim":  # TODO remove from_peer and to_peer from dict + only update if from_peer == seen_by
                                     tx_id = "%s.%s.%d" % (to_peer_id, from_peer_id, to_seq_num)
                                     if tx_id not in tx_info:
                                         tx_info[tx_id] = [-1, -1]

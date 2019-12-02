@@ -119,8 +119,12 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         num_com = 1
         if os.getenv('NUM_COM'):
             num_com = int(os.getenv('NUM_COM'))
-        # Choose random peers as minters
+
         num_nodes = len(self.all_vars.keys())
+        if os.getenv("ALL_MINT"):
+            num_com = num_nodes
+
+        # Choose random peers as minters
         seed(42)
         minters = sample(self.all_vars.keys(), min(num_com, num_nodes))
         # Work a graph where all peers are connected to minters
