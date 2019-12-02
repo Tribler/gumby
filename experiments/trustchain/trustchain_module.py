@@ -186,6 +186,39 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.request_signatures_lc = LoopingCall(self.request_noodle_all_random_signature)
         self.request_signatures_lc.start(value)
 
+    def is_minter(self):
+        """
+        Return whether you are a minter or not.
+        """
+        minters = set(nx.get_node_attributes(self.overlay.known_graph, 'minter').keys())
+        my_key = self.overlay.my_peer.public_key.key_to_bin()
+        return my_key in minters
+
+    @experiment_callback
+    def mint(self):
+        """
+        Have minters mint some initial value.
+        """
+        if not self.is_minter():
+            return
+
+        self._logger.info("Minting initial value...")
+        mint = self.overlay.prepare_mint_transaction()
+        self.overlay.self_sign_block(block_type=b'claim', transaction=mint)
+
+    @experiment_callback
+    def minter_send_to_all(self):
+        """
+        Have the minter send initial value to all known peers.
+        """
+        if not self.is_minter():
+            return
+
+        self._logger.info("Sending initial value to all peers...")
+
+        for peer in self.overlay.get_all_communities_peers():
+            self.transfer(peer, 1000)
+
     @experiment_callback
     def start_creating_transactions(self):
         if not self.did_write_start_time:
@@ -274,12 +307,11 @@ class TrustchainModule(IPv8OverlayExperimentModule):
                                         int(sequence_number))
 
     @experiment_callback
-    def request_noodle_1hop_random_signature(self, attach_to_block=None):
+    def request_noodle_1hop_random_signature(self):
         """
         Request a random signature from one of your known verified peers
         """
-        self.noodle_random_spend(choice(list(self.overlay.get_peers())),
-                                 attached_block=attach_to_block)
+        self.transfer(choice(list(self.overlay.get_peers())), random())
 
     def request_noodle_community_signature(self):
         """
@@ -288,10 +320,10 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         minters = set(self.overlay.get_peers())
         peers = self.overlay.get_all_communities_peers()
         peers.update(minters)
-        self.noodle_random_spend(choice(list(peers)))
+        self.transfer(choice(list(peers)), 1)
 
     @experiment_callback
-    def request_noodle_all_random_signature(self, attach_to_block=None):
+    def request_noodle_all_random_signature(self):
         """
         Request a random signature from one of your known verified peers
         """
@@ -299,8 +331,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
         eligible_peers = set(self.experiment.get_peers()) - {str(self.my_id)}
         peer_id = choice(list(eligible_peers))
-        self.noodle_random_spend(self.get_peer(peer_id),
-                                 attached_block=attach_to_block)
+        self.transfer(self.get_peer(peer_id), random())
 
     @experiment_callback
     def request_random_signature(self, attach_to_block=None):
@@ -360,35 +391,26 @@ class TrustchainModule(IPv8OverlayExperimentModule):
                                 block_type=b'test', transaction=transaction,
                                 double_spend_block=attached_block)
 
-    def noodle_random_spend(self, peer, attached_block=None):
+    def transfer(self, peer, spend_value):
 
         dest_peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
         self._logger.info("%s: Sending spend to: %s", self.my_id, dest_peer_id)
-        minters = set(nx.get_node_attributes(self.overlay.known_graph, 'minter').keys())
-        my_key = self.overlay.my_peer.public_key.key_to_bin()
-        is_minter = my_key in minters
-        spend_value = random()
 
         val = self.overlay.prepare_spend_transaction(peer.public_key.key_to_bin(), spend_value)
         if not val:
-            # No sufficient balance -> mint
-            if is_minter:
-                self._logger.info("Minting new tokens")
-                mint = self.overlay.prepare_mint_transaction()
-                self.overlay.self_sign_block(block_type=b'claim', transaction=mint)
-            else:
-                self._logger.warning("No tokens to spend. Waiting for tokens")
-        else:
-            next_hop_peer, tx = val
-            next_hop_peer_id = self.experiment.get_peer_id(next_hop_peer.address[0], next_hop_peer.address[1])
-            if next_hop_peer_id != dest_peer_id:
-                # Multi-hop payment, add condition + nonce
-                nonce = self.overlay.persistence.get_new_peer_nonce(peer.public_key.key_to_bin())
-                condition = hexlify(peer.public_key.key_to_bin()).decode()
-                tx.update({'nonce': nonce, 'condition': condition})
-            self._logger.debug("Making spend to peer %s (value: %f)", next_hop_peer_id, spend_value)
-            self.overlay.sign_block(next_hop_peer, next_hop_peer.public_key.key_to_bin(),
-                                    block_type=b'spend', transaction=tx)
+            self._logger.warning("No tokens to spend. Waiting for tokens")
+            return
+
+        next_hop_peer, tx = val
+        next_hop_peer_id = self.experiment.get_peer_id(next_hop_peer.address[0], next_hop_peer.address[1])
+        if next_hop_peer_id != dest_peer_id:
+            # Multi-hop payment, add condition + nonce
+            nonce = self.overlay.persistence.get_new_peer_nonce(peer.public_key.key_to_bin())
+            condition = hexlify(peer.public_key.key_to_bin()).decode()
+            tx.update({'nonce': nonce, 'condition': condition})
+        self._logger.debug("Making spend to peer %s (value: %f)", next_hop_peer_id, spend_value)
+        self.overlay.sign_block(next_hop_peer, next_hop_peer.public_key.key_to_bin(),
+                                block_type=b'spend', transaction=tx)
 
     def check_num_blocks_in_db(self):
         """
