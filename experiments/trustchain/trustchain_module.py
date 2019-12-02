@@ -190,9 +190,14 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         """
         Return whether you are a minter or not.
         """
-        minters = set(nx.get_node_attributes(self.overlay.known_graph, 'minter').keys())
-        my_key = self.overlay.my_peer.public_key.key_to_bin()
-        return my_key in minters
+        num_minters = 1
+        if os.getenv('NUM_MINTERS'):
+            num_minters = int(os.getenv('NUM_MINTERS'))
+
+        num_nodes = len(self.all_vars.keys())
+        num_minters = min(num_nodes, num_minters)
+
+        return self.my_id <= num_minters
 
     @experiment_callback
     def mint(self):
@@ -394,7 +399,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     def transfer(self, peer, spend_value):
 
         dest_peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])
-        self._logger.info("%s: Sending spend to: %s", self.my_id, dest_peer_id)
+        self._logger.debug("Making spend to peer %s (value: %f)", dest_peer_id, spend_value)
 
         val = self.overlay.prepare_spend_transaction(peer.public_key.key_to_bin(), spend_value)
         if not val:
@@ -408,7 +413,6 @@ class TrustchainModule(IPv8OverlayExperimentModule):
             nonce = self.overlay.persistence.get_new_peer_nonce(peer.public_key.key_to_bin())
             condition = hexlify(peer.public_key.key_to_bin()).decode()
             tx.update({'nonce': nonce, 'condition': condition})
-        self._logger.debug("Making spend to peer %s (value: %f)", next_hop_peer_id, spend_value)
         self.overlay.sign_block(next_hop_peer, next_hop_peer.public_key.key_to_bin(),
                                 block_type=b'spend', transaction=tx)
 
