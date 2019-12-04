@@ -237,7 +237,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
         self._logger.info("Starting transactions...")
         total_peers = len(self.all_vars.keys())
-        self.tx_lc = LoopingCall(self.request_noodle_community_signature)
+        self.tx_lc = LoopingCall(self.request_noodle_fixed_community_signature)
 
         # Depending on the tx rate and number of clients, wait a bit
         individual_tx_rate = int(self.tx_rate) / total_peers
@@ -320,7 +320,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         """
         self.transfer(choice(list(self.overlay.get_peers())), random())
 
-    def request_noodle_community_signature(self):
+    def request_noodle_random_community_signature(self):
         """
         Request signature from peer that is either directly connected or is part of my community.
         """
@@ -328,6 +328,14 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         peers = self.overlay.get_all_communities_peers()
         peers.update(minters)
         self.transfer(choice(list(peers)), 1)
+
+    def request_noodle_fixed_community_signature(self):
+        """
+        Request signature from a fixed peer that is either directly connected or is part of my community.
+        """
+        target_peer_id = self.my_id % len(self.all_vars.keys()) + 1
+        target_peer = self.get_peer(str(target_peer_id))
+        self.transfer(target_peer, 1)
 
     @experiment_callback
     def request_noodle_all_random_signature(self):
