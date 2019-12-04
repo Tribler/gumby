@@ -35,6 +35,21 @@ class TrustchainStatisticsParser(BlockchainTransactionsParser):
         """
         Parse all transactions, based on the info in the blocks.
         """
+
+        # First get all the peer IDs and build a map
+        peer_map = {}  # peer id str -> peer id int
+        for peer_nr, filename, dir in self.yield_files('overlays.txt'):
+            with open(filename) as read_file:
+                for line in read_file.readlines():
+                    if not line:
+                        continue
+
+                    parts = line.split(",")
+                    if parts[0] == "TrustChainCommunity":
+                        peer_id = parts[1][-8:]
+                        peer_map[peer_id] = peer_nr
+                        break
+
         tx_info = {}  # Keep track of the submit time and confirmation times for each transaction we see.
 
         with open("blocks.csv", "w") as blocks_file:
@@ -57,6 +72,17 @@ class TrustchainStatisticsParser(BlockchainTransactionsParser):
                             from_peer_id = row[5]
                             to_peer_id = row[6]
 
+                            if from_peer_id not in peer_map:
+                                print("Peer %s not found in map!" % from_peer_id)
+                                continue
+
+                            if to_peer_id not in peer_map:
+                                print("Peer %s not found in map!" % from_peer_id)
+                                continue
+
+                            from_peer_id = peer_map[from_peer_id]
+                            to_peer_id = peer_map[to_peer_id]
+
                             writer.writerow({
                                 "time": block_time,
                                 'type': block_type,
@@ -70,14 +96,14 @@ class TrustchainStatisticsParser(BlockchainTransactionsParser):
 
                             if block_type == "spend" or block_type == "claim":
                                 if block_type == "spend":
-                                    tx_id = "%s.%s.%d" % (from_peer_id, to_peer_id, from_seq_num)
+                                    tx_id = "%d.%d.%d" % (from_peer_id, to_peer_id, from_seq_num)
                                     if tx_id not in tx_info:
                                         tx_info[tx_id] = [-1, -1]
 
                                     # Update the submit time
                                     tx_info[tx_id][0] = block_time - self.avg_start_time
-                                elif block_type == "claim":  # TODO remove from_peer and to_peer from dict + only update if from_peer == seen_by
-                                    tx_id = "%s.%s.%d" % (to_peer_id, from_peer_id, to_seq_num)
+                                elif block_type == "claim" and to_peer_id == peer_nr:
+                                    tx_id = "%d.%d.%d" % (to_peer_id, from_peer_id, to_seq_num)
                                     if tx_id not in tx_info:
                                         tx_info[tx_id] = [-1, -1]
 

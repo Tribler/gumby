@@ -56,7 +56,6 @@ class TrustchainMemoryDatabase(object):
         self.known_connections.add_edge(peer_a, peer_b)
 
     def add_double_spend(self, block1, block2):
-
         """
         Add information about a double spend to the database.
         """
@@ -407,8 +406,8 @@ class TrustchainMemoryDatabase(object):
             for block_id in self.block_time:
                 block = self.block_cache[block_id]
                 time = self.block_time[block_id]
-                from_id = str(hexlify(block.public_key)[-8:])[2:-1]
-                to_id = str(hexlify(block.link_public_key)[-8:])[2:-1]
+                from_id = hexlify(block.public_key).decode()[-8:]
+                to_id = hexlify(block.link_public_key).decode()[-8:]
                 writer.writerow({"time": time, 'transaction': str(block.transaction),
                                  'type': block.type.decode(),
                                  'seq_num': block.sequence_number, "link": block.link_sequence_number,
