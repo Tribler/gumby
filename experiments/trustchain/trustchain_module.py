@@ -237,7 +237,12 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
         self._logger.info("Starting transactions...")
         total_peers = len(self.all_vars.keys())
-        self.tx_lc = LoopingCall(self.request_noodle_fixed_community_signature)
+
+        target_function = self.request_noodle_fixed_community_signature
+        if os.getenv("RANDOM_INTERACTIONS"):
+            target_function = self.request_noodle_random_community_signature
+
+        self.tx_lc = LoopingCall(target_function)
 
         # Depending on the tx rate and number of clients, wait a bit
         individual_tx_rate = int(self.tx_rate) / total_peers
