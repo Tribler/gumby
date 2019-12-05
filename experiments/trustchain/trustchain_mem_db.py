@@ -36,7 +36,7 @@ class TrustchainMemoryDatabase(object):
 
         self.block_time = {}
         self.block_file = None
-                
+
         self.total_spend_sum = {}
         self.total_claim_sum = {}
 
@@ -97,11 +97,11 @@ class TrustchainMemoryDatabase(object):
         lpk = spend.link_public_key
         id_from = self.key_to_id(pk)
         id_to = self.key_to_id(lpk)
+        self.update_cum_value(id_from, id_to, float(spend.transaction["total_spend"]))
         if id_from not in self.work_graph or \
                 id_to not in self.work_graph[id_from] or \
                 'total_spend' not in self.work_graph[id_from][id_to] or \
                 self.work_graph[id_from][id_to]["total_spend"] < float(spend.transaction["total_spend"]):
-            self.update_cum_value(id_from, id_to, float(spend.transaction["total_spend"]))
             self.work_graph.add_edge(id_from, id_to,
                                      total_spend=float(spend.transaction["total_spend"]),
                                      spend_num=spend.sequence_number)
@@ -114,12 +114,11 @@ class TrustchainMemoryDatabase(object):
         lpk = claim.link_public_key
         id_from = self.key_to_id(lpk)
         id_to = self.key_to_id(pk)
-
+        self.update_cum_value(id_from, id_to, float(claim.transaction["total_spend"]))
         if id_from not in self.work_graph or \
                 id_to not in self.work_graph[id_from] or \
                 'total_spend' not in self.work_graph[id_from][id_to] or \
                 self.work_graph[id_from][id_to]["total_spend"] < float(claim.transaction["total_spend"]):
-            self.update_cum_value(id_from, id_to, float(claim.transaction["total_spend"]))
             self.work_graph.add_edge(id_from, id_to,
                                      total_spend=float(claim.transaction["total_spend"]),
                                      spend_num=claim.link_sequence_number,
@@ -232,8 +231,8 @@ class TrustchainMemoryDatabase(object):
             return self.claim_proofs[peer_id][0]
     
     def update_cum_value(self, p1, p2, value):
-        if not self.work_graph.has_edge(p1, p2) or value > self.work_graph[p1][p2]['total_spend']:
-            prev_spend = self.get_total_pairwise_spends(p1, p2)
+        prev_spend = self.get_total_pairwise_spends(p1, p2)
+        if prev_spend < value:
             prev_cum_spend = self.total_spend_sum[p1] if p1 in self.total_spend_sum else 0
             prev_cum_claim = self.total_claim_sum[p2] if p2 in self.total_claim_sum else 0
             self.total_spend_sum[p1] = prev_cum_spend - prev_spend + value
