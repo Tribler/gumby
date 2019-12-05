@@ -114,7 +114,6 @@ class TrustchainMemoryDatabase(object):
         lpk = claim.link_public_key
         id_from = self.key_to_id(lpk)
         id_to = self.key_to_id(pk)
-        self.update_cum_value(id_from, id_to, float(claim.transaction["total_spend"]))
         if id_from not in self.work_graph or \
                 id_to not in self.work_graph[id_from] or \
                 'total_spend' not in self.work_graph[id_from][id_to] or \
@@ -176,10 +175,10 @@ class TrustchainMemoryDatabase(object):
                                                 for k in self.work_graph.predecessors(peer_id))
 
     def get_total_spends(self, peer_id):
-        if peer_id not in self.total_spend_sum:
+        if peer_id not in self.work_graph:
             return 0
         else:
-            return self.total_spend_sum[peer_id]
+            return sum(self.work_graph[peer_id][k]["total_spend"] for k in self.work_graph.successors(peer_id))
 
     def is_verified(self, p1, p2):
         return 'verified' in self.work_graph[p1][p2] and self.work_graph[p1][p2]['verified']
@@ -208,10 +207,10 @@ class TrustchainMemoryDatabase(object):
         return status
 
     def get_total_claims(self, peer_id, only_verified=True):
-        if peer_id not in self.total_claim_sum:
+        if peer_id not in self.work_graph:
             # Peer not known
             return 0
-        return self.total_claim_sum[peer_id]
+        return sum(self.work_graph[k][peer_id]['total_spend'] for k in self.work_graph.predecessors(peer_id))
 
     def _construct_path_id(self, path):
         res_id = ""
