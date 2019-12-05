@@ -165,6 +165,14 @@ class TrustchainMemoryDatabase(object):
         else:
             return self.work_graph[peer_a][peer_b]["total_spend"]
 
+    def update_total_spend(self, peer_id):
+        self.total_spend_sum[peer_id] = sum(self.work_graph[peer_id][k]["total_spend"]
+                                            for k in self.work_graph.successors(peer_id))
+
+    def update_total_claim(self, peer_id):
+        self.total_claim_sum[peer_id] = sum(self.work_graph[k][peer_id]['total_spend']
+                                            for k in self.work_graph.predecessors(peer_id))
+
     def get_total_spends(self, peer_id):
         if peer_id not in self.total_spend_sum:
             return 0
@@ -202,7 +210,7 @@ class TrustchainMemoryDatabase(object):
             # Peer not known
             return 0
         return self.total_claim_sum[peer_id]
-    
+
     def _construct_path_id(self, path):
         res_id = ""
         res_id = res_id + str(len(path))
@@ -229,7 +237,7 @@ class TrustchainMemoryDatabase(object):
             return 0
         else:
             return self.claim_proofs[peer_id][0]
-    
+
     def update_cum_value(self, p1, p2, value):
         prev_spend = self.get_total_pairwise_spends(p1, p2)
         if prev_spend < value:
@@ -290,6 +298,8 @@ class TrustchainMemoryDatabase(object):
 
     def get_balance(self, peer_id, verified=True):
         # Sum of claims(verified/or not) - Sum of spends(all known)
+        self.update_total_spend(peer_id)
+        self.update_total_claim(peer_id)
         return self.get_total_claims(peer_id, only_verified=verified) - self.get_total_spends(peer_id)
 
     def remove_block(self, block):
