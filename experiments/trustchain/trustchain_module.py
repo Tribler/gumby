@@ -427,10 +427,13 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         next_hop_peer, tx = val
         next_hop_peer_id = self.experiment.get_peer_id(next_hop_peer.address[0], next_hop_peer.address[1])
         if next_hop_peer_id != dest_peer_id:
-            # Multi-hop payment, add condition + nonce
-            nonce = self.overlay.persistence.get_new_peer_nonce(peer.public_key.key_to_bin())
-            condition = hexlify(peer.public_key.key_to_bin()).decode()
-            tx.update({'nonce': nonce, 'condition': condition})
+            self._logger.warning("Choosing an intermediary node %s: %s, %s: %s", next_hop_peer_id,
+                                 next_hop_peer, dest_peer_id, peer)
+        #if next_hop_peer_id != dest_peer_id:
+        #    # Multi-hop payment, add condition + nonce
+        #    nonce = self.overlay.persistence.get_new_peer_nonce(peer.public_key.key_to_bin())
+        #    condition = hexlify(peer.public_key.key_to_bin()).decode()
+        #    tx.update({'nonce': nonce, 'condition': condition})
         self.overlay.sign_block(next_hop_peer, next_hop_peer.public_key.key_to_bin(),
                                 block_type=b'spend', transaction=tx)
 
