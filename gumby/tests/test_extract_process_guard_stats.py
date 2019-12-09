@@ -24,6 +24,8 @@ class TestExtractProcessGuardStats(unittest.TestCase):
         parser = ResourceUsageParser(self.PROCESS_GUARD_INPUT_DIR, self.test_dir)
         parser.parse_resource_files()
 
+        self.assertEqual(len(parser.all_nodes), 2)
+
         file_prefixes = ["utimes", "stimes", "wchars", "rchars", "wchars_sum", "rchars_sum", "vsizes", "rsizes",
                          "writebytes", "readbytes", "writebytes_sum", "readbytes_sum", "threads"]
         for prefix in file_prefixes:
