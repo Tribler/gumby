@@ -111,10 +111,10 @@ class ResourceUsageParser(object):
 
         resource_usage_fn = 'resource_usage.log'
         for root, _, files in os.walk(self.input_dir):
-            nodename = root.split('/')[-1]
-            self.all_nodes.add(nodename)
-
             if resource_usage_fn in files:
+                nodename = root.split('/')[-1]
+                self.all_nodes.add(nodename)
+
                 print("Parsing resource_usage file %s" % (os.path.join(nodename, "/", resource_usage_fn)),
                       file=sys.stderr)
 
