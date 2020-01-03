@@ -48,7 +48,7 @@ fi
 
 # @CONF_OPTION RUN_PYLINT: Run pylint in parallel with the unit tests (default is TRUE)
 if [ "${RUN_PYLINT}" != "false" ]; then
-    ionice -c 3 nice pylint --ignore=.git --ignore=pymdht --ignore=libnacl --output-format=parseable --reports=y  Tribler \
+    ionice -c 3 nice pylint --ignore=.git --ignore=pymdht --ignore=libnacl --output-format=parseable --reports=y  src/tribler-core/tribler_core \
          > $OUTPUT_DIR/pylint.out 2> $OUTPUT_DIR/pylint.log &
     PYLINT_PID=$!
 fi
@@ -58,7 +58,7 @@ if [ "${RUN_SLOCCOUNT}" != "false" ]; then
 
     mkdir -p $OUTPUT_DIR/slocdata
 
-    (ionice -c 3 nice sloccount --datadir $OUTPUT_DIR/slocdata --duplicates --wide --details Tribler | \
+    (ionice -c 3 nice sloccount --datadir $OUTPUT_DIR/slocdata --duplicates --wide --details src/tribler-core/tribler_core | \
             fgrep -v .svn | fgrep -v .git | \
             fgrep -v debian | fgrep -v test_.Tribler | fgrep -v /pymdht/ \
                                                              > $OUTPUT_DIR/sloccount.out 2> $OUTPUT_DIR/sloccount.log) &
@@ -75,9 +75,14 @@ else
     NOSETESTS_CMD="nosetests3"
 fi
 
+# Setup PYTHONPATH to include all the required modules
+SRC_DIR="$PWD/src"
+PYTHONPATH="$PYTHONPATH:"$SRC_DIR/pyipv8":"$SRC_DIR/anydex":"$SRC_DIR/tribler-common":"$SRC_DIR/tribler-core":"$SRC_DIR/tribler-gui""
+export PYTHONPATH
+
 # TODO(emilon): Make the timeout configurable
 
-NOSEARGS_COMMON="--with-xunit --all-modules --traverse-namespace --cover-package=Tribler --cover-tests --cover-inclusive "
+NOSEARGS_COMMON="--with-xunit --all-modules --traverse-namespace --cover-package=tribler_core --cover-tests --cover-inclusive "
 NOSECMD="$NOSETESTS_CMD -v --with-xcoverage --xcoverage-file=$OUTPUT_DIR/coverage.xml --xunit-file=$OUTPUT_DIR/nosetests.xml.part $NOSEARGS_COMMON"
 
 export NOSE_LOGFORMAT="%(levelname)-7s %(created)d %(module)15s:%(name)s:%(lineno)-4d %(message)s"
