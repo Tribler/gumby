@@ -1,17 +1,15 @@
 import json
 import time
+from asyncio import Future
 from binascii import hexlify
 from os import environ, getpid, makedirs, symlink, path
-
-from twisted.internet.defer import Deferred
-from twisted.internet.task import LoopingCall
 
 from gumby.anydex_config import AnyDexConfig
 from gumby.experiment import experiment_callback
 from gumby.modules.community_launcher import TrustChainCommunityLauncher, MarketCommunityLauncher, DHTCommunityLauncher
 from gumby.modules.experiment_module import ExperimentModule, static_module
 from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
-from gumby.util import read_keypair_trustchain
+from gumby.util import read_keypair_trustchain, run_task
 
 from ipv8_service import IPv8
 
@@ -48,8 +46,7 @@ class AnyDexModule(ExperimentModule):
         self.tribler_config = None
         self.session_id = environ['SYNC_HOST'] + environ['SYNC_PORT']
         self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
-        self.ipv8_available = Deferred()
-        self.ipv8_statistics_monitor = LoopingCall(self.write_ipv8_statistics)
+        self.ipv8_available = Future()
         self.ipv8 = None
 
     def write_ipv8_statistics(self):
@@ -94,7 +91,7 @@ class AnyDexModule(ExperimentModule):
         # Load overlays
         self.custom_ipv8_community_loader.load(self.ipv8, self.session)
 
-        self.ipv8_available.callback(self.ipv8)
+        self.ipv8_available.set_result(self.ipv8)
 
     @experiment_callback
     def enable_ipv8_statistics(self):
@@ -102,7 +99,7 @@ class AnyDexModule(ExperimentModule):
 
     @experiment_callback
     def start_ipv8_statistics_monitor(self):
-        self.ipv8_statistics_monitor.start(1)
+        run_task(self.write_ipv8_statistics, interval=1)
 
     @experiment_callback
     def set_ipv8_port(self, port):

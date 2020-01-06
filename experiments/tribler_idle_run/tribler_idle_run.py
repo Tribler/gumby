@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # tribler_idle_run.py ---
 #
 # Filename: tribler_idle_run.py
@@ -39,52 +39,55 @@
 
 import sys
 import os
-
-from twisted.internet import reactor
+from asyncio import ensure_future, get_event_loop, sleep
 
 from gumby.instrumentation import init_instrumentation
 
+from tribler_core.config.tribler_config import TriblerConfig
+from tribler_core.session import Session
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-
-sys.path.append(os.path.abspath('./tribler'))
-sys.path.append(os.path.abspath('./tribler/twisted/plugins'))
-
-from tribler_plugin import TriblerServiceMaker
 
 
 class IdleTribleRunner():
 
     def __init__(self):
         init_instrumentation()
-        self.service = None
+        self.session = None
 
-    def start(self):
-        self.service = TriblerServiceMaker()
+    async def run(self):
+        config = TriblerConfig()
+        config.set_state_dir(os.path.abspath(os.path.join(BASE_DIR, "output", "tribler-state")),)
+        config.set_http_api_enabled(False)
+        config.set_ipv8_port(21000)
+        config.set_libtorrent_port(21005)
+
+        self.session = Session(config)
+        try:
+            await self.session.start()
+        except Exception as e:
+            print(str(e))
+            get_event_loop().stop()
+        else:
+            print("Tribler started")
 
         if "TRIBLER_EXECUTION_TIME" in os.environ:
             run_time = int(os.environ["TRIBLER_EXECUTION_TIME"])
         else:
             run_time = 60 * 10  # Run for 10 minutes by default
 
-        reactor.callLater(run_time, self.stop)
-        self.service.start_tribler({
-            'restapi': 0,
-            'ipv8': 21000,
-            'statedir': os.path.abspath(os.path.join(BASE_DIR, "output", "tribler-state")),
-            'libtorrent': 21005,
-            'ipv8_bootstrap_override': None
-        })
+        await sleep(run_time)
 
-    def stop(self):
-        # so once this is added, make sure it is not violently killed.
-        self.service.shutdown_process("Stopping Tribler idle run", code=0)
+        print("Stopping Tribler idle run")
+        await self.session.shutdown()
+        get_event_loop().stop()
 
 
 if __name__ == "__main__":
     runner = IdleTribleRunner()
-    reactor.callWhenRunning(runner.start)
-    reactor.run()
+    ensure_future(runner.run())
+    get_event_loop().run_forever()
+    get_event_loop().close()
 
 #
 # tribler_idle_run.py ends here

@@ -2,7 +2,7 @@ from experiments.tunnels.tunnel_module import TunnelModule
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module
 
-from Tribler.Core.Utilities.unicode import hexlify
+from tribler_core.utilities.unicode import hexlify
 
 
 @static_module

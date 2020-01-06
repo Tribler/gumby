@@ -5,6 +5,7 @@ from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
 
+from ipv8.dht import DHTError
 from ipv8.dht.discovery import DHTDiscoveryCommunity
 
 
@@ -35,31 +36,32 @@ class DHTModule(IPv8OverlayExperimentModule):
                 self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
 
     @experiment_callback
-    def store(self, key, value):
-        self.log_timing(self.overlay.store_value(unhexlify(key), value.encode('utf-8')), 'store')
+    async def store(self, key, value):
+        await self.log_timing(self.overlay.store_value(unhexlify(key), value.encode('utf-8')), 'store')
 
     @experiment_callback
-    def find(self, key):
-        self.log_timing(self.overlay.find_values(unhexlify(key)), 'find')
+    async def find(self, key):
+        await self.log_timing(self.overlay.find_values(unhexlify(key)), 'find')
 
     @experiment_callback
-    def do_dht_announce(self):
-        def on_peer_stored(nodes):
-            if nodes is not None:
-                self._logger.info("Stored this peer on %d nodes", len(nodes))
+    async def do_dht_announce(self):
+        try:
+            nodes = await self.overlay.store_peer()
+        except Exception as e:
+            self._logger.error("Error when storing peer: %s", e)
+            return
 
-        def on_peer_store_error(failure):
-            self._logger.error("Error when storing peer: %s", failure)
+        if nodes is not None:
+            self._logger.info("Stored this peer on %d nodes", len(nodes))
 
-        self.overlay.store_peer().addCallbacks(on_peer_stored, on_peer_store_error)
-
-    def log_timing(self, deferred, op):
+    async def log_timing(self, coro, op):
         ts = time.time() - self.start_time
-        cb = lambda _, t=ts: self.write_to_log('dht.log', '%d %s %.3f\n', ts, op, time.time() - self.start_time - t)
-        eb = lambda _: self.write_to_log('dht.log', '%d %s -1', ts, op)
-        deferred.addCallbacks(cb, eb)
+        try:
+            await coro
+            self.write_to_log('dht.log', '%d %s %.3f\n', ts, op, time.time() - self.start_time - ts)
+        except DHTError:
+            self.write_to_log('dht.log', '%d %s -1', ts, op)
 
     def write_to_log(self, fn, string, *values):
         with open(fn, 'a') as fp:
             fp.write(string % values)
-

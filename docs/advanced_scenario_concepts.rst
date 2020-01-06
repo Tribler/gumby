@@ -22,7 +22,7 @@ The syntax for declaring a variable is the following:
 
 **The scope of the variable begins immediately and persists until the end of the scenario file**. The meaning of each component is explained in what follows:
 
-- ``@!`` is a special timestamp which informs the parser that the command must be executed immediately, as opposed to using Twisted to schedule it in the future, after the scenario has been parsed and the experiment has begun.
+- ``@!`` is a special timestamp which informs the parser that the command must be executed immediately, as opposed to using asyncio to schedule it in the future, after the scenario has been parsed and the experiment has begun.
 - ``set`` is a special experiment callback, which is used to declare variables
 - ``<variable_name>`` is the name of the variable
 - ``<variable_value>`` is the value assigned to the variable
@@ -234,4 +234,3 @@ The following will not work due to other issues:
 - Multiple peer IDs in the ``for`` loop's peerspec:
 
 ``@10:00 for i in 1 to 100 call my_function $i {1,2,3,4}``
-

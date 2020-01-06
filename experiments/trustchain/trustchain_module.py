@@ -4,14 +4,13 @@ from random import randint, choice
 import csv
 from time import time
 
-from twisted.internet.task import LoopingCall
-
 from ipv8.attestation.trustchain.community import TrustChainCommunity
 from ipv8.attestation.trustchain.listener import BlockListener
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
+from gumby.util import run_task
 
 
 class FakeBlockListener(BlockListener):
@@ -55,8 +54,9 @@ class TrustchainModule(IPv8OverlayExperimentModule):
     def __init__(self, experiment):
         super(TrustchainModule, self).__init__(experiment, TrustChainCommunity)
         self.request_signatures_lc = None
-        self.num_blocks_in_db_lc = None
+        self.num_blocks_in_db_task = None
         self.block_stat_file = None
+        self.request_signatures_task = None
 
     def on_ipv8_available(self, _):
         # Disable threadpool messages
@@ -101,21 +101,19 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def start_requesting_signatures(self):
-        self.request_signatures_lc = LoopingCall(self.request_random_signature)
-        self.request_signatures_lc.start(1)
+        self.request_signatures_task = run_task(self.request_random_signature, interval=1)
 
     @experiment_callback
     def stop_requesting_signatures(self):
-        self.request_signatures_lc.stop()
+        self.request_signatures_task.cancel()
 
     @experiment_callback
     def start_monitor_num_blocks_in_db(self):
-        self.num_blocks_in_db_lc = LoopingCall(self.check_num_blocks_in_db)
-        self.num_blocks_in_db_lc.start(1)
+        self.num_blocks_in_db_task = run_task(self.check_num_blocks_in_db, interval=1)
 
     @experiment_callback
     def stop_monitor_num_blocks_in_db(self):
-        self.num_blocks_in_db_lc.stop()
+        self.num_blocks_in_db_task.cancel()
 
     @experiment_callback
     def request_signature(self, peer_id, up, down):
@@ -160,8 +158,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         if os.getenv('NUM_TX'):
             block_num = int(os.getenv('NUM_TX'))
 
-        self.request_signatures_lc = LoopingCall(self.send_to_leader_peer, int(block_num))
-        self.request_signatures_lc.start(1)
+        self.request_signatures_task = run_task(self.send_to_leader_peer, int(block_num), interval=1)
 
     def request_signature_from_peer(self, peer, up, down):
         peer_id = self.experiment.get_peer_id(peer.address[0], peer.address[1])

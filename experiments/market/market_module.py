@@ -48,7 +48,7 @@ class MarketModule(IPv8OverlayExperimentModule):
         dummy1_wallet.MONITOR_DELAY = 0
         dummy2_wallet.MONITOR_DELAY = 0
 
-        tc_wallet = TrustchainWallet(self.session.lm.trustchain_community)
+        tc_wallet = TrustchainWallet(self.session.trustchain_community)
         tc_wallet.check_negative_balance = False
         self.overlay.wallets[tc_wallet.get_identifier()] = tc_wallet
 

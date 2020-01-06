@@ -1,11 +1,9 @@
 import json
+import time
+from asyncio import Future
 from binascii import hexlify
 from os import environ, makedirs, symlink, path, getpid
 from socket import gethostbyname
-
-import time
-from twisted.internet.defer import Deferred
-from twisted.internet.task import LoopingCall
 
 from gumby.experiment import experiment_callback
 from gumby.gumby_tribler_config import GumbyTriblerConfig
@@ -13,6 +11,7 @@ from gumby.modules.experiment_module import ExperimentModule
 from gumby.modules.community_launcher import *
 from gumby.modules.gumby_session import GumbySession
 from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
+from gumby.util import run_task
 
 
 class BaseIPv8Module(ExperimentModule):
@@ -27,11 +26,13 @@ class BaseIPv8Module(ExperimentModule):
         self.ipv8_port = None
         self.session_id = environ['SYNC_HOST'] + environ['SYNC_PORT']
         self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
-        self.ipv8_available = Deferred()
-        self.ipv8_statistics_monitor = LoopingCall(self.write_ipv8_statistics)
+        self.ipv8_available = Future()
 
     def write_ipv8_statistics(self):
-        statistics = self.session.lm.ipv8.endpoint.statistics
+        if not self.session.ipv8:
+            return
+
+        statistics = self.session.ipv8.endpoint.statistics
 
         # Cleanup this dictionary
         time_elapsed = time.time() - self.experiment.scenario_runner.exp_start_time
@@ -70,7 +71,7 @@ class BaseIPv8Module(ExperimentModule):
 
     @experiment_callback
     def start_ipv8_statistics_monitor(self):
-        self.ipv8_statistics_monitor.start(1)
+        run_task(self.write_ipv8_statistics, interval=1)
 
     @experiment_callback
     def set_ipv8_port(self, port):

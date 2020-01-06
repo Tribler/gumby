@@ -339,14 +339,12 @@ networkx
 pony
 protobuf
 psutil
-pyasn1 # for twisted
-pycrypto # Twisted needs it
 pynacl # New EC crypto stuff for tunnelcommunity
 pyOpenSSL
 qrcode
 service_identity
-six
-twisted
+aiohttp
+aiohttp_apispec
 yappi
 " > ~/requirements.txt
 

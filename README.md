@@ -13,7 +13,7 @@ Notable features:
 ## Installation
 Prior to installing Gumby install the required dependencies for basic tests on Ubuntu/debian-based systems by executing the following command:
 ```
-sudo apt-get install python-psutil python-twisted python-configobj r-base
+sudo apt-get install python-psutil python-configobj r-base
 ```
 
 These dependencies can also be installed using `pip`.

@@ -42,7 +42,7 @@ class CommunityLauncher(object):
 
             return session.config.get_tunnel_community_enabled()
 
-        :type session: Tribler.Core.Session.Session
+        :type session: tribler_core.Session.Session
         :rtype: bool
         """
         return True
@@ -52,7 +52,7 @@ class CommunityLauncher(object):
         Perform setup tasks before the community is loaded.
 
         :type overlay_provider: ipv8.IPv8
-        :type session: Tribler.Core.Session.Session
+        :type session: tribler_core.Session.Session
         """
         pass
 
@@ -61,7 +61,7 @@ class CommunityLauncher(object):
         Perform cleanup tasks after the community has been loaded.
 
         :type ipv8: ipv8.IPv8
-        :type session: Tribler.Core.Session.Session
+        :type session: tribler_core.Session.Session
         :type community: IPv8 community
         """
         pass
@@ -152,7 +152,7 @@ class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
         return session.config.get_tunnel_community_enabled()
 
     def get_overlay_class(self):
-        from Tribler.community.triblertunnel.community import TriblerTunnelCommunity
+        from tribler_core.modules.tunnel.community.triblertunnel_community import TriblerTunnelCommunity
         return TriblerTunnelCommunity
 
     def get_my_peer(self, ipv8, session):
@@ -162,13 +162,13 @@ class TriblerTunnelCommunityLauncher(IPv8CommunityLauncher):
         from anydex.wallet.tc_wallet import TrustchainWallet
         kwargs = super(TriblerTunnelCommunityLauncher, self).get_kwargs(session)
         if session.config.get_dht_enabled():
-            kwargs['dht_provider'] = DHTCommunityProvider(session.lm.dht_community, session.config.get_ipv8_port())
-        kwargs['bandwidth_wallet'] = TrustchainWallet(session.lm.trustchain_community)
+            kwargs['dht_provider'] = DHTCommunityProvider(session.dht_community, session.config.get_ipv8_port())
+        kwargs['bandwidth_wallet'] = TrustchainWallet(session.trustchain_community)
         return kwargs
 
     def finalize(self, ipv8, session, community):
         super(TriblerTunnelCommunityLauncher, self).finalize(ipv8, session, community)
-        session.lm.tunnel_community = community
+        session.tunnel_community = community
 
 
 class TrustChainCommunityLauncher(IPv8CommunityLauncher):
@@ -188,7 +188,7 @@ class TrustChainCommunityLauncher(IPv8CommunityLauncher):
 
     def finalize(self, ipv8, session, community):
         super(TrustChainCommunityLauncher, self).finalize(ipv8, session, community)
-        session.lm.trustchain_community = community
+        session.trustchain_community = community
 
         # If we're using a memory DB, replace the existing one
         if session.config.use_trustchain_memory_db():
@@ -215,7 +215,7 @@ class MarketCommunityLauncher(IPv8CommunityLauncher):
         return Peer(session.trustchain_keypair)
 
     def get_kwargs(self, session):
-        return {'trustchain': session.lm.trustchain_community, 'dht': session.lm.dht_community, 'use_database': False}
+        return {'trustchain': session.trustchain_community, 'dht': session.dht_community, 'use_database': False}
 
 
 class GigaChannelCommunityLauncher(IPv8CommunityLauncher):
@@ -227,11 +227,11 @@ class GigaChannelCommunityLauncher(IPv8CommunityLauncher):
         return session.config.get_chant_enabled()
 
     def get_overlay_class(self):
-        from Tribler.community.gigachannel.community import GigaChannelCommunity
+        from tribler_core.modules.metadata_store.community.gigachannel_community import GigaChannelCommunity
         return GigaChannelCommunity
 
     def get_args(self, session):
-        return [session.lm.mds]
+        return [session.mds]
 
     def get_kwargs(self, session):
         return {}
@@ -240,12 +240,12 @@ class GigaChannelCommunityLauncher(IPv8CommunityLauncher):
         return Peer(session.trustchain_keypair)
 
     def get_walk_strategies(self):
-        from Tribler.community.gigachannel.sync_strategy import SyncChannels
+        from tribler_core.modules.metadata_store.community.sync_strategy import SyncChannels
         return [(SyncChannels, {}, -1)]
 
     def finalize(self, ipv8, session, community):
         super(GigaChannelCommunityLauncher, self).finalize(ipv8, session, community)
-        session.lm.gigachannel_community = community
+        session.gigachannel_community = community
 
 
 class PopularityCommunityLauncher(IPv8CommunityLauncher):
@@ -257,14 +257,14 @@ class PopularityCommunityLauncher(IPv8CommunityLauncher):
         return session.config.get_popularity_community_enabled()
 
     def get_overlay_class(self):
-        from Tribler.community.popularity.community import PopularityCommunity
+        from tribler_core.modules.popularity.popularity_community import PopularityCommunity
         return PopularityCommunity
 
     def get_my_peer(self, ipv8, session):
         return Peer(session.trustchain_keypair)
 
     def get_kwargs(self, session):
-        return {'metadata_store': session.lm.mds, 'torrent_checker': session.lm.torrent_checker}
+        return {'metadata_store': session.mds, 'torrent_checker': session.torrent_checker}
 
 
 class DHTCommunityLauncher(IPv8CommunityLauncher):
@@ -284,4 +284,4 @@ class DHTCommunityLauncher(IPv8CommunityLauncher):
 
     def finalize(self, ipv8, session, community):
         super(DHTCommunityLauncher, self).finalize(ipv8, session, community)
-        session.lm.dht_community = community
+        session.dht_community = community

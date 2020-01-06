@@ -1,13 +1,11 @@
-#!/usr/bin/env python
-from __future__ import print_function
-
+#!/usr/bin/env python3
 import json
 import os
 import sys
 
 from gumby.statsparser import StatisticsParser
 
-from Tribler.Core.Utilities.unicode import hexlify
+from tribler_core.utilities.unicode import hexlify
 
 from scripts.trustchain_database_reader import GumbyDatabaseAggregator
 

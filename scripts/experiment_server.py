@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # experiment_server.py ---
 #
 # Filename: experiment_server.py
@@ -59,12 +59,12 @@
 
 # Code:
 
+from asyncio import ensure_future, get_event_loop
 from os import environ
 
 from gumby.sync import ExperimentServiceFactory
 from gumby.log import setupLogging
 
-from twisted.internet import reactor
 
 # @CONF_OPTION SYNC_SUBSCRIBERS_AMOUNT: Number of sync clients we should wait for to be registered before starting the experiment. (default is DAS4_INSTANCES_TO_RUN)
 # @CONF_OPTION SYNC_EXPERIMENT_START_DELAY: Delay the synchronized start of the experiment by this amount of seconds when giving the start signal.
@@ -81,10 +81,13 @@ if __name__ == '__main__':
     experiment_start_delay = float(environ.get('SYNC_EXPERIMENT_START_DELAY', 5))
     server_port = int(environ['SYNC_PORT'])
 
-    reactor.exitCode = 0
-    reactor.listenTCP(server_port, ExperimentServiceFactory(expected_subscribers, experiment_start_delay))
-    reactor.run()
-    exit(reactor.exitCode)
+    loop = get_event_loop()
+    ensure_future(loop.create_server(ExperimentServiceFactory(expected_subscribers, experiment_start_delay),
+                                     port=server_port))
+    loop.exit_code = 0
+    loop.run_forever()
+    loop.close()
+    exit(loop.exit_code)
 
 #
 # experiment_server.py ends here

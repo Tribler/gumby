@@ -36,14 +36,12 @@
 
 # Code:
 import logging
+import signal
+from asyncio import get_event_loop
 from os import environ, getpid, makedirs, path
 from time import time
 
-from six.moves import xrange
-from twisted.conch import manhole_tap
-from twisted.internet import reactor
-from twisted.internet.task import LoopingCall
-from twisted.python.log import msg
+from gumby.util import run_task
 
 
 # @CONF_OPTION PROFILE_MEMORY: Enable memory profiling for the python processes that call instrumentation.init_instrumentation() (default: false)
@@ -60,17 +58,10 @@ PROFILE_MEMORY_GRAPH_BACKREF_TYPES = environ.get("PROFILE_MEMORY_GRAPH_BACKREF_T
 # @CONF_OPTION PROFILE_MEMORY_GRAPH_BACKREF_AMOUNT: Amount of randomly selected objects to graph (default: 1)
 PROFILE_MEMORY_GRAPH_BACKREF_AMOUNT =  int(environ.get("PROFILE_MEMORY_GRAPH_BACKREF_AMOUNT", 1))
 
-# @CONF_OPTION MANHOLE_ENABLE: Enable manhole (telnet access to the python processes), for debugging purposes. User: gumby, pass is empty (default: false)
-MANHOLE_ENABLE = environ.get("MANHOLE_ENABLE", "FALSE").upper() == "TRUE"
-# @CONF_OPTION MANHOLE_PORTL Port that manhole should listen to. (default: 2323)
-MANHOLE_PORT = int(environ.get("MANHOLE_PORT", 2323))
-
-manhole = None
-manhole_namespace = {}
-
 PID = getpid()
 
 logger = logging.getLogger()
+
 
 def init_instrumentation():
     """
@@ -78,9 +69,6 @@ def init_instrumentation():
     """
     if PROFILE_MEMORY and PROFILE_MEMORY_PID_MODULO and (PID % PROFILE_MEMORY_PID_MODULO == 0):
         start_memory_dumper()
-
-    if MANHOLE_ENABLE:
-        start_manhole()
 
 
 def start_memory_dumper():
@@ -108,7 +96,7 @@ def start_memory_dumper():
         now = time() - start
         if PROFILE_MEMORY_GRAPH_BACKREF_TYPES:
             for type_ in types:
-                for sample_number in xrange(PROFILE_MEMORY_GRAPH_BACKREF_AMOUNT):
+                for sample_number in range(PROFILE_MEMORY_GRAPH_BACKREF_AMOUNT):
                     objects = objgraph.by_type(type_)
                     if objects:
                         objgraph.show_chain(
@@ -121,24 +109,9 @@ def start_memory_dumper():
 
         scanner.dump_all_objects(meliae_out_file % now)
 
-    LoopingCall(dump_memory).start(PROFILE_MEMORY_INTERVAL, now=True)
-    reactor.addSystemEventTrigger("before", "shutdown",
-                                  lambda: scanner.dump_all_objects(path.join(memdump_dir, "memory-%06.2f-%s.out") % (
-                                      time() - start, "-shutdown")))
-
-
-def start_manhole():
-    """
-    Starts a manhole telnet server listening on MANHOLE_PORT
-    """
-    passwd_path = path.join(environ['PROJECT_DIR'], 'lib', 'passwd')
-    global manhole
-    manhole = manhole_tap.makeService({
-        'namespace': manhole_namespace,
-        'telnetPort': 'tcp:%d:interface=127.0.0.1' % MANHOLE_PORT,
-        'sshPort': None,
-        'passwd': passwd_path,
-    })
+    run_task(dump_memory, interval=PROFILE_MEMORY_INTERVAL, delay=0)
+    get_event_loop().add_signal_handler(signal.SIGTERM, lambda: scanner.dump_all_objects(
+        path.join(memdump_dir, "memory-%06.2f-%s.out") % (time() - start, "-shutdown")))
 
 
 #

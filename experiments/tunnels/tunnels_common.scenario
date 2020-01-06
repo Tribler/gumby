@@ -16,5 +16,5 @@
 
 @0:4 start_session
 @0:4 annotate start-experiment
-@0:6 set_libtorrentmgr_alert_mask
+@0:9 set_libtorrentmgr_alert_mask
 @0:11 introduce_peers

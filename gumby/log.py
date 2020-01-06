@@ -1,4 +1,3 @@
-from __future__ import print_function
 # log.py ---
 #
 # Filename: log.py
@@ -43,117 +42,6 @@ import logging
 import logging.config
 import sys
 
-from twisted.python.log import msg, FileLogObserver, textFromEventDict, _safeFormat, removeObserver, addObserver, startLogging
-from twisted.python import util
-
-class ColoredFileLogObserver(FileLogObserver):
-    CANCEL_COLOR = "\x1b[0m"
-    RED_NORMAL = "\x1b[31m"
-    RED_BOLD = "\x1b[31;1m"
-    GREEN_NORMAL = "\x1b[32m"
-    GREEN_BOLD = "\x1b[32;1m"
-    GREY_NORMAL = "\x1b[37m"
-
-    def __init__(self, f=None):
-        if f is None:
-            FileLogObserver.__init__(self, sys.stdout)
-        else:
-            FileLogObserver.__init__(self, f)
-
-        self.timeFormat = "%H:%M:%S"
-
-    def _colorize(self, text, color=GREY_NORMAL):
-        return color + text + ColoredFileLogObserver.CANCEL_COLOR
-
-    def emit(self, eventDict):
-        text = textFromEventDict(eventDict)
-        if text is None:
-            return
-
-        timeStr = self._colorize(
-            self.formatTime(eventDict['time']),
-            ColoredFileLogObserver.GREY_NORMAL)
-        fmtDict = {
-            'system': eventDict['system'],
-            'text': text.replace("\n", "\n\t")}
-        systemStr = self._colorize(
-            _safeFormat("[%(system)s]", fmtDict),
-            ColoredFileLogObserver.GREY_NORMAL)
-        textStr = _safeFormat("%(text)s", fmtDict)
-
-        if textStr.startswith("SSH"):
-            t = textStr.find("STDERR:")
-            if t != -1:
-                textStr = self._colorize(
-                    textStr[t + 8:],
-                    ColoredFileLogObserver.RED_BOLD)
-            else:
-                textStr = self._colorize(
-                    textStr[textStr.find("STDOUT:") + 8:],
-                    ColoredFileLogObserver.GREEN_BOLD)
-            # only text for incoming data
-            msgStr = textStr + "\n"
-        else:
-            # add system to the local logs
-            # TODO: Make system more useful, not just "SSHChannel...".
-            msgStr = systemStr + " " + textStr + "\n"
-
-        util.untilConcludes(self.write, timeStr + " " + msgStr)
-        util.untilConcludes(self.flush)  # Hoorj!
-
-
-class PythonLoggingObserver(object):
-
-    """
-    Output twisted messages to Python standard library L{logging} module.
-
-    WARNING: specific logging configurations (example: network) can lead to
-    a blocking system. Nothing is done here to prevent that, so be sure to not
-    use this: code within Twisted, such as twisted.web, assumes that logging
-    does not block.
-    """
-
-    def __init__(self, loggerName="twisted", defaultLogLevel=logging.DEBUG):
-        """
-        @param loggerName: identifier used for getting logger.
-        @type loggerName: C{str}
-        """
-        self.default_loglevel = defaultLogLevel
-        self.logger = logging.getLogger(loggerName)
-
-    def emit(self, eventDict):
-        """
-        Receive a twisted log entry, format it and bridge it to python.
-
-        By default the logging level used is info; log.err produces error
-        level, and you can customize the level by using the C{logLevel} key::
-
-        >>> log.msg('debugging', logLevel=logging.DEBUG)
-
-        """
-        if 'logLevel' in eventDict:
-            level = eventDict['logLevel']
-        elif eventDict['isError']:
-            level = logging.ERROR
-        else:
-            level = self.default_loglevel
-        text = textFromEventDict(eventDict)
-        if text is None:
-            return
-        self.logger.log(level, text)
-
-    def start(self):
-        """
-        Start observing log events.
-        """
-        addObserver(self.emit)
-
-    def stop(self):
-        """
-        Stop observing log events.
-        """
-        removeObserver(self.emit)
-
 
 # TODO(emilon): Document this on the user manual
 def setupLogging():
@@ -187,9 +75,6 @@ def setupLogging():
         stderr_handler.setLevel(log_level)
         stderr_handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(message)s"))
         root.addHandler(stderr_handler)
-
-    observer = PythonLoggingObserver('root', defaultLogLevel=logging.INFO)
-    observer.start()
 
 
 # log.py ends here

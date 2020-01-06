@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # run_in_env.py ---
 #
 # Filename: run_in_env.py
@@ -40,7 +40,6 @@
 
 # Code:
 
-from __future__ import print_function
 from glob import glob
 from os import path, chdir, environ, makedirs, execvpe, getcwd
 from subprocess import call
@@ -98,10 +97,11 @@ extend_var(environ, "PYTHONPATH", project_dir)
 extend_var(environ, "PYTHONPATH", path.join(project_dir, "gumby"))
 
 # Add tribler dir to PYTHONPATH
-extend_var(environ, "PYTHONPATH", path.join(project_dir, "tribler"))
+extend_var(environ, "PYTHONPATH", path.join(project_dir, "tribler", "src", "tribler-common"))
+extend_var(environ, "PYTHONPATH", path.join(project_dir, "tribler", "src", "tribler-core"))
 
 # Add IPv8 dir to PYTHONPATH
-extend_var(environ, "PYTHONPATH", path.join(project_dir, "tribler", "Tribler", "pyipv8"))
+extend_var(environ, "PYTHONPATH", path.join(project_dir, "tribler", "src", "pyipv8"))
 
 # Add gumby scripts dir to PATH
 extend_var(environ, "PATH", scripts_dir)

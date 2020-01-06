@@ -1,8 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
-
-from twisted.python import log
 
 from gumby.statsparser import StatisticsParser
 
@@ -27,9 +25,6 @@ class DHTStatisticsParser(StatisticsParser):
 
 # cd to the output directory
 os.chdir(os.environ['OUTPUT_DIR'])
-
-observer = log.PythonLoggingObserver()
-observer.start()
 
 parser = DHTStatisticsParser(sys.argv[1])
 parser.run()

@@ -1,6 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from __future__ import print_function
 import csv
 import json
 import math
@@ -22,7 +21,7 @@ def is_float(x):
 def get_last_row(f, delimiter=' '):
     """
     Gets the last row of the CSV file
-    
+
     :param f: The filename
     :param delimiter: The delimiter
     :return: The last row
@@ -44,8 +43,8 @@ def mkdir_for_file(filename):
 
 def large_deviation(data, point):
     """
-    Check if a data point is within 1.5 IQR of the median. 
-    
+    Check if a data point is within 1.5 IQR of the median.
+
     :param data: a list of previous data points
     :param point: the data point to check
     :return: whether the point is an outlier
@@ -60,6 +59,7 @@ def large_deviation(data, point):
     max_allowed = median + 1.5*IQR
 
     return point > max_allowed or point < min_allowed
+
 
 class DroppedStatsProcessor:
 
@@ -118,7 +118,7 @@ class DroppedStatsProcessor:
     def _combine_stats(self, scenario, total_dropped):
         """
         Insert the new data into the old data.
-        
+
         :param scenario: the scenario name to update
         :param total_dropped: the value to update with
         :return: the new dict

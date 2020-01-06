@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # create_conf.py ---
 #
 # Filename: create_conf.py
@@ -37,7 +37,6 @@
 
 # Code:
 
-from __future__ import print_function
 from os import path, walk
 from sys import argv
 

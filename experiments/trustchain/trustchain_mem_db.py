@@ -1,5 +1,3 @@
-from six.moves import xrange
-
 from ipv8.attestation.trustchain.block import TrustChainBlock
 
 
@@ -94,7 +92,7 @@ class TrustchainMemoryDatabase(object):
         if public_key not in self.latest_blocks:
             return 1
         latest_seq_num = self.latest_blocks[public_key].sequence_number
-        for ind in xrange(1, latest_seq_num + 2):
+        for ind in range(1, latest_seq_num + 2):
             if (public_key, ind) not in self.block_cache:
                 return ind
 
@@ -118,7 +116,7 @@ class TrustchainMemoryDatabase(object):
         # TODO we assume only ourselves are crawled
         blocks = []
         orig_blocks_added = 0
-        for seq_num in xrange(start_seq_num, end_seq_num + 1):
+        for seq_num in range(start_seq_num, end_seq_num + 1):
             if (public_key, seq_num) in self.block_cache:
                 block = self.block_cache[(public_key, seq_num)]
                 blocks.append(block)

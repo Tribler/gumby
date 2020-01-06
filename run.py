@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # run.py ---
 #
 # Filename: run.py
@@ -37,16 +37,17 @@
 
 # Code:
 
-from __future__ import print_function
 import logging
 import sys
+from asyncio import ensure_future, get_event_loop, sleep
 from os import environ, getpgid, getpid, kill, setpgrp
 from os.path import dirname, exists
 from signal import SIGKILL, SIGTERM, signal
-from time import sleep, time
+from time import time
 
 
 logging.basicConfig(level=getattr(logging, environ.get('GUMBY_LOG_LEVEL', 'INFO').upper()))
+logging.getLogger("asyncio").setLevel(logging.WARNING)
 
 # This conditional import is added to support older versions of psutil
 try:
@@ -54,9 +55,9 @@ try:
 except ImportError:
     from psutil import pids
 
-from twisted.internet import reactor
-
 from gumby.runner import ExperimentRunner
+
+_terminating = False
 
 
 def _termTrap(self, *argv):
@@ -81,7 +82,42 @@ def _killGroup(signal=SIGTERM):
             pass
     return pids_found
 
-_terminating = False
+
+async def run_experiment(conf_path):
+    loop = get_event_loop()
+
+    # Create a process group so we can clean up after ourselves when
+    setpgrp()  # create new process group and become its leader
+    # Catch SIGTERM to attempt to clean after ourselves
+    signal(SIGTERM, _termTrap)
+
+    logger = logging.getLogger()
+    exp_runner = ExperimentRunner(conf_path)
+    try:
+        await exp_runner.run()
+    except Exception as e:
+        logger.error("Experiment execution failed, exiting with error.")
+        logger.error(str(e))
+        loop.exit_code = 1
+        loop.stop()
+
+    # Kill all the subprocesses before exiting
+    logger.info("Killing leftover local sub processes...")
+    pids_found = _killGroup()
+    wait_start_time = time()
+    while pids_found > 1 and (time() - wait_start_time) < 30:
+        pids_found = _killGroup()
+        if pids_found > 1:
+            logger.info("Waiting for %d subprocess(es) to die...", pids_found)
+        await sleep(5)
+
+    if (time() - wait_start_time) >= 30:
+        logger.info("Time out waiting, sending SIGKILL to remaining processes.")
+        _killGroup(SIGKILL)
+
+    logger.info("Done.")
+    loop.stop()
+
 
 if __name__ == '__main__':
     sys.path.append(dirname(__file__))
@@ -90,38 +126,13 @@ if __name__ == '__main__':
         if not exists(conf_path):
             print("Error: The specified configuration file doesn't exist.")
             exit(1)
-
-        # Create a process group so we can clean up after ourselves when
-        setpgrp()  # create new process group and become its leader
-        # Catch SIGTERM to attempt to clean after ourselves
-        signal(SIGTERM, _termTrap)
-
-        exp_runner = ExperimentRunner(conf_path)
-        exp_runner.run()
-
-        reactor.exitCode = 0
-        reactor.run()
-
-        # Kill all the subprocesses before exiting
-        logger = logging.getLogger()
-        logger.info("Killing leftover local sub processes...")
-        pids_found = _killGroup()
-        wait_start_time = time()
-        while pids_found > 1 and (time() - wait_start_time) < 30:
-            pids_found = _killGroup()
-            if pids_found > 1:
-                logger.info("Waiting for %d subprocess(es) to die...", pids_found)
-            sleep(5)
-
-        if (time() - wait_start_time) >= 30:
-            logger.info("Time out waiting, sending SIGKILL to remaining processes.")
-            _killGroup(SIGKILL)
-
-        logger.info("Done.")
-
-        exit(reactor.exitCode)
-    else:
-        print("Usage:\n%s EXPERIMENT_CONFIG" % sys.argv[0])
+        ensure_future(run_experiment(conf_path))
+        loop = get_event_loop()
+        loop.exit_code = 0
+        loop.run_forever()
+        loop.close()
+        exit(loop.exit_code)
+    print("Usage:\n%s EXPERIMENT_CONFIG" % sys.argv[0])
 
 #
 # run.py ends here
