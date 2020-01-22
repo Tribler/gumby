@@ -341,6 +341,7 @@ pony
 protobuf
 psutil
 pynacl # New EC crypto stuff for tunnelcommunity
+pyyaml
 pyOpenSSL
 qrcode
 service_identity
