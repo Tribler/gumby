@@ -324,6 +324,7 @@ CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --up
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade gmpy2
 
 echo "
+asyncssh
 bcrypt
 chardet
 cherrypy
