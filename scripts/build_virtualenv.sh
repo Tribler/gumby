@@ -287,7 +287,7 @@ if [ ! -e $VENV/lib/libffi-$LIBFFI_VERSION/include/ffi.h -o ! -e $LIBFFI_MARKER 
 fi
 
 # install libsodium
-LIBSODIUM_VERSION=1.0.16
+LIBSODIUM_VERSION=1.0.18
 LIBSODIUM_MARKER=`build_marker libsodium $LIBSODIUM_VERSION`
 if [ ! -e $VENV/include/sodium.h  -o ! -e $LIBSODIUM_MARKER ]; then
     LIBSODIUM_PACKAGE="libsodium-$LIBSODIUM_VERSION.tar.gz"
