@@ -1,13 +1,13 @@
-from asyncio import coroutine, ensure_future, iscoroutine, iscoroutinefunction, sleep
-
-from ipv8.keyvault.private.libnaclkey import LibNaCLSK
+from asyncio import coroutine, ensure_future, iscoroutinefunction, sleep
 
 
 def generate_keypair_trustchain():
+    from ipv8.keyvault.private.libnaclkey import LibNaCLSK
     return LibNaCLSK()
 
 
 def read_keypair_trustchain(keypairfilename):
+    from ipv8.keyvault.private.libnaclkey import LibNaCLSK
     with open(keypairfilename, 'rb') as keyfile:
         binarykey = keyfile.read()
     return LibNaCLSK(binarykey=binarykey)
