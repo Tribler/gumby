@@ -5,7 +5,7 @@ from gumby.experiment import experiment_callback
 
 from gumby.modules.experiment_module import static_module, ExperimentModule
 
-import Tribler.Core.Libtorrent.LibtorrentMgr as lt
+from tribler_core.modules.libtorrent.libtorrent_mgr import LibtorrentMgr as lt
 
 
 class EverEmptySet(frozenset):
@@ -57,23 +57,23 @@ class DHTModule(ExperimentModule):
 
     @experiment_callback
     def print_dht_table(self):
-        for ltsession in self.lm.ltmgr.ltsessions.values():
+        for ltsession in self.ltmgr.ltsessions.values():
             if hasattr(ltsession, 'post_dht_stats'):
                 ltsession.post_dht_stats()
 
     @experiment_callback
     def disable_libtorrent_dht(self):
         for sess in self.lm.ltmgr.ltsessions.values():
-            settings = sess.get_settings()
+            settings = self.session.ltmgr.get_session_settings(sess)
             settings["enable_dht"] = False
-            sess.set_settings(settings)
+            self.session.ltmgr.set_session_settings(sess, settings)
 
     @experiment_callback
     def enable_libtorrent_dht(self):
         for sess in self.lm.ltmgr.ltsessions.values():
-            settings = sess.get_settings()
+            settings = self.session.ltmgr.get_session_settings(sess)
             settings["enable_dht"] = True
-            sess.set_settings(settings)
+            self.session.ltmgr.set_session_settings(sess, settings)
 
     @experiment_callback
     def isolate_dht(self):
@@ -95,9 +95,9 @@ class DHTModule(ExperimentModule):
                 self.dht_nodes.append(("127.0.0.1", sess.listen_port()))
             # else: we don't know the port of the exit socket
 
-            settings = sess.get_settings()
+            settings = self.session.ltmgr.get_session_settings(sess)
             settings["enable_lsd"] = False
-            sess.set_settings(settings)
+            self.session.ltmgr.set_session_settings(sess, settings)
 
             inst.dht_ready = True
             return sess

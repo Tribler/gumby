@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # config.py ---
 #
 # Filename: config.py
@@ -42,9 +42,7 @@ from getpass import getuser
 from hashlib import md5
 from time import time
 
-from twisted.internet.protocol import ClientFactory
-from twisted.protocols.basic import LineReceiver
-from twisted.internet import reactor, defer
+from gumby.line_receiver import LineReceiver
 
 
 class _ConfigClientProtocol(LineReceiver):
@@ -64,12 +62,12 @@ class _ConfigClientProtocol(LineReceiver):
         self.config = None
 
     def connectionMade(self):
-        self.sendLine(b"TIME " + str(time()))
+        self.send_line(b"TIME " + str(time()))
 
         # goto recv MYCONFIG
         self.state = 1
 
-    def lineReceived(self, data):
+    def line_received(self, data):
         if self.state == 1:
             data = data.strip()
             id, ip, port, start_timestamp = data.split()
@@ -99,18 +97,6 @@ class _ConfigClientProtocol(LineReceiver):
                 # TODO: goto send LOGGING
                 # self.state = 3
         # elif self.state == 3:
-
-
-class ConfigClientFactory(ClientFactory):
-
-    def buildProtocol(self, addr):
-        p = _ConfigClientProtocol()
-        p.factory = self
-        return p
-
-    def onConfigReceived(self, function):
-        self.onConfigReceived = defer.Deferred()
-        self.onConfigReceived.addCallback(function)
 
 
 def get_config_server_endpoint():

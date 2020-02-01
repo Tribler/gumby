@@ -4,8 +4,6 @@ This file can then be loaded in an experiment to initialize channels.
 """
 import random
 
-from six.moves import xrange
-
 PEERS = 20
 TORRENTS_IN_CHANNEL = 200
 DEAD_TORRENT_RATE = 0.619
@@ -17,8 +15,8 @@ def random_infohash():
 
 
 with open("torrents.txt", "w") as torrents_file:
-    for peer in xrange(PEERS):
-        for _ in xrange(TORRENTS_IN_CHANNEL):
+    for peer in range(PEERS):
+        for _ in range(TORRENTS_IN_CHANNEL):
             infohash = random_infohash()
             seeders = 0 if random.random() < DEAD_TORRENT_RATE else random.randint(1, 10000)
             leechers = random.randint(0, 10000)

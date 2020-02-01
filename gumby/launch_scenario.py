@@ -1,17 +1,14 @@
-#!/usr/bin/env python
-
-from __future__ import print_function
-
+#!/usr/bin/env python3
 import random
+from asyncio import ensure_future, get_event_loop
 from logging import debug, warning
 from os import environ, path
 from sys import argv, path as python_path
 
-from twisted.internet import reactor
-
 from gumby.instrumentation import init_instrumentation
 from gumby.log import setupLogging
 from gumby.sync import ExperimentClientFactory, ExperimentServiceFactory
+from gumby.util import run_task
 
 
 # @CONF_OPTION SCENARIO_FILE: The scenario to run for this experiment (default: None)
@@ -23,7 +20,7 @@ def main(self_service=False):
      - Supply a scenario file to run on the commandline (eg: launch_scenario.py some.scenario), or
      - Set the scenario file to run in the SCENARIO_FILE environment variable.
 
-    The launch_scenario script will start the twisted reactor and run an ExperimentClient on it.
+    The launch_scenario script will start the event loop and run an ExperimentClient on it.
 
     For debugging a scenario in an IDE, launch_scenario offers the self_service feature. it is activated if the
     environment variable SELF_SERVICE exists, or if the main() method is invoked with self_service=True. The self-
@@ -57,7 +54,7 @@ def main(self_service=False):
     if "TRIBLER_DIR" not in environ:
         environ["TRIBLER_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler"))
     if "IPV8_DIR" not in environ:
-        environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler", "Tribler", "pyipv8"))
+        environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler", "src", "pyipv8"))
     if "SYNC_HOST" not in environ:
         environ["SYNC_HOST"] = "localhost"
     if "SYNC_PORT" not in environ:
@@ -66,8 +63,10 @@ def main(self_service=False):
         environ["SCENARIO_FILE"] = path.abspath(path.join(
             environ["EXPERIMENT_DIR"], "%s.scenario" % path.basename(path.normpath(environ["EXPERIMENT_DIR"]))))
 
-    if environ["TRIBLER_DIR"] not in python_path:
-        python_path.append(environ["TRIBLER_DIR"])
+    for subdir_name in ('tribler-common', 'tribler-core', 'anydex'):
+        subdir_path = path.join(environ["TRIBLER_DIR"], 'src', subdir_name)
+        if subdir_path not in python_path:
+            python_path.append(subdir_path)
     if environ["EXPERIMENT_DIR"] not in python_path:
         python_path.append(environ["EXPERIMENT_DIR"])
     if environ["IPV8_DIR"] not in python_path:
@@ -78,7 +77,8 @@ def main(self_service=False):
     if not path.exists(environ["SCENARIO_FILE"]):
         warning("Unable to find scenario file: %s", environ["SCENARIO_FILE"])
 
-    reactor.exitCode = 0
+    loop = get_event_loop()
+    loop.exit_code = 0
 
     # if self service is requested, start an experiment server to run our scenario. Used to debug the client in an IDE
     if self_service or "SELF_SERVICE" in environ:
@@ -87,20 +87,22 @@ def main(self_service=False):
             environ["SYNC_PORT"] = "57756"       # corresponds to the keyboard rows for the word gumby
         debug("Starting experiment server on: %s:%s", environ['SYNC_HOST'], int(environ['SYNC_PORT']))
 
-        def exp_started(_):
+        def exp_started():
             debug("Experiment started, closing server")
 
         # create experiment service with 1 expected subscriber, and start in 0 seconds
         fact = ExperimentServiceFactory(1, 0)
         # need to monkey patch this one or it will kill the reactor.
-        fact.onExperimentStarted = exp_started
-        reactor.listenTCP(int(environ['SYNC_PORT']), fact)
+        fact.on_experiment_started = exp_started
+        ensure_future(loop.create_server(fact, port=int(environ['SYNC_PORT'])))
 
     debug("Connecting to: %s:%s", environ['SYNC_HOST'], int(environ['SYNC_PORT']))
-    reactor.callLater(random.randint(1, 5), reactor.connectTCP,
-                      environ['SYNC_HOST'], int(environ['SYNC_PORT']), ExperimentClientFactory())
-    reactor.run()
-    exit(reactor.exitCode)
+    run_task(loop.create_connection, ExperimentClientFactory(), environ['SYNC_HOST'],
+             int(environ['SYNC_PORT']), delay=random.randint(1, 5))
+    loop.run_forever()
+    loop.close()
+    exit(loop.exit_code)
+
 
 if __name__ == '__main__':
     main()

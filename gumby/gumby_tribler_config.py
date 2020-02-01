@@ -1,4 +1,4 @@
-from Tribler.Core.Config.tribler_config import TriblerConfig
+from tribler_core.config.tribler_config import TriblerConfig
 
 
 class GumbyTriblerConfig(TriblerConfig):

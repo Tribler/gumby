@@ -2,17 +2,15 @@ import imp
 import json
 import logging
 import os
+from asyncio import get_event_loop
 from os import chdir, environ, makedirs, path
 import sys
 from collections import Iterable
 from functools import reduce  # pylint: disable=redefined-builtin
 from time import time
 
-import six
 from gumby.scenario import ScenarioRunner
-from twisted.internet import reactor
-from twisted.internet.threads import deferToThread
-from twisted.protocols.basic import LineReceiver
+from gumby.line_receiver import LineReceiver
 
 
 def experiment_callback(name=None):
@@ -81,23 +79,23 @@ class ExperimentClient(LineReceiver):
             else:
                 self._logger.error("Scenario file %s not found", self.scenario_file)
 
-    def connectionMade(self):
+    def connection_made(self, transport):
+        super(ExperimentClient, self).connection_made(transport)
         self._logger.debug("Connected to the experiment server")
-        self.sendLine(b"time:%f" % time())
-
+        self.send_line(b"time:%f" % time())
         self.state = "id"
 
-    def lineReceived(self, line):
+    def line_received(self, line):
         try:
             pto = 'proto_' + self.state
             state_handler = getattr(self, pto)
         except AttributeError:
-            self._logger.error('Callback %s not found. Stopping reactor.', self.state)
-            reactor.stop()
+            self._logger.error('Callback %s not found. Stopping event loop.', self.state)
+            get_event_loop().stop()
         else:
             self.state = state_handler(line)
             if self.state == 'done':
-                self.transport.loseConnection()
+                self.transport.close()
 
     def on_id_received(self):
         self.scenario_runner.set_peernumber(self.my_id)
@@ -108,14 +106,16 @@ class ExperimentClient(LineReceiver):
         else:
             makedirs(my_dir)
         chdir(my_dir)
-        self._stats_file = open("statistics.log", 'w')
+        self._stats_file = open("statistics.log", 'w', buffering=1)
 
         for module in self.experiment_modules:
             if module is not self:
                 module.on_id_received()
 
         for key, val in self.vars.items():
-            self.sendLine(b"set:%s:%s" % (key.encode('utf-8'), val.encode('utf-8')))
+            self.send_line(b"set:%s:%s" % (key.encode('utf-8'), val.encode('utf-8')))
+
+        self.send_line(b"ready")
 
     def on_all_vars_received(self):
         for module in self.experiment_modules:
@@ -155,8 +155,7 @@ class ExperimentClient(LineReceiver):
                 self.my_id = int(id)
 
             self._logger.debug('Got assigned id: %s', self.my_id)
-            d = deferToThread(self.on_id_received)
-            d.addCallback(lambda _: self.sendLine(b"ready"))
+            get_event_loop().run_in_executor(None, self.on_id_received)
             return "all_vars"
         else:
             self._logger.error("Received an unexpected string from the server, closing connection")
@@ -179,7 +178,7 @@ class ExperimentClient(LineReceiver):
         self.time_offset = self.all_vars[str(self.my_id)]["time_offset"]
         self.on_all_vars_received()
 
-        self.sendLine(b"vars_received")
+        self.send_line(b"vars_received")
         return "go"
 
     def proto_go(self, line):
@@ -187,9 +186,9 @@ class ExperimentClient(LineReceiver):
         if line.strip().startswith(b"go:"):
             start_delay = max(0, float(line.strip().split(b":")[1]) - time())
             self._logger.info("Starting the experiment in %f secs.", start_delay)
-            reactor.callLater(start_delay, self.start_experiment)
-            self.factory.stopTrying()
-            self.transport.loseConnection()
+            get_event_loop().call_later(start_delay, self.start_experiment)
+            self.factory.stop_reconnecting()
+            self.transport.close()
 
     def register(self, target):
         """
@@ -227,8 +226,8 @@ class ExperimentClient(LineReceiver):
 
     @experiment_callback
     def stop(self):
-        self._logger.info("Stopping reactor")
-        reactor.stop()
+        self._logger.info("Stopping event loop")
+        get_event_loop().stop()
 
     @experiment_callback
     def set(self, variable_name, variable_value):
@@ -257,7 +256,7 @@ class ExperimentClient(LineReceiver):
             if cur_dict:
                 for key, value in cur_dict.items():
                     # convert key to make it printable
-                    if not isinstance(key, (six.string_types, six.integer_types, float)):
+                    if not isinstance(key, (str, int, float)):
                         key = str(key)
 
                     # if this is a dict, recursively check for changed values
@@ -270,7 +269,7 @@ class ExperimentClient(LineReceiver):
 
                     # else convert and compare single value
                     else:
-                        if not isinstance(value, (six.string_types, six.integer_types, float, Iterable)):
+                        if not isinstance(value, (str, int, float, Iterable)):
                             value = str(value)
 
                         new_values[key] = value
@@ -282,7 +281,6 @@ class ExperimentClient(LineReceiver):
         new_values, changed_values = get_changed_values(prev_dict, cur_dict)
         if changed_values:
             self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
-            self._stats_file.flush()
             return new_values
         return prev_dict
 

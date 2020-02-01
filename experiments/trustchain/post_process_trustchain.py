@@ -1,13 +1,11 @@
-#!/usr/bin/env python
-from __future__ import print_function
-
+#!/usr/bin/env python3
 import json
 import os
 import sys
 
 from gumby.statsparser import StatisticsParser
 
-from Tribler.Core.Utilities.unicode import hexlify
+from tribler_core.utilities.unicode import hexlify
 
 from scripts.trustchain_database_reader import GumbyDatabaseAggregator
 
@@ -59,7 +57,7 @@ class TrustchainStatisticsParser(StatisticsParser):
             # Write header
             trustchain_file.write(
                 "peer;public_key;sequence_number;link_peer;link_public_key;"
-                "link_sequence_number;previous_hash;signature;hash;type;time;time_since_start;tx\n"
+                "link_sequence_number;previous_hash;signature;hash;type;time;time_since_start\n"
             )
 
             # Write blocks
@@ -75,7 +73,7 @@ class TrustchainStatisticsParser(StatisticsParser):
 
                 peer = key_map[hexlify(block.public_key)]
                 trustchain_file.write(
-                    "%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s;%s\n" % (
+                    "%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%d;%s\n" % (
                         peer,
                         hexlify(block.public_key),
                         block.sequence_number,
@@ -88,7 +86,7 @@ class TrustchainStatisticsParser(StatisticsParser):
                         block.type,
                         block.timestamp,
                         block.timestamp - start_time,
-                        json.dumps(block.transaction))
+                    )
                 )
 
                 if (peer, link_peer) not in interactions and (link_peer, peer) not in interactions:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # bartercast_client.py ---
 #
 # Filename: tunnel_module.py
@@ -39,20 +39,16 @@
 import time
 from binascii import unhexlify
 
-from Tribler.Core.Utilities.unicode import hexlify
-from Tribler.Core.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
-from Tribler.community.triblertunnel.community import TriblerTunnelCommunity
-
-from ipv8.messaging.anonymization.community import TunnelSettings
-
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
 
-try:
-    long  # Python 2
-except NameError:  # Python 3
-    long = int  # pylint: disable=redefined-builtin
+from ipv8.messaging.anonymization.community import TunnelSettings
+
+from tribler_common.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
+
+from tribler_core.utilities.unicode import hexlify
+from tribler_core.modules.tunnel.community.triblertunnel_community import TriblerTunnelCommunity
 
 
 @static_module
@@ -99,7 +95,7 @@ class TunnelModule(IPv8OverlayExperimentModule):
                                                peer["utotal"], peer["extended_version"])
                     for pid, hashes in peer_aggregate.items():
                         for infohash, balance in hashes.items():
-                            self.session.lm.payout_manager.update_peer(pid, infohash, balance)
+                            self.session.payout_manager.update_peer(pid, infohash, balance)
 
                 status_dict = {
                     "time": time.time() - self.experiment.scenario_runner.exp_start_time,
@@ -115,7 +111,7 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
             return []
 
-        self.session.set_download_states_callback(monitor_downloads)
+        self.session.ltmgr.set_download_states_callback(monitor_downloads)
 
     # TunnelSettings should be obtained from tribler_config settings. But not all properties of the tunnel settings can
     # be controlled that way. So we store a custom TunnelSettings object in the community launcher. Properties that have
@@ -142,15 +138,15 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def set_tunnel_max_traffic(self, value):
-        self.tunnel_settings.max_traffic = long(value)
+        self.tunnel_settings.max_traffic = int(value)
 
     @experiment_callback
     def set_tunnel_max_time(self, value):
-        self.tunnel_settings.max_time = long(value)
+        self.tunnel_settings.max_time = int(value)
 
     @experiment_callback
     def set_tunnel_max_time_inactive(self, value):
-        self.tunnel_settings.max_time_inactive = long(value)
+        self.tunnel_settings.max_time_inactive = int(value)
 
     @experiment_callback
     def build_circuits(self, hops):

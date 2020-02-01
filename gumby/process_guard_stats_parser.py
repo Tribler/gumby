@@ -1,16 +1,9 @@
-#!/usr/bin/env python
-from __future__ import print_function
-
+#!/usr/bin/env python3
 import sys
 import os
 from collections import defaultdict
 
 import json
-
-try:
-    long           # Python 2
-except NameError:  # Python 3
-    long = int     # pylint: disable=redefined-builtin
 
 
 # Indices in proc(5)
@@ -143,8 +136,8 @@ class ResourceUsageParser(object):
                         if pid not in self.all_pids:
                             self.all_pids.add(pid)
 
-                        utime = long(parts[PROCFS_UTIME])
-                        stime = long(parts[PROCFS_STIME])
+                        utime = int(parts[PROCFS_UTIME])
+                        stime = int(parts[PROCFS_STIME])
 
                         time_diff = calc_diff(cur_time, self.prev_times.get(pid, cur_time), utime,
                                               self.prev_utimes.get(pid, utime)) / sc_clk_tck
@@ -155,20 +148,20 @@ class ResourceUsageParser(object):
                         self.utimes[cur_time].setdefault(nodename, []).append(self.utimes[cur_time][pid])
                         self.stimes[cur_time].setdefault(nodename, []).append(self.stimes[cur_time][pid])
 
-                        vsize = long(parts[PROCFS_VSIZE])
+                        vsize = int(parts[PROCFS_VSIZE])
                         self.vsizes.setdefault(cur_time, {})[pid] = vsize / 1048576.0
                         self.vsizes[cur_time].setdefault(nodename, []).append(self.vsizes[cur_time][pid])
 
-                        num_threads = long(parts[PROCFS_NUM_THREADS])
+                        num_threads = int(parts[PROCFS_NUM_THREADS])
                         self.threads.setdefault(cur_time, {})[pid] = num_threads
                         self.threads[cur_time].setdefault(nodename, []).append(self.threads[cur_time][pid])
 
-                        rss = long(parts[PROCFS_RSS])
+                        rss = int(parts[PROCFS_RSS])
                         self.rsizes.setdefault(cur_time, {})[pid] = (rss * pagesize) / 1048576.0
                         self.rsizes[cur_time].setdefault(nodename, []).append(self.rsizes[cur_time][pid])
 
-                        write_bytes = long(parts[PROCFS_WRITE_BYTES])
-                        read_bytes = long(parts[PROCFS_READ_BYTES])
+                        write_bytes = int(parts[PROCFS_WRITE_BYTES])
+                        read_bytes = int(parts[PROCFS_READ_BYTES])
 
                         self.writebytes_sum.setdefault(cur_time, {})[pid] = write_bytes / 1024.0
                         self.writebytes_sum[cur_time].setdefault(nodename, []).append(
@@ -186,8 +179,8 @@ class ResourceUsageParser(object):
                         self.readbytes[cur_time].setdefault(nodename, []).append(self.readbytes[cur_time][pid])
                         self.writebytes[cur_time].setdefault(nodename, []).append(self.writebytes[cur_time][pid])
 
-                        wchar = long(parts[PROCFS_WCHARS])
-                        rchar = long(parts[PROCFS_RCHARS])
+                        wchar = int(parts[PROCFS_WCHARS])
+                        rchar = int(parts[PROCFS_RCHARS])
 
                         self.wchars_sum.setdefault(cur_time, {})[pid] = wchar / 1024.0
                         self.wchars_sum[cur_time].setdefault(nodename, []).append(self.wchars_sum[cur_time][pid])

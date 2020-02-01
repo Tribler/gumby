@@ -1,8 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Mircea Bardac
 # Rewritten by Elric Milon (Dec. 2012 and Aug. 2013)
-
-from __future__ import print_function
 
 import errno
 import json
@@ -317,6 +315,7 @@ class ProcessMonitor(object):
                 self.timed_out = True
                 return self.stop()
             sleep(sleep_time)
+
 
 if __name__ == "__main__":
     from optparse import OptionParser

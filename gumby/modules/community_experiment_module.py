@@ -23,7 +23,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         # To be sure that the module loading happens in the right order, this next line serves the dual purpose of
         # triggering the check for a loaded IPv8 provider
-        self.ipv8_provider.ipv8_available.addCallback(self.on_ipv8_available)
+        self.ipv8_provider.ipv8_available.add_done_callback(lambda f: self.on_ipv8_available(f.result()))
         self.strategies = {
             'RandomWalk': RandomWalk,
             'EdgeWalk': EdgeWalk,
@@ -131,7 +131,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         strategy = self.strategies[name]
 
-        self.session.lm.ipv8.strategies.append((strategy(self.overlay, **kwargs), int(max_peers)))
+        self.session.ipv8.strategies.append((strategy(self.overlay, **kwargs), int(max_peers)))
 
     def get_peer(self, peer_id):
         target = self.all_vars[peer_id]

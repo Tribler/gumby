@@ -287,7 +287,7 @@ if [ ! -e $VENV/lib/libffi-$LIBFFI_VERSION/include/ffi.h -o ! -e $LIBFFI_MARKER 
 fi
 
 # install libsodium
-LIBSODIUM_VERSION=1.0.16
+LIBSODIUM_VERSION=1.0.18
 LIBSODIUM_MARKER=`build_marker libsodium $LIBSODIUM_VERSION`
 if [ ! -e $VENV/include/sodium.h  -o ! -e $LIBSODIUM_MARKER ]; then
     LIBSODIUM_PACKAGE="libsodium-$LIBSODIUM_VERSION.tar.gz"
@@ -324,6 +324,7 @@ CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --up
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade gmpy2
 
 echo "
+asyncssh
 bcrypt
 chardet
 cherrypy
@@ -339,14 +340,13 @@ networkx
 pony
 protobuf
 psutil
-pyasn1 # for twisted
-pycrypto # Twisted needs it
 pynacl # New EC crypto stuff for tunnelcommunity
+pyyaml
 pyOpenSSL
 qrcode
 service_identity
-six
-twisted
+aiohttp
+aiohttp_apispec
 yappi
 " > ~/requirements.txt
 

@@ -1,19 +1,18 @@
 import logging
 import os
 import random
+from asyncio import Future
 from binascii import hexlify, unhexlify
 
-from Tribler.community.popularity.community import PopularityCommunity
-from Tribler.Core.Modules.MetadataStore.OrmBindings.channel_node import NEW
+from tribler_core.modules.popularity.popularity_community import PopularityCommunity
+from tribler_core.modules.metadata_store.orm_bindings.channel_node import NEW
 from ipv8.taskmanager import TaskManager
 from pony.orm import db_session, count
-from twisted.internet import reactor
-from twisted.internet.defer import Deferred
-from twisted.internet.task import LoopingCall
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
+from gumby.util import run_task
 
 
 class FakeDHTHealthManager(TaskManager):
@@ -28,7 +27,7 @@ class FakeDHTHealthManager(TaskManager):
 
     def get_health(self, infohash, **_):
         self._logger.info("Getting health info for infohash %s", hexlify(infohash))
-        deferred = Deferred()
+        future = Future()
 
         seeders, peers = 0, 0
         if infohash in self.torrent_healths:
@@ -42,9 +41,9 @@ class FakeDHTHealthManager(TaskManager):
             }]
         }
 
-        self.register_task("lookup_%s" % hexlify(infohash),
-                           reactor.callLater(random.randint(1, 7), deferred.callback, health_response))
-        return deferred
+        self.register_task("lookup_%s" % hexlify(infohash), future.set_result,
+                           health_response, delay=random.randint(1, 7))
+        return future
 
 
 @static_module
@@ -57,7 +56,7 @@ class PopularityModule(IPv8OverlayExperimentModule):
         super(PopularityModule, self).__init__(experiment, PopularityCommunity)
         self._logger = logging.getLogger(self.__class__.__name__)
         self.fake_dht_health_manager = None
-        self.health_poll_lc = LoopingCall(self.write_periodic_torrent_health_statistics)
+        self.health_poll_lc = None
 
     def on_id_received(self):
         super(PopularityModule, self).on_id_received()
@@ -68,16 +67,16 @@ class PopularityModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def start_health_poll(self, interval):
-        self.health_poll_lc.start(int(interval))
+        self.health_poll_lc = run_task(self.write_periodic_torrent_health_statistics, interval=int(interval))
 
     @experiment_callback
     def stop_health_poll(self):
-        self.health_poll_lc.stop()
+        self.health_poll_lc.cancel()
 
     @experiment_callback
     def set_fake_dht_health_manager(self):
         self.fake_dht_health_manager = FakeDHTHealthManager()
-        self.session.lm.ltmgr.dht_health_manager = self.fake_dht_health_manager
+        self.session.ltmgr.dht_health_manager = self.fake_dht_health_manager
 
     @experiment_callback
     def introduce_peers_popularity(self):
@@ -90,10 +89,7 @@ class PopularityModule(IPv8OverlayExperimentModule):
         interval = int(interval)
         self._logger.info("Changing torrent check interval to %d seconds", interval)
         torrent_checker = self.overlay.torrent_checker
-        torrent_checker.cancel_pending_task("torrent_check")
-        torrent_checker.torrent_check_lc = torrent_checker.register_task(
-            "torrent_check", LoopingCall(torrent_checker.check_random_torrent))
-        torrent_checker.torrent_check_lc.start(interval)
+        torrent_checker.replace_task("torrent_check", torrent_checker.check_random_torrent, interval=interval)
 
     @experiment_callback
     def insert_torrents_from_file(self, filename):

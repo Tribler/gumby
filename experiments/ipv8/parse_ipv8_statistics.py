@@ -1,9 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import json
 import os
 import sys
 
-from six.moves import xrange
 from gumby.statsparser import StatisticsParser
 
 
@@ -69,14 +68,14 @@ class IPv8StatisticsParser(StatisticsParser):
 
         # We now construct the final list
         results = []
-        for ind in xrange(0, largest_time / 5 + 1):
+        for ind in range(0, largest_time // 5 + 1):
             placeholder_dict = {}
             for msg_id in msg_ids:
                 placeholder_dict[msg_id] = {'num_up': 0, 'num_down': 0, 'bytes_up': 0, 'bytes_down': 0}
             results.append(placeholder_dict)
 
         # We now actually fill in the results
-        for ind in xrange(1, largest_time / 5 + 1):
+        for ind in range(1, largest_time // 5 + 1):
             cur_time = ind * 5
             for stats_list in stats_per_peer.values():
                 filtered_dicts = [stat_dict for stat_time, stat_dict in stats_list if stat_time <= cur_time]

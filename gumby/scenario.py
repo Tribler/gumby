@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # scenario.py ---
 #
 # Filename: scenario.py
@@ -8,8 +8,8 @@
 # Created: Mon Jul  15 15:14:19 2013 (+0200)
 
 # Commentary:
-# This module parses events from a scenario file and schedules them on the main
-# Twisted thread.
+# This module parses events from a scenario file and schedules them
+# on the event loop.
 #
 # Usage example:
 #     t = Tribler(...)
@@ -46,14 +46,14 @@
 
 import logging
 import shlex
+from asyncio import iscoroutine, ensure_future
+from functools import partial
 from os import environ, path
 from re import compile as re_compile
 from threading import RLock
 from time import time
 
-from six.moves import xrange
-
-from twisted.internet import reactor
+from gumby.util import run_task
 
 
 class ScenarioParser(object):
@@ -326,7 +326,7 @@ class ScenarioParser(object):
                     # parse the peer number (or peer number pair)
                     if "-" in peer:
                         low, high = peer.split("-")
-                        peers.update(xrange(int(low), int(high) + 1))
+                        peers.update(range(int(low), int(high) + 1))
                     else:
                         peers.add(int(peer))
 
@@ -357,7 +357,7 @@ class ScenarioRunner(ScenarioParser):
 
     Users should register callables using register() before calling run(). All
     scenario events (lines) using unregistered callable names will be silently
-    ignored. The callables will be executed on the main Twisted thread.
+    ignored. The callables will be executed on the event loop.
     """
 
     def __init__(self, expstartstamp=None):
@@ -400,17 +400,14 @@ class ScenarioRunner(ScenarioParser):
                 self._logger.info("Register call %s %s:%d %s %s %s", tstmp, filename, line_number, clb,
                                   repr(args), repr(kwargs))
                 for target in self._callables[clb]:
-                    reactor.callLater(
-                        delay if delay > 0.0 else 0,
-                        target,
-                        *args,
-                        **kwargs
-                    )
+                    run_task(partial(target, **kwargs), *args, delay=max(0, delay))
             else:
                 self._logger.info("Calling immediately %s:%d %s %s %s", filename, line_number, clb,
                                   repr(args), repr(kwargs))
                 for target in self._callables[clb]:
-                    target(*args, **kwargs)
+                    coro = target(*args, **kwargs)
+                    if iscoroutine(coro):
+                        ensure_future(coro)
 
     def _parse_for_this_peer(self, peerspec):
         # TODO: an extra check should be applied here to see if the peerspec contains variables, and if it does, they

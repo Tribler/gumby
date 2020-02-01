@@ -1,15 +1,12 @@
-import os
-from time import time
-
 from pony.orm import db_session
-from twisted.internet.task import LoopingCall
 
-from Tribler.community.gigachannel.community import GigaChannelCommunity
-from Tribler.Core.simpledefs import DLSTATUS_SEEDING
+from tribler_common.simpledefs import DLSTATUS_SEEDING
+from tribler_core.modules.metadata_store.community.gigachannel_community import GigaChannelCommunity
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
+from gumby.util import run_task
 
 
 @static_module
@@ -32,7 +29,7 @@ class GigaChannelModule(IPv8OverlayExperimentModule):
         self.autoplot_create('total_torrents', 'num_torrents')
 
     def on_ipv8_available(self, _):
-        LoopingCall(self.write_channels).start(1.0, True)
+        run_task(self.write_channels, interval=1, delay=0)
 
     @experiment_callback
     def introduce_peers_gigachannels(self):
@@ -44,10 +41,13 @@ class GigaChannelModule(IPv8OverlayExperimentModule):
         """
         Write information about all discovered channels away.
         """
+        if not self.session.mds:
+            return
+
         with db_session:
-            self.autoplot_add_point('known_channels', len(list(self.session.lm.mds.ChannelMetadata.select())))
-            self.autoplot_add_point('total_torrents', len(list(self.session.lm.mds.TorrentMetadata.select())))
-        self.autoplot_add_point('downloading_channels', len(self.session.lm.get_downloads()))
+            self.autoplot_add_point('known_channels', len(list(self.session.mds.ChannelMetadata.select())))
+            self.autoplot_add_point('total_torrents', len(list(self.session.mds.TorrentMetadata.select())))
+        self.autoplot_add_point('downloading_channels', len(self.session.ltmgr.get_downloads()))
         self.autoplot_add_point('completed_channels',
-                                len([c for c in self.session.lm.get_downloads()
+                                len([c for c in self.session.ltmgr.get_downloads()
                                      if c.get_state().get_status() == DLSTATUS_SEEDING]))

@@ -49,7 +49,7 @@ fi
 cd $PROJECT_DIR
 
 if [ -e tribler ]; then
-    cd tribler/Tribler
+    cd tribler/src
 fi
 
 if [ ! -e pyipv8 ]; then
@@ -92,7 +92,7 @@ while [ $EXPECTED_SUBSCRIBERS -gt 0 ] || [ $NR_TRACKERS -lt 4 ]; do
     mkdir -p $STATEDIR
     ln -s $OUTPUT_DIR/bootstraptribler.txt $STATEDIR/bootstraptribler.txt
     # Do not daemonize the process as we want to wait for all of them to die at the end of this script
-    twistd --pidfile $STATEDIR/tracker_$TRACKER_PORT.pid -n $EXTRA_ARGS --logfile="$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" tracker --listen_port $TRACKER_PORT $EXTRA_TRACKER_ARGS &
+    python3 $PWD/pyipv8/scripts/tracker_plugin.py --listen_port $TRACKER_PORT $EXTRA_TRACKER_ARGS > "$OUTPUT_DIR/tracker_out_$TRACKER_PORT.log" &
     let TRACKER_PORT=$TRACKER_PORT+1
     let EXPECTED_SUBSCRIBERS=$EXPECTED_SUBSCRIBERS-1000
     let NR_TRACKERS=$NR_TRACKERS+1
