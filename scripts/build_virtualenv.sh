@@ -63,16 +63,10 @@ fi
 
 export PATH=$PATH:$SCRIPTDIR
 
-if [[ $* == *--py3* ]]; then
-    DEFAULT_VENV_DIR_NAME="venv3"
-else
-    DEFAULT_VENV_DIR_NAME="venv"
-fi
-
 if [ ! -z "$VIRTUALENV_DIR" ]; then
     VENV=$VIRTUALENV_DIR
 else
-    VENV=$HOME/$DEFAULT_VENV_DIR_NAME
+    VENV=$HOME/venv3
 fi
 
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
@@ -82,7 +76,7 @@ if [ -e $VENV/.completed.$SCRIPT_VERSION ]; then
 fi
 
 # If we compile for Python 3, we want to install a newer version since the version on the DAS5 is outdated.
-if [[ $* == *--py3* ]] && [ ! -e ~/python3/bin/python3 ]; then
+if [ ! -e ~/python3/bin/python3 ]; then
     pushd $HOME
     wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tgz
     tar -xzvf Python-3.7.3.tgz
@@ -93,20 +87,13 @@ if [[ $* == *--py3* ]] && [ ! -e ~/python3/bin/python3 ]; then
     popd
 fi
 
-if [[ $* == *--py3* ]]; then
-    export PATH=$HOME/python3/bin:$PATH
-fi
+export PATH=$HOME/python3/bin:$PATH
 
 python -v
 
 if [ ! -e $VENV/bin/python ]; then
-    if [[ $* == *--py3* ]]; then
-        PYTHON_BIN=$HOME/python3/bin
-        python3 -m venv --system-site-packages --clear $VENV
-    else
-        PYTHON_BIN=/usr/bin/python
-        virtualenv -p $PYTHON_BIN --no-site-packages --system-site-packages --clear $VENV
-    fi
+    PYTHON_BIN=$HOME/python3/bin
+    python3 -m venv --system-site-packages --clear $VENV
 
     $VENV/bin/easy_install --upgrade pip
 fi
@@ -118,53 +105,41 @@ source $VENV/bin/activate
 #
 # Build boost (if using Python 3, otherwise use system boost)
 #
-if [[ $* == *--py3* ]]; then
-    pushd $VENV/src
-    BOOST_VERSION=1.68.0
-    BOOST_MARKER=`build_marker boost $BOOST_VERSION`
-    BOOST_PATHV=`echo $BOOST_VERSION | sed 's/\./_/g'`
-    if [ ! -e $VENV/lib/libboost_system.so -o ! -e $BOOST_MARKER ]; then
-        BOOST_SRC=boost_$BOOST_PATHV
-        BOOST_TAR=$BOOST_SRC.tar.gz
-        if [ ! -e $BOOST_TAR ]; then
-            wget https://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION/$BOOST_TAR
-        fi
-        if [ ! -d $BOOST_SRC ]; then
-            tar -xzvf $BOOST_TAR
-        fi
-        pushd $BOOST_SRC
-        ./bootstrap.sh
-        export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:$HOME/python3/include/python3.7m"
-        ./b2 variant=debug -j24 --prefix=$VENV install
-        rm -rf bin.v2
-        popd
-        popd
-        touch $BOOST_MARKER
+pushd $VENV/src
+BOOST_VERSION=1.68.0
+BOOST_MARKER=`build_marker boost $BOOST_VERSION`
+BOOST_PATHV=`echo $BOOST_VERSION | sed 's/\./_/g'`
+if [ ! -e $VENV/lib/libboost_system.so -o ! -e $BOOST_MARKER ]; then
+    BOOST_SRC=boost_$BOOST_PATHV
+    BOOST_TAR=$BOOST_SRC.tar.gz
+    if [ ! -e $BOOST_TAR ]; then
+        wget https://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION/$BOOST_TAR
     fi
+    if [ ! -d $BOOST_SRC ]; then
+        tar -xzvf $BOOST_TAR
+    fi
+    pushd $BOOST_SRC
+    ./bootstrap.sh
+    export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:$HOME/python3/include/python3.7m"
+    ./b2 variant=debug -j24 --prefix=$VENV install
+    rm -rf bin.v2
+    popd
+    popd
+    touch $BOOST_MARKER
 fi
 
 #
 # Build Libtorrent and its python bindings
 #
 pushd $VENV/src
-if [[ $* == *--py3* ]]; then
-    LIBTORRENT_VERSION=1.2.1
-else
-    # For Python 2, we use an older version of libtorrent so we do not have to compile a newer version of Boost ourselves.
-    LIBTORRENT_VERSION=1.1.12
-fi
+LIBTORRENT_VERSION=1.2.1
 LIBTORRENT_MARKER=`build_marker libtorrent $LIBTORRENT_VERSION`
 LIBTORRENT_PATHV=`echo $LIBTORRENT_VERSION | sed 's/\./_/g'`
 if [ ! -e $VENV/lib/python*/site-packages/libtorrent*.so  -o ! -e $LIBTORRENT_MARKER ]; then
     LIBTORRENT_SRC=libtorrent-rasterbar-$LIBTORRENT_VERSION
     LIBTORRENT_TAR=$LIBTORRENT_SRC.tar.gz
     if [ ! -e $LIBTORRENT_TAR ]; then
-        if [[ $* == *--py3* ]]; then
-            LIBTORRENT_DOWNLOAD_URL=https://github.com/arvidn/libtorrent/releases/download/libtorrent-$LIBTORRENT_PATHV/$LIBTORRENT_TAR
-        else
-            # Slightly different format of the download URL for older version of libtorrent...
-            LIBTORRENT_DOWNLOAD_URL=https://github.com/arvidn/libtorrent/releases/download/libtorrent_$LIBTORRENT_PATHV/$LIBTORRENT_TAR
-        fi
+        LIBTORRENT_DOWNLOAD_URL=https://github.com/arvidn/libtorrent/releases/download/libtorrent-$LIBTORRENT_PATHV/$LIBTORRENT_TAR
         wget $LIBTORRENT_DOWNLOAD_URL
     fi
     if [ ! -d $LIBTORRENT_SRC ]; then
@@ -173,11 +148,7 @@ if [ ! -e $VENV/lib/python*/site-packages/libtorrent*.so  -o ! -e $LIBTORRENT_MA
     pushd $LIBTORRENT_SRC
 
     # The configuration of libtorrent highly depends on whether we are using Python 2 or Python 3
-    if [[ ! $* == *--py3* ]]; then
-        ./configure --enable-python-binding --prefix=$VENV
-    else
-        PYTHON=$VENV/bin/python CPPFLAGS="-I$VENV/include" LDFLAGS="-L$VENV/lib" ./configure PYTHON_LDFLAGS="-lpython3.7m -lpthread -ldl -lutil -lm" --enable-python-binding --with-boost-python=boost_python37 --with-boost-libdir=$VENV/lib --with-boost=$VENV --prefix=$VENV
-    fi
+    PYTHON=$VENV/bin/python CPPFLAGS="-I$VENV/include" LDFLAGS="-L$VENV/lib" ./configure PYTHON_LDFLAGS="-lpython3.7m -lpthread -ldl -lutil -lm" --enable-python-binding --with-boost-python=boost_python37 --with-boost-libdir=$VENV/lib --with-boost=$VENV --prefix=$VENV
 
     make -j24
     make install
@@ -349,13 +320,6 @@ aiohttp
 aiohttp_apispec
 yappi
 " > ~/requirements.txt
-
-# Meliae only works under Python 2
-if [[ ! $* == *--py3* ]]; then
-    echo "meliae
-pysqlite
-    " > ~/requirements.txt
-fi
 
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade -r ~/requirements.txt
 
