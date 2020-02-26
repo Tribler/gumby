@@ -1,3 +1,4 @@
+import os
 from asyncio import coroutine, ensure_future, iscoroutinefunction, sleep
 
 
@@ -14,12 +15,14 @@ def read_keypair_trustchain(keypairfilename):
 
 
 def save_keypair_trustchain(keypair, keypairfilename):
+    os.makedirs(os.path.dirname(keypairfilename), exist_ok=True)
     with open(keypairfilename, 'wb') as keyfile:
         keyfile.write(keypair.key.sk)
         keyfile.write(keypair.key.seed)
 
 
 def save_pub_key_trustchain(keypair, pubkeyfilename):
+    os.makedirs(os.path.dirname(pubkeyfilename), exist_ok=True)
     with open(pubkeyfilename, 'wb') as keyfile:
         keyfile.write(keypair.key.pk)
 
