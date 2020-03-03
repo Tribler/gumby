@@ -112,9 +112,8 @@ class BaseIPv8Module(ExperimentModule):
             f.write("\n".join(["%s %d" % (head_host, port) for port in port_range]))
         community._DEFAULT_ADDRESSES = [(head_host, port) for port in port_range]
 
-        config = GumbyTriblerConfig()
+        config = GumbyTriblerConfig(my_state_path)
         config.set_trustchain_keypair_filename("tc_keypair_" + str(self.experiment.my_id))
-        config.set_root_state_dir(my_state_path)
         config.set_torrent_checking_enabled(False)
         config.set_market_community_enabled(False)
         config.set_chant_enabled(False)
