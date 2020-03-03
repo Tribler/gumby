@@ -28,7 +28,7 @@ class AnyDexConfig(object):
     def get_trustchain_enabled(self):
         return self.config['trustchain']['enabled']
 
-    def set_root_state_dir(self, state_dir):
+    def set_state_dir(self, state_dir):
         self.config["general"]["state_dir"] = state_dir
 
     def get_state_dir(self):
