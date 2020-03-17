@@ -44,6 +44,7 @@ from gumby.modules.community_experiment_module import IPv8OverlayExperimentModul
 from gumby.modules.experiment_module import static_module
 
 from ipv8.messaging.anonymization.community import TunnelSettings
+from ipv8.messaging.anonymization.tunnel import PEER_FLAG_EXIT_ANY, PEER_FLAG_RELAY
 
 from tribler_common.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
 
@@ -127,6 +128,7 @@ class TunnelModule(IPv8OverlayExperimentModule):
         self._logger.info("This peer will be exit node: %s" % ('Yes' if value else 'No'))
         self.tribler_config.set_tunnel_community_exitnode_enabled(value)
         self.tunnel_settings.become_exitnode = value
+        self.tunnel_settings.peer_flags = PEER_FLAG_EXIT_ANY if value else PEER_FLAG_RELAY
 
     @experiment_callback
     def set_tunnel_min_circuits(self, value):
