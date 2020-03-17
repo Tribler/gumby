@@ -7,8 +7,8 @@ class GumbyTriblerConfig(TriblerConfig):
     A subclass is necessary since we need a few settings that are only used in Gumby experiments.
     """
 
-    def __init__(self, state_dir, config=None):
-        super(GumbyTriblerConfig, self).__init__(state_dir, config=config)
+    def __init__(self, state_dir, config_file=None):
+        super(GumbyTriblerConfig, self).__init__(state_dir, config_file=config_file)
 
         self.config['trustchain']['enabled'] = True
         self.config['trustchain']['memory_db'] = False
