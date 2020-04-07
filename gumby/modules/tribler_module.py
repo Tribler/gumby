@@ -60,10 +60,13 @@ class TriblerModule(BaseIPv8Module):
 
     @experiment_callback
     def set_libtorrentmgr_alert_mask(self, mask=0xffffffff):
-        self.session.ltmgr.default_alert_mask = mask
-        self.session.ltmgr.alert_callback = self._process_libtorrent_alert
-        for ltsession in self.session.ltmgr.ltsessions.values():
+        self.session.dlmgr.default_alert_mask = mask
+        self.session.dlmgr.session_stats_callback = self._process_libtorrent_alert
+        for ltsession in self.session.dlmgr.ltsessions.values():
             ltsession.set_alert_mask(mask)
+
+    def _process_libtorrent_alert(self, alert):
+        self._logger.info("LibtorrentDownloadImpl: alert %s", alert)
 
     @experiment_callback
     def enable_bootstrap_download(self):
@@ -93,10 +96,10 @@ class TriblerModule(BaseIPv8Module):
         Disable the RC4 encryption that the libtorrent session in Tribler uses by default.
         This should speed up downloads when testing.
         """
-        ltsession = self.session.ltmgr.get_session(0)
-        settings = self.session.ltmgr.get_session_settings(ltsession)
+        ltsession = self.session.dlmgr.get_session(0)
+        settings = self.session.dlmgr.get_session_settings(ltsession)
         settings['prefer_rc4'] = False
-        self.session.ltmgr.set_session_settings(ltsession, settings)
+        self.session.dlmgr.set_session_settings(ltsession, settings)
 
     @experiment_callback
     async def transfer(self, action="download", hops=None, timeout=None, download_id=None, length=None):
@@ -170,7 +173,7 @@ class TriblerModule(BaseIPv8Module):
 
             return 1.0
 
-        download = self.session.ltmgr.start_download(tdef=tdef, config=dscfg)
+        download = self.session.dlmgr.start_download(tdef=tdef, config=dscfg)
         download.set_state_callback(cb)
 
         if action == 'download':
@@ -189,7 +192,7 @@ class TriblerModule(BaseIPv8Module):
             await self.session.dht_community.store_value(tdef.get_infohash(), value.encode('utf-8'))
 
         if timeout:
-            run_task(self.session.ltmgr.remove_download, download, True, delay=timeout)
+            run_task(self.session.dlmgr.remove_download, download, True, delay=timeout)
 
     @experiment_callback
     def create_channel(self):
@@ -239,9 +242,6 @@ class TriblerModule(BaseIPv8Module):
         tdef.add_content(file_name)
         tdef.save()
         return tdef
-
-    def _process_libtorrent_alert(self, alert):
-        self._logger.info("LibtorrentDownloadImpl: alert %s", alert)
 
     @experiment_callback
     def write_overlay_statistics(self):
