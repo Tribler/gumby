@@ -30,21 +30,15 @@ class TrustchainStatisticsParser(StatisticsParser):
             for mod_dir_name in os.listdir(os.path.join(self.output_dir, "localhost", node_dir_name)):
                 # Read all nodes
                 if mod_dir_name.startswith(".TriblerModule"):
-                    # Get the state directory for the latest Tribler version from the version_history.json file
-                    mod_dir_full_path = os.path.join(self.output_dir, "localhost", node_dir_name, mod_dir_name)
-                    with open(os.path.join(mod_dir_full_path, "version_history.json"), "r") as version_history_file:
-                        content = version_history_file.read()
-                        json_content = json.loads(content)
-                        state_dir_name = json_content["last_version"]
-
-                    db_path = os.path.join(mod_dir_full_path, state_dir_name)
+                    db_path = os.path.join(self.output_dir, "localhost", node_dir_name, mod_dir_name)
+                    print("Considering database %s" % db_path)
                     database = TrustChainDB(db_path, "trustchain")
                     for block in database.get_all_blocks():
                         if not self.all_blocks_db.contains(block):
                             self.all_blocks_db.add_block(block)
                             total_blocks += 1
 
-        print("Found %d unique trustchain (half) blocks across databases" % total_blocks)
+        print("Found %d unique TrustChain (half) blocks across databases" % total_blocks)
 
     def write_blocks_to_file(self):
         # First, determine the experiment start time

@@ -76,7 +76,7 @@ class PopularityModule(IPv8OverlayExperimentModule):
     @experiment_callback
     def set_fake_dht_health_manager(self):
         self.fake_dht_health_manager = FakeDHTHealthManager()
-        self.session.ltmgr.dht_health_manager = self.fake_dht_health_manager
+        self.session.dlmgr.dht_health_manager = self.fake_dht_health_manager
 
     @experiment_callback
     def introduce_peers_popularity(self):

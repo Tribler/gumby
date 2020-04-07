@@ -112,7 +112,7 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
             return []
 
-        self.session.ltmgr.set_download_states_callback(monitor_downloads)
+        self.session.dlmgr.set_download_states_callback(monitor_downloads)
 
     # TunnelSettings should be obtained from tribler_config settings. But not all properties of the tunnel settings can
     # be controlled that way. So we store a custom TunnelSettings object in the community launcher. Properties that have
