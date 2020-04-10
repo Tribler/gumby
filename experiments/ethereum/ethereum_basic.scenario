@@ -1,0 +1,15 @@
+&module gumby.modules.experiment_module.ExperimentModule
+&module experiments.ethereum.ethereum_module.EthereumModule
+
+@0:1 generate_keypair
+@0:6 generate_genesis
+@0:8 initialize_chain
+@0:10 start_ethereum {1}
+@0:14 write_node_info {1}
+@0:15 start_ethereum {2-1000}
+@0:20 unlock_account
+@0:44 print_connected_peers
+@0:44 deploy_contract {1}
+@0:46 print_balance
+@0:48 write_stats
+@0:50 stop_ethereum
