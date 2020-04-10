@@ -1,0 +1,978 @@
+{
+    "initial_timestamp": "2017-08-28T19:43:55",
+    "max_core_supply": "1000000000000000",
+    "initial_parameters": {
+        "current_fees": {
+            "parameters": [
+                [
+                    0,
+                    {
+                        "fee": 2000000,
+                        "price_per_kbyte": 1000000
+                    }
+                ],
+                [
+                    1,
+                    {
+                        "fee": 500000
+                    }
+                ],
+                [
+                    2,
+                    {
+                        "fee": 0
+                    }
+                ],
+                [
+                    3,
+                    {
+                        "fee": 2000000
+                    }
+                ],
+                [
+                    4,
+                    {}
+                ],
+                [
+                    5,
+                    {
+                        "basic_fee": 500000,
+                        "premium_fee": 200000000,
+                        "price_per_kbyte": 100000
+                    }
+                ],
+                [
+                    6,
+                    {
+                        "fee": 2000000,
+                        "price_per_kbyte": 100000
+                    }
+                ],
+                [
+                    7,
+                    {
+                        "fee": 300000
+                    }
+                ],
+                [
+                    8,
+                    {
+                        "membership_annual_fee": 200000000,
+                        "membership_lifetime_fee": 1000000000
+                    }
+                ],
+                [
+                    9,
+                    {
+                        "fee": 50000000
+                    }
+                ],
+                [
+                    10,
+                    {
+                        "symbol3": "50000000000",
+                        "symbol4": "30000000000",
+                        "long_symbol": 500000000,
+                        "price_per_kbyte": 10
+                    }
+                ],
+                [
+                    11,
+                    {
+                        "fee": 50000000,
+                        "price_per_kbyte": 10
+                    }
+                ],
+                [
+                    12,
+                    {
+                        "fee": 50000000
+                    }
+                ],
+                [
+                    13,
+                    {
+                        "fee": 50000000
+                    }
+                ],
+                [
+                    14,
+                    {
+                        "fee": 2000000,
+                        "price_per_kbyte": 100000
+                    }
+                ],
+                [
+                    15,
+                    {
+                        "fee": 2000000
+                    }
+                ],
+                [
+                    16,
+                    {
+                        "fee": 100000
+                    }
+                ],
+                [
+                    17,
+                    {
+                        "fee": 10000000
+                    }
+                ],
+                [
+                    18,
+                    {
+                        "fee": 50000000
+                    }
+                ],
+                [
+                    19,
+                    {
+                        "fee": 100000
+                    }
+                ],
+                [
+                    20,
+                    {
+                        "fee": 500000000
+                    }
+                ],
+                [
+                    21,
+                    {
+                        "fee": 2000000
+                    }
+                ],
+                [
+                    22,
+                    {
+                        "fee": 2000000,
+                        "price_per_kbyte": 10
+                    }
+                ],
+                [
+                    23,
+                    {
+                        "fee": 2000000,
+                        "price_per_kbyte": 10
+                    }
+                ],
+                [
+                    24,
+                    {
+                        "fee": 100000
+                    }
+                ],
+                [
+                    25,
+                    {
+                        "fee": 100000
+                    }
+                ],
+                [
+                    26,
+                    {
+                        "fee": 100000
+                    }
+                ],
+                [
+                    27,
+                    {
+                        "fee": 2000000,
+                        "price_per_kbyte": 10
+                    }
+                ],
+                [
+                    28,
+                    {
+                        "fee": 0
+                    }
+                ],
+                [
+                    29,
+                    {
+                        "fee": 500000000
+                    }
+                ],
+                [
+                    30,
+                    {
+                        "fee": 2000000
+                    }
+                ],
+                [
+                    31,
+                    {
+                        "fee": 100000
+                    }
+                ],
+                [
+                    32,
+                    {
+                        "fee": 100000
+                    }
+                ],
+                [
+                    33,
+                    {
+                        "fee": 2000000
+                    }
+                ],
+                [
+                    34,
+                    {
+                        "fee": 500000000
+                    }
+                ],
+                [
+                    35,
+                    {
+                        "fee": 100000,
+                        "price_per_kbyte": 10
+                    }
+                ],
+                [
+                    36,
+                    {
+                        "fee": 100000
+                    }
+                ],
+                [
+                    37,
+                    {}
+                ],
+                [
+                    38,
+                    {
+                        "fee": 2000000,
+                        "price_per_kbyte": 10
+                    }
+                ],
+                [
+                    39,
+                    {
+                        "fee": 500000,
+                        "price_per_output": 500000
+                    }
+                ],
+                [
+                    40,
+                    {
+                        "fee": 500000,
+                        "price_per_output": 500000
+                    }
+                ],
+                [
+                    41,
+                    {
+                        "fee": 500000
+                    }
+                ],
+                [
+                    42,
+                    {}
+                ],
+                [
+                    43,
+                    {
+                        "fee": 2000000
+                    }
+                ],
+                [
+                    44,
+                    {}
+                ]
+            ],
+            "scale": 10000
+        },
+        "block_interval": 5,
+        "maintenance_interval": 86400,
+        "maintenance_skip_slots": 3,
+        "committee_proposal_review_period": 1209600,
+        "maximum_transaction_size": 2048,
+        "maximum_block_size": 2048000000,
+        "maximum_time_until_expiration": 86400,
+        "maximum_proposal_lifetime": 2419200,
+        "maximum_asset_whitelist_authorities": 10,
+        "maximum_asset_feed_publishers": 10,
+        "maximum_witness_count": 1001,
+        "maximum_committee_count": 1001,
+        "maximum_authority_membership": 10,
+        "reserve_percent_of_fee": 2000,
+        "network_percent_of_fee": 2000,
+        "lifetime_referrer_percent_of_fee": 3000,
+        "cashback_vesting_period_seconds": 31536000,
+        "cashback_vesting_threshold": 10000000,
+        "count_non_member_votes": true,
+        "allow_non_member_whitelists": false,
+        "witness_pay_per_block": 1000000,
+        "worker_budget_per_day": "50000000000",
+        "max_predicate_opcode": 1,
+        "fee_liquidation_threshold": 10000000,
+        "accounts_per_fee_scale": 1000,
+        "account_fee_scale_bitshifts": 4,
+        "max_authority_depth": 2,
+        "extensions": []
+    },
+    "initial_accounts": [
+        {
+            "name": "nathan",
+            "owner_key": "BTS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+            "active_key": "BTS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user0",
+            "owner_key": "BTS5xNtutYjAsJAQfvrS9iuDuc5zYdvUku51iNDrddAKVUUzNC5qj",
+            "active_key": "BTS5xNtutYjAsJAQfvrS9iuDuc5zYdvUku51iNDrddAKVUUzNC5qj",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user1",
+            "owner_key": "BTS6SmVajhDbaLXv25ebNhJSUuZY7V8VTDxWhy7ChziuPUaowVsey",
+            "active_key": "BTS6SmVajhDbaLXv25ebNhJSUuZY7V8VTDxWhy7ChziuPUaowVsey",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user2",
+            "owner_key": "BTS87PK9VMqKoEmcj7uX6cSdQ31xZVkAnjw6gkp62CnRKmnT434wG",
+            "active_key": "BTS87PK9VMqKoEmcj7uX6cSdQ31xZVkAnjw6gkp62CnRKmnT434wG",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user3",
+            "owner_key": "BTS7aREuascdtd8WcdjimpSpjSSRHmmSQjHDBc4MHhrRT1rZTF9jF",
+            "active_key": "BTS7aREuascdtd8WcdjimpSpjSSRHmmSQjHDBc4MHhrRT1rZTF9jF",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user4",
+            "owner_key": "BTS7T8zqz19u3WYub8G3YLb1C2ij63DPFmd8ibnBPEfXCDUQk1cEa",
+            "active_key": "BTS7T8zqz19u3WYub8G3YLb1C2ij63DPFmd8ibnBPEfXCDUQk1cEa",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user5",
+            "owner_key": "BTS5hynJmbFjSzazy9xbVcDKG5X5ktqaN2WaWna9i8k718teSWSF9",
+            "active_key": "BTS5hynJmbFjSzazy9xbVcDKG5X5ktqaN2WaWna9i8k718teSWSF9",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user6",
+            "owner_key": "BTS6iUhppuVwZ5d7DN2EgX3WTctxzVPhx8LxU7NL6ZNxfQLww6XUd",
+            "active_key": "BTS6iUhppuVwZ5d7DN2EgX3WTctxzVPhx8LxU7NL6ZNxfQLww6XUd",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user7",
+            "owner_key": "BTS5iP5UqW9jqaPKbcwuTLKwNC8Nfqt9hy8uAHowC11WQ2xNzCxyW",
+            "active_key": "BTS5iP5UqW9jqaPKbcwuTLKwNC8Nfqt9hy8uAHowC11WQ2xNzCxyW",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user8",
+            "owner_key": "BTS5jqz1nLgyBbJtB1bu6QMatE4bVJSnVKBPjZxi6uBycW7sCe9Rg",
+            "active_key": "BTS5jqz1nLgyBbJtB1bu6QMatE4bVJSnVKBPjZxi6uBycW7sCe9Rg",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user9",
+            "owner_key": "BTS8knYCCnscVAYyvdua9ruuTWMXFN5R9XZhjmnk1fXBvGWvnfRKa",
+            "active_key": "BTS8knYCCnscVAYyvdua9ruuTWMXFN5R9XZhjmnk1fXBvGWvnfRKa",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user10",
+            "owner_key": "BTS8m5XAsWX5JXnbsuFYdv6CzXaCNFx1PBvT26gHTJYcDn6RNKosg",
+            "active_key": "BTS8m5XAsWX5JXnbsuFYdv6CzXaCNFx1PBvT26gHTJYcDn6RNKosg",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user11",
+            "owner_key": "BTS5z3qapYXrUzUvhuarhTLCjz9Ud8vi6RQdLxMeoJPyLiVzwmkwN",
+            "active_key": "BTS5z3qapYXrUzUvhuarhTLCjz9Ud8vi6RQdLxMeoJPyLiVzwmkwN",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user12",
+            "owner_key": "BTS6qb86fpJ2L1siRaA6bxg4v2vRGVsJBUkg4TpEpCoRXPVpcEGM6",
+            "active_key": "BTS6qb86fpJ2L1siRaA6bxg4v2vRGVsJBUkg4TpEpCoRXPVpcEGM6",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user13",
+            "owner_key": "BTS6yauqfzmh3nZ3Hvcrzwjrp7AZSiiDWqxACMpD5LhvhFH1Xf6MG",
+            "active_key": "BTS6yauqfzmh3nZ3Hvcrzwjrp7AZSiiDWqxACMpD5LhvhFH1Xf6MG",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user14",
+            "owner_key": "BTS7BxdbfikyV5yJgV4FLZLHBJ1AU9adMZZGsygGb4XTZWfnbMkZe",
+            "active_key": "BTS7BxdbfikyV5yJgV4FLZLHBJ1AU9adMZZGsygGb4XTZWfnbMkZe",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user15",
+            "owner_key": "BTS8XQEmB43cCqP6izJcD5uFbQW6GGToRbBRmu1ix9crCHSgkdxn4",
+            "active_key": "BTS8XQEmB43cCqP6izJcD5uFbQW6GGToRbBRmu1ix9crCHSgkdxn4",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user16",
+            "owner_key": "BTS7CwNjZmaDfXPSy1qzGYwubJenquiKEsFpxsuvDu9BFM74cohVs",
+            "active_key": "BTS7CwNjZmaDfXPSy1qzGYwubJenquiKEsFpxsuvDu9BFM74cohVs",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user17",
+            "owner_key": "BTS89sxBJDgz6d7qzGBBxsmGP4i3b1RD1rUHK1zrqeSYcknptq9Ks",
+            "active_key": "BTS89sxBJDgz6d7qzGBBxsmGP4i3b1RD1rUHK1zrqeSYcknptq9Ks",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user18",
+            "owner_key": "BTS4yj76toQbpybDPm8bLSFtwVUjYUkK8PbU2B1yB9yNmyJ6vxjde",
+            "active_key": "BTS4yj76toQbpybDPm8bLSFtwVUjYUkK8PbU2B1yB9yNmyJ6vxjde",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user19",
+            "owner_key": "BTS8jB88x2d4hhYcqRSQ4pGQzz3wxh7FUxeeUxrFSDqqr9xQ63veC",
+            "active_key": "BTS8jB88x2d4hhYcqRSQ4pGQzz3wxh7FUxeeUxrFSDqqr9xQ63veC",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user20",
+            "owner_key": "BTS6o1bT7AvqCa5qPY74rhVy5jRgSRXUPkfzvnfzRw89gMjwCjTXu",
+            "active_key": "BTS6o1bT7AvqCa5qPY74rhVy5jRgSRXUPkfzvnfzRw89gMjwCjTXu",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user21",
+            "owner_key": "BTS7MD1Rm32vVgq9QuL9guB86PmnymQdyPz8piz71FZxLVVZ1z7Sq",
+            "active_key": "BTS7MD1Rm32vVgq9QuL9guB86PmnymQdyPz8piz71FZxLVVZ1z7Sq",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user22",
+            "owner_key": "BTS7BxuPFLmZ3rnBEoPYtmo8sUnnqh1u3PddD6qModXERPcAanM66",
+            "active_key": "BTS7BxuPFLmZ3rnBEoPYtmo8sUnnqh1u3PddD6qModXERPcAanM66",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user23",
+            "owner_key": "BTS5k8V2gxsj9JHLMqTCkkowo8wnE54rGQoddy4CfPW9tocPhXAYG",
+            "active_key": "BTS5k8V2gxsj9JHLMqTCkkowo8wnE54rGQoddy4CfPW9tocPhXAYG",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user24",
+            "owner_key": "BTS65ZfvmvyRChAmhwCRVLSHG1GXt4D64GTdUTHUS4QNsDvyPiPpN",
+            "active_key": "BTS65ZfvmvyRChAmhwCRVLSHG1GXt4D64GTdUTHUS4QNsDvyPiPpN",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user25",
+            "owner_key": "BTS6C4dH7f9DS2VyLK1GnSmPLDmCVn56FEjvKKBSAfLqxuxrm5Gm4",
+            "active_key": "BTS6C4dH7f9DS2VyLK1GnSmPLDmCVn56FEjvKKBSAfLqxuxrm5Gm4",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user26",
+            "owner_key": "BTS6gWY8iDU9ZEgW1bet6T1HD8vaa4RcD4gmGvfqWQgbTy1RTwYEu",
+            "active_key": "BTS6gWY8iDU9ZEgW1bet6T1HD8vaa4RcD4gmGvfqWQgbTy1RTwYEu",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user27",
+            "owner_key": "BTS8VwpHd4dqYZGF5qRdjLBtabhf1skWDTxFYzrC8YyjanbNfR5fi",
+            "active_key": "BTS8VwpHd4dqYZGF5qRdjLBtabhf1skWDTxFYzrC8YyjanbNfR5fi",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user28",
+            "owner_key": "BTS65fuE4fQ2NmHwfshW7jXxYcEBGjWEyxrDBHjYVf1Mgej6qjYuS",
+            "active_key": "BTS65fuE4fQ2NmHwfshW7jXxYcEBGjWEyxrDBHjYVf1Mgej6qjYuS",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user29",
+            "owner_key": "BTS7new4hKjUwJGw4a69C5N8Pp97KrmTtzNBpSM17sTteXVdGf5YV",
+            "active_key": "BTS7new4hKjUwJGw4a69C5N8Pp97KrmTtzNBpSM17sTteXVdGf5YV",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user30",
+            "owner_key": "BTS6C5XGLkvBpx86BxLBW97Z1HvFmXxvWH3chdNzcBLcmWfV9Q9c6",
+            "active_key": "BTS6C5XGLkvBpx86BxLBW97Z1HvFmXxvWH3chdNzcBLcmWfV9Q9c6",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user31",
+            "owner_key": "BTS6v3gFPPiBzGRDWvdvbtp2DTifCpdVnFPm9RibNgwEpScx92QCX",
+            "active_key": "BTS6v3gFPPiBzGRDWvdvbtp2DTifCpdVnFPm9RibNgwEpScx92QCX",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user32",
+            "owner_key": "BTS59NaNeF5bvT6bWQQbCcwkTQ8YEzrhQ3E4hLPc2BcLZpCQr5Dkb",
+            "active_key": "BTS59NaNeF5bvT6bWQQbCcwkTQ8YEzrhQ3E4hLPc2BcLZpCQr5Dkb",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user33",
+            "owner_key": "BTS5EKLEyughMWoMwK5QkK4ZJWNzqYPEAWJfLVD3QT5qk9PKhiS28",
+            "active_key": "BTS5EKLEyughMWoMwK5QkK4ZJWNzqYPEAWJfLVD3QT5qk9PKhiS28",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user34",
+            "owner_key": "BTS6ZUGYvTgfu9b4D65oPPG6r9ib9eLrBt2UBAkgb1kZjXvZZfpLY",
+            "active_key": "BTS6ZUGYvTgfu9b4D65oPPG6r9ib9eLrBt2UBAkgb1kZjXvZZfpLY",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user35",
+            "owner_key": "BTS7iRKJnqnqEQLWeCfjkF1uheYrPaXUccZqBJZdYQu3RrFmic8TS",
+            "active_key": "BTS7iRKJnqnqEQLWeCfjkF1uheYrPaXUccZqBJZdYQu3RrFmic8TS",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user36",
+            "owner_key": "BTS5zcSmZrKGUK242uAVJZZ1iRhqdxBpC1c5ps7NuMrj2Q42JCVSd",
+            "active_key": "BTS5zcSmZrKGUK242uAVJZZ1iRhqdxBpC1c5ps7NuMrj2Q42JCVSd",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user37",
+            "owner_key": "BTS5Rkv18F5qv6MiHoEuiijP1zY947Z9JaBx14TESW3BwoKagVntZ",
+            "active_key": "BTS5Rkv18F5qv6MiHoEuiijP1zY947Z9JaBx14TESW3BwoKagVntZ",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user38",
+            "owner_key": "BTS8LmHNDNyPKdqLK9nGPdW4WNXhjRj3Kv8hXHQc14qmCRkqA234Y",
+            "active_key": "BTS8LmHNDNyPKdqLK9nGPdW4WNXhjRj3Kv8hXHQc14qmCRkqA234Y",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user39",
+            "owner_key": "BTS8iGX8rD1yPAx73aHmEYL3jLSwYZ7WbowJViXoxHB47inmYr6pM",
+            "active_key": "BTS8iGX8rD1yPAx73aHmEYL3jLSwYZ7WbowJViXoxHB47inmYr6pM",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user40",
+            "owner_key": "BTS7L6Aa7iEYJmmRq4FkfS6FnRDmLswSVSUeGkpT8XKBuqYfsbv7c",
+            "active_key": "BTS7L6Aa7iEYJmmRq4FkfS6FnRDmLswSVSUeGkpT8XKBuqYfsbv7c",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user41",
+            "owner_key": "BTS6SaXqsvrGe4Y5VBgEEqivxNniU6eL9ZrnLdZDmCQenVZUMwwrY",
+            "active_key": "BTS6SaXqsvrGe4Y5VBgEEqivxNniU6eL9ZrnLdZDmCQenVZUMwwrY",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user42",
+            "owner_key": "BTS5BkMUj59PL7iyjW4J9aqvXLD5nDYt3MrfZGVxP9iGNiWhJmMcC",
+            "active_key": "BTS5BkMUj59PL7iyjW4J9aqvXLD5nDYt3MrfZGVxP9iGNiWhJmMcC",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user43",
+            "owner_key": "BTS8XrG2qpSsPL69RZSJGT6Ui1zrycsvr2TPxbi8c7WXAC1LPovdM",
+            "active_key": "BTS8XrG2qpSsPL69RZSJGT6Ui1zrycsvr2TPxbi8c7WXAC1LPovdM",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user44",
+            "owner_key": "BTS4yN9RU9tVKWaehtWnF4LeC4KFr8Ud6X8DZh556Cq76thAXVWt1",
+            "active_key": "BTS4yN9RU9tVKWaehtWnF4LeC4KFr8Ud6X8DZh556Cq76thAXVWt1",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user45",
+            "owner_key": "BTS8KbmDc94E2NjKQVxibSSoxCyYdGiUtsuKmpN3gAgrMM6MQSoqq",
+            "active_key": "BTS8KbmDc94E2NjKQVxibSSoxCyYdGiUtsuKmpN3gAgrMM6MQSoqq",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user46",
+            "owner_key": "BTS8V1WjpBCtC6AuQbRidL5g4FuqtkvCLuKadMHo4HV5AqMSNAcRU",
+            "active_key": "BTS8V1WjpBCtC6AuQbRidL5g4FuqtkvCLuKadMHo4HV5AqMSNAcRU",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user47",
+            "owner_key": "BTS5Wig3tE1jsMJLXFxw7qbP56YBMdwQDkGR6MudFmzjGGpp4b6GC",
+            "active_key": "BTS5Wig3tE1jsMJLXFxw7qbP56YBMdwQDkGR6MudFmzjGGpp4b6GC",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user48",
+            "owner_key": "BTS7h9kHsDreGEavT7rvJdyumT89tfsnQNxxb4ASQoCou3JYLgEAt",
+            "active_key": "BTS7h9kHsDreGEavT7rvJdyumT89tfsnQNxxb4ASQoCou3JYLgEAt",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user49",
+            "owner_key": "BTS5auR71UhsceoY9vzDcsPic5nvxUVRSMRF6rVBzBgyXmmo65kES",
+            "active_key": "BTS5auR71UhsceoY9vzDcsPic5nvxUVRSMRF6rVBzBgyXmmo65kES",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user50",
+            "owner_key": "BTS7igDXw41TvEKuKznibQqAQikTd5nz75MmsYp6vcf7rFQwAnqcu",
+            "active_key": "BTS7igDXw41TvEKuKznibQqAQikTd5nz75MmsYp6vcf7rFQwAnqcu",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user51",
+            "owner_key": "BTS7pJfzH1zHQRPDey8ynvvFd4nuXixn4VCEn1hGq5Ph64gzWrBnc",
+            "active_key": "BTS7pJfzH1zHQRPDey8ynvvFd4nuXixn4VCEn1hGq5Ph64gzWrBnc",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user52",
+            "owner_key": "BTS6b9Z6L7EFGZXbnso9jYNmQ9dff2cuN19Ta2PvqWzrqFWYQwVdm",
+            "active_key": "BTS6b9Z6L7EFGZXbnso9jYNmQ9dff2cuN19Ta2PvqWzrqFWYQwVdm",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user53",
+            "owner_key": "BTS868ji24i57qmoFPGizNKP2rAeRjXfqWmQNfssLbMVjGjvVEJR3",
+            "active_key": "BTS868ji24i57qmoFPGizNKP2rAeRjXfqWmQNfssLbMVjGjvVEJR3",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user54",
+            "owner_key": "BTS7aiwAFbfYVyKiwMAaH23MaJUhjGpMKZWd7uxLaF1fQ5c1FKURT",
+            "active_key": "BTS7aiwAFbfYVyKiwMAaH23MaJUhjGpMKZWd7uxLaF1fQ5c1FKURT",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user55",
+            "owner_key": "BTS7ea8KnPNjnLPQJRY2af8VXqtUBWxirP3A529HP4prSbEFWB264",
+            "active_key": "BTS7ea8KnPNjnLPQJRY2af8VXqtUBWxirP3A529HP4prSbEFWB264",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user56",
+            "owner_key": "BTS6jz7cpdvP59nfTDFoWsZZBG73ikohy9v8mxVUXsWx1RHD4TyiN",
+            "active_key": "BTS6jz7cpdvP59nfTDFoWsZZBG73ikohy9v8mxVUXsWx1RHD4TyiN",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user57",
+            "owner_key": "BTS7kjMMn3cQK17YgzR5AtTA5YBk9XrgcPF9fdH9onUBHGnQjQdXU",
+            "active_key": "BTS7kjMMn3cQK17YgzR5AtTA5YBk9XrgcPF9fdH9onUBHGnQjQdXU",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user58",
+            "owner_key": "BTS8fsXmSgR78YEZzTjZMu95cRkU96ie3VyJPsmfPEG8CzJDAUTaZ",
+            "active_key": "BTS8fsXmSgR78YEZzTjZMu95cRkU96ie3VyJPsmfPEG8CzJDAUTaZ",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user59",
+            "owner_key": "BTS8JtTdAsRrLtd2d8JXs5WQBS4GyDQ549N9KYmfmwMhYXMkDvqPP",
+            "active_key": "BTS8JtTdAsRrLtd2d8JXs5WQBS4GyDQ549N9KYmfmwMhYXMkDvqPP",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user60",
+            "owner_key": "BTS8AzckicJJiZs9XWvbkZkLUjq5MUX3FMWNXeQc1t6EAB1PjocFj",
+            "active_key": "BTS8AzckicJJiZs9XWvbkZkLUjq5MUX3FMWNXeQc1t6EAB1PjocFj",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user61",
+            "owner_key": "BTS7fQwDEBaUoNE9XAGd4gzmiB6FzA8NHaiPT3jSpLzkqBv37xx2m",
+            "active_key": "BTS7fQwDEBaUoNE9XAGd4gzmiB6FzA8NHaiPT3jSpLzkqBv37xx2m",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user62",
+            "owner_key": "BTS6KkvMhNPcTCd6dZUoeck1KFZ6aKEe9MMXxKHs72p7Ky5355sjP",
+            "active_key": "BTS6KkvMhNPcTCd6dZUoeck1KFZ6aKEe9MMXxKHs72p7Ky5355sjP",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user63",
+            "owner_key": "BTS7DEWiJTPcoP1a1NM4QNv2v4BGeoxndGXNdFiC65h7hwHdJx3TJ",
+            "active_key": "BTS7DEWiJTPcoP1a1NM4QNv2v4BGeoxndGXNdFiC65h7hwHdJx3TJ",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user64",
+            "owner_key": "BTS7TA8XMtd16psf2nZBZZVQxBbwzXegjE8ht8eJRmJBXArbKV9oE",
+            "active_key": "BTS7TA8XMtd16psf2nZBZZVQxBbwzXegjE8ht8eJRmJBXArbKV9oE",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user65",
+            "owner_key": "BTS5P7ffFhDjV5a8Y2wDLUUPjdi66VBHYQGyCg9b5q3hKYdxzhKJE",
+            "active_key": "BTS5P7ffFhDjV5a8Y2wDLUUPjdi66VBHYQGyCg9b5q3hKYdxzhKJE",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user66",
+            "owner_key": "BTS82gp82y6CNUiqthZnGNxqidqM4XNcZAnHjocktBtrSoDpUGyRt",
+            "active_key": "BTS82gp82y6CNUiqthZnGNxqidqM4XNcZAnHjocktBtrSoDpUGyRt",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user67",
+            "owner_key": "BTS7QCQCQRQ3DbF3FXHTs5TpSVbJhTxqThZjzorzwmRWnrtRbBx5d",
+            "active_key": "BTS7QCQCQRQ3DbF3FXHTs5TpSVbJhTxqThZjzorzwmRWnrtRbBx5d",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user68",
+            "owner_key": "BTS7554xoB4Hk1iMeyT6Qu7QZSQKa6HYz2jDkBdMnb5gQsQc2bYg2",
+            "active_key": "BTS7554xoB4Hk1iMeyT6Qu7QZSQKa6HYz2jDkBdMnb5gQsQc2bYg2",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user69",
+            "owner_key": "BTS6UXjn7KFAjMf5yLDJEKnynrA6stV31E5RmXkcFpq24GGir1V3G",
+            "active_key": "BTS6UXjn7KFAjMf5yLDJEKnynrA6stV31E5RmXkcFpq24GGir1V3G",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user70",
+            "owner_key": "BTS6iAjAs6JavzWop57xCWxBwBSah8KDzgjPFi2Coa7mDB7Acs7p9",
+            "active_key": "BTS6iAjAs6JavzWop57xCWxBwBSah8KDzgjPFi2Coa7mDB7Acs7p9",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user71",
+            "owner_key": "BTS58dFfnzNLnAzYcXiPovndFYqv9uedWEXLzPvpPeQhsdUCAGFTQ",
+            "active_key": "BTS58dFfnzNLnAzYcXiPovndFYqv9uedWEXLzPvpPeQhsdUCAGFTQ",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user72",
+            "owner_key": "BTS6piEjmYJhyN2Y8QkbEhCoYyaqmuUs5KuULXW7PVyzF5z26Y1ie",
+            "active_key": "BTS6piEjmYJhyN2Y8QkbEhCoYyaqmuUs5KuULXW7PVyzF5z26Y1ie",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user73",
+            "owner_key": "BTS73s3CTBst6r4EJ71E2REWYix2vzJ6c9echaLWdLqFfpoRC8Jci",
+            "active_key": "BTS73s3CTBst6r4EJ71E2REWYix2vzJ6c9echaLWdLqFfpoRC8Jci",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user74",
+            "owner_key": "BTS5JB3hh78vEsrvecH1huhPV7PmEathnAqLHBeZSnL5Fhb52tT7n",
+            "active_key": "BTS5JB3hh78vEsrvecH1huhPV7PmEathnAqLHBeZSnL5Fhb52tT7n",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user75",
+            "owner_key": "BTS8cpB5KLiHizQWY1aMz43ptYZyatCXWnk5A6jdtGDM3rg1NFqR5",
+            "active_key": "BTS8cpB5KLiHizQWY1aMz43ptYZyatCXWnk5A6jdtGDM3rg1NFqR5",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user76",
+            "owner_key": "BTS6gN2v3fAkqSTgkaANVPXZTp3CTrd7dw1RUoARCyyg5gr2jyZBh",
+            "active_key": "BTS6gN2v3fAkqSTgkaANVPXZTp3CTrd7dw1RUoARCyyg5gr2jyZBh",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user77",
+            "owner_key": "BTS6FcgdEDe9Hn1ZJsanEivDWzbu2ZooRkS7DDrJuJzPyr4cpcEUq",
+            "active_key": "BTS6FcgdEDe9Hn1ZJsanEivDWzbu2ZooRkS7DDrJuJzPyr4cpcEUq",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user78",
+            "owner_key": "BTS6vHUqpVkVEgwJRt9ddfKPpV46FrzrZuKPqVnUMB64scgQmvAmF",
+            "active_key": "BTS6vHUqpVkVEgwJRt9ddfKPpV46FrzrZuKPqVnUMB64scgQmvAmF",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user79",
+            "owner_key": "BTS6SLPBRCKka8e5MkYBEr5d23Ktkf3yakhQYQnFHzyRV8fAppA1H",
+            "active_key": "BTS6SLPBRCKka8e5MkYBEr5d23Ktkf3yakhQYQnFHzyRV8fAppA1H",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user80",
+            "owner_key": "BTS6TE5D9ohj1BmnScSeDa1NcyTEYHnpHh2x7JfwnLN4qTwmzRgLr",
+            "active_key": "BTS6TE5D9ohj1BmnScSeDa1NcyTEYHnpHh2x7JfwnLN4qTwmzRgLr",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user81",
+            "owner_key": "BTS8JNZeac2sifNsFFom1QnDgKwGEMHgF7pYSuKQ8BN5yEXnUUumR",
+            "active_key": "BTS8JNZeac2sifNsFFom1QnDgKwGEMHgF7pYSuKQ8BN5yEXnUUumR",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user82",
+            "owner_key": "BTS7aFp11aTKqZ6htwchJfh9MjmHuv87UT4Tp7667YYLdQQpxv8CT",
+            "active_key": "BTS7aFp11aTKqZ6htwchJfh9MjmHuv87UT4Tp7667YYLdQQpxv8CT",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user83",
+            "owner_key": "BTS7qe6KoBR5yFJZxSAnJ6WtUFfp1v6paadUtQijwowLKVPzsRpy4",
+            "active_key": "BTS7qe6KoBR5yFJZxSAnJ6WtUFfp1v6paadUtQijwowLKVPzsRpy4",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user84",
+            "owner_key": "BTS5SHKtgGnchoeusuWAwv42CsYn5irZ3CREcWe5uXqtsd9W6uk2x",
+            "active_key": "BTS5SHKtgGnchoeusuWAwv42CsYn5irZ3CREcWe5uXqtsd9W6uk2x",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user85",
+            "owner_key": "BTS8RF3dwJyjNgVfaFGNeEZiopoP4Mnqu5upbnAJC4DaeBDaVwQ9Y",
+            "active_key": "BTS8RF3dwJyjNgVfaFGNeEZiopoP4Mnqu5upbnAJC4DaeBDaVwQ9Y",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user86",
+            "owner_key": "BTS5sMA989KktgNyoWheT4dUh4vpcDLHyeJhSvGka7RZfDgiWs1bP",
+            "active_key": "BTS5sMA989KktgNyoWheT4dUh4vpcDLHyeJhSvGka7RZfDgiWs1bP",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user87",
+            "owner_key": "BTS6RXTkETapsiyWimWetQt32AmZD5KNqeBtV4P3ata5o2gaTVrAM",
+            "active_key": "BTS6RXTkETapsiyWimWetQt32AmZD5KNqeBtV4P3ata5o2gaTVrAM",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user88",
+            "owner_key": "BTS8k57hTLuubXdqtriob9Xfibqs23r81pEmHhbTorDpaM4YkxbWW",
+            "active_key": "BTS8k57hTLuubXdqtriob9Xfibqs23r81pEmHhbTorDpaM4YkxbWW",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user89",
+            "owner_key": "BTS8ZnnttXztTwELk1M3v6JqeXML3mtPsWgKZUAMmuuQM3ceK5F8m",
+            "active_key": "BTS8ZnnttXztTwELk1M3v6JqeXML3mtPsWgKZUAMmuuQM3ceK5F8m",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user90",
+            "owner_key": "BTS8E2iCHhz1wFRpCSrSXcHbuSiHXHnTkzSabcjfMFVjCFJzU6TEY",
+            "active_key": "BTS8E2iCHhz1wFRpCSrSXcHbuSiHXHnTkzSabcjfMFVjCFJzU6TEY",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user91",
+            "owner_key": "BTS5Tf28aJuB4qePLopVEw4eqTUB5wHGmBZBoLJVsXp7bHwKzDfym",
+            "active_key": "BTS5Tf28aJuB4qePLopVEw4eqTUB5wHGmBZBoLJVsXp7bHwKzDfym",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user92",
+            "owner_key": "BTS6ePAg7WLqsfSSVK8ZuRiHxmne8bodkLsEVpHHGSo1LGu2x1tx1",
+            "active_key": "BTS6ePAg7WLqsfSSVK8ZuRiHxmne8bodkLsEVpHHGSo1LGu2x1tx1",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user93",
+            "owner_key": "BTS7dCQCF6TJoAhGQ2ycNwpYa9MqSLoDhr2rzF9UhRXbket9kZhkg",
+            "active_key": "BTS7dCQCF6TJoAhGQ2ycNwpYa9MqSLoDhr2rzF9UhRXbket9kZhkg",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user94",
+            "owner_key": "BTS8Mpb1HZBvkPLt11bLodFKkS3CqEteoebX4ntYyUbj1SDJqPX7E",
+            "active_key": "BTS8Mpb1HZBvkPLt11bLodFKkS3CqEteoebX4ntYyUbj1SDJqPX7E",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user95",
+            "owner_key": "BTS5863Y1aedMs8enPV2nnjB1XAbksNMMJ5ZJDJCJMKyxFVspHwb8",
+            "active_key": "BTS5863Y1aedMs8enPV2nnjB1XAbksNMMJ5ZJDJCJMKyxFVspHwb8",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user96",
+            "owner_key": "BTS6z4JahjZUdG4Gh9p152Jra3ab2HYZ5ZpqZtevajyhC3TPZR4F9",
+            "active_key": "BTS6z4JahjZUdG4Gh9p152Jra3ab2HYZ5ZpqZtevajyhC3TPZR4F9",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user97",
+            "owner_key": "BTS8YS9TwsDfkNsjLEQNY2qHLb8EHZfmpCs1UGm5QHTU8LxP3MSYq",
+            "active_key": "BTS8YS9TwsDfkNsjLEQNY2qHLb8EHZfmpCs1UGm5QHTU8LxP3MSYq",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user98",
+            "owner_key": "BTS5wLNuQEPysGjgBDUBdFGihq5j6wapH6pLXwtiV9KPkCfygc1Cx",
+            "active_key": "BTS5wLNuQEPysGjgBDUBdFGihq5j6wapH6pLXwtiV9KPkCfygc1Cx",
+            "is_lifetime_member": true
+        },
+        {
+            "name": "user99",
+            "owner_key": "BTS6VbCmNpYGYHvP3nnnaHttyjvyhGCWFpaKp8dvNdTXafj8FJoXu",
+            "active_key": "BTS6VbCmNpYGYHvP3nnnaHttyjvyhGCWFpaKp8dvNdTXafj8FJoXu",
+            "is_lifetime_member": true
+        }
+    ],
+    "initial_assets": [
+        {
+            "symbol": "DUM1",
+            "issuer_name": "nathan"
+        },
+        {
+            "symbol": "DUM2",
+            "issuer_name": "nathan"
+        }
+    ],
+    "initial_balances": [
+        {
+            "owner": "BTSFAbAx7yuxt725qSZvfwWqkdCwp9ZnUama",
+            "asset_symbol": "BTS",
+            "amount": "1000000000000000"
+        },
+        {
+            "owner": "BTSFAbAx7yuxt725qSZvfwWqkdCwp9ZnUama",
+            "asset_symbol": "DUM1",
+            "amount": "1000000000000000"
+        },
+        {
+            "owner": "BTSFAbAx7yuxt725qSZvfwWqkdCwp9ZnUama",
+            "asset_symbol": "DUM2",
+            "amount": "1000000000000000"
+        }
+    ],
+    "initial_vesting_balances": [],
+    "initial_active_witnesses": 2,
+    "initial_witness_candidates": [
+        {
+            "owner_name": "user0",
+            "block_signing_key": "BTS5xNtutYjAsJAQfvrS9iuDuc5zYdvUku51iNDrddAKVUUzNC5qj"
+        },
+        {
+            "owner_name": "user1",
+            "block_signing_key": "BTS6SmVajhDbaLXv25ebNhJSUuZY7V8VTDxWhy7ChziuPUaowVsey"
+        }
+    ],
+    "initial_committee_candidates": [
+        {
+            "owner_name": "nathan"
+        }
+    ],
+    "initial_worker_candidates": [],
+    "initial_chain_id": "aa34045518f1469a28fa4578240d5f039afa9959c0b95ce3b39674efa691fb21",
+    "immutable_parameters": {
+        "min_committee_member_count": 1,
+        "min_witness_count": 1,
+        "num_special_accounts": 0,
+        "num_special_assets": 0
+    }
+}
