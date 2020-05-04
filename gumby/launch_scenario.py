@@ -29,6 +29,9 @@ def main(self_service=False):
     it was not set or if it was set to 0.
     """
 
+    print("--- ENVIRONMENT ---")
+    print(environ)
+
     if len(argv) > 2:
         print("Launch invoke error, too many command line arguments. Specify 1 scenario file to run.")
         exit(3)
