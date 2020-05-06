@@ -1,0 +1,21 @@
+&module gumby.modules.experiment_module.ExperimentModule
+&module gumby.modules.transactions_module.TransactionsModule
+&module experiments.stellar.stellar_module.StellarModule
+
+@0:1 init_db
+@0:5 start_db
+@0:7 setup_db
+@0:8 create_db
+@0:8 init_config
+@0:9 init_validators
+@0:12 start_validators
+@0:20 start_horizon
+@0:28 upgrade_tx_set_size
+@0:30 create_accounts {1}
+@0:58 get_initial_sq_num
+@0:60 start_creating_transactions
+@0:180 stop_creating_transactions
+@0:210 parse_ledgers {1}
+@0:210 write_submit_times
+@0:210 print_ledgers {2}
+@0:260 stop

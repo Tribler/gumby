@@ -32,8 +32,10 @@
 # <- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1": {"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"}, "2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
 # -> vars_received
 # <- go:1388665322.478153
-# [Connection is closed by the server]
 #
+# After the initial time synchronization and experiment metainfo exchange, peers can send messages to each
+# other using the synchronization server. This command looks like msg:<peer_id>:<message> where peer_id is the
+# peer to which the message should be forwarded to.
 
 # Change Log:
 #
@@ -99,8 +101,6 @@ class ExperimentServiceProto(LineReceiver):
             stop_loop()
         else:
             self.state = statehandler(line)
-            if self.state == 'done':
-                self.transport.lose_connection()
 
     def send_and_wait_for_ready(self):
         self.ready_future = Future()
@@ -156,6 +156,19 @@ class ExperimentServiceProto(LineReceiver):
         self._logger.error('Unexpected command received "%s" while in ready state. Closing connection', line)
         return 'done'
 
+    def proto_running(self, line):
+        if line.startswith(b"msg"):
+            _, peer_id, msg_type, msg = line.strip().split(b':', 3)
+            self._logger.debug("Received message with type %s for peer %s: %s",
+                               msg_type.decode(), int(peer_id), msg.decode())
+
+            # Forward the message to the appropriate peer
+            self.factory.forwardMessage(self.id, int(peer_id), msg_type, msg)
+        else:
+            self._logger.error('Unexpected command received "%s" while in running state.', line)
+
+        return "running"
+
 
 class ExperimentServiceFactory:
 
@@ -170,6 +183,7 @@ class ExperimentServiceFactory:
         self.connections_ready = []
         self.vars_received = []
         self.last_status_update = 0
+        self.id_to_connection = {}
 
         self._timeout_delayed_call = None
 
@@ -196,17 +210,34 @@ class ExperimentServiceFactory:
             self._logger.info("All subscribers connected!")
 
             # Assign IDs to the connected subscribers, based on their address
+            host_dict = {}
+            for connection in self.connections_made:
+                connection_host = connection.transport.get_extra_info('peername')[0]
+                if connection_host not in host_dict:
+                    host_dict[connection_host] = []
+                host_dict[connection_host].append(connection)
+
+            # Sort them on IP
             def split_ip(ip):
                 return tuple(int(part) for part in ip.split('.'))
 
-            def ip_addr_key(connection):
-                return split_ip(connection.transport.get_extra_info('peername')[0])
+            def ip_addr_key(ip_addr):
+                return split_ip(ip_addr)
 
-            self.connections_made = sorted(self.connections_made, key=ip_addr_key)
-            peer_index = 1
-            for connection in self.connections_made:
-                connection.id = peer_index
-                peer_index += 1
+            sorted_hosts = sorted(list(host_dict.keys()), key=ip_addr_key)
+
+            # Assign
+            cur_peer_index = 1
+            cur_host_index = 0
+            while cur_peer_index <= len(self.connections_made):
+                # Get the next connection
+                if host_dict[sorted_hosts[cur_host_index]]:
+                    connection = host_dict[sorted_hosts[cur_host_index]].pop(0)
+                    connection.id = cur_peer_index
+
+                cur_host_index += 1
+                cur_host_index %= len(sorted_hosts)
+                cur_peer_index += 1
 
             ensure_future(self.push_id_to_subscribers())
 
@@ -280,16 +311,16 @@ class ExperimentServiceFactory:
         for subscriber in self.connections_ready:
             # Sync the experiment start time among instances
             subscriber.send_line(b"go:%f" % (start_time + subscriber.vars['time_offset']))
+            subscriber.state = "running"
+            self.id_to_connection[subscriber.id] = subscriber
 
         await sleep(5)
 
-        self._logger.info("Done, disconnecting all clients.")
-        try:
-            self.disconnect_all()
-        except Exception as e:
-            self.on_experiment_start_error(e)
-        else:
-            self.on_experiment_started()
+    def forwardMessage(self, from_id, to_id, msg_type, msg):
+        if to_id not in self.id_to_connection:
+            self._logger.error("Error while forwarding message: peer with id %d not found!", to_id)
+
+        self.id_to_connection[to_id].send_line(b"msg:%d:%s:%s" % (from_id, msg_type, msg))
 
     def disconnect_all(self):
         for subscriber in self.connections_ready:

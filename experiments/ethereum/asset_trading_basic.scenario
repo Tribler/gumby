@@ -1,0 +1,19 @@
+&module gumby.modules.experiment_module.ExperimentModule
+&module experiments.ethereum.ethereum_module.EthereumModule
+&module experiments.ethereum.asset_trading_module.AssetTradingModule
+
+@0:1 generate_keypair
+@0:6 generate_genesis {1}
+@0:8 initialize_chain
+@0:10 start_ethereum {1}
+@0:14 write_node_info {1}
+@0:15 start_ethereum {2-1000}
+@0:30 unlock_account
+@0:34 deploy_contract contracts/orderbook/matching_market.sol MatchingMarket {1}
+@0:60 start_monitor_tx_pool {1}
+@0:65 ask 10000 1.3.0 10000 1.3.117 order_id=1.7.167312867 {148}
+@0:66 bid 10000 1.3.0 10000 1.3.117 order_id=1.7.167412867 {149}
+@0:98 stop_monitor_tx_pool {1}
+@0:98 print_balance
+@0:98 write_stats
+@0:100 stop_ethereum

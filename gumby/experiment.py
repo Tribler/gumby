@@ -60,6 +60,7 @@ class ExperimentClient(LineReceiver):
         self.loaded_experiment_module_classes = []
         self._stats_file = None
         self.scenario_file = environ.get("SCENARIO_FILE", None)
+        self.message_callback = None
 
         # Beware! The ordering of modules is important, specifically on calling the event handlers.
         self.experiment_modules = []
@@ -94,8 +95,9 @@ class ExperimentClient(LineReceiver):
             get_event_loop().stop()
         else:
             self.state = state_handler(line)
-            if self.state == 'done':
-                self.transport.close()
+
+    def send_message(self, peer_id, msg_type, msg):
+        self.send_line(b"msg:%d:%s:%s" % (peer_id, msg_type, msg))
 
     def on_id_received(self):
         self.scenario_runner.set_peernumber(self.my_id)
@@ -188,7 +190,17 @@ class ExperimentClient(LineReceiver):
             self._logger.info("Starting the experiment in %f secs.", start_delay)
             get_event_loop().call_later(start_delay, self.start_experiment)
             self.factory.stop_reconnecting()
-            self.transport.close()
+            return "running"
+
+    def proto_running(self, line):
+        if line.startswith(b"msg"):
+            _, from_peer_id, msg_type, msg = line.strip().split(b':', 3)
+            self._logger.debug("Received message with type %s from peer %d: %s",
+                               msg_type.decode(), int(from_peer_id), msg.decode())
+            if self.message_callback:
+                self.message_callback.on_message(int(from_peer_id), msg_type, msg)
+
+        return "running"
 
     def register(self, target):
         """
