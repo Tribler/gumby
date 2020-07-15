@@ -183,7 +183,7 @@ if [ ! -e $VENV/include/gmp.h  -o ! -e $GMP_MARKER ]; then
 fi
 
 # libmpfr needed by gmpy2
-MPFR_VERSION=4.0.2
+MPFR_VERSION=4.1.0
 MPFR_MARKER=`build_marker mpfr $MPFR_VERSION`
 if [ ! -e $VENV/include/mpfr.h  -o ! -e $MPFR_MARKER ]; then
 
