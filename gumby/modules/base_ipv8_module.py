@@ -118,7 +118,7 @@ class BaseIPv8Module(ExperimentModule):
         config.set_market_community_enabled(False)
         config.set_chant_enabled(False)
         config.set_libtorrent_enabled(False)
-        config.set_http_api_enabled(False)
+        config.set_api_http_enabled(False)
         config.set_libtorrent_port(20000 + self.experiment.my_id * 10)
         config.set_ipv8_port(self.ipv8_port)
         config.set_tunnel_community_enabled(False)
