@@ -10,6 +10,7 @@
 @0:5 init_matchmakers
 @0:5 set_validation_range 0
 @0:6 init_trader_lookup_table
+@0:7 introduce_peers
 @0:10 connect_matchmakers 10
 @0:25 annotate start-trading
 @0:25.1 bid 10 DUM1 10 DUM2 {1}
