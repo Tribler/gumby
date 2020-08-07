@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from asyncio import Future
 from binascii import hexlify
@@ -76,7 +77,7 @@ class AnyDexModule(ExperimentModule):
         return loader
 
     @experiment_callback
-    def start_session(self):
+    async def start_session(self):
         from ipv8.configuration import get_default_configuration
 
         ipv8_config = get_default_configuration()
@@ -90,8 +91,12 @@ class AnyDexModule(ExperimentModule):
 
         # Load overlays
         self.custom_ipv8_community_loader.load(self.ipv8, self.session)
-
+        await self.ipv8.start()
         self.ipv8_available.set_result(self.ipv8)
+
+    @experiment_callback
+    async def stop_session(self):
+        await self.ipv8.stop()
 
     @experiment_callback
     def enable_ipv8_statistics(self):
@@ -108,10 +113,6 @@ class AnyDexModule(ExperimentModule):
     @experiment_callback
     def isolate_ipv8_overlay(self, name):
         self.custom_ipv8_community_loader.isolate(name)
-
-    @experiment_callback
-    def stop_session(self):
-        self.ipv8.stop()
 
     def setup_config(self):
         if self.ipv8_port is None:
@@ -143,7 +144,8 @@ class AnyDexModule(ExperimentModule):
                 community._DNS_ADDRESSES.append((parts[0], int(parts[1])))
 
         config = AnyDexConfig()
-        config.set_trustchain_keypair_filename("tc_keypair_" + str(self.experiment.my_id))
+        config.set_trustchain_keypair_filename(os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id)))
+        self._logger.info("Setting state dir to %s", my_state_path)
         config.set_state_dir(my_state_path)
         config.set_ipv8_port(self.ipv8_port)
         return config

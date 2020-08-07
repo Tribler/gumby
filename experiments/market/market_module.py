@@ -63,6 +63,10 @@ class MarketModule(IPv8OverlayExperimentModule):
         self.overlay.max_peers = -1
 
     @experiment_callback
+    def enable_market_memory_db(self):
+        self.tribler_config.set_market_memory_db(True)
+
+    @experiment_callback
     def connect_matchmakers(self, num_to_connect):
         num_total_matchmakers = int(os.environ['NUM_MATCHMAKERS'])
         if int(num_to_connect) > num_total_matchmakers:
@@ -95,18 +99,18 @@ class MarketModule(IPv8OverlayExperimentModule):
                     self.overlay.matchmakers.add(peer)
 
     @experiment_callback
-    def ask(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
+    async def ask(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
         self.num_asks += 1
         pair = AssetPair(AssetAmount(int(asset1_amount), asset1_type), AssetAmount(int(asset2_amount), asset2_type))
-        order = self.overlay.create_ask(pair, 3600)
+        order = await self.overlay.create_ask(pair, 3600)
         if order_id:
             self.order_id_map[order_id] = order.order_id
 
     @experiment_callback
-    def bid(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
+    async def bid(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
         self.num_bids += 1
         pair = AssetPair(AssetAmount(int(asset1_amount), asset1_type), AssetAmount(int(asset2_amount), asset2_type))
-        order = self.overlay.create_bid(pair, 3600)
+        order = await self.overlay.create_bid(pair, 3600)
         if order_id:
             self.order_id_map[order_id] = order.order_id
 
@@ -183,3 +187,8 @@ class MarketModule(IPv8OverlayExperimentModule):
                 for retries, price, other_order_id in match_cache.queue.queue:
                     queue_file.write(
                         "%s,%d,%s,%s\n" % (match_cache.order.order_id, retries, price, other_order_id))
+
+        # Write bandwidth statistics
+        with open('bandwidth.txt', 'w') as bandwidth_file:
+            bandwidth_file.write("%d,%d" % (self.overlay.endpoint.bytes_up,
+                                            self.overlay.endpoint.bytes_down))

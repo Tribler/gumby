@@ -139,7 +139,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         return Peer(b64decode(self.get_peer_public_key(peer_id)), address=address)
 
     def get_peer_public_key(self, peer_id):
-        return self.all_vars[peer_id][b'public_key']
+        return self.all_vars[peer_id]['public_key']
 
     def on_id_received(self):
         # Since the IPv8 source module is loaded before any community module, the IPv8 on_id_received has
