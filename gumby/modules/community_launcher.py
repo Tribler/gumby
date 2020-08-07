@@ -215,7 +215,11 @@ class MarketCommunityLauncher(IPv8CommunityLauncher):
         return Peer(session.trustchain_keypair)
 
     def get_kwargs(self, session):
-        return {'trustchain': session.trustchain_community, 'dht': session.dht_community, 'use_database': False}
+        return {
+            'trustchain': session.trustchain_community,
+            'dht': session.dht_community,
+            'use_database': not session.config.use_market_memory_db()
+        }
 
 
 class GigaChannelCommunityLauncher(IPv8CommunityLauncher):

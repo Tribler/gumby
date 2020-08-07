@@ -63,6 +63,10 @@ class MarketModule(IPv8OverlayExperimentModule):
         self.overlay.max_peers = -1
 
     @experiment_callback
+    def enable_market_memory_db(self):
+        self.tribler_config.set_market_memory_db(True)
+
+    @experiment_callback
     def connect_matchmakers(self, num_to_connect):
         num_total_matchmakers = int(os.environ['NUM_MATCHMAKERS'])
         if int(num_to_connect) > num_total_matchmakers:

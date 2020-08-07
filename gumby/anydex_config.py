@@ -13,11 +13,12 @@ class AnyDexConfig(object):
                 'statistics': False
             },
             'market_community': {
-                'enabled': True
+                'enabled': True,
+                'memory_db': False,
             },
             'trustchain': {
                 'enabled': True,
-                'memory_db': True,
+                'memory_db': False,
                 'ec_keypair_filename': ''
             },
             'dht': {
@@ -70,3 +71,9 @@ class AnyDexConfig(object):
 
     def use_trustchain_memory_db(self):
         return self.config['trustchain']['memory_db']
+
+    def set_market_memory_db(self, value):
+        self.config['market_community']['memory_db'] = value
+
+    def use_market_memory_db(self):
+        return self.config['market_community']['memory_db']
