@@ -187,3 +187,8 @@ class MarketModule(IPv8OverlayExperimentModule):
                 for retries, price, other_order_id in match_cache.queue.queue:
                     queue_file.write(
                         "%s,%d,%s,%s\n" % (match_cache.order.order_id, retries, price, other_order_id))
+
+        # Write bandwidth statistics
+        with open('bandwidth.txt', 'w') as bandwidth_file:
+            bandwidth_file.write("%d,%d" % (self.overlay.endpoint.bytes_up,
+                                            self.overlay.endpoint.bytes_down))
