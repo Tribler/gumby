@@ -144,6 +144,7 @@ class AnyDexModule(ExperimentModule):
 
         config = AnyDexConfig()
         config.set_trustchain_keypair_filename("tc_keypair_" + str(self.experiment.my_id))
+        self._logger.info("Setting state dir to %s", my_state_path)
         config.set_state_dir(my_state_path)
         config.set_ipv8_port(self.ipv8_port)
         return config
