@@ -159,7 +159,7 @@ class ResourceMonitor(object):
                     self.ignore_pid_list.append(pid)
 
     def run(self, cmd):
-        if self.output_dir:
+        if self.output_dir and "DEBUG" not in os.environ:
             output_filename = self.output_dir + "/%05d.out" % self.cmd_counter
             error_filename = self.output_dir + "/%05d.err" % self.cmd_counter
 
