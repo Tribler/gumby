@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from asyncio import Future
 from binascii import hexlify
@@ -143,7 +144,7 @@ class AnyDexModule(ExperimentModule):
                 community._DNS_ADDRESSES.append((parts[0], int(parts[1])))
 
         config = AnyDexConfig()
-        config.set_trustchain_keypair_filename("tc_keypair_" + str(self.experiment.my_id))
+        config.set_trustchain_keypair_filename(os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id)))
         self._logger.info("Setting state dir to %s", my_state_path)
         config.set_state_dir(my_state_path)
         config.set_ipv8_port(self.ipv8_port)
