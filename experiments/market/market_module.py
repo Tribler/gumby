@@ -95,18 +95,18 @@ class MarketModule(IPv8OverlayExperimentModule):
                     self.overlay.matchmakers.add(peer)
 
     @experiment_callback
-    def ask(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
+    async def ask(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
         self.num_asks += 1
         pair = AssetPair(AssetAmount(int(asset1_amount), asset1_type), AssetAmount(int(asset2_amount), asset2_type))
-        order = self.overlay.create_ask(pair, 3600)
+        order = await self.overlay.create_ask(pair, 3600)
         if order_id:
             self.order_id_map[order_id] = order.order_id
 
     @experiment_callback
-    def bid(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
+    async def bid(self, asset1_amount, asset1_type, asset2_amount, asset2_type, order_id=None):
         self.num_bids += 1
         pair = AssetPair(AssetAmount(int(asset1_amount), asset1_type), AssetAmount(int(asset2_amount), asset2_type))
-        order = self.overlay.create_bid(pair, 3600)
+        order = await self.overlay.create_bid(pair, 3600)
         if order_id:
             self.order_id_map[order_id] = order.order_id
 
