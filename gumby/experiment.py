@@ -233,10 +233,6 @@ class ExperimentClient(LineReceiver):
         self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, "annotate", message))
 
     @experiment_callback
-    def peertype(self, peer_type):
-        self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, "peertype", peer_type))
-
-    @experiment_callback
     def stop(self):
         self._logger.info("Stopping event loop")
         get_event_loop().stop()
