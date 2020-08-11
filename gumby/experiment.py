@@ -58,7 +58,6 @@ class ExperimentClient(LineReceiver):
         self.scenario_runner = ScenarioRunner()
         self.scenario_runner.preprocessor_callbacks["module"] = self._preproc_module
         self.loaded_experiment_module_classes = []
-        self._stats_file = None
         self.scenario_file = environ.get("SCENARIO_FILE", None)
         self.message_callback = None
 
@@ -108,7 +107,6 @@ class ExperimentClient(LineReceiver):
         else:
             makedirs(my_dir)
         chdir(my_dir)
-        self._stats_file = open("statistics.log", 'w', buffering=1)
 
         for module in self.experiment_modules:
             if module is not self:
@@ -230,7 +228,8 @@ class ExperimentClient(LineReceiver):
 
     @experiment_callback
     def annotate(self, message):
-        self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, "annotate", message))
+        with open("annotations.csv", "a") as annotations_file:
+            annotations_file.write('%f,%s\n' % (time() - self.scenario_runner.exp_start_time, message))
 
     @experiment_callback
     def stop(self):
