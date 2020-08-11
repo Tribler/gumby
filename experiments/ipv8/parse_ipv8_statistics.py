@@ -147,30 +147,28 @@ class IPv8StatisticsParser(StatisticsParser):
 
     def aggregate_annotations(self):
         annotation_dict = {}
-        peer_set = set()
-        for peer_nr, filename, dir in self.yield_files('statistics.log'):
-            peer_set.add(peer_nr)
+        for _, filename, _ in self.yield_files('annotations.csv'):
             with open(filename, 'r') as annotation_file:
-                lines = annotation_file.read().split('\n')
-                for line in lines:
-                    extracted = line.split(' ')
-                    if len(extracted) == 1 or extracted[2] != 'annotate':
+                for line in annotation_file.readlines():
+                    if not line:
                         continue
-                    message = " ".join(extracted[3:])
-                    tuple_dict = annotation_dict.get(message, {})
-                    tuple_dict[extracted[1]] = extracted[0]
-                    annotation_dict[message] = tuple_dict
-        with open(os.path.join(self.node_directory, "annotations.txt"), "w+") as h_annotations:
-            h_annotations.write("annotation %s\n" % " ".join(map(str, sorted(peer_set))))
-            for message, packed_values in annotation_dict.items():
-                h_annotations.write('"%s" ' % message)
-                counter = 0
-                for node in sorted(packed_values.keys()):
-                    h_annotations.write(packed_values.get(node, '?'))
-                    if counter != len(packed_values.keys()) - 1:
-                        h_annotations.write(" ")
-                    counter += 1
-                h_annotations.write("\n")
+
+                    parts = line.strip().split(',')
+                    if len(parts) != 2:
+                        continue
+
+                    annotation_time = float(parts[0])
+                    annotation_name = parts[1]
+
+                    if annotation_name not in annotation_dict:
+                        annotation_dict[annotation_name] = []
+                    annotation_dict[annotation_name].append(annotation_time)
+
+        with open(os.path.join(self.node_directory, "annotations.csv"), "w") as annotations_file:
+            annotations_file.write("time,name\n")
+            for annotation_name, annotation_times in annotation_dict.items():
+                annotation_avg_time = sum(annotation_times) / len(annotation_times)
+                annotations_file.write("%f,%s\n" % (annotation_avg_time, annotation_name))
 
     def run(self):
         self.aggregate_annotations()

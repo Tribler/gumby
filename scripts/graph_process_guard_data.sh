@@ -52,7 +52,6 @@ source axis_stats.txt
 
 collect_profile_logs.py .
 
-modify_annotations.py . $XSTART
 modify_autoplot.py . $XSTART
 
 # Graph the stuff
