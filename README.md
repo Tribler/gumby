@@ -6,7 +6,8 @@ Gumby allows developers and scientists to devise complex experiments and run the
 
 Notable features:
 - Run IPv8/Tribler experiments with thousands of instances in a local or remote (DAS5) environment.
-- Scenario files to schedule actions during an experiment run.
+- A built-in experiment coordinator, facilitating coordination and message passing between any running instance.
+- Scenario files to schedule custom actions during an experiment run.
 - Resource monitoring (CPU, memory, I/O etc).
 - Post-processing functionality to visualize statistics gathered during an experiment with R.
 
