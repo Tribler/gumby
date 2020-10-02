@@ -1,12 +1,10 @@
 import logging
 
-from gumby.modules.community_launcher import IPv8CommunityLauncher
-from gumby.modules.community_loader import IPv8CommunityLoader
-
+from ipv8.loader import CommunityLauncher, IPv8CommunityLoader
 from ipv8.peer import Peer
 
 
-class IsolatedIPv8LauncherWrapper(IPv8CommunityLauncher):
+class IsolatedIPv8LauncherWrapper(CommunityLauncher):
 
     """
     Wrapper for another CommunityLauncher:
@@ -17,7 +15,7 @@ class IsolatedIPv8LauncherWrapper(IPv8CommunityLauncher):
         """
         Wrap a child launcher, given a unique session id.
 
-        :type child: IPv8CommunityLauncher
+        :type child: CommunityLauncher
         :type session_id: str
         """
         self.child = child
