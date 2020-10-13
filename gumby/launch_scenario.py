@@ -5,7 +5,6 @@ from logging import debug, warning
 from os import environ, path
 from sys import argv, path as python_path
 
-from gumby.instrumentation import init_instrumentation
 from gumby.log import setupLogging
 from gumby.sync import ExperimentClientFactory, ExperimentServiceFactory
 from gumby.util import run_task
@@ -72,7 +71,6 @@ def main(self_service=False):
     if environ["IPV8_DIR"] not in python_path:
         python_path.append(environ["IPV8_DIR"])
 
-    init_instrumentation()
     setupLogging()
     if not path.exists(environ["SCENARIO_FILE"]):
         warning("Unable to find scenario file: %s", environ["SCENARIO_FILE"])

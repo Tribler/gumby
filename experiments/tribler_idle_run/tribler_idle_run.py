@@ -37,11 +37,8 @@
 
 # Code:
 
-import sys
 import os
 from asyncio import ensure_future, get_event_loop, sleep
-
-from gumby.instrumentation import init_instrumentation
 
 from tribler_core.config.tribler_config import TriblerConfig
 from tribler_core.session import Session
@@ -52,7 +49,6 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '
 class IdleTribleRunner():
 
     def __init__(self):
-        init_instrumentation()
         self.session = None
 
     async def run(self):
