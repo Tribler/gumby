@@ -18,7 +18,7 @@ class GumbySession(Session):
         self._logger.info("tribler: Preparing IPv8 overlays...")
         now_time = timemod.time()
 
-        super()
+        self.ipv8_community_loader.load(self.ipv8, self)
 
         if self.config.get_ipv8_statistics():
             for overlay in self.ipv8.overlays:
