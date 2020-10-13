@@ -12,12 +12,12 @@ from gumby.modules.gumby_session import GumbySession
 from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
 from gumby.util import run_task
 
-from tribler_core.modules.ipv8_module_catalog import (DHTCommunityLauncher,
+from tribler_core.modules.ipv8_module_catalog import (BandwidthCommunityLauncher,
+                                                      DHTCommunityLauncher,
                                                       GigaChannelCommunityLauncher,
                                                       IPv8DiscoveryCommunityLauncher,
                                                       PopularityCommunityLauncher,
-                                                      TriblerTunnelCommunityLauncher,
-                                                      TrustChainCommunityLauncher)
+                                                      TriblerTunnelCommunityLauncher)
 
 
 class BaseIPv8Module(ExperimentModule):
@@ -59,11 +59,11 @@ class BaseIPv8Module(ExperimentModule):
     def create_ipv8_community_loader(self):
         loader = IsolatedIPv8CommunityLoader(self.session_id)
         loader.set_launcher(IPv8DiscoveryCommunityLauncher())
-        loader.set_launcher(TrustChainCommunityLauncher())
         loader.set_launcher(TriblerTunnelCommunityLauncher())
         loader.set_launcher(PopularityCommunityLauncher())
         loader.set_launcher(DHTCommunityLauncher())
         loader.set_launcher(GigaChannelCommunityLauncher())
+        loader.set_launcher(BandwidthCommunityLauncher())
         return loader
 
     @experiment_callback
