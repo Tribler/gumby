@@ -119,7 +119,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             # Walk to a number of peers
             eligible_peers = [peer_id for peer_id in self.all_vars.keys()
                               if int(peer_id) not in excluded_peers_list and int(peer_id) != self.my_id]
-            rand_peer_ids = sample(eligible_peers, int(max_peers))
+            rand_peer_ids = sample(eligible_peers, min(len(eligible_peers), int(max_peers)))
             for rand_peer_id in rand_peer_ids:
                 self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(rand_peer_id))
 
