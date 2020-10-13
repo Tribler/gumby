@@ -7,12 +7,90 @@ from os import environ, getpid, makedirs, symlink, path
 
 from gumby.anydex_config import AnyDexConfig
 from gumby.experiment import experiment_callback
-from gumby.modules.community_launcher import TrustChainCommunityLauncher, MarketCommunityLauncher, DHTCommunityLauncher
 from gumby.modules.experiment_module import ExperimentModule, static_module
 from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
 from gumby.util import read_keypair_trustchain, run_task
 
+from ipv8.loader import CommunityLauncher
+from ipv8.peer import Peer
+
 from ipv8_service import IPv8
+
+
+# The lazy-loading of Community-specific files triggers Pylint, this is expected:
+# pylint: disable=C0415,W0613
+
+
+class TrustChainCommunityLauncher(CommunityLauncher):
+
+    def should_launch(self, session):
+        return session.config.get_trustchain_enabled()
+
+    def get_overlay_class(self):
+        from ipv8.attestation.trustchain.community import TrustChainCommunity
+        return TrustChainCommunity
+
+    def get_my_peer(self, ipv8, session):
+        return Peer(session.trustchain_keypair)
+
+    def get_kwargs(self, session):
+        return {'working_directory': session.config.get_state_dir()}
+
+    def finalize(self, ipv8, session, community):
+        session.trustchain_community = community
+
+        # If we're using a memory DB, replace the existing one
+        if session.config.use_trustchain_memory_db():
+            orig_db = community.persistence
+
+            from experiments.trustchain.trustchain_mem_db import TrustchainMemoryDatabase
+            community.persistence = TrustchainMemoryDatabase(session.config.get_state_dir(), 'trustchain')
+            community.persistence.original_db = orig_db
+
+        return super()
+
+
+class MarketCommunityLauncher(CommunityLauncher):
+
+    def not_before(self):
+        return ['DHTDiscoveryCommunity', 'TrustChainCommunity']
+
+    def should_launch(self, session):
+        return session.config.get_market_community_enabled()
+
+    def get_overlay_class(self):
+        from anydex.core.community import MarketCommunity
+        return MarketCommunity
+
+    def get_my_peer(self, ipv8, session):
+        return Peer(session.trustchain_keypair)
+
+    def get_kwargs(self, session):
+        return {
+            'trustchain': session.trustchain_community,
+            'dht': session.dht_community,
+            'use_database': not session.config.use_market_memory_db()
+        }
+
+
+class DHTCommunityLauncher(CommunityLauncher):
+
+    def should_launch(self, session):
+        return session.config.get_dht_enabled()
+
+    def get_overlay_class(self):
+        from ipv8.dht.discovery import DHTDiscoveryCommunity
+        return DHTDiscoveryCommunity
+
+    def get_my_peer(self, ipv8, session):
+        return Peer(session.trustchain_keypair)
+
+    def get_kwargs(self, session):
+        return {}
+
+    def finalize(self, ipv8, session, community):
+        session.dht_community = community
+        return super()
 
 
 class GumbyMinimalLm(object):

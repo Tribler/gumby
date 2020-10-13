@@ -1,11 +1,12 @@
 import unittest
 
-from gumby.modules.community_launcher import IPv8CommunityLauncher
+from ipv8.loader import CommunityLauncher
+
 from gumby.modules.isolated_community_loader import IsolatedIPv8LauncherWrapper
 from gumby.tests.mocking import MockIPv8, MockSession, MockOverlay
 
 
-class MockUniqueLauncher1(IPv8CommunityLauncher):
+class MockUniqueLauncher1(CommunityLauncher):
 
     def get_name(self):
         return "MockUniqueLauncher1"
@@ -17,7 +18,7 @@ class MockUniqueLauncher1(IPv8CommunityLauncher):
         return None
 
 
-class MockUniqueLauncher2(IPv8CommunityLauncher):
+class MockUniqueLauncher2(CommunityLauncher):
 
     def get_name(self):
         return "MockUniqueLauncher2"

@@ -1,8 +1,8 @@
 import time as timemod
 
-from tribler_core.session import Session
+from ipv8.loader import IPv8CommunityLoader
 
-from gumby.modules.community_loader import IPv8CommunityLoader
+from tribler_core.session import Session
 
 
 class GumbySession(Session):
@@ -18,7 +18,11 @@ class GumbySession(Session):
         self._logger.info("tribler: Preparing IPv8 overlays...")
         now_time = timemod.time()
 
-        self.ipv8_community_loader.load(self.ipv8, self)
+        super()
+
+        if self.config.get_ipv8_statistics():
+            for overlay in self.ipv8.overlays:
+                self.ipv8.endpoint.enable_community_statistics(overlay.get_prefix(), True)
 
         self.config.set_anon_proxy_settings(2,
                                             ("127.0.0.1",

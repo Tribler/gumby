@@ -8,10 +8,16 @@ from socket import gethostbyname
 from gumby.experiment import experiment_callback
 from gumby.gumby_tribler_config import GumbyTriblerConfig
 from gumby.modules.experiment_module import ExperimentModule
-from gumby.modules.community_launcher import *
 from gumby.modules.gumby_session import GumbySession
 from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
 from gumby.util import run_task
+
+from tribler_core.modules.ipv8_module_catalog import (DHTCommunityLauncher,
+                                                      GigaChannelCommunityLauncher,
+                                                      IPv8DiscoveryCommunityLauncher,
+                                                      PopularityCommunityLauncher,
+                                                      TriblerTunnelCommunityLauncher,
+                                                      TrustChainCommunityLauncher)
 
 
 class BaseIPv8Module(ExperimentModule):
