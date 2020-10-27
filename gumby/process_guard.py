@@ -5,6 +5,8 @@
 import errno
 import json
 import os
+import sys
+from argparse import ArgumentParser
 from glob import iglob
 from math import ceil
 from os import (R_OK, access, getpgid, getpid, kill, killpg, makedirs, mkdir, path, setsid, sysconf, sysconf_names)
@@ -318,73 +320,71 @@ class ProcessMonitor(object):
 
 
 if __name__ == "__main__":
-    from optparse import OptionParser
-    parser = OptionParser()
-    parser.add_option("-t", "--timeout",
-                      metavar='TIMEOUT',
-                      default=0,
-                      type=int,
-                      help="Hard timeout, after this amount of seconds all the child processes will be killed."
+    parser = ArgumentParser()
+    parser.add_argument("-t", "--timeout",
+                        metavar='TIMEOUT',
+                        default=0,
+                        type=int,
+                        help="Hard timeout, after this amount of seconds all the child processes will be killed."
+                        )
+    parser.add_argument("-m", "--monitor-dir",
+                        metavar='OUTDIR',
+                        help="Monitor individual process/thread resource consumption and write the logs "
+                             "in the specified dir.",
+                        )
+    parser.add_argument("-o", "--output-dir",
+                        metavar='OUTDIR',
+                        help="Capture individual process std{out|err} and write the logs in the specified dir.",
+                        )
+    parser.add_argument("-f", "--commands-file",
+                        metavar='COMMANDS_FILE',
+                        help="Read this file and spawn a subprocess using each line as the command line."
+                        )
+    parser.add_argument("-c", "--command",
+                        metavar='COMMAND',
+                        help="Run this command (can be specified multiple times and in addition of --commands-file)"
+                        )
+    parser.add_argument("-i", "--interval",
+                        metavar='FLOAT',
+                        default=1.0,
+                        type=float,
+                        action="store",
+                        help="Sample monitoring stats and check processes/threads every FLOAT seconds"
                       )
-    parser.add_option("-T", "--fail-on-timeout",
-                      action="store_true",
-                      default=False,
-                      dest="fail_on_timeout",
-                      help="Exit with status code 3 when a timeout happens."
-                      )
-    parser.add_option("-m", "--monitor-dir",
-                      metavar='OUTDIR',
-                      help="Monitor individual process/thread resource consumption and write the logs in the specified dir.",
-                      )
-    parser.add_option("-o", "--output-dir",
-                      metavar='OUTDIR',
-                      help="Capture individual process std{out|err} and write the logs in the specified dir.",
-
-                      )
-    parser.add_option("-f", "--commands-file",
-                      metavar='COMMANDS_FILE',
-                      help="Read this file and spawn a subprocess using each line as the command line."
-                      )
-    parser.add_option("-c", "--command",
-                      metavar='COMMAND',
-                      action="append",
-                      dest="commands",
-                      help="Run this command (can be specified multiple times and in addition of --commands-file)"
-                      )
-    parser.add_option("-i", "--interval",
-                      metavar='FLOAT',
-                      default=1.0,
-                      type=float,
-                      action="store",
-                      help="Sample monitoring stats and check processes/threads every FLOAT seconds"
-                      )
-    parser.add_option("-n", "--network",
-                      action="store_true",
-                      default=False,
-                      help="Monitor network devices."
-                      )
-    (options, args) = parser.parse_args()
-    if not (options.commands_file or options.commands):
+    parser.add_argument("--network",
+                        action="store_true",
+                        default=False,
+                        help="Monitor network devices."
+                        )
+    parser.add_argument("--instances",
+                        "-n",
+                        default=1,
+                        type=int,
+                        help='The number of peers'
+                        )
+    args = parser.parse_args(sys.argv[1:])
+    if not (args.commands_file or args.command):
         parser.error("Please specify at least one of --command or --commands-file (run with -h to see command usage).")
 
-    if options.commands:
-        commands = [cmd.strip() for cmd in options.commands if cmd.strip()]
+    if args.command:
+        commands = [args.command.strip()] * args.instances
     else:
         commands = []
-    if options.commands_file:
-        with open(options.commands_file) as file:
+    if args.commands_file:
+        with open(args.commands_file) as file:
             for cmd in [line.strip() for line in file.read().splitlines()]:
                 if cmd and not cmd.startswith('#'):
                     commands.append(cmd)
 
     if not commands:
-        parser.error("Could not collect a list of commands to run.\nMake sure that the commands file is not empty or has all the lines commented out.")
+        parser.error("Could not collect a list of commands to run."
+                     "Make sure that the commands file is not empty or has all the lines commented out.")
 
-    if options.output_dir and not path.exists(options.output_dir):
-        print("making output directory: %s" % options.output_dir)
-        makedirs(options.output_dir)
+    if args.output_dir and not path.exists(args.output_dir):
+        print("making output directory: %s" % args.output_dir)
+        makedirs(args.output_dir)
 
-    pm = ProcessMonitor(commands, options.timeout, options.interval, options.output_dir, options.monitor_dir, options.network)
+    pm = ProcessMonitor(commands, args.timeout, args.interval, args.output_dir, args.monitor_dir, args.network)
     try:
         exit(pm.monitoring_loop())
 
@@ -392,5 +392,5 @@ if __name__ == "__main__":
         print("Killing monitored processes...")
         pm.stop()
         print("Done.")
-    if pm.timed_out and options.fail_on_timeout:
+    if pm.timed_out and args.fail_on_timeout:
         exit(TIMEOUT_EXIT_CODE)

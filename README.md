@@ -42,17 +42,17 @@ This will run the experiment, which should take around 15 seconds.
 When the experiment terminates, it will plot various system metrics like CPU usage, I/O read and written.
 These metrics can be found in the `output` directory, together with various log files.
 
-_when running the experiment for the first time with `ggplot2` installed, it will compile the `ggplot2` R package and its dependencies.
+_When running the experiment for the first time with `ggplot2` installed, it will compile the `ggplot2` R package and its dependencies.
 This can take a while to complete._
 
 ## Anatomy of an experiment
 
-We now briefly explain how the `local_processguard` experiment that was executed in the previous section, is composed.
+We now briefly explain how the experiment that was executed in the previous section, is composed.
 
 #### Configuration file
 
 Each experiment should be defined by a configuration file that contains information about the environment and parameters of the experiment.
-The content of the `local_processguard` experiment is shown below:
+The content of the `local_processguard` experiment configuration file is shown below:
 
 ```
 experiment_name = LocalProcessGuard
@@ -68,15 +68,16 @@ The `local_instance_cmd` describes the command that Gumby should run.
 This usually points to an executable file, i.e. a Python file or a script written in bash.
 In the example above, it invokes the `process_guard.py` script with a specific command.
 The `process_guard.py` script is (another) wrapper around a command and is responsible for monitoring and writing away various statistics of the process, like CPU, memory and I/O usage.
+The command that should be executed by the process guard is provided by the `-c` argument, and one can spawn multiple, parallel processes by passing the desired number instanced with `-n`.
 The `post_process_cmd` variable defines an optional script that should be executed *after* the experiment is finished.
 The `graph_process_guard_data.sh` scripts reads the statistics as written away by the `process_guard` file, and plots them with R.
 
 This should provide you with a basic understanding of how to run a simple experiment on your local computer.
-The remainder of this README will explain more advanced concepts of Gumby.
+The remainder of this document will explain more advanced concepts of Gumby.
 
 ## Running experiments on the DAS5.
 
-Gumby supports running experiments on the DAS5 supercomputer.
+Gumby supports running experiments on the [DAS5 compute cluster](https://www.cs.vu.nl/das5).
 An example configuration file to do so is given below:
 
 ```
@@ -88,7 +89,7 @@ local_setup_cmd = 'das4_setup.sh'
 
 local_instance_cmd = 'das4_reserve_and_run.sh'
 
-# How many nodes do we want? (seconds)
+# How many nodes do we want?
 das4_node_amount = 4
 
 # Kill the processes if they don't die after this many seconds
@@ -101,7 +102,7 @@ das4_instances_to_run = 100
 das4_node_command = "basic_experiment.py"
 ```
 
-This configuration file will run a basic experiment on [the DAS5 supercomputer](https://www.cs.vu.nl/das5).
+This configuration file will run a basic experiment on the DAS5 compute cluster.
 The `das4_response_and_run.sh` script will automatically find a cluster with available nodes and reserve them for the time indicated by `das4_node_timeout`.
 The `local_setup_cmd` will prepare the environment on the remote HEAD node.
 Note that you can specify the total number of nodes you want to reserve with the `das4_node_amount` variable, and the total instances you want to run with `das4_instances_to_run`.
