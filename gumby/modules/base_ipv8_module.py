@@ -1,8 +1,8 @@
 import json
+import os
 import time
 from asyncio import Future
 from binascii import hexlify
-from os import environ, makedirs, symlink, path, getpid
 from socket import gethostbyname
 
 from gumby.experiment import experiment_callback
@@ -30,7 +30,7 @@ class BaseIPv8Module(ExperimentModule):
         self.session = None
         self.tribler_config = None
         self.ipv8_port = None
-        self.session_id = environ['SYNC_HOST'] + environ['SYNC_PORT']
+        self.session_id = os.environ['SYNC_HOST'] + os.environ['SYNC_PORT']
         self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
         self.ipv8_available = Future()
 
@@ -96,14 +96,12 @@ class BaseIPv8Module(ExperimentModule):
         from ipv8 import community
         community._DEFAULT_ADDRESSES = []
         community._DNS_ADDRESSES = []
-        head_host = gethostbyname(environ['HEAD_HOST']) if 'HEAD_HOST' in environ else "127.0.0.1"
+        head_host = gethostbyname(os.environ['HEAD_HOST']) if 'HEAD_HOST' in os.environ else "127.0.0.1"
 
-        my_state_path = path.abspath(path.join(environ["OUTPUT_DIR"], ".%s-%d-%d" % (self.__class__.__name__,
-                                                                                     getpid(), self.my_id)))
-        makedirs(my_state_path)
-        bootstrap_file = path.join(environ['OUTPUT_DIR'], 'bootstraptribler.txt')
-        if path.exists(bootstrap_file):
-            symlink(bootstrap_file, path.join(my_state_path, 'bootstraptribler.txt'))
+        my_state_path = os.path.join(os.environ['OUTPUT_DIR'], str(self.my_id))
+        bootstrap_file = os.path.join(os.environ['OUTPUT_DIR'], 'bootstraptribler.txt')
+        if os.path.exists(bootstrap_file):
+            os.symlink(bootstrap_file, os.path.join(my_state_path, 'bootstraptribler.txt'))
 
             with open(bootstrap_file, 'r') as bfile:
                 for line in bfile.readlines():
@@ -112,9 +110,9 @@ class BaseIPv8Module(ExperimentModule):
                         continue
                     community._DNS_ADDRESSES.append((parts[0], int(parts[1])))
 
-        base_tracker_port = int(environ['TRACKER_PORT'])
+        base_tracker_port = int(os.environ['TRACKER_PORT'])
         port_range = range(base_tracker_port, base_tracker_port + 4)
-        with open(path.join(my_state_path, 'bootstraptribler.txt'), "w+") as f:
+        with open(os.path.join(my_state_path, 'bootstraptribler.txt'), "w+") as f:
             f.write("\n".join(["%s %d" % (head_host, port) for port in port_range]))
         community._DEFAULT_ADDRESSES = [(head_host, port) for port in port_range]
 
