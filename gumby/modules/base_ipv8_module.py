@@ -119,7 +119,6 @@ class BaseIPv8Module(ExperimentModule):
         config = GumbyTriblerConfig(my_state_path)
         config.set_trustchain_keypair_filename("tc_keypair_" + str(self.experiment.my_id))
         config.set_torrent_checking_enabled(False)
-        config.set_market_community_enabled(False)
         config.set_discovery_community_enabled(False)
         config.set_chant_enabled(False)
         config.set_libtorrent_enabled(False)
