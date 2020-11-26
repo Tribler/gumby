@@ -1,42 +1,91 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+import json
 import os
 import sys
 
-from gumby.statsparser import StatisticsParser
+from gumby.post_process_blockchain import BlockchainTransactionsParser
 
 
-class EthereumStatisticsParser(StatisticsParser):
+class EthereumStatisticsParser(BlockchainTransactionsParser):
     """
-    This class is responsible for parsing statistics of the Ethereum experiment
+    Parse Ethereum statistics.
     """
-
-    def aggregate_bandwidth(self):
-        total_up, total_down = 0, 0
-        for _, filename, _ in self.yield_files('bandwidth.txt'):
-            with open(filename) as bandwidth_file:
-                parts = bandwidth_file.read().rstrip('\n').split(",")
-                total_up += int(parts[0])
-                total_down += int(parts[1])
-
-        with open('total_bandwidth.log', 'w') as taxi_file:
-            taxi_file.write("%s,%s,%s\n" % (total_up, total_down, (total_up + total_down) / 2))
 
     def parse_transactions(self):
-        with open("submitted_transactions.csv", "w") as submitted_transactions_file:
-            submitted_transactions_file.write("order_id,submit_time\n")
-            for _, filename, _ in self.yield_files('submitted_transactions.txt'):
-                with open(filename) as individual_file:
-                    submitted_transactions_file.write(individual_file.read())
+        transactions = {}
+        for peer_nr, filename, _ in self.yield_files('submit_times.txt'):
+            with open(filename, "r") as individual_transactions_file:
+                content = individual_transactions_file.read()
+                for line in content.split("\n"):
+                    if not line:
+                        continue
 
-        with open("completed_transactions.csv", "w") as completed_transactions_file:
-            completed_transactions_file.write("order_id,complete_time\n")
-            for _, filename, _ in self.yield_files('order_complete_times.txt'):
-                with open(filename) as individual_file:
-                    completed_transactions_file.write(individual_file.read())
+                    parts = line.split(",")
+                    tx_id = parts[0]
+                    submit_time = int(parts[1]) - self.avg_start_time
+                    transactions[tx_id] = [peer_nr, submit_time, -1]
+
+        for peer_nr, filename, _ in self.yield_files('confirmed_txs.txt'):
+            with open(filename, "r") as individual_transactions_file:
+                content = individual_transactions_file.read()
+                for line in content.split("\n"):
+                    if not line:
+                        continue
+
+                    parts = line.split(",")
+                    tx_id = parts[0]
+                    if tx_id in transactions:
+                        confirm_time = int(parts[1]) - self.avg_start_time
+                        transactions[tx_id][2] = confirm_time
+
+        for tx_id, tx_info in transactions.items():
+            tx_latency = -1
+            if tx_info[2] != -1:
+                tx_latency = tx_info[2] - tx_info[1]
+            self.transactions.append((tx_info[0], tx_id, tx_info[1], tx_info[2], tx_latency))
+
+    def compute_avg_block_time(self):
+        timestamps_sum = 0
+        num_timestamps = 0
+        last_timestamp = None
+
+        for _, filename, _ in self.yield_files('blockchain.txt'):
+            with open(filename, "r") as blockchain_file:
+                for line in blockchain_file.readlines():
+                    if not line:
+                        continue
+
+                    block = json.loads(line)
+                    if not last_timestamp:
+                        last_timestamp = block["timestamp"]
+                    else:
+                        time_between_blocks = block["timestamp"] - last_timestamp
+                        timestamps_sum += time_between_blocks
+                        num_timestamps += 1
+                        last_timestamp = block["timestamp"]
+
+            break  # We just need one
+
+        # Compute the average time between blocks and write it away
+        with open("avg_block_time.txt", "w") as out_file:
+            out_file.write("%f" % (timestamps_sum / num_timestamps))
+
+    def compute_avg_hash_rate(self):
+        hashrate_sum = 0
+        hashrate_num = 0
+        for _, filename, _ in self.yield_files('hashrate.txt'):
+            with open(filename, "r") as hashrate_file:
+                hashrate = int(hashrate_file.read())
+                hashrate_sum += hashrate
+                hashrate_num += 1
+
+        with open("avg_hashrate.txt", "w") as hashrate_file:
+            hashrate_file.write("%d" % (hashrate_sum / hashrate_num))
 
     def run(self):
-        self.aggregate_bandwidth()
-        self.parse_transactions()
+        self.parse()
+        self.compute_avg_block_time()
+        self.compute_avg_hash_rate()
 
 
 # cd to the output directory
