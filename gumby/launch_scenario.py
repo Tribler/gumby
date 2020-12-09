@@ -55,7 +55,11 @@ def main(self_service=False):
     if "IPV8_DIR" not in environ:
         environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler", "src", "pyipv8"))
     if "SYNC_HOST" not in environ:
-        environ["SYNC_HOST"] = "localhost"
+        # If we deploy using an SSH connection, use the IP of the host
+        if "SSH_CONNECTION" in environ:
+            environ["SYNC_HOST"] = environ["SSH_CONNECTION"].split(" ")[0]
+        else:
+            environ["SYNC_HOST"] = "localhost"
     if "SYNC_PORT" not in environ:
         environ['SYNC_PORT'] = "0"
     if "SCENARIO_FILE" not in environ:

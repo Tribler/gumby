@@ -76,14 +76,14 @@ if __name__ == '__main__':
     if 'SYNC_SUBSCRIBERS_AMOUNT' in environ:
         expected_subscribers = int(environ['SYNC_SUBSCRIBERS_AMOUNT'])
     else:
-        expected_subscribers = int(environ['DAS4_INSTANCES_TO_RUN'])
+        expected_subscribers = int(environ['INSTANCES_TO_RUN'])
 
     experiment_start_delay = float(environ.get('SYNC_EXPERIMENT_START_DELAY', 5))
     server_port = int(environ['SYNC_PORT'])
 
     loop = get_event_loop()
     ensure_future(loop.create_server(ExperimentServiceFactory(expected_subscribers, experiment_start_delay),
-                                     port=server_port))
+                                     host="0.0.0.0", port=server_port))
     loop.exit_code = 0
     loop.run_forever()
     loop.close()

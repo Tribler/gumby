@@ -170,6 +170,7 @@ class ExperimentRunner():
 
     async def startExperimentServer(self):
         if self._cfg['experiment_server_cmd']:
+            self._logger.info("Starting experiment server")
             # TODO: This is not very flexible, refactor it to have a background_commands
             # list instead of experiment_server_cmd, tracker_cmd, etc...
             try:
