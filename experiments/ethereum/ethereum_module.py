@@ -29,15 +29,14 @@ class EthereumModule(BlockchainModule):
         self.public_key = None
         self.deployed_contract_address = None
         self.deployed_contract_abi = None
-        self.market_contract = None
         self.experiment.message_callback = self
-        self.others_public_keys = []
+        self.others_public_keys = {}
         self.network_id = 3248394248
         self.tx_pool_polls = []
         self.poll_start_time = None
         self.tx_pool_lc = None
-        self.submitted_transactions = []
-        self.order_complete_times = []
+        self.submitted_transactions = {}
+        self.confirmed_transactions = {}
 
     def on_message(self, from_id, msg_type, msg):
         self._logger.info("Received message with type %s from peer %d", msg_type, from_id)
@@ -46,13 +45,16 @@ class EthereumModule(BlockchainModule):
         elif msg_type == b"contract_abi":
             self.deployed_contract_abi = json.loads(unhexlify(msg).decode())
         elif msg_type == b"public_key":
-            self.others_public_keys.append(msg.decode())
+            self.others_public_keys[from_id] = msg.decode()
 
     @experiment_callback
     def generate_keypair(self):
         """
         Generate a keypair with the command: geth account new --datadir data --password password.txt
         """
+        if self.is_client():
+            return
+
         with open("password.txt", "w") as password_file:
             password_file.write("password")
 
@@ -72,9 +74,12 @@ class EthereumModule(BlockchainModule):
             self._logger.info("Public key: %s", pub_key.decode())
 
             if self.experiment.my_id == 1:
-                self.others_public_keys.append(self.public_key)
+                self.others_public_keys[1] = self.public_key
             else:
                 self.experiment.send_message(1, b"public_key", self.public_key.encode())
+
+            for client_index in range(self.num_validators + 1, self.num_validators + self.num_clients + 1):
+                self.experiment.send_message(client_index, b"public_key", self.public_key.encode())
 
     @experiment_callback
     def connect_to_nodes(self):
@@ -100,13 +105,14 @@ class EthereumModule(BlockchainModule):
         self._logger.info("Generating Ethereum genesis file...")
 
         alloc_json = {}
-        for public_key in self.others_public_keys:
+        for public_key in self.others_public_keys.values():
             alloc_json[public_key] = {"balance": "1000000000000000000"}
 
         if "MINING_DIFFICULTY" in os.environ:
             difficulty = str(os.environ["MINING_DIFFICULTY"])
         else:
-            difficulty = "50000000"
+            # This number is based on the DAS5 CPUs, with an average block time of 13 seconds.
+            difficulty = "%d" % (55000 * 13 * self.num_validators)
 
         if "GAS_LIMIT" in os.environ:
             gas_limit = str(os.environ["GAS_LIMIT"])
@@ -140,6 +146,9 @@ class EthereumModule(BlockchainModule):
         """
         Initialize the blockchain data directory.
         """
+        if self.is_client():
+            return
+
         self._logger.info("Initializing blockchain data dir...")
 
         copyfile("/home/pouwelse/genesis.json", "genesis.json")
@@ -155,6 +164,9 @@ class EthereumModule(BlockchainModule):
         """
         Start an Ethereum node.
         """
+        if self.is_client():
+            return
+
         port = 12000 + self.experiment.my_id
         rpc_port = 14000 + self.experiment.my_id
         pprof_port = 16000 + self.experiment.my_id
@@ -162,6 +174,7 @@ class EthereumModule(BlockchainModule):
         host, _ = self.experiment.get_peer_ip_port_by_id(str(self.experiment.my_id))
         if self.experiment.my_id == 1:
             cmd = "geth --datadir data --allow-insecure-unlock --metrics --pprof --pprofport %d --rpc --rpcport %d " \
+                  "--rpcaddr 0.0.0.0 " \
                   "--rpcapi=\"eth,net,web3,personal,admin,debug,txpool\" --ethash.dagdir /home/pouwelse/ethash " \
                   "--port %d --networkid %d --nat extip:%s --mine --miner.threads=1 --maxpeers 500 " \
                   "--netrestrict 10.141.0.0/24 --txpool.globalslots=20000 " \
@@ -173,6 +186,7 @@ class EthereumModule(BlockchainModule):
             with open("/home/pouwelse/ethash/ethereum_node_1", "r") as bootstrap_node_file:
                 bootstrap_enode = json.loads(bootstrap_node_file.read())["enode"]
             cmd = "geth --datadir data --allow-insecure-unlock --metrics --pprof --pprofport %d --rpc --rpcport %d " \
+                  "--rpcaddr 0.0.0.0 " \
                   "--rpcapi=\"eth,net,web3,personal,admin,debug,txpool\" --ethash.dagdir /home/pouwelse/ethash " \
                   "--port %d --networkid %d --nat extip:%s --mine --miner.threads=1 --maxpeers 500 " \
                   "--netrestrict 10.141.0.0/24 --txpool.globalslots=20000 --txpool.globalqueue=20000 " \
@@ -210,6 +224,9 @@ class EthereumModule(BlockchainModule):
 
     @experiment_callback
     def unlock_account(self):
+        if self.is_client():
+            return
+
         self._logger.info("Unlocking account...")
         url = 'http://localhost:%d' % (14000 + self.experiment.my_id)
         w3 = Web3(Web3.HTTPProvider(url))
@@ -273,7 +290,7 @@ class EthereumModule(BlockchainModule):
     def deploy_contract(self, contract_path, main_class_name):
         self._logger.info("Deploying contract...")
 
-        set_solc_version('v0.5.15')
+        set_solc_version('v0.6.2')
 
         url = 'http://localhost:%d' % (14000 + self.experiment.my_id)
         w3 = Web3(Web3.HTTPProvider(url))
@@ -300,9 +317,9 @@ class EthereumModule(BlockchainModule):
         os.chdir(cur_dir)
 
         contract_interface = compiled_sol["%s:%s" % (contract_name, main_class_name)]
+        self._logger.info("Contract ABI: %s", contract_interface['abi'])
         address = deploy_contract_with_w3(w3, contract_interface)
         self._logger.info("Deployed contract to: %s", address)
-        self._logger.info("Contract ABI: %s", contract_interface['abi'])
 
         self.deployed_contract_address = address
         self.deployed_contract_abi = contract_interface['abi']
@@ -317,15 +334,16 @@ class EthereumModule(BlockchainModule):
                                          hexlify(json.dumps(contract_interface['abi']).encode()))
 
         contract = w3.eth.contract(address=address, abi=contract_interface['abi'])
-        event_filter = contract.events.LogDelete.createFilter(fromBlock='latest')
+        event_filter = contract.events.Transfer.createFilter(fromBlock='latest')
 
-        # Listen for events
+        # Listen for transfer events
         async def log_loop():
             while True:
                 for event in event_filter.get_new_entries():
-                    print("LogDelete event: %s" % event)
+                    print("EVENT: %s" % event)
                     complete_time = int(round(time.time() * 1000))
-                    self.order_complete_times.append((event['args']['id'], complete_time))
+                    tx_id = event["args"]["identifier"]
+                    self.confirmed_transactions[tx_id] = complete_time
                 await sleep(0.5)
 
         ensure_future(log_loop())
@@ -335,6 +353,19 @@ class EthereumModule(BlockchainModule):
         """
         Write away statistics.
         """
+        if self.is_client():
+            # Write submitted transactions
+            with open("submit_times.txt", "w") as tx_file:
+                for tx_id, submit_time in self.submitted_transactions.items():
+                    tx_file.write("%s,%d\n" % (tx_id, submit_time))
+
+            return
+
+        # Write confirmed transactions
+        with open("confirmed_txs.txt", "w") as tx_file:
+            for tx_id, confirm_time in self.confirmed_transactions.items():
+                tx_file.write("%s,%d\n" % (tx_id, confirm_time))
+
         url = 'http://localhost:%d/debug/metrics' % (16000 + self.experiment.my_id)
         response = requests.get(url).text
         with open("metrics.txt", "w") as metrics_file:
@@ -350,16 +381,6 @@ class EthereumModule(BlockchainModule):
         url = 'http://localhost:%d' % (14000 + self.experiment.my_id)
         w3 = Web3(Web3.HTTPProvider(url))
 
-        # Write submitted transactions
-        with open("submitted_transactions.txt", "w") as tx_file:
-            for order_id, submit_time in self.submitted_transactions:
-                tx_file.write("%s,%d\n" % (order_id, submit_time))
-
-        # Write order complete times
-        with open("order_complete_times.txt", "w") as tx_file:
-            for order_id, complete_time in self.order_complete_times:
-                tx_file.write("%s,%d\n" % (order_id, complete_time))
-
         # Dump tx pool status
         print("TX pool status: %s" % w3.geth.txpool.status())
 
@@ -368,6 +389,10 @@ class EthereumModule(BlockchainModule):
             with open("tx_pool.txt", "w") as tx_pool_file:
                 for poll_time, num_pending, num_queued in self.tx_pool_polls:
                     tx_pool_file.write("%f,%d,%d\n" % (poll_time, num_pending, num_queued))
+
+        # Dump hash rate
+        with open("hashrate.txt", "w") as hash_rate_file:
+            hash_rate_file.write("%s" % w3.eth.hashrate)
 
         # Dump blockchain
         latest_block = w3.eth.getBlock('latest')
@@ -385,4 +410,3 @@ class EthereumModule(BlockchainModule):
 
         loop = get_event_loop()
         loop.stop()
-        self._logger.info("Experiment ended...")
