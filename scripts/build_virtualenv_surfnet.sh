@@ -28,4 +28,4 @@ mkdir -p $VENV/src
 
 source $VENV/bin/activate
 
-python -m pip install psutil
+python -m pip install psutil py-solc-x web3

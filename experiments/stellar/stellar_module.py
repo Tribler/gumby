@@ -63,24 +63,6 @@ class StellarModule(BlockchainModule):
         elif msg_type == b"receive_account_seed":
             self.receiver_keypair = Keypair.from_seed(msg)
 
-    def is_responsible_validator(self):
-        """
-        Return whether this validator is the responsible validator to setup/init databases on this machine.
-        This can only be conducted by a single process.
-        """
-        if self.is_client():
-            return False
-
-        my_host, _ = self.experiment.get_peer_ip_port_by_id(self.my_id)
-
-        is_responsible = True
-        for peer_id in self.experiment.all_vars.keys():
-            if self.experiment.all_vars[peer_id]['host'] == my_host and int(peer_id) < self.my_id:
-                is_responsible = False
-                break
-
-        return is_responsible
-
     @experiment_callback
     def init_db(self):
         """
