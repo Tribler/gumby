@@ -14,7 +14,7 @@ genesis = {
     ]
 }
 
-stake_per_node = 100 // NUM_VALIDATORS
+stake_per_node = round(100 / NUM_VALIDATORS, 3)
 last_node_stake = stake_per_node + 100 - (stake_per_node * NUM_VALIDATORS)
 
 for node_ind in range(NUM_VALIDATORS):
@@ -30,7 +30,7 @@ for node_ind in range(NUM_VALIDATORS):
 
     node_info = {
         "Name": "Node%d" % (node_ind + 1),
-        "IsRelay": node_ind == 0,
+        "IsRelay": True,
         "Wallets": [{
             "Name": wallet_name,
             "ParticipationOnly": False

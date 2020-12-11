@@ -21,6 +21,7 @@ class BlockchainTransactionsParser(StatisticsParser):
         self.parse_transactions()
         self.compute_avg_latency()
         self.compute_tx_cumulative_stats()
+        self.aggregate_disk_usage()
         self.write_all()
 
     def compute_avg_start_time(self):
@@ -91,6 +92,17 @@ class BlockchainTransactionsParser(StatisticsParser):
 
             cur_time += cumulative_window
             self.cumulative_stats.append((cur_time, submitted_count, confirmed_count))
+
+    def aggregate_disk_usage(self):
+        """
+        Aggregate the disk usage of individual nodes
+        """
+        with open("disk_usage.csv", "w") as disk_usage_file:
+            disk_usage_file.write("peer_id,disk_usage\n")
+            for peer_nr, filename, _ in self.yield_files('disk_usage.txt'):
+                with open(filename, "r") as individual_disk_usage_file:
+                    disk_usage = int(individual_disk_usage_file.read())
+                    disk_usage_file.write("%d,%d\n" % (peer_nr, disk_usage))
 
     def write_all(self):
         """
