@@ -3,7 +3,6 @@ import os
 import random
 import shutil
 import subprocess
-import sys
 from asyncio import get_event_loop
 
 import time
@@ -13,7 +12,7 @@ from grapheneapi.grapheneapi import GrapheneAPI
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module
+from gumby.modules.experiment_module import static_module, ExperimentModule
 from gumby.util import run_task
 
 
@@ -21,7 +20,7 @@ from gumby.util import run_task
 class BitsharesModule(BlockchainModule):
 
     def __init__(self, experiment):
-        super(BitsharesModule, self).__init__(experiment)
+        super().__init__(experiment)
         self.wallet_rpc = None
         self.wallet_rpc_user = None
         self.wallet_rpc_password = "supersecret"
@@ -31,19 +30,20 @@ class BitsharesModule(BlockchainModule):
         self.trade_lc = None
         self.username = None
         self.bs_process = None
-        self.bs_process_lc = None
+        self.wallet_process = None
         self.create_ask = True
         self.orders_info = []  # Keeps track of tuples: (order_creation_time, signature)
         self.tx_info = []
-        self.devnet_dir = "/home/pouwelse/bitshares-core/devnet"
+        self.devnet_dir = "/tmp/bitshares"
 
         self.order_id_map = {}
         self.cancelled_orders = set()
         self.dump_blockchain_lc = None
         self.last_block_written = 0
+        self.data_dir = None
 
     def on_all_vars_received(self):
-        super(BitsharesModule, self).on_all_vars_received()
+        super().on_all_vars_received()
         self.transactions_manager.transfer = self.transfer
 
     def load_keys(self):
@@ -73,8 +73,9 @@ class BitsharesModule(BlockchainModule):
         if self.is_client():
             return
 
-        # Copy the data directory
-        shutil.copytree(os.path.join(self.devnet_dir, "data-clean-%d" % self.num_validators), "data")
+        # Reset and copy the data directory
+        shutil.rmtree(self.data_dir, ignore_errors=True)
+        shutil.copytree(os.path.join(self.devnet_dir, "data-clean-%d" % self.num_validators), self.data_dir)
 
         self.load_keys()
 
@@ -96,7 +97,7 @@ class BitsharesModule(BlockchainModule):
         template_content = template_content.replace("<BITSHARES_PUBLIC_KEY>", self.pub_key)
         template_content = template_content.replace("<BITSHARES_PRIVATE_KEY>", self.wif_priv_key)
 
-        with open(os.path.join("data", "config.ini"), "w") as conf_file:
+        with open(os.path.join(self.data_dir, "config.ini"), "w") as conf_file:
             conf_file.write(template_content)
 
         # Now we start the witness node
@@ -105,26 +106,18 @@ class BitsharesModule(BlockchainModule):
         else:
             run_task(self.start_bitshares_process, delay=random.random() * 10)
 
-        self.bs_process_lc = run_task(self.check_bs_process, interval=12, delay=12)
-
     def on_id_received(self):
-        super(BitsharesModule, self).on_id_received()
+        super().on_id_received()
+        self.data_dir = os.path.join("/tmp", "bitshares_data_%d" % self.my_id)
         self.create_ask = (self.my_id % 2 == 0)
-
-    def check_bs_process(self):
-        """
-        Check whether the main Bitshares process is alive. If it's not, restart it
-        """
-        if self.bs_process.poll():
-            print("Bitshares process died - starting again!")
-            self.start_bitshares_process()
 
     def start_bitshares_process(self):
         bitshares_exec = os.path.join(self.devnet_dir, "witness_node")
         genesis_path = os.path.join(self.devnet_dir, "genesis", "my-genesis.json")
-        cmd = '%s --genesis-json=%s --data-dir data --partial-operations true > %s 2>&1' \
-              % (bitshares_exec, genesis_path, 'bitshares_output.log')
-        self.bs_process = subprocess.Popen([cmd], shell=True)
+        cmd = '%s --genesis-json=%s --data-dir %s --partial-operations true' % \
+              (bitshares_exec, genesis_path, self.data_dir)
+        bitshares_out_file = open("bitshares_output.log", "w")
+        self.bs_process = subprocess.Popen(cmd.split(" "), stdout=bitshares_out_file)
 
     @experiment_callback
     def start_cli_wallet(self):
@@ -142,11 +135,11 @@ class BitsharesModule(BlockchainModule):
 
         cli_wallet_exec = os.path.join(self.devnet_dir, "cli_wallet")
         cmd = '%s --wallet-file=my-wallet.json --chain-id %s --server-rpc-endpoint=ws://127.0.0.1:%d ' \
-              '--server-rpc-user=%s --server-rpc-password=%s --rpc-endpoint=0.0.0.0:%d --daemon > %s 2>&1' \
+              '--server-rpc-user=%s --server-rpc-password=%s --rpc-endpoint=0.0.0.0:%d --daemon' \
               % (cli_wallet_exec, chain_id, server_rpc_port, self.wallet_rpc_user,
-                 self.wallet_rpc_password, wallet_rpc_port, 'bitshares_wallet_output.log')
-        subprocess.Popen([cmd], shell=True)
-        self.bs_process_lc.cancel()
+                 self.wallet_rpc_password, wallet_rpc_port)
+        wallet_out_file = open("bitshares_wallet_output.log", "w")
+        self.wallet_process = subprocess.Popen(cmd.split(" "), stdout=wallet_out_file)
 
     @experiment_callback
     def unlock_cli_wallet(self):
@@ -272,6 +265,12 @@ class BitsharesModule(BlockchainModule):
     def write_stats(self):
         self._logger.info("Writing BitShares statistics...")
 
+        if not self.is_client():
+            # Write the disk usage of the data directory
+            with open("disk_usage.txt", "w") as disk_out_file:
+                dir_size = ExperimentModule.get_dir_size(self.data_dir)
+                disk_out_file.write("%d" % dir_size)
+
         # Write a map with tx info
         with open("tx_submit_times.txt", "w") as created_tx_files:
             for order_tup in self.tx_info:
@@ -314,12 +313,14 @@ class BitsharesModule(BlockchainModule):
 
     @experiment_callback
     def stop(self):
-        print("Stopping...")
+        print("Stopping BitShares...")
         if self.bs_process:
-            self.bs_process.kill()
+            self.bs_process.terminate()
+        if self.wallet_process:
+            self.wallet_process.terminate()
+
         if self.dump_blockchain_lc:
             self.dump_blockchain_lc.cancel()
 
         loop = get_event_loop()
         loop.stop()
-        sys.exit(0)
