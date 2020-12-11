@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import shutil
 import subprocess
 import time
@@ -10,7 +11,7 @@ from ruamel.yaml.comments import CommentedMap
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module
+from gumby.modules.experiment_module import static_module, ExperimentModule
 from gumby.util import run_task
 
 from hfc.fabric import Client
@@ -25,7 +26,7 @@ class HyperledgerModule(BlockchainModule):
 
     def __init__(self, experiment):
         super(HyperledgerModule, self).__init__(experiment)
-        self.config_path = "/home/pouwelse/hyperledger-network-template"
+        self.config_path = "/home/martijn/hyperledger-deploy-scripts"
         self.fabric_client = None
         self.peer_process = None
         self.orderer_process = None
@@ -152,52 +153,58 @@ class HyperledgerModule(BlockchainModule):
         if self.is_client():
             return
 
-        os.mkdir("peer_data")
-        os.mkdir("orderer_data")
+        data_dir = os.path.join("/tmp", "hyperledger_data", "%d" % self.my_id)
+        shutil.rmtree(data_dir, ignore_errors=True)
+        os.makedirs(data_dir, exist_ok=True)
+        os.mkdir(os.path.join(data_dir, "peer_data"))
+        os.mkdir(os.path.join(data_dir, "orderer_data"))
 
-        shutil.copyfile(os.path.join(self.config_path, "core.yaml"), os.path.join("peer_data", "core.yaml"))
-        shutil.copyfile(os.path.join(self.config_path, "core.yaml"), os.path.join("orderer_data", "core.yaml"))
-        shutil.copyfile(os.path.join(self.config_path, "orderer.yaml"), os.path.join("orderer_data", "orderer.yaml"))
+        shutil.copyfile(os.path.join(self.config_path, "core.yaml"), os.path.join(data_dir, "peer_data", "core.yaml"))
+        shutil.copyfile(os.path.join(self.config_path, "core.yaml"),
+                        os.path.join(data_dir, "orderer_data", "core.yaml"))
+        shutil.copyfile(os.path.join(self.config_path, "orderer.yaml"),
+                        os.path.join(data_dir, "orderer_data", "orderer.yaml"))
 
         # Copy the orderer directory
         orderer_data_path = os.path.join(self.config_path, "crypto-config", "ordererOrganizations", "example.com",
                                          "orderers", "orderer%d.example.com" % self.my_id)
-        shutil.copytree(os.path.join(orderer_data_path, "msp"), os.path.join("orderer_data", "msp"))
-        shutil.copytree(os.path.join(orderer_data_path, "tls"), os.path.join("orderer_data", "tls"))
+        shutil.copytree(os.path.join(orderer_data_path, "msp"), os.path.join(data_dir, "orderer_data", "msp"))
+        shutil.copytree(os.path.join(orderer_data_path, "tls"), os.path.join(data_dir, "orderer_data", "tls"))
 
         # Copy the peer directory
         peer_data_path = os.path.join(self.config_path, "crypto-config", "peerOrganizations",
                                       "org%d.example.com" % self.my_id, "peers", "peer0.org%d.example.com" % self.my_id)
-        shutil.copytree(os.path.join(peer_data_path, "msp"), os.path.join("peer_data", "msp"))
-        shutil.copytree(os.path.join(peer_data_path, "tls"), os.path.join("peer_data", "tls"))
+        shutil.copytree(os.path.join(peer_data_path, "msp"), os.path.join(data_dir, "peer_data", "msp"))
+        shutil.copytree(os.path.join(peer_data_path, "tls"), os.path.join(data_dir, "peer_data", "tls"))
 
         # Change paths in peer/orderer files
         yaml = YAML()
-        with open(os.path.join("peer_data", "core.yaml"), "r") as core_config_file:
+        with open(os.path.join(data_dir, "peer_data", "core.yaml"), "r") as core_config_file:
             config = yaml.load(core_config_file)
 
-        config["peer"]["fileSystemPath"] = os.path.join(os.getcwd(), "peer_data")
+        config["peer"]["fileSystemPath"] = os.path.join(data_dir, "peer_data")
 
-        with open(os.path.join("peer_data", "core.yaml"), "w") as core_config_file:
+        with open(os.path.join(data_dir, "peer_data", "core.yaml"), "w") as core_config_file:
             yaml.dump(config, core_config_file)
 
         yaml = YAML()
-        with open(os.path.join("orderer_data", "orderer.yaml"), "r") as orderer_config_file:
+        with open(os.path.join(data_dir, "orderer_data", "orderer.yaml"), "r") as orderer_config_file:
             config = yaml.load(orderer_config_file)
 
-        config["FileLedger"]["Location"] = os.path.join(os.getcwd(), "orderer_data")
-        config["Consensus"]["WALDir"] = os.path.join(os.getcwd(), "orderer_data", "etcdraft", "wal")
-        config["Consensus"]["SnapDir"] = os.path.join(os.getcwd(), "orderer_data", "etcdraft", "snapshot")
+        config["FileLedger"]["Location"] = os.path.join(data_dir, "orderer_data")
+        config["Consensus"]["WALDir"] = os.path.join(data_dir, "orderer_data", "etcdraft", "wal")
+        config["Consensus"]["SnapDir"] = os.path.join(data_dir, "orderer_data", "etcdraft", "snapshot")
 
-        with open(os.path.join("orderer_data", "orderer.yaml"), "w") as orderer_config_file:
+        with open(os.path.join(data_dir, "orderer_data", "orderer.yaml"), "w") as orderer_config_file:
             yaml.dump(config, orderer_config_file)
 
     @experiment_callback
-    def start_orderers(self):
+    async def start_orderers(self):
         if self.is_client():
             return
 
-        orderer_data_path = os.path.join(os.getcwd(), "orderer_data")
+        data_dir = os.path.join("/tmp", "hyperledger_data", "%d" % self.my_id)
+        orderer_data_path = os.path.join(data_dir, "orderer_data")
         orderer_tls_dir = os.path.join(orderer_data_path, "tls")
         orderer_port = 7000 + self.my_id
 
@@ -226,18 +233,22 @@ class HyperledgerModule(BlockchainModule):
         }
         orderer_env.update(orderer_vars)
 
+        await sleep(random.random() * 10)
+
         # Start the orderer
-        cmd = "orderer > orderer.out 2>&1"
-        self.orderer_process = subprocess.Popen([cmd], shell=True, env=orderer_env)
+        cmd = "/home/martijn/hyperledger/orderer"
+        out_file = open("orderer.out", "w")
+        self.orderer_process = subprocess.Popen(cmd, env=orderer_env, stdout=out_file, stderr=out_file)
 
     @experiment_callback
-    def start_peers(self):
+    async def start_peers(self):
         if self.is_client():
             return
 
         host, _ = self.experiment.get_peer_ip_port_by_id(self.my_id)
 
-        peer_data_path = os.path.join(os.getcwd(), "peer_data")
+        data_dir = os.path.join("/tmp", "hyperledger_data", "%d" % self.my_id)
+        peer_data_path = os.path.join(data_dir, "peer_data")
         peer_tls_dir = os.path.join(peer_data_path, "tls")
 
         peer_port = 8000 + self.my_id
@@ -271,9 +282,12 @@ class HyperledgerModule(BlockchainModule):
         }
         peer_env.update(peer_vars)
 
+        await sleep(random.random() * 10)
+
         # Start the peer
-        cmd = "peer node start > peer.out 2>&1"
-        self.peer_process = subprocess.Popen([cmd], shell=True, env=peer_env)
+        cmd = "/home/martijn/hyperledger/peer node start"
+        out_file = open("peer.out", "w")
+        self.peer_process = subprocess.Popen(cmd.split(" "), env=peer_env, stdout=out_file, stderr=out_file)
 
     @experiment_callback
     def generate_client_config(self):
@@ -348,20 +362,26 @@ class HyperledgerModule(BlockchainModule):
             network_file.write(json.dumps(network_config))
 
     @experiment_callback
+    def share_config_with_other_nodes(self):
+        """
+        Rsync the generated config to other nodes.
+        """
+        my_host, _ = self.experiment.get_peer_ip_port_by_id(self.experiment.my_id)
+        other_hosts = set()
+        for peer_id in self.experiment.all_vars.keys():
+            host = self.experiment.all_vars[peer_id]['host']
+            if host not in other_hosts and host != my_host:
+                other_hosts.add(host)
+                self._logger.info("Syncing config with host %s", host)
+                os.system("rsync -r --delete /home/martijn/hyperledger-deploy-scripts martijn@%s:/home/martijn/" % host)
+
+    @experiment_callback
     def generate_artifacts(self):
         self._logger.info("Generating artifacts...")
-        os.system("/home/pouwelse/hyperledger-network-template/generate.sh")
+        os.system(os.path.join(self.config_path, "generate.sh"))
 
     @experiment_callback
-    def start_network(self):
-        if self.is_client():
-            return
-
-        self._logger.info("Starting network...")
-        os.system("/home/pouwelse/hyperledger-network-template/start_containers.sh %d" % self.my_id)
-
-    @experiment_callback
-    async def deploy_chaincode(self):
+    async def create_channel(self):
         """
         Create the channel, add peers and instantiate chaincode.
         """
@@ -372,7 +392,6 @@ class HyperledgerModule(BlockchainModule):
         self.fabric_client = Client(net_profile=network_file_path)
 
         org1_admin = self.fabric_client.get_user(org_name='org1.example.com', name='Admin')
-        chaincode_version = 'v6'
 
         # Create a New Channel, the response should be true if succeed
         response = await self.fabric_client.channel_create(
@@ -383,7 +402,10 @@ class HyperledgerModule(BlockchainModule):
         )
         self._logger.info("Result of channel creation: %s", response)
 
-        await sleep(3)
+    @experiment_callback
+    async def deploy_chaincode(self):
+        chaincode_version = 'v6'
+        org1_admin = self.fabric_client.get_user(org_name='org1.example.com', name='Admin')
 
         # Join Peers into Channel
         for peer_index in range(1, len(self.fabric_client.peers) + 1):
@@ -421,14 +443,6 @@ class HyperledgerModule(BlockchainModule):
         self._logger.info("Result of chaincode instantiation: %s", response)
 
     @experiment_callback
-    def stop_network(self):
-        if self.is_client():
-            return
-
-        self._logger.info("Stopping network...")
-        os.system("/home/pouwelse/hyperledger-network-template/stop_all.sh")
-
-    @experiment_callback
     async def start_monitor(self):
         """
         Start monitoring the blocks
@@ -437,14 +451,15 @@ class HyperledgerModule(BlockchainModule):
         org1_admin = self.fabric_client.get_user(org_name='org1.example.com', name='Admin')
 
         self._logger.info("Starting monitor...")
-        cmd = "cd /home/pouwelse/fabric-examples/fabric-cli/cmd/fabric-cli/ && /home/pouwelse/go/bin/go run " \
-              "/home/pouwelse/fabric-examples/fabric-cli/cmd/fabric-cli/fabric-cli.go event listenblock " \
+        cmd = "/home/martijn/go/bin/go run " \
+              "/home/martijn/fabric-examples/fabric-cli/cmd/fabric-cli/fabric-cli.go event listenblock " \
               "--cid mychannel --peer localhost:8001 " \
-              "--config /home/pouwelse/fabric-examples/fabric-cli/cmd/fabric-cli/config.yaml > %s" \
-              % os.path.join(os.getcwd(), "transactions.txt")
+              "--config /home/martijn/fabric-examples/fabric-cli/cmd/fabric-cli/config.yaml"
+        out_file = open("transactions.txt", "w")
         my_env = os.environ.copy()
-        my_env["GOPATH"] = "/home/pouwelse/gocode"
-        self.monitor_process = subprocess.Popen(cmd, env=my_env, shell=True)
+        my_env["GOPATH"] = "/home/martijn/gocode"
+        self.monitor_process = subprocess.Popen(cmd.split(" "), env=my_env, stdout=out_file,
+                                                cwd="/home/martijn/fabric-examples/fabric-cli/cmd/fabric-cli/")
 
         async def get_latest_block_num():
             self._logger.info("Getting latest block nr...")
@@ -503,7 +518,8 @@ class HyperledgerModule(BlockchainModule):
         if self.monitor_lc:
             self.monitor_lc.cancel()
         if self.monitor_process:
-            self.monitor_process.kill()
+            self.monitor_process.terminate()
+            os.system("pkill -f listenblock")  # To kill the spawned Go run subprocess
 
     @experiment_callback
     def start_client(self):
@@ -526,7 +542,7 @@ class HyperledgerModule(BlockchainModule):
 
         # Make a transaction
         args = ["blah", "20"]
-        admin = self.fabric_client.get_user(org_name='org1.example.com', name='Admin')
+        admin = self.fabric_client.get_user(org_name='org%d.example.com' % validator_peer_id, name='Admin')
         ensure_future(self.fabric_client.chaincode_invoke(
             requestor=admin,
             channel_name='mychannel',
@@ -539,6 +555,11 @@ class HyperledgerModule(BlockchainModule):
     @experiment_callback
     def write_stats(self):
         if not self.is_client():
+            # Write the disk usage of the data directory
+            data_dir = os.path.join("/tmp", "hyperledger_data", "%d" % self.my_id)
+            with open("disk_usage.txt", "w") as disk_out_file:
+                dir_size = ExperimentModule.get_dir_size(data_dir)
+                disk_out_file.write("%d" % dir_size)
             return
 
         # Write the transaction info away
@@ -550,9 +571,9 @@ class HyperledgerModule(BlockchainModule):
     def stop(self):
         print("Stopping Hyperledger Fabric...")
         if self.orderer_process:
-            self.orderer_process.kill()
+            self.orderer_process.terminate()
         if self.peer_process:
-            self.peer_process.kill()
+            self.peer_process.terminate()
 
         loop = get_event_loop()
         loop.stop()
