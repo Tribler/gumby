@@ -171,14 +171,11 @@ class ExperimentRunner():
     async def startExperimentServer(self):
         if self._cfg['experiment_server_cmd']:
             self._logger.info("Starting experiment server")
-            # TODO: This is not very flexible, refactor it to have a background_commands
-            # list instead of experiment_server_cmd, tracker_cmd, etc...
             try:
                 await self.runCommand(self._cfg['experiment_server_cmd'],
                                       self._cfg.as_bool('experiment_server_run_remote'))
             except Exception as e:
                 self._logger.error("Error while running config server: %s", e)
-                # TODO: Add a config option to not shut down the experiment when the config server dies???
                 get_event_loop().exit_code = 1
                 get_event_loop().stop()
 

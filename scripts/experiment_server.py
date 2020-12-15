@@ -58,7 +58,7 @@
 #
 
 # Code:
-
+import logging
 from asyncio import ensure_future, get_event_loop
 from os import environ
 
@@ -82,6 +82,8 @@ if __name__ == '__main__':
     server_port = int(environ['SYNC_PORT'])
 
     loop = get_event_loop()
+    logger = logging.getLogger("experiment_server")
+    logger.info("Creating experiment server on port %d", server_port)
     ensure_future(loop.create_server(ExperimentServiceFactory(expected_subscribers, experiment_start_delay),
                                      host="0.0.0.0", port=server_port))
     loop.exit_code = 0

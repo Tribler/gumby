@@ -35,7 +35,7 @@
 #
 
 # Code:
-
+import random
 from getpass import getuser
 from hashlib import md5
 from os import path, environ, curdir
@@ -83,12 +83,7 @@ def loadConfig(file_path):
         # If any config option has the special value __unique_port__, compute a unique port for it by hashing the user
         # ID, the experiment name, the experiment execution dir and the config option name.
         if value == '__unique_port__':
-            md5sum = md5()
-            md5sum.update(getuser().encode('utf-8'))
-            md5sum.update(config['experiment_name'].encode('utf-8'))
-            md5sum.update(path.abspath(curdir).encode('utf-8'))
-            md5sum.update(key.encode('utf-8'))
-            config[key] = int(md5sum.hexdigest()[-16:], 16) % 20000 + 20000
+            config[key] = random.randint(1000, 60000)
 
     # Override config options with env. variables.
     revalidate = False
@@ -99,6 +94,7 @@ def loadConfig(file_path):
             revalidate = True
     if revalidate:
         config.validate(validator)
+    config.write()
     return config
 
 
