@@ -79,8 +79,9 @@ class EthereumStatisticsParser(BlockchainTransactionsParser):
                 hashrate_sum += hashrate
                 hashrate_num += 1
 
-        with open("avg_hashrate.txt", "w") as hashrate_file:
-            hashrate_file.write("%d" % (hashrate_sum / hashrate_num))
+        if hashrate_num > 0:
+            with open("avg_hashrate.txt", "w") as hashrate_file:
+                hashrate_file.write("%d" % (hashrate_sum / hashrate_num))
 
     def run(self):
         self.parse()
