@@ -33,7 +33,7 @@ class BlockchainTransactionsParser(StatisticsParser):
                 avg_start_time += start_time
                 num_files += 1
 
-        self.avg_start_time = int(avg_start_time / num_files)
+        self.avg_start_time = int(avg_start_time / num_files) if num_files > 0 else -1
 
     def parse_transactions(self):
         """
@@ -53,7 +53,7 @@ class BlockchainTransactionsParser(StatisticsParser):
                 avg_latency += transaction[4]
                 num_comfirmed += 1
 
-        self.avg_latency = avg_latency / num_comfirmed
+        self.avg_latency = (avg_latency / num_comfirmed) if num_comfirmed > 0 else -1
 
     def compute_tx_cumulative_stats(self):
         """
@@ -77,6 +77,9 @@ class BlockchainTransactionsParser(StatisticsParser):
         submitted_count = 0
         confirmed_count = 0
         self.cumulative_stats = [(0, 0, 0)]
+
+        if not submit_times or not confirm_times:
+            return
 
         while cur_time < max(submit_times[-1], confirm_times[-1]):
             # Increase counters
