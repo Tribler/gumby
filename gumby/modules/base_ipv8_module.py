@@ -3,7 +3,6 @@ import os
 import time
 from asyncio import Future
 from binascii import hexlify
-from socket import gethostbyname
 
 from gumby.experiment import experiment_callback
 from gumby.gumby_tribler_config import GumbyTriblerConfig
@@ -92,31 +91,10 @@ class BaseIPv8Module(ExperimentModule):
             self.ipv8_port = 12000 + self.experiment.my_id
         self._logger.info("IPv8 port set to %d", self.ipv8_port)
 
-        # We manually update the IPv8 bootstrap servers since IPv8 does not use the bootstraptribler.txt file.
-        from ipv8 import community
-        community._DEFAULT_ADDRESSES = []
-        community._DNS_ADDRESSES = []
-        head_host = gethostbyname(os.environ['HEAD_HOST']) if 'HEAD_HOST' in os.environ else "127.0.0.1"
-
         my_state_path = os.path.join(os.environ['OUTPUT_DIR'], str(self.my_id))
-        bootstrap_file = os.path.join(os.environ['OUTPUT_DIR'], 'bootstraptribler.txt')
-        if os.path.exists(bootstrap_file):
-            os.symlink(bootstrap_file, os.path.join(my_state_path, 'bootstraptribler.txt'))
-
-            with open(bootstrap_file, 'r') as bfile:
-                for line in bfile.readlines():
-                    parts = line.split(" ")
-                    if not parts:
-                        continue
-                    community._DNS_ADDRESSES.append((parts[0], int(parts[1])))
-
-        base_tracker_port = int(os.environ['TRACKER_PORT'])
-        port_range = range(base_tracker_port, base_tracker_port + 4)
-        with open(os.path.join(my_state_path, 'bootstraptribler.txt'), "w+") as f:
-            f.write("\n".join(["%s %d" % (head_host, port) for port in port_range]))
-        community._DEFAULT_ADDRESSES = [(head_host, port) for port in port_range]
 
         config = GumbyTriblerConfig(my_state_path)
+        config.set_ipv8_bootstrap_override("0.0.0.0:0")
         config.set_trustchain_keypair_filename("tc_keypair_" + str(self.experiment.my_id))
         config.set_torrent_checking_enabled(False)
         config.set_discovery_community_enabled(False)
