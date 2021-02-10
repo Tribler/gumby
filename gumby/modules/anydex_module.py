@@ -53,7 +53,7 @@ class TrustChainCommunityLauncher(CommunityLauncher):
 class MarketCommunityLauncher(CommunityLauncher):
 
     def not_before(self):
-        return ['DHTDiscoveryCommunity', 'TrustChainCommunity']
+        return ['DHTCommunityLauncher', 'TrustChainCommunityLauncher']
 
     def should_launch(self, session):
         return session.config.get_market_community_enabled()
