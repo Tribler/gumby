@@ -11,6 +11,7 @@ from gumby.modules.experiment_module import ExperimentModule, static_module
 from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
 from gumby.util import read_keypair_trustchain, run_task
 
+from ipv8.bootstrapping.dispersy.bootstrapper import DispersyBootstrapper
 from ipv8.loader import CommunityLauncher
 from ipv8.peer import Peer
 
@@ -21,7 +22,25 @@ from ipv8_service import IPv8
 # pylint: disable=C0415,W0613
 
 
-class TrustChainCommunityLauncher(CommunityLauncher):
+class BaseAnyDexLauncher(CommunityLauncher):
+
+    def get_bootstrappers(self, session):
+        my_state_path = session.config.get_state_dir()
+
+        # We manually update the IPv8 bootstrap servers since IPv8 does not use the bootstraptribler.txt file.
+        bootstrap_file = path.join(my_state_path, 'bootstraptribler.txt')
+        dns_addresses = []
+        with open(bootstrap_file, 'r') as bfile:
+            for line in bfile.readlines():
+                parts = line.split(" ")
+                if not parts:
+                    continue
+                dns_addresses.append((parts[0], int(parts[1])))
+
+        return [(DispersyBootstrapper, {"ip_addresses": [], "dns_addresses": dns_addresses})]
+
+
+class TrustChainCommunityLauncher(BaseAnyDexLauncher):
 
     def should_launch(self, session):
         return session.config.get_trustchain_enabled()
@@ -50,7 +69,7 @@ class TrustChainCommunityLauncher(CommunityLauncher):
         return super()
 
 
-class MarketCommunityLauncher(CommunityLauncher):
+class MarketCommunityLauncher(BaseAnyDexLauncher):
 
     def not_before(self):
         return ['DHTCommunityLauncher', 'TrustChainCommunityLauncher']
@@ -73,7 +92,7 @@ class MarketCommunityLauncher(CommunityLauncher):
         }
 
 
-class DHTCommunityLauncher(CommunityLauncher):
+class DHTCommunityLauncher(BaseAnyDexLauncher):
 
     def should_launch(self, session):
         return session.config.get_dht_enabled()
@@ -208,18 +227,6 @@ class AnyDexModule(ExperimentModule):
             port_range = range(base_tracker_port, base_tracker_port + 4)
             with open(path.join(my_state_path, 'bootstraptribler.txt'), "w+") as f:
                 f.write("\n".join(["%s %d" % (environ['HEAD_HOST'], port) for port in port_range]))
-            bootstrap_file = path.join(my_state_path, 'bootstraptribler.txt')
-
-        # We manually update the IPv8 bootstrap servers since IPv8 does not use the bootstraptribler.txt file.
-        from ipv8 import community
-        community._DEFAULT_ADDRESSES = []
-        community._DNS_ADDRESSES = []
-        with open(bootstrap_file, 'r') as bfile:
-            for line in bfile.readlines():
-                parts = line.split(" ")
-                if not parts:
-                    continue
-                community._DNS_ADDRESSES.append((parts[0], int(parts[1])))
 
         config = AnyDexConfig()
         config.set_trustchain_keypair_filename(os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id)))
