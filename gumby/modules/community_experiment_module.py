@@ -2,11 +2,13 @@ from base64 import b64encode, b64decode
 from os import environ
 from random import sample
 from socket import gethostbyname
+from typing import Optional
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import generate_keypair_trustchain, save_keypair_trustchain, save_pub_key_trustchain
 
+from ipv8.loader import CommunityLauncher
 from ipv8.peer import Peer
 from ipv8.peerdiscovery.churn import RandomChurn
 from ipv8.peerdiscovery.discovery import EdgeWalk, RandomWalk
@@ -74,8 +76,14 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         return self.ipv8_provider.custom_ipv8_community_loader
 
     @property
-    def ipv8_community_launcher(self):
-        return self.ipv8_community_loader.get_launcher(self.community_class.__name__)
+    def ipv8_community_launcher(self) -> Optional[CommunityLauncher]:
+        """
+        Return the launcher associated with the community of this module.
+        """
+        for launcher, _ in self.ipv8_community_loader.community_launchers.values():
+            if launcher.get_overlay_class().__name__ == self.community_class.__name__:
+                return launcher
+        return None
 
     @property
     def overlay(self):
