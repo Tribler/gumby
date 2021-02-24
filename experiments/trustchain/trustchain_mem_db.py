@@ -1,4 +1,4 @@
-from ipv8.attestation.trustchain.block import TrustChainBlock
+from anydex.trustchain.block import TrustChainBlock
 
 
 class TrustchainMemoryDatabase(object):

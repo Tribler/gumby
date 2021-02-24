@@ -1,9 +1,7 @@
 &module gumby.modules.tribler_module.TriblerModule
 &module experiments.tunnels.tunnel_module.TunnelModule
 &module experiments.dht.dht_module.DHTModule
-&module experiments.trustchain.trustchain_module.TrustchainModule
 
-@0:1 isolate_ipv8_overlay TrustChainCommunity
 @0:0 isolate_ipv8_overlay DHTDiscoveryCommunity
 @0:0 isolate_ipv8_overlay TriblerTunnelCommunity
 @0:1 set_transfer_size 10485760
@@ -16,7 +14,6 @@
 @0:30 annotate start-downloading
 @0:30 transfer hops=0 {2}
 @0:70 write_tunnels_info
-@0:70 write_trustchain_statistics
 @0:70 write_overlay_statistics
 @0:72 stop_session
 @0:80 stop
