@@ -4,8 +4,8 @@ from random import randint, choice
 import csv
 from time import time
 
-from ipv8.attestation.trustchain.community import TrustChainCommunity
-from ipv8.attestation.trustchain.listener import BlockListener
+from anydex.trustchain.community import TrustChainCommunity
+from anydex.trustchain.listener import BlockListener
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import static_module

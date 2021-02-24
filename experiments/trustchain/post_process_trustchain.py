@@ -7,7 +7,7 @@ from gumby.statsparser import StatisticsParser
 
 from tribler_core.utilities.unicode import hexlify
 
-from ipv8.attestation.trustchain.database import TrustChainDB
+from anydex.trustchain.database import TrustChainDB
 
 
 class TrustchainStatisticsParser(StatisticsParser):

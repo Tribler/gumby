@@ -46,7 +46,7 @@ class TrustChainCommunityLauncher(BaseAnyDexLauncher):
         return session.config.get_trustchain_enabled()
 
     def get_overlay_class(self):
-        from ipv8.attestation.trustchain.community import TrustChainCommunity
+        from anydex.trustchain.community import TrustChainCommunity
         return TrustChainCommunity
 
     def get_my_peer(self, ipv8, session):

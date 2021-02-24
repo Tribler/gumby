@@ -9,6 +9,5 @@
 @0:50 add_peer_to_downloads 4 {5}
 @0:97 print_dht_table
 @0:97 write_tunnels_info
-@0:97 write_trustchain_statistics
 @0:100 stop_session
 @0:110 stop

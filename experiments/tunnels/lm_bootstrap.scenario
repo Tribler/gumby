@@ -1,11 +1,9 @@
 &module gumby.modules.tribler_module.TriblerModule
 &module experiments.tunnels.tunnel_module.TunnelModule
 &module experiments.dht.dht_module.DHTModule
-&module experiments.trustchain.trustchain_module.TrustchainModule
 
 @0:0 isolate_ipv8_overlay DHTDiscoveryCommunity
 @0:0 isolate_ipv8_overlay TriblerTunnelCommunity
-@0:1 isolate_ipv8_overlay TrustChainCommunity
 @0:1 enable_bootstrap_download
 @0:2 setup_initial_bootstrap_seeder {1}
 @0:4 start_session {1}
@@ -33,7 +31,6 @@
 @0:183 start_bootstrap_download {28-36}
 @0:350 write_tunnels_info
 @0:351 commit_blocks_to_db
-@0:355 write_trustchain_statistics
 @0:356 write_overlay_statistics
 @0:360 stop_session
 @0:365 stop
