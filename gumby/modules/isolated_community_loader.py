@@ -97,18 +97,22 @@ class IsolatedIPv8CommunityLoader(IPv8CommunityLoader):
         self.session_id = session_id
         self.isolated = []
 
-    def isolate(self, name):
+    def isolate(self, community_name: str) -> None:
         """
         Isolate a community by name.
-
-        See CommunityLauncher.get_name()
-        :type name: str
+        First we get the launcher name associated with the community to be isolated. We then replace the launcher.
         """
-        assert name in self.community_launchers.keys()
+        target_launcher = None
+        for launcher, _ in self.community_launchers.values():
+            if launcher.get_overlay_class().__name__ == community_name:
+                target_launcher = launcher
+                break
 
-        if name in self.isolated:
-            logging.warning("re-isolation of %s: you probably did not want to do this", name)
+        assert target_launcher.get_name() in self.community_launchers.keys()
+
+        if target_launcher.get_name() in self.isolated:
+            logging.warning("re-isolation of %s: you probably did not want to do this", community_name)
         else:
-            self.isolated.append(name)
+            self.isolated.append(target_launcher.get_name())
 
-        self.set_launcher(IsolatedIPv8LauncherWrapper(self.get_launcher(name), self.session_id))
+        self.set_launcher(IsolatedIPv8LauncherWrapper(target_launcher, self.session_id))
