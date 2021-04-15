@@ -53,12 +53,12 @@ trap cancel_reservation TERM
 
 set -e
 
-# @CONF_OPTION DAS4_NODE_AMOUNT: Set the number of nodes that will get reserved on each cluster to run this experiment. (required)
+# @CONF_OPTION NODE_AMOUNT: Set the number of nodes that will get reserved on each cluster to run this experiment. (required)
 # @CONF_OPTION DAS4_RESERVE_DURATION: Set the reservation time length in seconds. (default is DAS4_NODE_TIMEOUT+120)
 
 
-if [ -z "$DAS4_NODE_AMOUNT" ]; then
-    echo "ERROR: you need to specify at least DAS4_NODE_AMOUNT when using $0" >&2
+if [ -z "$NODE_AMOUNT" ]; then
+    echo "ERROR: you need to specify at least NODE_AMOUNT when using $0" >&2
     exit 1
 fi
 if [ -z "$DAS4_RESERVE_DURATION" ]; then
@@ -92,8 +92,8 @@ fi
 WORKING_DIR=$PWD
 cd ~
 
-echo "Reserving $DAS4_NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
-prun -t $DAS4_RESERVE_DURATION -v -np $DAS4_NODE_AMOUNT das4_node_run_job.sh &
+echo "Reserving $NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
+prun -t $DAS4_RESERVE_DURATION -v -np $NODE_AMOUNT das4_node_run_job.sh &
 PID=$!
 
 sleep 1

@@ -84,7 +84,7 @@ Alternatively, if you want to run your first experiment on the DAS5:
     scenario_file = 'hello_world.scenario'
     
     # The amound of physical machines to reserve (never more than 20)
-    das4_node_amount = 5
+    node_amount = 5
     
     # The amount of processes to run over all nodes
     # These will be evenly mapped over the available nodes (in this case 1 per node)
