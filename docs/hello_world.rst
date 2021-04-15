@@ -88,7 +88,7 @@ Alternatively, if you want to run your first experiment on the DAS5:
     
     # The amount of processes to run over all nodes
     # These will be evenly mapped over the available nodes (in this case 1 per node)
-    das4_instances_to_run = 5
+    instances_to_run = 5
     
     # The time before we automatically hard-kill this experiment
     das4_node_timeout = 90
