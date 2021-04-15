@@ -91,7 +91,7 @@ Alternatively, if you want to run your first experiment on the DAS5:
     instances_to_run = 5
     
     # The time before we automatically hard-kill this experiment
-    das4_node_timeout = 90
+    node_timeout = 90
 
     ## Don't change the following settings, unless you are 100% sure you know what you are doing
 

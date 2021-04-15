@@ -67,8 +67,8 @@ for INSTANCE in $(seq 1 1 $PROCESSES_IN_THIS_NODE); do
     echo "$DAS4_NODE_COMMAND" >> $CMDFILE
 done
 
-# @CONF_OPTION DAS4_NODE_TIMEOUT: Time in seconds to wait for the sub-processes to run before killing them. (required)
-(process_guard.py -f $CMDFILE -t $DAS4_NODE_TIMEOUT -o $OUTPUT_DIR -m $OUTPUT_DIR  -i 5 2>&1 | tee process_guard.log) ||:
+# @CONF_OPTION NODE_TIMEOUT: Time in seconds to wait for the sub-processes to run before killing them. (required)
+(process_guard.py -f $CMDFILE -t $NODE_TIMEOUT -o $OUTPUT_DIR -m $OUTPUT_DIR  -i 5 2>&1 | tee process_guard.log) ||:
 
 rm $CMDFILE
 

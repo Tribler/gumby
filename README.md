@@ -93,7 +93,7 @@ local_instance_cmd = 'das4_reserve_and_run.sh'
 node_amount = 4
 
 # Kill the processes if they don't die after this many seconds
-das4_node_timeout = 350
+node_timeout = 350
 
 # How many processes do we want to spawn?
 instances_to_run = 100
@@ -103,7 +103,7 @@ das4_node_command = "basic_experiment.py"
 ```
 
 This configuration file will run a basic experiment on the DAS5 compute cluster.
-The `das4_response_and_run.sh` script will automatically find a cluster with available nodes and reserve them for the time indicated by `das4_node_timeout`.
+The `das4_response_and_run.sh` script will automatically find a cluster with available nodes and reserve them for the time indicated by `node_timeout`.
 The `local_setup_cmd` will prepare the environment on the remote HEAD node.
 Note that you can specify the total number of nodes you want to reserve with the `node_amount` variable, and the total instances you want to run with `instances_to_run`.
 Each instance executes the `das4_node_command`, (which is `basic_experiment.py` in this experiment).
