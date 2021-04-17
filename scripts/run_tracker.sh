@@ -66,10 +66,10 @@ fi
 if [ ! -z "$SYNC_SUBSCRIBERS_AMOUNT" ]; then
     EXPECTED_SUBSCRIBERS=$SYNC_SUBSCRIBERS_AMOUNT
 else
-    if [ ! -z "$DAS4_INSTANCES_TO_RUN" ]; then
-        EXPECTED_SUBSCRIBERS=$DAS4_INSTANCES_TO_RUN
+    if [ ! -z "$INSTANCES_TO_RUN" ]; then
+        EXPECTED_SUBSCRIBERS=$INSTANCES_TO_RUN
     else
-        echo 'Neither SYNC_SUBSCRIBERS_AMOUNT nor DAS4_INSTANCES_TO_RUN is set, not balancing.'
+        echo 'Neither SYNC_SUBSCRIBERS_AMOUNT nor INSTANCES_TO_RUN is set, not balancing.'
         EXPECTED_SUBSCRIBERS=1
     fi
 fi

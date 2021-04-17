@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import shutil
 import subprocess
 import time
 from asyncio import get_event_loop, sleep, ensure_future
@@ -16,7 +17,7 @@ from web3 import Web3
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module
+from gumby.modules.experiment_module import static_module, ExperimentModule
 from gumby.util import run_task
 
 
@@ -37,6 +38,12 @@ class EthereumModule(BlockchainModule):
         self.tx_pool_lc = None
         self.submitted_transactions = {}
         self.confirmed_transactions = {}
+        self.data_dir = None
+        self.geth_bin_path = os.path.join(os.environ["HOME"], "geth_bin", "geth")
+
+    def on_id_received(self):
+        super().on_id_received()
+        self.data_dir = os.path.join("/tmp", "ethereum_data_%d" % self.my_id)
 
     def on_message(self, from_id, msg_type, msg):
         self._logger.info("Received message with type %s from peer %d", msg_type, from_id)
@@ -46,6 +53,16 @@ class EthereumModule(BlockchainModule):
             self.deployed_contract_abi = json.loads(unhexlify(msg).decode())
         elif msg_type == b"public_key":
             self.others_public_keys[from_id] = msg.decode()
+        elif msg_type == b"enode_info":
+            enode_info = unhexlify(msg).decode()
+            self._logger.info("Connecting to peer with enode %s", enode_info)
+            url = 'http://localhost:%d' % (14000 + self.experiment.my_id)
+            w3 = Web3(Web3.HTTPProvider(url))
+            w3.geth.admin.add_peer(enode_info)
+        elif msg_type == b"genesis":
+            if self.is_responsible_validator():
+                with open(os.path.join(os.environ["HOME"], "genesis.json"), "w") as genesis_json_file:
+                    genesis_json_file.write(unhexlify(msg).decode())
 
     @experiment_callback
     def generate_keypair(self):
@@ -55,10 +72,14 @@ class EthereumModule(BlockchainModule):
         if self.is_client():
             return
 
+        # Reset the data dir
+        shutil.rmtree(self.data_dir, ignore_errors=True)
+        os.makedirs(self.data_dir, exist_ok=True)
+
         with open("password.txt", "w") as password_file:
             password_file.write("password")
 
-        cmd = "geth account new --datadir data --password password.txt"
+        cmd = "%s account new --datadir %s --password password.txt" % (self.geth_bin_path, self.data_dir)
         process = subprocess.Popen([cmd], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         process.wait()
 
@@ -82,26 +103,13 @@ class EthereumModule(BlockchainModule):
                 self.experiment.send_message(client_index, b"public_key", self.public_key.encode())
 
     @experiment_callback
-    def connect_to_nodes(self):
-        self._logger.info("Connecting to bootstrap node...")
-
-        all_peer_ids = list(self.all_vars.keys())
-        peer_ids = random.sample(all_peer_ids, min(len(all_peer_ids), 50))
-
-        url = 'http://localhost:%d' % (14000 + self.experiment.my_id)
-        w3 = Web3(Web3.HTTPProvider(url))
-
-        for peer_id in peer_ids:
-            self._logger.info("Connecting to peer %s", peer_id)
-            with open("/home/pouwelse/ethash/ethereum_node_%s" % peer_id, "r") as bootstrap_node_file:
-                bootstrap_enode = json.loads(bootstrap_node_file.read())["enode"]
-                w3.geth.admin.add_peer(bootstrap_enode)
-
-    @experiment_callback
     def generate_genesis(self):
         """
         Generate the initial genesis file.
         """
+        if not self.is_responsible_validator():
+            return
+
         self._logger.info("Generating Ethereum genesis file...")
 
         alloc_json = {}
@@ -111,8 +119,7 @@ class EthereumModule(BlockchainModule):
         if "MINING_DIFFICULTY" in os.environ:
             difficulty = str(os.environ["MINING_DIFFICULTY"])
         else:
-            # This number is based on the DAS5 CPUs, with an average block time of 13 seconds.
-            difficulty = "%d" % (55000 * 13 * self.num_validators)
+            difficulty = "%d" % (30000 * 13 * self.num_validators)
 
         if "GAS_LIMIT" in os.environ:
             gas_limit = str(os.environ["GAS_LIMIT"])
@@ -138,7 +145,11 @@ class EthereumModule(BlockchainModule):
             "alloc": alloc_json
         }
 
-        with open("/home/pouwelse/genesis.json", "w") as genesis_json_file:
+        encoded_genesis = hexlify(json.dumps(genesis_json).encode())
+        for validator_index in range(2, self.num_validators + 1):
+            self.experiment.send_message(validator_index, b"genesis", encoded_genesis)
+
+        with open(os.path.join(os.environ["HOME"], "genesis.json"), "w") as genesis_json_file:
             genesis_json_file.write(json.dumps(genesis_json))
 
     @experiment_callback
@@ -151,9 +162,9 @@ class EthereumModule(BlockchainModule):
 
         self._logger.info("Initializing blockchain data dir...")
 
-        copyfile("/home/pouwelse/genesis.json", "genesis.json")
+        copyfile(os.path.join(os.environ["HOME"], "genesis.json"), "genesis.json")
 
-        cmd = "geth init --datadir data genesis.json"
+        cmd = "%s init --datadir %s genesis.json" % (self.geth_bin_path, self.data_dir)
         process = subprocess.Popen([cmd], shell=True)
         process.wait()
 
@@ -170,33 +181,43 @@ class EthereumModule(BlockchainModule):
         port = 12000 + self.experiment.my_id
         rpc_port = 14000 + self.experiment.my_id
         pprof_port = 16000 + self.experiment.my_id
+        ethash_dir = os.path.join(os.environ["HOME"], "ethash")
+        geth_bin_path = os.path.join(os.environ["HOME"], "geth_bin", "geth")
 
         host, _ = self.experiment.get_peer_ip_port_by_id(str(self.experiment.my_id))
-        if self.experiment.my_id == 1:
-            cmd = "geth --datadir data --allow-insecure-unlock --metrics --pprof --pprofport %d --rpc --rpcport %d " \
-                  "--rpcaddr 0.0.0.0 " \
-                  "--rpcapi=\"eth,net,web3,personal,admin,debug,txpool\" --ethash.dagdir /home/pouwelse/ethash " \
-                  "--port %d --networkid %d --nat extip:%s --mine --miner.threads=1 --maxpeers 500 " \
-                  "--netrestrict 10.141.0.0/24 --txpool.globalslots=20000 " \
-                  "--txpool.globalqueue=20000 > ethereum.out 2>&1" % (pprof_port, rpc_port, port, self.network_id, host)
-        else:
-            start_delay = random.random() * 10
-            await sleep(start_delay)
-
-            with open("/home/pouwelse/ethash/ethereum_node_1", "r") as bootstrap_node_file:
-                bootstrap_enode = json.loads(bootstrap_node_file.read())["enode"]
-            cmd = "geth --datadir data --allow-insecure-unlock --metrics --pprof --pprofport %d --rpc --rpcport %d " \
-                  "--rpcaddr 0.0.0.0 " \
-                  "--rpcapi=\"eth,net,web3,personal,admin,debug,txpool\" --ethash.dagdir /home/pouwelse/ethash " \
-                  "--port %d --networkid %d --nat extip:%s --mine --miner.threads=1 --maxpeers 500 " \
-                  "--netrestrict 10.141.0.0/24 --txpool.globalslots=20000 --txpool.globalqueue=20000 " \
-                  "--bootnodes %s > ethereum.out 2>&1" \
-                  % (pprof_port, rpc_port, port, self.network_id, host, bootstrap_enode)
+        cmd = "%s --datadir %s --allow-insecure-unlock --metrics --pprof --pprofport %d --rpc --rpcport %d " \
+              "--rpcaddr 0.0.0.0 " \
+              "--rpcapi=eth,net,web3,personal,admin,debug,txpool --ethash.dagdir %s " \
+              "--port %d --networkid %d --nat extip:%s --mine --miner.threads=1 --maxpeers 500 " \
+              "--netrestrict 192.42.116.0/24 --txpool.globalslots=20000 " \
+              "--txpool.globalqueue=20000" % \
+              (geth_bin_path, self.data_dir, pprof_port, rpc_port, ethash_dir, port, self.network_id, host)
 
         self._logger.info("Ethereum start command: %s", cmd)
 
-        self.ethereum_process = subprocess.Popen([cmd], shell=True)
+        out_file = open("ethereum.out", "w")
+        self.ethereum_process = subprocess.Popen(cmd.split(" "), stdout=out_file)
         self._logger.info("Ethereum started...")
+
+    @experiment_callback
+    def connect_eth_peers(self):
+        """
+        Send enode info to ten peers which will then
+        """
+        if self.is_client():
+            return
+
+        self._logger.info("Broadcasting node info...")
+        url = 'http://localhost:%d' % (14000 + self.experiment.my_id)
+        w3 = Web3(Web3.HTTPProvider(url))
+        enode_info = w3.geth.admin.node_info()["enode"].encode()
+
+        peers = list(range(1, self.num_validators + 1))
+        peers.remove(self.my_id)
+        random_peers = random.sample(peers, min(len(peers), 10))
+
+        for peer_id in random_peers:
+            self.experiment.send_message(peer_id, b"enode_info", hexlify(enode_info))
 
     @experiment_callback
     def start_monitor_tx_pool(self):
@@ -234,27 +255,17 @@ class EthereumModule(BlockchainModule):
         self._logger.info("Account unlocked!")
 
     @experiment_callback
-    def write_node_info(self):
+    def broadcast_node_info(self):
         """
-        Write node connection info.
+        Broadcast node connection info.
         """
-        self._logger.info("Writing node info...")
+        self._logger.info("Broadcasting node info...")
         url = 'http://localhost:%d' % (14000 + self.experiment.my_id)
         w3 = Web3(Web3.HTTPProvider(url))
-        node_info = w3.geth.admin.node_info()
+        enode_info = w3.geth.admin.node_info()["enode"].encode()
 
-        with open("/home/pouwelse/ethash/ethereum_node_%d" % self.experiment.my_id, "w") as out_file:
-            out_file.write(w3.toJSON(node_info))
-
-    @experiment_callback
-    def print_connected_peers(self):
-        """
-        Print the connected peers.
-        """
-        url = 'http://localhost:%d' % (14000 + self.experiment.my_id)
-        w3 = Web3(Web3.HTTPProvider(url))
-        peers = w3.geth.admin.peers()
-        print("Network peers: %s" % peers)
+        for validator_index in range(1, self.num_validators + 1):
+            self.experiment.send_message(validator_index, b"enode_info", hexlify(enode_info))
 
     @experiment_callback
     def print_balance(self):
@@ -361,6 +372,11 @@ class EthereumModule(BlockchainModule):
 
             return
 
+        # Write disk usage
+        with open("disk_usage.txt", "w") as disk_out_file:
+            dir_size = ExperimentModule.get_dir_size("data")
+            disk_out_file.write("%d" % dir_size)
+
         # Write confirmed transactions
         with open("confirmed_txs.txt", "w") as tx_file:
             for tx_id, confirm_time in self.confirmed_transactions.items():
@@ -380,6 +396,11 @@ class EthereumModule(BlockchainModule):
 
         url = 'http://localhost:%d' % (14000 + self.experiment.my_id)
         w3 = Web3(Web3.HTTPProvider(url))
+
+        # Write connected peers
+        peers = w3.geth.admin.peers()
+        with open("peers.txt", "w") as peers_file:
+            peers_file.write(w3.toJSON(peers))
 
         # Dump tx pool status
         print("TX pool status: %s" % w3.geth.txpool.status())
@@ -403,10 +424,9 @@ class EthereumModule(BlockchainModule):
 
     @experiment_callback
     def stop_ethereum(self):
-        self._logger.info("Stopping Ethereum...")
-
         if self.ethereum_process:
-            self.ethereum_process.kill()
+            self._logger.info("Stopping Ethereum...")
+            self.ethereum_process.terminate()
 
         loop = get_event_loop()
         loop.stop()

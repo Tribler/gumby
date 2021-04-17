@@ -1,0 +1,15 @@
+&module gumby.modules.experiment_module.ExperimentModule
+&module gumby.modules.transactions_module.TransactionsModule
+&module experiments.algorand.algorand_module.AlgorandModule
+
+@0:1 init_config
+@0:5 start_algorand_node {1}
+@0:6 start_algorand_node {2-1000}
+@0:80 start_client
+@0:90 prepare_client
+@0:100 start_creating_transactions
+@0:160 stop_creating_transactions
+@0:190 write_info
+@0:190 print_status
+@0:195 stop_algorand
+@0:200 stop

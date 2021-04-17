@@ -1,11 +1,12 @@
 import hashlib
 import json
 import os
+from random import sample
+
 import requests
 import shutil
 import subprocess
 import time
-from asyncio import get_event_loop, sleep
 from binascii import hexlify
 from threading import Thread
 
@@ -17,7 +18,7 @@ from algosdk.wallet import Wallet
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module
+from gumby.modules.experiment_module import static_module, ExperimentModule
 
 
 @static_module
@@ -25,7 +26,6 @@ class AlgorandModule(BlockchainModule):
 
     def __init__(self, experiment):
         super(AlgorandModule, self).__init__(experiment)
-        self.root_dir = os.path.join(os.environ["WORKSPACE"], "algo_data")
         self.node_process = None
         self.kmd_process = None
         self.algod_client = None
@@ -44,66 +44,8 @@ class AlgorandModule(BlockchainModule):
         super(AlgorandModule, self).on_all_vars_received()
         self.transactions_manager.transfer = self.transfer
 
-    @experiment_callback
-    def create_network(self):
-        """
-        Create the root directory with network information.
-        """
-        self._logger.info("Starting to create network info...")
-
-        # Step 1: Generate genesis.json, depending on the number of nodes
-        genesis = {
-            "Genesis": {
-                "NetworkName": "",
-                "Wallets": [
-                    # This is filled in
-                ]
-            },
-            "Nodes": [
-                # This is filled in
-            ]
-        }
-
-        stake_per_node = 100 // self.num_validators
-        last_node_stake = stake_per_node + 100 - (stake_per_node * self.num_validators)
-
-        for node_ind in range(self.num_validators):
-            wallet_name = "Wallet%d" % (node_ind + 1)
-            stake = stake_per_node if node_ind != (self.num_validators - 1) else last_node_stake
-
-            wallet_info = {
-                "Name": wallet_name,
-                "Stake": stake,
-                "Online": True
-            }
-            genesis["Genesis"]["Wallets"].append(wallet_info)
-
-            node_info = {
-                "Name": "Node%d" % (node_ind + 1),
-                "IsRelay": node_ind == 0,
-                "Wallets": [{
-                    "Name": wallet_name,
-                    "ParticipationOnly": False
-                }]
-            }
-            genesis["Nodes"].append(node_info)
-
-        with open("genesis.json", "w") as genesis_file:
-            genesis_file.write(json.dumps(genesis))
-
-        # Step 2: Create the network/configuration files
-        cmd = "/home/pouwelse/gocode/bin/goal network create -r %s -n private -t genesis.json > create.out" \
-              % self.root_dir
-        os.system(cmd)
-
-        # Kill the kmd processes
-        cmd = 'pkill -f "kmd-v0.5"'
-        os.system(cmd)
-
-        self._logger.info("Done with making network info!")
-
     def get_data_dir(self, peer_id):
-        return os.path.join(os.getcwd(), "Node%d" % peer_id)
+        return os.path.join("/tmp/algo_data_%d" % self.num_validators, "Node%d" % peer_id)
 
     def get_rest_token(self, peer_id):
         """
@@ -122,7 +64,7 @@ class AlgorandModule(BlockchainModule):
             return
 
         # Copy over the configuration to the local file system
-        config_dir = "/home/pouwelse/algorand_data/data-%d" % self.num_validators
+        config_dir = "/tmp/algo_data_%d" % self.num_validators
         shutil.copytree(os.path.join(config_dir, "Node%d" % self.my_id), "Node%d" % self.my_id)
 
         self._logger.info("Initializing configuration...")
@@ -167,22 +109,22 @@ class AlgorandModule(BlockchainModule):
         if self.is_client():
             return
 
-        self._logger.info("Starting Algorand node...")
-        if self.my_id == 1:
-            cmd = "/home/pouwelse/gocode/bin/goal node start -d %s" % self.get_data_dir(self.my_id)
-        else:
-            ip, _ = self.experiment.get_peer_ip_port_by_id(1)
-            peer_str = "%s:13001" % ip
-            cmd = "/home/pouwelse/gocode/bin/goal node start -d %s -p %s" % (self.get_data_dir(self.my_id), peer_str)
+        # Select 10 random peers to bootstrap with
+        peers = list(range(1, self.num_validators + 1))
+        peers.remove(self.my_id)
+        random_peers = sample(peers, min(len(peers), 10))
+        addresses = []
+        for peer_id in random_peers:
+            ip, _ = self.experiment.get_peer_ip_port_by_id(peer_id)
+            addresses.append("%s:%d" % (ip, 13000 + peer_id))
 
-        # Wait a bit, depending on the node number
-        await sleep((self.my_id - 1) * 0.5)
+        cmd = "goal node start -d %s -p %s" % (self.get_data_dir(self.my_id), ";".join(addresses))
 
-        self._logger.info("Starting Algorand node...")
-        self.node_process = subprocess.Popen([cmd], shell=True)
+        self._logger.info("Starting Algorand node with command: %s", cmd)
+        self.node_process = subprocess.Popen(cmd.split(" "))
 
-        kmd_cmd = "/home/pouwelse/gocode/bin/goal kmd start -d %s" % self.get_data_dir(self.my_id)
-        self.kmd_process = subprocess.Popen([kmd_cmd], shell=True)
+        kmd_cmd = "goal kmd start -d %s" % self.get_data_dir(self.my_id)
+        self.kmd_process = subprocess.Popen(kmd_cmd.split(" "))
 
     @experiment_callback
     def start_client(self):
@@ -201,41 +143,45 @@ class AlgorandModule(BlockchainModule):
         self.kmd_client = KMDClient(rest_token, "http://%s:%d" % (host, 21000 + validator_peer_id))
 
     @experiment_callback
-    def transfer(self):
+    def prepare_client(self):
         if not self.is_client():
             return
 
-        if not self.suggested_parameters:
-            # get suggested parameters and fee
-            self.suggested_parameters = self.algod_client.suggested_params()
-            self.suggested_parameters["fee"] = 1000  # start with 1000 fee
+        self._logger.info("Fetching initial suggested parameters...")
+        self.suggested_parameters = self.algod_client.suggested_params()
+        self._logger.info("Received suggested parameters")
+        self.suggested_parameters["fee"] = 1000  # start with 1000 fee
+
+        self._logger.info("Fetching wallet info...")
+        self.wallet = Wallet('unencrypted-default-wallet', '', self.kmd_client)
+        wallet_keys = self.wallet.list_keys()
+        self._logger.info("Wallet keys returned: %s", wallet_keys)
+
+        # Determine the 'master' wallet with coins
+        for wallet_key in wallet_keys:
+            balance = self.algod_client.account_info(wallet_key)["amount"]
+            if balance > 0:
+                self._logger.info("Found account %s with balance %d", wallet_key, balance)
+                self.sender_key = wallet_key
+                break
+
+        try:
+            self.receiver_key = self.wallet.generate_key()
+        except KMDHTTPError:
+            self._logger.warning("Failed to generate receiver key!")
+
+        self._logger.info("Sender key: %s", self.sender_key)
+        self._logger.info("Receiver key: %s", self.receiver_key)
+
+    @experiment_callback
+    def transfer(self):
+        if not self.is_client():
+            return
 
         gen = self.suggested_parameters["genesisID"]
         gh = self.suggested_parameters["genesishashb64"]
         last_round = self.suggested_parameters["lastRound"]
         fee = self.suggested_parameters["fee"]
-
-        if not self.wallet:
-            self.wallet = Wallet('unencrypted-default-wallet', '', self.kmd_client)
-            wallet_keys = self.wallet.list_keys()
-
-            # Determine the 'master' wallet with coins
-            for wallet_key in wallet_keys:
-                balance = self.algod_client.account_info(wallet_key)["amount"]
-                if balance > 0:
-                    self._logger.info("Found account %s with balance %d", wallet_key, balance)
-                    self.sender_key = wallet_key
-                    break
-
-        if not self.receiver_key:
-            try:
-                self.receiver_key = self.wallet.generate_key()
-            except KMDHTTPError:
-                self._logger.warning("Failed to generate receiver key - will try again later!")
-                return
-
-            self._logger.info("Sender key: %s", self.sender_key)
-            self._logger.info("Receiver key: %s", self.receiver_key)
 
         def create_and_submit_tx():
             txn = transaction.PaymentTxn(self.sender_key, fee, last_round, last_round + 300, gh,
@@ -244,6 +190,7 @@ class AlgorandModule(BlockchainModule):
             submit_time = int(round(time.time() * 1000))
             try:
                 self.tx_counter += 1
+                self._logger.info("About to submit a transaction (fee: %d)", fee)
                 tx_id = self.algod_client.send_transaction(signed)
                 self.transactions[tx_id] = (submit_time, -1)
                 self._logger.info("Submitted transaction with ID %s (fee: %d)", tx_id, fee)
@@ -268,17 +215,25 @@ class AlgorandModule(BlockchainModule):
 
         validator_peer_id = ((self.my_id - 1) % self.num_validators) + 1
 
-        self._logger.info("Starting Algorand client...")
-
         rest_token = self.get_rest_token(validator_peer_id)
         host, _ = self.experiment.get_peer_ip_port_by_id(validator_peer_id)
         response = requests.get("http://%s:%d/metrics" % (host, 18500 + validator_peer_id),
                                 headers={"X-Algo-API-Token": rest_token})
         print(response.text)
 
+        response = requests.get("http://%s:%d/v2/status" % (host, 18500 + validator_peer_id),
+                                headers={"X-Algo-API-Token": rest_token})
+        print(response.text)
+
     @experiment_callback
     def write_info(self):
         if not self.is_client():
+            self._logger.info("Writing disk usage...")
+            # Write the disk usage of the data directory
+            with open("disk_usage.txt", "w") as disk_out_file:
+                dir_size = ExperimentModule.get_dir_size(self.get_data_dir(self.my_id))
+                disk_out_file.write("%d" % dir_size)
+
             return
 
         # Get the confirmation times of all transactions and write them away
@@ -303,13 +258,8 @@ class AlgorandModule(BlockchainModule):
 
     @experiment_callback
     def stop_algorand(self):
-        self._logger.info("Stopping Algorand...")
-        if self.node_process:
-            self.node_process.kill()
-        if self.kmd_process:
-            self.kmd_process.kill()
+        if self.is_client():
+            return
 
-    @experiment_callback
-    def stop(self):
-        loop = get_event_loop()
-        loop.stop()
+        os.system("pkill -f algod")
+        os.system("pkill -f kmd")

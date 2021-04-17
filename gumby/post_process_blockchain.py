@@ -21,6 +21,7 @@ class BlockchainTransactionsParser(StatisticsParser):
         self.parse_transactions()
         self.compute_avg_latency()
         self.compute_tx_cumulative_stats()
+        self.aggregate_disk_usage()
         self.write_all()
 
     def compute_avg_start_time(self):
@@ -32,7 +33,7 @@ class BlockchainTransactionsParser(StatisticsParser):
                 avg_start_time += start_time
                 num_files += 1
 
-        self.avg_start_time = int(avg_start_time / num_files)
+        self.avg_start_time = int(avg_start_time / num_files) if num_files > 0 else -1
 
     def parse_transactions(self):
         """
@@ -52,7 +53,7 @@ class BlockchainTransactionsParser(StatisticsParser):
                 avg_latency += transaction[4]
                 num_comfirmed += 1
 
-        self.avg_latency = avg_latency / num_comfirmed
+        self.avg_latency = (avg_latency / num_comfirmed) if num_comfirmed > 0 else -1
 
     def compute_tx_cumulative_stats(self):
         """
@@ -77,6 +78,9 @@ class BlockchainTransactionsParser(StatisticsParser):
         confirmed_count = 0
         self.cumulative_stats = [(0, 0, 0)]
 
+        if not submit_times or not confirm_times:
+            return
+
         while cur_time < max(submit_times[-1], confirm_times[-1]):
             # Increase counters
             while submitted_tx_index < len(submit_times) and \
@@ -91,6 +95,17 @@ class BlockchainTransactionsParser(StatisticsParser):
 
             cur_time += cumulative_window
             self.cumulative_stats.append((cur_time, submitted_count, confirmed_count))
+
+    def aggregate_disk_usage(self):
+        """
+        Aggregate the disk usage of individual nodes
+        """
+        with open("disk_usage.csv", "w") as disk_usage_file:
+            disk_usage_file.write("peer_id,disk_usage\n")
+            for peer_nr, filename, _ in self.yield_files('disk_usage.txt'):
+                with open(filename, "r") as individual_disk_usage_file:
+                    disk_usage = int(individual_disk_usage_file.read())
+                    disk_usage_file.write("%d,%d\n" % (peer_nr, disk_usage))
 
     def write_all(self):
         """

@@ -4,16 +4,18 @@
 
 @0:1 generate_config {1}
 @0:3 generate_artifacts {1}
-@0:10 init_config
-@0:10 generate_client_config
-@0:15 start_orderers
-@0:15 start_peers
-@0:25 deploy_chaincode {1}
-@0:75 start_monitor {1}
-@0:75 start_client
-@0:80 start_creating_transactions
-@0:100 stop_creating_transactions
-@0:105 stop_monitor {1}
-@0:106 parse_blockchain {1}
-@0:106 write_stats
-@0:115 stop
+@0:25 share_config_with_other_nodes {1}
+@0:28 init_config
+@0:28 generate_client_config
+@0:30 start_orderers
+@0:30 start_peers
+@0:55 create_channel {1}
+@0:115 deploy_chaincode {1}
+@0:165 start_monitor {1}
+@0:165 start_client
+@0:170 start_creating_transactions
+@0:190 stop_creating_transactions
+@0:195 stop_monitor {1}
+@0:196 parse_blockchain {1}
+@0:196 write_stats
+@0:205 stop

@@ -12,5 +12,5 @@
 @0:60 start_creating_transactions
 @0:60 start_dumping_blockchain {1}
 @0:70 stop_creating_transactions
-@0:75 write_stats
-@0:80 stop
+@0:85 write_stats
+@0:90 stop

@@ -2,17 +2,14 @@
 &module gumby.modules.transactions_module.TransactionsModule
 &module experiments.libra.libra_module.LibraModule
 
-@0:1 generate_config {1}
-@0:2 init_config
-@0:5 start_libra_validator
-@0:12 start_libra_client {1}
-@0:18 start_libra_client {2-500}
-@0:25 create_accounts
-@0:30 mint
-@0:50 start_creating_transactions
-@0:50 start_monitor
-@0:60 stop_creating_transactions
-@0:70 stop_monitor
-@0:70 print_balance 0
-@0:70 write_tx_stats
-@0:75 stop
+@0:1 init_config
+@0:10 start_libra_validator
+@0:30 start_libra_cli
+@0:35 create_accounts
+@0:40 mint
+@0:260 start_creating_transactions
+@0:260 start_monitor
+@0:270 stop_creating_transactions
+@0:280 stop_monitor
+@0:285 write_stats
+@0:290 stop

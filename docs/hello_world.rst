@@ -84,14 +84,14 @@ Alternatively, if you want to run your first experiment on the DAS5:
     scenario_file = 'hello_world.scenario'
     
     # The amound of physical machines to reserve (never more than 20)
-    das4_node_amount = 5
+    node_amount = 5
     
     # The amount of processes to run over all nodes
     # These will be evenly mapped over the available nodes (in this case 1 per node)
-    das4_instances_to_run = 5
+    instances_to_run = 5
     
     # The time before we automatically hard-kill this experiment
-    das4_node_timeout = 90
+    node_timeout = 90
 
     ## Don't change the following settings, unless you are 100% sure you know what you are doing
 

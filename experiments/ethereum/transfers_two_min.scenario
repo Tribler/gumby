@@ -6,12 +6,11 @@
 @0:1 generate_keypair
 @0:6 generate_genesis {1}
 @0:8 initialize_chain
-@0:10 start_ethereum {1}
-@0:14 write_node_info {1}
-@0:15 start_ethereum {2-1000}
-@0:30 unlock_account
-@0:34 deploy_contract contracts/erc20.sol ERC20Basic {1}
-@0:60 start_creating_transactions
-@0:180 stop_creating_transactions
-@0:245 write_stats
-@0:250 stop_ethereum
+@0:10 start_ethereum
+@0:20 connect_eth_peers
+@0:40 unlock_account
+@0:44 deploy_contract contracts/erc20.sol ERC20Basic {1}
+@0:120 start_creating_transactions
+@0:240 stop_creating_transactions
+@0:290 write_stats
+@0:300 stop_ethereum

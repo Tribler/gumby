@@ -1,0 +1,11 @@
+&module gumby.modules.experiment_module.ExperimentModule
+&module gumby.modules.transactions_module.TransactionsModule
+&module experiments.burrow.burrow_module.BurrowModule
+
+@0:1 generate_config {1}
+@0:5 start_burrow
+@0:10 deploy_contract contracts/erc20.sol ERC20Basic {1}
+@0:25 start_creating_transactions
+@0:35 stop_creating_transactions
+@0:45 write_stats
+@0:50 stop_burrow

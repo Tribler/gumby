@@ -1,29 +1,24 @@
 import os
+import random
+import shlex
+import shutil
+
+from asyncio import get_event_loop, sleep
+from threading import Thread
 import requests
 import subprocess
-import sys
 import time
-from asyncio import get_event_loop
-from threading import Thread
 
 from urllib.parse import quote_plus
 
 from datetime import datetime
 
-import treq
-
-from stellar_base import Keypair, Horizon
-from stellar_base.builder import Builder
-from stellar_base.transaction_envelope import TransactionEnvelope
+from stellar_sdk import Keypair, TransactionBuilder, AiohttpClient, Server, Account, TransactionEnvelope
+from stellar_sdk.exceptions import NotFoundError
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
 from gumby.modules.experiment_module import static_module
-
-
-class AccountStatus:
-    IDLE = 0
-    REQ_PENDING = 1
 
 
 @static_module
@@ -42,12 +37,10 @@ class StellarModule(BlockchainModule):
         self.sender_keypairs = [None] * self.num_accounts_per_client
         self.receiver_keypair = None
         self.sequence_numbers = [25769803776] * self.num_accounts_per_client
-        self.account_status = [AccountStatus.IDLE] * self.num_accounts_per_client
         self.current_tx_num = 0
         self.tx_submit_times = {}
-
-        # Make sure our postgres can be found
-        sys.path.append("/home/pouwelse/postgres/bin")
+        self.current_account_nr = 0
+        self.root_seq_num = 0
 
     def on_all_vars_received(self):
         super(StellarModule, self).on_all_vars_received()
@@ -57,29 +50,10 @@ class StellarModule(BlockchainModule):
         self._logger.info("Received message with type %s from peer %d", msg_type, from_id)
         if msg_type.startswith(b"send_account_seed"):
             account_nr = int(msg_type.split(b"_")[-1])
-            self.sender_keypairs[account_nr] = Keypair.from_seed(msg)
-            self._logger.info("Address of account %d: %s", account_nr,
-                              self.sender_keypairs[account_nr].address().decode())
+            self.sender_keypairs[account_nr] = Keypair.from_secret(msg)
+            self._logger.info("Address of account %d: %s", account_nr, self.sender_keypairs[account_nr].public_key)
         elif msg_type == b"receive_account_seed":
-            self.receiver_keypair = Keypair.from_seed(msg)
-
-    def is_responsible_validator(self):
-        """
-        Return whether this validator is the responsible validator to setup/init databases on this machine.
-        This can only be conducted by a single process.
-        """
-        if self.is_client():
-            return False
-
-        my_host, _ = self.experiment.get_peer_ip_port_by_id(self.my_id)
-
-        is_responsible = True
-        for peer_id in self.experiment.all_vars.keys():
-            if self.experiment.all_vars[peer_id]['host'] == my_host and int(peer_id) < self.my_id:
-                is_responsible = False
-                break
-
-        return is_responsible
+            self.receiver_keypair = Keypair.from_secret(msg)
 
     @experiment_callback
     def init_db(self):
@@ -91,10 +65,11 @@ class StellarModule(BlockchainModule):
 
         ip, _ = self.experiment.get_peer_ip_port_by_id(self.my_id)
 
-        self.db_path = os.path.join(os.environ["WORKSPACE"], "postgres", ip)
-        os.makedirs(self.db_path)
+        self.db_path = os.path.join("/tmp", "postgres-data", ip)
+        shutil.rmtree(self.db_path, ignore_errors=True)
+        os.makedirs(self.db_path, exist_ok=True)
 
-        os.system("/home/pouwelse/postgres/bin/initdb %s" % self.db_path)
+        os.system("/usr/lib/postgresql/11/bin/initdb %s > postgres.out" % self.db_path)
 
     @experiment_callback
     def start_db(self):
@@ -102,8 +77,9 @@ class StellarModule(BlockchainModule):
             return
 
         os.environ["PGDATA"] = self.db_path
-        cmd = "/home/pouwelse/postgres/bin/pg_ctl start"
-        self.postgres_process = subprocess.Popen([cmd], shell=True)
+        cmd = "/usr/lib/postgresql/11/bin/pg_ctl start"
+        out_file = open("postgres.out", "w")
+        self.postgres_process = subprocess.Popen(cmd.split(" "), stdout=out_file, stderr=out_file)
 
     @experiment_callback
     def setup_db(self):
@@ -112,10 +88,10 @@ class StellarModule(BlockchainModule):
 
         # Create users and table
         cmd = "CREATE USER tribler WITH PASSWORD 'tribler';"
-        os.system('/home/pouwelse/postgres/bin/psql postgres -c "%s"' % cmd)
+        os.system('/usr/lib/postgresql/11/bin/psql postgres -c "%s"' % cmd)
 
         cmd = "ALTER USER tribler WITH SUPERUSER;"
-        os.system('/home/pouwelse/postgres/bin/psql postgres -c "%s"' % cmd)
+        os.system('/usr/lib/postgresql/11/bin/psql postgres -c "%s"' % cmd)
 
     @experiment_callback
     def create_db(self):
@@ -123,16 +99,16 @@ class StellarModule(BlockchainModule):
             return
 
         cmd = "CREATE DATABASE stellar_%d_db;" % self.my_id
-        os.system('/home/pouwelse/postgres/bin/psql postgres -c "%s"' % cmd)
+        os.system('/usr/lib/postgresql/11/bin/psql postgres -c "%s"' % cmd)
 
         cmd = "GRANT ALL PRIVILEGES ON DATABASE stellar_%d_db TO tribler;" % self.my_id
-        os.system('/home/pouwelse/postgres/bin/psql postgres -c "%s"' % cmd)
+        os.system('/usr/lib/postgresql/11/bin/psql postgres -c "%s"' % cmd)
 
         cmd = "CREATE DATABASE stellar_horizon_%d_db;" % self.my_id
-        os.system('/home/pouwelse/postgres/bin/psql postgres -c "%s"' % cmd)
+        os.system('/usr/lib/postgresql/11/bin/psql postgres -c "%s"' % cmd)
 
         cmd = "GRANT ALL PRIVILEGES ON DATABASE stellar_horizon_%d_db TO tribler;" % self.my_id
-        os.system('/home/pouwelse/postgres/bin/psql postgres -c "%s"' % cmd)
+        os.system('/usr/lib/postgresql/11/bin/psql postgres -c "%s"' % cmd)
 
     @experiment_callback
     def init_config(self):
@@ -146,15 +122,20 @@ class StellarModule(BlockchainModule):
 
         # Read the keys
         keys = []
-        with open("/home/pouwelse/stellar-core/keys.txt", "r") as keys_file:
+        with open("/home/martijn/stellar-core/keys.txt", "r") as keys_file:
             for line in keys_file.readlines():
                 line = line.strip()
                 seed, pub_key = line.split(" ")
                 keys.append((seed, pub_key))
 
         # Make the validators info
+        k = int(os.getenv('QUORUM', "11"))
+        full_list = list(range(self.num_validators))
+        quorum = random.sample(full_list, min(k, len(full_list)))
+
+        # Make the validators info
         validators_string = ""
-        for validator_index in range(self.num_validators):
+        for validator_index in quorum:
             if validator_index + 1 == self.my_id:
                 continue
             validator_host, _ = self.experiment.get_peer_ip_port_by_id(validator_index + 1)
@@ -166,7 +147,7 @@ ADDRESS="%s:%d"
 
 """ % (validator_index + 1, keys[validator_index][1], validator_host, 14000 + validator_index + 1)
 
-        with open("/home/pouwelse/stellar-core/stellar-core-template.cfg", "r") as template_file:
+        with open("/home/martijn/stellar-core/stellar-core-template.cfg", "r") as template_file:
             template_content = template_file.read()
 
         template_content = template_content.replace("<HTTP_PORT>", str(11000 + self.my_id))
@@ -187,22 +168,35 @@ ADDRESS="%s:%d"
         if self.is_client():
             return
 
-        cmd = "/home/pouwelse/stellar-core/stellar-core new-db"
+        self._logger.info("Creating new DB...")
+
+        cmd = "/home/martijn/stellar-core/stellar-core new-db"
         os.system(cmd)  # Blocking execution
 
-        cmd = "/home/pouwelse/stellar-core/stellar-core force-scp"
+        self._logger.info("Forcing SCP...")
+
+        cmd = "/home/martijn/stellar-core/stellar-core force-scp"
         os.system(cmd)  # Blocking execution
+
+        # Publish history
+        if self.my_id == 1:
+            self._logger.info("Publish a new history...")
+            os.system("/home/martijn/stellar-core/stellar-core new-hist vs --conf=stellar-core.cfg > "
+                      "publish_history.out")
 
     @experiment_callback
-    def start_validators(self):
+    async def start_validators(self):
         """
         Start all Stellar validators.
         """
         if self.is_client():
             return
 
-        cmd = "/home/pouwelse/stellar-core/stellar-core run 2>&1"
-        self.validator_process = subprocess.Popen([cmd], shell=True, stdout=subprocess.DEVNULL)
+        await sleep(random.random() * 3)
+
+        cmd = "/home/martijn/stellar-core/stellar-core run"
+        out_file = open("stellar.out", "w")
+        self.validator_process = subprocess.Popen(cmd.split(" "), stdout=out_file, stderr=out_file)
 
     @experiment_callback
     def start_horizon(self):
@@ -212,35 +206,61 @@ ADDRESS="%s:%d"
         if self.is_client():
             return
 
+        self._logger.info("Starting Horizon...")
+
         db_name = "stellar_%d_db" % self.my_id
         horizon_db_name = "stellar_horizon_%d_db" % self.my_id
-        cmd = '/home/pouwelse/horizon/horizon --port %d ' \
-              '--ingest ' \
-              '--db-url "postgresql://tribler:tribler@localhost:5432/%s?sslmode=disable" ' \
-              '--stellar-core-db-url "postgresql://tribler:tribler@localhost:5432/%s?sslmode=disable" ' \
-              '--stellar-core-url "http://127.0.0.1:%d" ' \
-              '--network-passphrase="Standalone Pramati Network ; Oct 2018" ' \
-              '--apply-migrations > horizon.out ' \
-              '--ingest-failed-transactions=true ' \
-              '--log-level=info ' \
-              '--per-hour-rate-limit 0 2>&1' % (19000 + self.my_id, horizon_db_name, db_name, 11000 + self.my_id)
+        args = '--port %d ' \
+               '--ingest ' \
+               '--db-url "postgresql://tribler:tribler@localhost:5432/%s?sslmode=disable" ' \
+               '--stellar-core-db-url "postgresql://tribler:tribler@localhost:5432/%s?sslmode=disable" ' \
+               '--stellar-core-url "http://127.0.0.1:%d" ' \
+               '--network-passphrase="Standalone Pramati Network ; Oct 2018" ' \
+               '--apply-migrations ' \
+               '--log-level=info ' \
+               '--history-archive-urls "file:///tmp/stellar-core/history/vs" ' \
+               '--per-hour-rate-limit 0' % (19000 + self.my_id, horizon_db_name, db_name, 11000 + self.my_id)
 
-        self.horizon_process = subprocess.Popen([cmd], shell=True)
+        # First initialize Horizon with an empty genesis state
+        cmd = '/home/martijn/gocode/bin/horizon expingest init-genesis-state %s > horizon_expingest.out 2>&1' % args
+        os.system(cmd)
+
+        # Now start Horizon
+        cmd = '/home/martijn/gocode/bin/horizon %s' % args
+        out_file = open("horizon.out", "w")
+        self.horizon_process = subprocess.Popen(shlex.split(cmd), stdout=out_file, stderr=out_file)
 
     @experiment_callback
-    def upgrade_tx_set_size(self):
+    async def upgrade_tx_set_size(self):
         if self.is_client():
             return
 
-        self._logger.info("Upgrading tx size limit")
+        upgrade_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
+        self._logger.info("Upgrading protocol version")
         response = requests.get(
-            "http://127.0.0.1:%d/upgrades?mode=set&upgradetime=1970-01-01T00:00:00Z&maxtxsize=10000"
+            "http://127.0.0.1:%d/upgrades?mode=set&upgradetime=%s&protocolversion=15"
+            % (11000 + self.my_id, upgrade_time))
+        self._logger.info("Response to protocol upgrade: %s", response.status_code)
+
+        await sleep(10)
+
+        self._logger.info("Upgrading tx size limit")
+        response = requests.get(
+            "http://127.0.0.1:%d/upgrades?mode=set&upgradetime=%s&maxtxsize=10000&protocolversion=15"
+            % (11000 + self.my_id, upgrade_time))
+        self._logger.info("Response to tx size upgrade: %s", response.status_code)
+
+        await sleep(10)
+
+        self._logger.info("Fetching network upgrade settings")
+        response = requests.get(
+            "http://127.0.0.1:%d/upgrades?mode=get"
             % (11000 + self.my_id,))
-        self._logger.info("Response: %s", response.text)
+        self._logger.info("Settings: %s", response.text)
 
     @experiment_callback
-    def create_accounts(self):
+    async def create_accounts(self):
         """
         Create accounts for every client. Send the secret seeds to the clients.
         """
@@ -250,63 +270,81 @@ ADDRESS="%s:%d"
         host, _ = self.experiment.get_peer_ip_port_by_id(validator_peer_id)
         horizon_uri = "http://%s:%d" % (host, 19000 + validator_peer_id)
 
-        def on_content(content):
-            self._logger.info("Create accounts request failed with response: %s", content)
+        root_keypair = Keypair.from_secret("SDJ5AQWLIAYT22TCYSKOQALI3SNUMPAR63SEL73ASALDP6PYDN54FARM")
+        async with Server(horizon_url=horizon_uri, client=AiohttpClient()) as server:
+            root_account = await server.load_account(root_keypair.public_key)
+        self.root_seq_num = root_account.sequence
+        self._logger.info("Setting root sequence number to %d", self.root_seq_num)
 
-        def on_response(response):
-            if response.code != 200:
-                treq.text_content(response).addCallback(on_content)
-            else:
-                self._logger.error("Create accounts request successful!")
+        builder = TransactionBuilder(
+            source_account=root_account,
+            network_passphrase="Standalone Pramati Network ; Oct 2018"
+        )
 
-        def append_create_account_op(builder, receiver_pub_key, amount):
-            builder.append_create_account_op(receiver_pub_key, amount)
-            if len(builder.ops) == 100:
+        async def append_create_account_op(builder, root_keypair, receiver_pub_key, amount):
+            builder.append_create_account_op(receiver_pub_key, amount, root_keypair.public_key)
+            if len(builder.operations) == 100:
                 self._logger.info("Sending create transaction ops...")
-                builder.sign()
-                treq.post(horizon_uri + "/transactions/", data={"tx": builder.gen_xdr()}).addCallback(on_response)
-                builder = builder.next_builder()
+                tx = builder.build()
+                tx.sign(root_keypair)
+                response = requests.get("http://%s:%d/tx?blob=%s" % (host, 11000 + validator_peer_id,
+                                                                     quote_plus(tx.to_xdr())))
+                self._logger.info("Received response for create accounts request: %s", response.text)
+
+                await sleep(2)
+
+                self.root_seq_num += 1
+
+                partial_root_acc = Account(root_keypair.public_key, self.root_seq_num)
+                builder = TransactionBuilder(
+                    source_account=partial_root_acc,
+                    network_passphrase="Standalone Pramati Network ; Oct 2018"
+                )
 
             return builder
 
-        builder = Builder(secret="SDJ5AQWLIAYT22TCYSKOQALI3SNUMPAR63SEL73ASALDP6PYDN54FARM",
-                          horizon_uri=horizon_uri,
-                          network="Standalone Pramati Network ; Oct 2018")
-
         for client_index in range(self.num_validators + 1, self.num_validators + self.num_clients + 1):
             receiver_keypair = Keypair.random()
-            receiver_pub_key = receiver_keypair.address().decode()
-            builder = append_create_account_op(builder, receiver_pub_key, "10000000")
-            self.experiment.send_message(client_index, b"receive_account_seed", receiver_keypair.seed())
+            builder = await append_create_account_op(builder, root_keypair, receiver_keypair.public_key, "10000000")
+            self.experiment.send_message(client_index, b"receive_account_seed", receiver_keypair.secret.encode())
 
             # Create the sender accounts
             for account_ind in range(self.num_accounts_per_client):
                 sender_keypair = Keypair.random()
-                sender_pub_key = sender_keypair.address().decode()
-                builder = append_create_account_op(builder, sender_pub_key, "10000000")
-                self.experiment.send_message(client_index, b"send_account_seed_%d" % account_ind, sender_keypair.seed())
+                builder = await append_create_account_op(builder, root_keypair, sender_keypair.public_key, "10000000")
+                self.experiment.send_message(client_index, b"send_account_seed_%d" % account_ind,
+                                             sender_keypair.secret.encode())
 
-        if builder.ops:
-            self._logger.info("Sending create transaction ops...")
-            builder.sign()
-            treq.post(horizon_uri + "/transactions/", data={"tx": builder.gen_xdr()})
+        # Send the remaining operations
+        if builder.operations:
+            self._logger.info("Sending remaining create transaction ops...")
+            tx = builder.build()
+            tx.sign(root_keypair)
+            response = requests.get("http://%s:%d/tx?blob=%s" % (host, 11000 + validator_peer_id,
+                                                                 quote_plus(tx.to_xdr())))
+            self._logger.info("Received response for create accounts request: %s", response.text)
+            self.root_seq_num += 1
 
     @experiment_callback
-    def get_initial_sq_num(self):
+    async def get_initial_sq_num(self):
         if not self.is_client():
             return
 
+        self._logger.info("Getting initial sequence numbers...")
+
         validator_peer_id = ((self.my_id - 1) % self.num_validators) + 1
         host, _ = self.experiment.get_peer_ip_port_by_id(validator_peer_id)
+        horizon_uri = "http://%s:%d" % (host, 19000 + validator_peer_id)
 
-        builder = Builder(secret=self.sender_keypairs[0].seed(),
-                          horizon_uri="http://%s:%d" % (host, 19000 + validator_peer_id),
-                          network="Standalone Pramati Network ; Oct 2018",
-                          fee=100)
-
-        # Set the sequence number for all accounts
         for account_ind in range(self.num_accounts_per_client):
-            self.sequence_numbers[account_ind] = builder.sequence
+            async with Server(horizon_url=horizon_uri, client=AiohttpClient()) as server:
+                try:
+                    sender_account = await server.load_account(self.sender_keypairs[account_ind])
+                    # Set the sequence number for all accounts
+                    self._logger.info("Sequence number for account %d: %d", account_ind, sender_account.sequence)
+                    self.sequence_numbers[account_ind] = sender_account.sequence
+                except NotFoundError:
+                    self._logger.warning("Unable to fetch sequence number for account %d!", account_ind)
 
     @experiment_callback
     def transfer(self):
@@ -316,39 +354,27 @@ ADDRESS="%s:%d"
         validator_peer_id = ((self.my_id - 1) % self.num_validators) + 1
         host, _ = self.experiment.get_peer_ip_port_by_id(validator_peer_id)
 
-        # Get an idle account
-        source_account_nr = None
-        for account_ind in range(self.num_accounts_per_client):
-            if self.account_status[account_ind] == AccountStatus.IDLE:
-                source_account_nr = account_ind
-                self.account_status[account_ind] = AccountStatus.REQ_PENDING
-                break
-
-        if source_account_nr is None:
-            self._logger.info("Could not find an idle account for transfer!")
-            return
-
         self._logger.info("Will transfer from account %d, sq num: %d",
-                          source_account_nr, self.sequence_numbers[source_account_nr])
+                          self.current_account_nr, self.sequence_numbers[self.current_account_nr])
 
-        builder = Builder(secret=self.sender_keypairs[source_account_nr].seed(),
-                          horizon_uri="http://%s:%d" % (host, 19000 + validator_peer_id),
-                          network="Standalone Pramati Network ; Oct 2018",
-                          sequence=self.sequence_numbers[source_account_nr],
-                          fee=100)
-        builder.horizon.request_timeout = 60
+        sender_account = Account(self.sender_keypairs[self.current_account_nr].public_key,
+                                 self.sequence_numbers[self.current_account_nr])
+        builder = TransactionBuilder(
+            source_account=sender_account,
+            network_passphrase="Standalone Pramati Network ; Oct 2018"
+        )
 
-        builder.append_payment_op(self.receiver_keypair.address(), '100', 'XLM')
-        builder.sign()
+        builder.append_payment_op(self.receiver_keypair.public_key, '100', 'XLM')
+        tx = builder.build()
+        tx.sign(self.sender_keypairs[self.current_account_nr])
 
-        self._logger.info("Submitting transaction with id %d", self.sequence_numbers[source_account_nr])
+        self._logger.info("Submitting transaction with id %d", self.sequence_numbers[self.current_account_nr])
 
         def send_transaction(tx, seq_num, account_nr):
-            tx_id = self.sender_keypairs[source_account_nr].address().decode() + "." + "%d" % seq_num
+            tx_id = self.sender_keypairs[self.current_account_nr].public_key + "." + "%d" % seq_num
             submit_time = int(round(time.time() * 1000))
             response = requests.get("http://%s:%d/tx?blob=%s"
-                                    % (host, 11000 + validator_peer_id, quote_plus(tx.decode())))
-            self.account_status[account_nr] = AccountStatus.IDLE
+                                    % (host, 11000 + validator_peer_id, quote_plus(tx)))
             self._logger.info("Received response for transaction with account %d and id %d: %s",
                               account_nr, seq_num, response.text)
             if response.status_code != 200 or response.json()["status"] != "PENDING":
@@ -360,16 +386,27 @@ ADDRESS="%s:%d"
                 self.tx_submit_times[tx_id] = submit_time
 
         t = Thread(target=send_transaction,
-                   args=(builder.gen_xdr(), self.sequence_numbers[source_account_nr], source_account_nr))
+                   args=(tx.to_xdr(), self.sequence_numbers[self.current_account_nr], self.current_account_nr))
         t.daemon = True
         t.start()
 
-        self.sequence_numbers[source_account_nr] += 1
+        self.sequence_numbers[self.current_account_nr] += 1
         self.current_tx_num += 1
+        self.current_account_nr = (self.current_account_nr + 1) % self.num_accounts_per_client
 
     @experiment_callback
-    def write_submit_times(self):
+    def write_stats(self):
         if not self.is_client():
+            self._logger.info("Writing disk usage...")
+            # Write the disk usage of the data directory
+            cmd = "/usr/lib/postgresql/11/bin/psql postgres -c \"SELECT pg_database_size('stellar_%d_db')\" -t" % \
+                  self.my_id
+            proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, shell=True)
+            out, _ = proc.communicate()
+            disk_usage = int(out.strip())
+            with open("disk_usage.txt", "w") as disk_out_file:
+                disk_out_file.write("%d" % disk_usage)
+
             return
 
         with open("tx_submit_times.txt", "w") as tx_submit_times_file:
@@ -377,29 +414,12 @@ ADDRESS="%s:%d"
                 tx_submit_times_file.write("%s,%d\n" % (tx_id, submit_time))
 
     @experiment_callback
-    def print_metrics(self):
-        if self.is_client():
-            return
-
-        horizon = Horizon("http://127.0.0.1:%d" % (19000 + self.my_id),)
-        metrics = horizon.metrics()
-        print("Horizon metrics: %s" % metrics)
-
-    @experiment_callback
-    def print_ledgers(self):
-        if self.is_client():
-            return
-
-        horizon = Horizon("http://127.0.0.1:%d" % (19000 + self.my_id), )
-        ledgers = horizon.ledgers(limit=100)
-        print("Ledgers: %s" % ledgers)
-
-    @experiment_callback
     def parse_ledgers(self):
         self._logger.info("Parsing ledgers...")
         horizon_url = "http://127.0.0.1:%d" % (19000 + self.my_id)
-        horizon = Horizon(horizon_url)
-        ledgers = horizon.ledgers(limit=100)
+
+        response = requests.get(horizon_url + "/ledgers?limit=100")
+        ledgers = response.json()
         tx_times = {}
         for ledger_info in ledgers["_embedded"]["records"]:
             ledger_sq = ledger_info["sequence"]
@@ -407,14 +427,17 @@ ADDRESS="%s:%d"
             close_time = datetime.fromisoformat(ledger_info["closed_at"].replace("Z", "+00:00")).timestamp() * 1000
 
             # Get the transactions in this ledger
-            transactions = horizon.ledger_transactions(ledger_sq, limit=200, include_failed=True)  # TODO chain requests
+            transactions_url = "%s/ledgers/%d/transactions?limit=200&include_failed=True" % (horizon_url, ledger_sq)
+            response = requests.get(transactions_url)
+            transactions = response.json()
             while True:
                 if not transactions["_embedded"]["records"]:
                     break
 
                 for transaction in transactions["_embedded"]["records"]:
-                    te = TransactionEnvelope.from_xdr(transaction["envelope_xdr"])
-                    tx_id = te.tx.source.decode() + "." + "%d" % (te.tx.sequence - 1)
+                    te = TransactionEnvelope.from_xdr(transaction["envelope_xdr"],
+                                                      "Standalone Pramati Network ; Oct 2018")
+                    tx_id = te.transaction.source.public_key + "." + "%d" % (te.transaction.sequence - 1)
                     tx_times[tx_id] = close_time
 
                 response = requests.get(transactions["_links"]["next"]["href"])
@@ -426,16 +449,16 @@ ADDRESS="%s:%d"
 
     @experiment_callback
     def stop(self):
-        print("Stopping Stellar...")
+        self._logger.info("Stopping Stellar...")
         if self.postgres_process:
             self._logger.info("Killing postgres")
-            self.postgres_process.kill()
+            os.system("pkill -f postgres")
         if self.validator_process:
             self._logger.info("Killing validator")
-            self.validator_process.kill()
+            self.validator_process.terminate()
         if self.horizon_process:
             self._logger.info("Killing horizon")
-            self.horizon_process.kill()
+            self.horizon_process.terminate()
 
         loop = get_event_loop()
         loop.stop()
