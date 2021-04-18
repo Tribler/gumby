@@ -158,13 +158,13 @@ if [ ! -e $VENV/lib/python*/site-packages/libtorrent*.so  -o ! -e $LIBTORRENT_MA
 fi
 
 # recent libgmp needed by gmpy2 + pycrypto
-GMP_VERSION=6.1.2
+GMP_VERSION=6.2.1
 GMP_MARKER=`build_marker gmp $GMP_VERSION`
 if [ ! -e $VENV/include/gmp.h  -o ! -e $GMP_MARKER ]; then
 
     if [ ! -e $VENV/src/gmp-$GMP_VERSION.tar.bz2 ]; then
         pushd $VENV/src
-        wget "ftp://ftp.gmplib.org/pub/gmp-$GMP_VERSION/gmp-$GMP_VERSION.tar.bz2"
+        wget "https://ftp.gnu.org/gnu/gmp/gmp-$GMP_VERSION.tar.bz2"
         popd
     fi
 
