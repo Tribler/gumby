@@ -49,7 +49,7 @@ from ipv8.messaging.anonymization.tunnel import PEER_FLAG_EXIT_BT, PEER_FLAG_REL
 from tribler_common.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
 
 from tribler_core.utilities.unicode import hexlify
-from tribler_core.modules.tunnel.community.triblertunnel_community import TriblerTunnelCommunity
+from tribler_core.modules.tunnel.community.community import TriblerTunnelCommunity
 
 
 @static_module
