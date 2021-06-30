@@ -311,6 +311,7 @@ networkx
 pony
 protobuf
 psutil
+pydantic
 pynacl # New EC crypto stuff for tunnelcommunity
 pyyaml
 pyOpenSSL

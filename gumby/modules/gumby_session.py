@@ -5,6 +5,7 @@ from socket import gethostbyname
 from ipv8.bootstrapping.dispersy.bootstrapper import DispersyBootstrapper
 from ipv8.loader import IPv8CommunityLoader
 
+from tribler_core.modules.libtorrent.download_manager import DownloadManager
 from tribler_core.session import Session
 
 
@@ -24,7 +25,7 @@ class GumbySession(Session):
         head_host = gethostbyname(os.environ['HEAD_HOST']) if 'HEAD_HOST' in os.environ else "127.0.0.1"
         dns_addresses = []
 
-        my_state_path = self.config.get_state_dir()
+        my_state_path = self.config.state_dir
         bootstrap_file = os.path.join(os.environ['OUTPUT_DIR'], 'bootstraptribler.txt')
         if os.path.exists(bootstrap_file):
             os.symlink(bootstrap_file, os.path.join(my_state_path, 'bootstraptribler.txt'))
@@ -53,12 +54,11 @@ class GumbySession(Session):
 
         self.inject_bootstrappers()
 
-        if self.config.get_ipv8_statistics():
+        if self.config.ipv8.statistics:
             for overlay in self.ipv8.overlays:
                 self.ipv8.endpoint.enable_community_statistics(overlay.get_prefix(), True)
 
-        self.config.set_anon_proxy_settings(2,
-                                            ("127.0.0.1",
-                                             self.config.get_tunnel_community_socks5_listen_ports()))
+        DownloadManager.set_anon_proxy_settings(self.config,
+                                                2, ("127.0.0.1", self.config.tunnel_community.socks5_listen_ports))
 
         self._logger.info("tribler: IPv8 overlays are ready in %.2f seconds", timemod.time() - now_time)

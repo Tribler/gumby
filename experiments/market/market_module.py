@@ -64,7 +64,7 @@ class MarketModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def enable_market_memory_db(self):
-        self.tribler_config.set_market_memory_db(True)
+        self.tribler_config.market.memory_db = True
 
     @experiment_callback
     def connect_matchmakers(self, num_to_connect):

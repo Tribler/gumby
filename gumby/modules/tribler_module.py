@@ -70,19 +70,19 @@ class TriblerModule(BaseIPv8Module):
 
     @experiment_callback
     def enable_bootstrap_download(self):
-        self.tribler_config.set_bootstrap_enabled(True)
-        self.tribler_config.set_libtorrent_enabled(True)
+        self.tribler_config.bootstrap.enabled = True
+        self.tribler_config.libtorrent.enabled = True
 
     @experiment_callback
     def setup_initial_bootstrap_seeder(self):
-        bootstrap_dir = os.path.join(self.tribler_config.get_state_dir(), 'bootstrap')
-        if not os.path.exists(bootstrap_dir):
+        bootstrap_dir = self.tribler_config.state_dir / 'bootstrap'
+        if not bootstrap_dir.exists():
             os.mkdir(bootstrap_dir)
-        file_name = os.path.join(bootstrap_dir, 'bootstrap.block')
+        file_name = bootstrap_dir / 'bootstrap.block'
         bootstrap_size = 25
         seed = 42
         random.seed(seed)
-        if not os.path.exists(file_name):
+        if not file_name.exists():
             with open(file_name, 'wb') as fp:
                 fp.write(bytearray(random.getrandbits(8) for _ in range(bootstrap_size * 1024 * 1024)))
 
@@ -135,7 +135,7 @@ class TriblerModule(BaseIPv8Module):
             length = self.transfer_size
 
         tdef = self.create_test_torrent(file_name, download_id, length)
-        dscfg = DownloadConfig(state_dir=self.session.config.get_state_dir())
+        dscfg = DownloadConfig(state_dir=self.session.config.state_dir)
         if hops is not None:
             dscfg.set_hops(hops)
         dscfg.set_dest_dir(os.path.join(os.environ["OUTPUT_DIR"], str(self.my_id)))
@@ -188,7 +188,7 @@ class TriblerModule(BaseIPv8Module):
                     download.add_peer((parts[0], int(parts[1])))
         elif action == 'seed':
             host, _ = self.experiment.get_peer_ip_port_by_id(str(self.experiment.my_id))
-            value = "%s:%d" % (host, self.session.config.get_libtorrent_port())
+            value = "%s:%d" % (host, self.session.config.libtorrent.port)
             await self.session.dht_community.store_value(tdef.get_infohash(), value.encode('utf-8'))
 
         if timeout:

@@ -59,7 +59,7 @@ class TrustChainCommunityLauncher(BaseAnyDexLauncher):
         session.trustchain_community = community
 
         # If we're using a memory DB, replace the existing one
-        if session.config.use_trustchain_memory_db():
+        if session.config.trustchain.memory_db:
             orig_db = community.persistence
 
             from experiments.trustchain.trustchain_mem_db import TrustchainMemoryDatabase
@@ -178,13 +178,13 @@ class AnyDexModule(ExperimentModule):
         from ipv8.configuration import get_default_configuration
 
         ipv8_config = get_default_configuration()
-        ipv8_config['port'] = self.tribler_config.get_ipv8_port()
+        ipv8_config['port'] = self.tribler_config.ipv8.port
         ipv8_config['overlays'] = []
         ipv8_config['keys'] = []  # We load the keys ourselves
-        self.ipv8 = IPv8(ipv8_config, enable_statistics=self.tribler_config.get_ipv8_statistics())
+        self.ipv8 = IPv8(ipv8_config, enable_statistics=self.tribler_config.ipv8.statistics)
 
         self.session = GumbyMinimalSession(self.tribler_config)
-        self.session.trustchain_keypair = read_keypair_trustchain(self.tribler_config.get_trustchain_keypair_filename())
+        self.session.trustchain_keypair = read_keypair_trustchain(self.tribler_config.trustchain.ec_keypair_filename)
 
         # Load overlays
         self.custom_ipv8_community_loader.load(self.ipv8, self.session)
@@ -197,7 +197,7 @@ class AnyDexModule(ExperimentModule):
 
     @experiment_callback
     def enable_ipv8_statistics(self):
-        self.tribler_config.set_ipv8_statistics(True)
+        self.tribler_config.ipv8.statistics = True
 
     @experiment_callback
     def start_ipv8_statistics_monitor(self):
