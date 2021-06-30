@@ -3,6 +3,7 @@ import os
 import time
 from asyncio import Future
 from binascii import hexlify
+from pathlib import Path
 
 from gumby.experiment import experiment_callback
 from gumby.gumby_tribler_config import GumbyTriblerConfig
@@ -72,7 +73,7 @@ class BaseIPv8Module(ExperimentModule):
 
     @experiment_callback
     def enable_ipv8_statistics(self):
-        self.tribler_config.set_ipv8_statistics(True)
+        self.tribler_config.ipv8.statistics = True
 
     @experiment_callback
     def start_ipv8_statistics_monitor(self):
@@ -92,22 +93,23 @@ class BaseIPv8Module(ExperimentModule):
         self._logger.info("IPv8 port set to %d", self.ipv8_port)
 
         my_state_path = os.path.join(os.environ['OUTPUT_DIR'], str(self.my_id))
+        self._logger.info("State path: %s", my_state_path)
 
-        config = GumbyTriblerConfig(my_state_path)
-        config.set_ipv8_bootstrap_override("0.0.0.0:0")
-        config.set_trustchain_keypair_filename("tc_keypair_" + str(self.experiment.my_id))
-        config.set_torrent_checking_enabled(False)
-        config.set_discovery_community_enabled(False)
-        config.set_chant_enabled(False)
-        config.set_libtorrent_enabled(False)
-        config.set_api_http_enabled(False)
-        config.set_libtorrent_port(20000 + self.experiment.my_id * 10)
-        config.set_ipv8_port(self.ipv8_port)
-        config.set_tunnel_community_enabled(False)
-        config.set_dht_enabled(False)
-        config.set_version_checker_enabled(False)
-        config.set_bootstrap_enabled(False)
-        config.set_popularity_community_enabled(False)
+        config = GumbyTriblerConfig(state_dir=Path(my_state_path))
+        config.ipv8.bootstrap_override = "0.0.0.0:0"
+        config.trustchain.ec_keypair_filename = "tc_keypair_" + str(self.experiment.my_id)
+        config.torrent_checking.enabled = False
+        config.discovery_community.enabled = False
+        config.chant.enabled = False
+        config.libtorrent.enabled = False
+        config.api.http_enabled = False
+        config.libtorrent.port = 20000 + self.experiment.my_id * 10
+        config.ipv8.port = self.ipv8_port
+        config.tunnel_community.enabled = False
+        config.dht.enabled = False
+        config.general.version_checker_enabled = False
+        config.bootstrap.enabled = False
+        config.popularity_community.enabled = False
         return config
 
     @classmethod

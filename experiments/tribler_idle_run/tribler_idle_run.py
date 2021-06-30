@@ -53,9 +53,9 @@ class IdleTribleRunner():
 
     async def run(self):
         config = TriblerConfig(os.path.abspath(os.path.join(BASE_DIR, "output", "tribler-state")))
-        config.set_api_http_enabled(False)
-        config.set_ipv8_port(21000)
-        config.set_libtorrent_port(21005)
+        config.api.http_enabled = False
+        config.ipv8.port = 21000
+        config.libtorrent.port = 21005
 
         self.session = Session(config)
         try:

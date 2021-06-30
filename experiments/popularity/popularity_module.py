@@ -60,8 +60,8 @@ class PopularityModule(IPv8OverlayExperimentModule):
 
     def on_id_received(self):
         super(PopularityModule, self).on_id_received()
-        self.tribler_config.set_popularity_community_enabled(True)
-        self.tribler_config.set_torrent_checking_enabled(True)
+        self.tribler_config.popularity_community.enabled = True
+        self.tribler_config.torrent_checking.enabled = True
 
         self.autoplot_create('num_healths', 'Number of torrent healths')
 

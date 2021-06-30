@@ -89,7 +89,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def enable_trustchain_memory_db(self):
-        self.tribler_config.set_trustchain_memory_db(True)
+        self.tribler_config.trustchain.memory_db = True
 
     @experiment_callback
     def set_validation_range(self, value):
@@ -177,7 +177,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def commit_blocks_to_db(self):
-        if self.session.config.use_trustchain_memory_db():
+        if self.session.config.trustchain.memory_db:
             self.overlay.persistence.commit(self.overlay.my_peer.public_key.key_to_bin())
 
     @experiment_callback

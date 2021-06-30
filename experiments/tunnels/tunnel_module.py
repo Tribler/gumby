@@ -61,10 +61,10 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
     def on_id_received(self):
         super(TunnelModule, self).on_id_received()
-        self.tribler_config.set_tunnel_community_enabled(True)
-        self.tribler_config.set_libtorrent_enabled(True)
-        self.tribler_config.set_tunnel_community_socks5_listen_ports([23000 + 100 * self.my_id + i for i in range(5)])
-        self.tribler_config.set_tunnel_community_exitnode_enabled(False)
+        self.tribler_config.tunnel_community.enabled = True
+        self.tribler_config.libtorrent.enabled = True
+        self.tribler_config.tunnel_community.socks5_listen_ports = [23000 + 100 * self.my_id + i for i in range(5)]
+        self.tribler_config.tunnel_community.exitnode_enabled = False
         self.ipv8_community_launcher.community_kwargs["settings"] = TunnelSettings()
 
     def on_ipv8_available(self, _):
@@ -126,7 +126,7 @@ class TunnelModule(IPv8OverlayExperimentModule):
     def set_tunnel_exit(self, value):
         value = TunnelModule.str2bool(value)
         self._logger.info("This peer will be exit node: %s" % ('Yes' if value else 'No'))
-        self.tribler_config.set_tunnel_community_exitnode_enabled(value)
+        self.tribler_config.tunnel_community.exitnode_enabled = value
         self.tunnel_settings.become_exitnode = value
         self.tunnel_settings.peer_flags = {PEER_FLAG_EXIT_BT} if value else {PEER_FLAG_RELAY}
 

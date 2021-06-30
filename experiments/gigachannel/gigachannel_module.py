@@ -20,8 +20,8 @@ class GigaChannelModule(IPv8OverlayExperimentModule):
 
     def on_id_received(self):
         super(GigaChannelModule, self).on_id_received()
-        self.tribler_config.set_chant_enabled(True)
-        self.tribler_config.set_libtorrent_enabled(True)
+        self.tribler_config.chant.enabled = True
+        self.tribler_config.libtorrent.enabled = True
 
         self.autoplot_create('known_channels', 'num_channels')
         self.autoplot_create('downloading_channels', 'num_channels')

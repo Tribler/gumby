@@ -158,7 +158,8 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         # We need the IPv8 peer key at this point. However, the configured session is not started yet. So we
         # generate the keys here and place them in the correct place. When the session starts it will load these keys.
         keypair = generate_keypair_trustchain()
-        pairfilename = self.tribler_config.get_trustchain_keypair_filename()
+        pairfilename = self.tribler_config.trustchain.get_path_as_absolute("ec_keypair_filename",
+                                                                           self.tribler_config.state_dir)
         save_keypair_trustchain(keypair, pairfilename)
         save_pub_key_trustchain(keypair, "%s.pub" % pairfilename)
 
