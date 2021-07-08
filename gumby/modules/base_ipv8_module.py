@@ -8,7 +8,7 @@ from pathlib import Path
 from gumby.experiment import experiment_callback
 from gumby.gumby_tribler_config import GumbyTriblerConfig
 from gumby.modules.experiment_module import ExperimentModule
-from gumby.modules.gumby_session import GumbySession
+from gumby.modules.gumby_session import GumbyTriblerSession
 from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
 from gumby.util import run_task
 
@@ -68,7 +68,7 @@ class BaseIPv8Module(ExperimentModule):
 
     @experiment_callback
     def start_session(self):
-        self.session = GumbySession(config=self.tribler_config)
+        self.session = GumbyTriblerSession(config=self.tribler_config)
         self.tribler_config = None
 
     @experiment_callback
