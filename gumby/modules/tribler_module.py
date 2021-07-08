@@ -3,14 +3,20 @@ import os
 import random
 
 from asyncio import ensure_future, sleep
+from pathlib import Path
 from random import Random
 
 import binascii
 from pony.orm import db_session
 
 from gumby.experiment import experiment_callback
+from gumby.gumby_tribler_config import GumbyTriblerConfig
+from gumby.modules.ipv8_community_launchers import IPv8DiscoveryCommunityLauncher, DHTCommunityLauncher
+from gumby.modules.tribler_community_launchers import TriblerTunnelCommunityLauncher, PopularityCommunityLauncher, \
+    GigaChannelCommunityLauncher, BandwidthCommunityLauncher
 from gumby.modules.experiment_module import static_module
 from gumby.modules.base_ipv8_module import BaseIPv8Module
+from gumby.modules.gumby_session import GumbyTriblerSession
 from gumby.util import run_task
 
 from tribler_common.simpledefs import dlstatus_strings
@@ -32,9 +38,20 @@ class TriblerModule(BaseIPv8Module):
             'upload': 0
         }
 
+    def create_ipv8_community_loader(self):
+        loader = super().create_ipv8_community_loader()
+        loader.set_launcher(IPv8DiscoveryCommunityLauncher())
+        loader.set_launcher(TriblerTunnelCommunityLauncher())
+        loader.set_launcher(PopularityCommunityLauncher())
+        loader.set_launcher(DHTCommunityLauncher())
+        loader.set_launcher(GigaChannelCommunityLauncher())
+        loader.set_launcher(BandwidthCommunityLauncher())
+        return loader
+
     @experiment_callback
     async def start_session(self):
-        super(TriblerModule, self).start_session()
+        self.session = GumbyTriblerSession(config=self.tribler_config)
+        self.tribler_config = None
 
         self._logger.error("Starting Tribler Session")
 
@@ -53,6 +70,31 @@ class TriblerModule(BaseIPv8Module):
         # Write away the start time of the experiment
         with open('start_time.txt', 'w') as start_time_time:
             start_time_time.write("%f" % self.experiment.scenario_runner.exp_start_time)
+
+    def setup_config(self):
+        if self.ipv8_port is None:
+            self.ipv8_port = 12000 + self.experiment.my_id
+        self._logger.info("IPv8 port set to %d", self.ipv8_port)
+
+        my_state_path = os.path.join(os.environ['OUTPUT_DIR'], str(self.my_id))
+        self._logger.info("State path: %s", my_state_path)
+
+        config = GumbyTriblerConfig(state_dir=Path(my_state_path))
+        config.ipv8.bootstrap_override = "0.0.0.0:0"
+        config.trustchain.ec_keypair_filename = os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id))
+        config.torrent_checking.enabled = False
+        config.discovery_community.enabled = False
+        config.chant.enabled = False
+        config.libtorrent.enabled = False
+        config.api.http_enabled = False
+        config.libtorrent.port = 20000 + self.experiment.my_id * 10
+        config.ipv8.port = self.ipv8_port
+        config.tunnel_community.enabled = False
+        config.dht.enabled = False
+        config.general.version_checker_enabled = False
+        config.bootstrap.enabled = False
+        config.popularity_community.enabled = False
+        return config
 
     @experiment_callback
     def set_transfer_size(self, size):

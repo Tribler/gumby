@@ -9,13 +9,13 @@ from tribler_core.modules.libtorrent.download_manager import DownloadManager
 from tribler_core.session import Session
 
 
-class GumbySession(Session):
+class GumbyTriblerSession(Session):
     """
     Overwritten Session allowing for custom community loading.
     """
 
     def __init__(self, config=None, ipv8_community_loader=IPv8CommunityLoader()):
-        super(GumbySession, self).__init__(config)
+        super().__init__(config)
         self.ipv8_community_loader = ipv8_community_loader
 
     def inject_bootstrappers(self):

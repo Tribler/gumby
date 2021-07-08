@@ -54,6 +54,8 @@ def main(self_service=False):
         environ["TRIBLER_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler"))
     if "IPV8_DIR" not in environ:
         environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler", "src", "pyipv8"))
+    if "ANYDEX_DIR" in environ:
+        python_path.append(environ["ANYDEX_DIR"])
     if "SYNC_HOST" not in environ:
         # If we deploy using an SSH connection, use the IP of the host
         if "SSH_CONNECTION" in environ:
@@ -66,7 +68,7 @@ def main(self_service=False):
         environ["SCENARIO_FILE"] = path.abspath(path.join(
             environ["EXPERIMENT_DIR"], "%s.scenario" % path.basename(path.normpath(environ["EXPERIMENT_DIR"]))))
 
-    for subdir_name in ('tribler-common', 'tribler-core', 'anydex'):
+    for subdir_name in ('tribler-common', 'tribler-core'):
         subdir_path = path.join(environ["TRIBLER_DIR"], 'src', subdir_name)
         if subdir_path not in python_path:
             python_path.append(subdir_path)

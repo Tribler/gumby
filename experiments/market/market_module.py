@@ -24,14 +24,16 @@ class MarketModule(IPv8OverlayExperimentModule):
     """
 
     def __init__(self, experiment):
-        super(MarketModule, self).__init__(experiment, MarketCommunity)
+        super().__init__(experiment, MarketCommunity)
         self.num_bids = 0
         self.num_asks = 0
         self.order_id_map = {}
 
-    def on_ipv8_available(self, _):
-        # Disable threadpool messages
-        self.overlay._use_main_thread = True
+    def on_id_received(self):
+        super().on_id_received()
+        self.tribler_config.trustchain.enabled = True
+        self.tribler_config.dht.enabled = True
+        self.tribler_config.market.enabled = True
 
     @experiment_callback
     def init_wallets(self):
