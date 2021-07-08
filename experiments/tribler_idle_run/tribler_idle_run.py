@@ -39,6 +39,7 @@
 
 import os
 from asyncio import ensure_future, get_event_loop, sleep
+from pathlib import Path
 
 from tribler_core.config.tribler_config import TriblerConfig
 from tribler_core.session import Session
@@ -46,13 +47,14 @@ from tribler_core.session import Session
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 
-class IdleTribleRunner():
+class IdleTribleRunner:
 
     def __init__(self):
         self.session = None
 
     async def run(self):
-        config = TriblerConfig(os.path.abspath(os.path.join(BASE_DIR, "output", "tribler-state")))
+        state_dir = Path(os.path.abspath(os.path.join(BASE_DIR, "output", "tribler-state")))
+        config = TriblerConfig(state_dir=state_dir)
         config.api.http_enabled = False
         config.ipv8.port = 21000
         config.libtorrent.port = 21005
