@@ -15,7 +15,7 @@ class GumbyTriblerSession(Session):
     """
 
     def __init__(self, config=None, ipv8_community_loader=IPv8CommunityLoader()):
-        super(GumbyTriblerSession, self).__init__(config)
+        super().__init__(config)
         self.ipv8_community_loader = ipv8_community_loader
 
     def inject_bootstrappers(self):
