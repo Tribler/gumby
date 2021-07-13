@@ -37,6 +37,11 @@ def market_community():
     return MarketCommunity
 
 
+def basalt_community():
+    from bami.basalt.community import BasaltCommunity
+    return BasaltCommunity
+
+
 def dht_discovery_community():
     from ipv8.dht.discovery import DHTDiscoveryCommunity
     return DHTDiscoveryCommunity
@@ -104,6 +109,12 @@ class MarketCommunityLauncher(IPv8CommunityLauncher):
             'use_database': not session.config.market.memory_db,
             'working_directory': session.config.state_dir
         }
+
+
+@precondition('session.config.basalt.enabled')
+@overlay(basalt_community)
+class BasaltCommunityLauncher(IPv8CommunityLauncher):
+    pass
 
 
 @precondition('session.config.dht.enabled')

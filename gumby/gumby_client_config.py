@@ -24,9 +24,14 @@ class MarketConfig(BaseSettings):
     memory_db: bool = False
 
 
+class BasaltConfig(BaseSettings):
+    enabled: bool = False
+
+
 class GumbyConfig(BaseSettings):
     state_dir: str = ""
     ipv8: IPv8Config = IPv8Config()
     trustchain: TrustchainConfig = TrustchainConfig()
     dht: DHTConfig = DHTConfig()
     market: MarketConfig = MarketConfig()
+    basalt: BasaltConfig = BasaltConfig()
