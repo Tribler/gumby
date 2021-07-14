@@ -56,6 +56,8 @@ def main(self_service=False):
         environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler", "src", "pyipv8"))
     if "ANYDEX_DIR" in environ:
         python_path.append(environ["ANYDEX_DIR"])
+    if "BAMI_DIR" in environ:
+        python_path.append(environ["BAMI_DIR"])
     if "SYNC_HOST" not in environ:
         # If we deploy using an SSH connection, use the IP of the host
         if "SSH_CONNECTION" in environ:
