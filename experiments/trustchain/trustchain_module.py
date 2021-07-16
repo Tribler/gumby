@@ -58,10 +58,6 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         self.block_stat_file = None
         self.request_signatures_task = None
 
-    def on_ipv8_available(self, _):
-        # Disable threadpool messages
-        self.overlay._use_main_thread = True
-
     def get_peer_public_key(self, peer_id):
         # override the default implementation since we use the trustchain key here.
         return self.all_vars[peer_id]['trustchain_public_key']

@@ -25,10 +25,6 @@ class DHTModule(IPv8OverlayExperimentModule):
 
         self.start_time = time.time()
 
-    def on_ipv8_available(self, _):
-        # Disable threadpool messages
-        self.overlay._use_main_thread = True
-
     @experiment_callback
     def introduce_peers_dht(self):
         for peer_id in self.all_vars.keys():
