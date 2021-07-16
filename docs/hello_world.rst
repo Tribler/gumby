@@ -44,7 +44,7 @@ In our example, we are keeping it simple and we will use the following ``hello_w
     sync_subscribers_amount = 5
 
     # This command will launch a process for each launch_scenario.py you feed it
-    local_instance_cmd = "process_guard.py -c launch_scenario.py -c launch_scenario.py -c launch_scenario.py -c launch_scenario.py -c launch_scenario.py -t $EXPERIMENT_TIME -m $OUTPUT_DIR  -o $OUTPUT_DIR "
+    local_instance_cmd = "process_guard.py -c launch_scenario.py -n 5 -t $EXPERIMENT_TIME -m $OUTPUT_DIR  -o $OUTPUT_DIR "
     
     # The scenario file to run
     scenario_file = 'hello_world.scenario'
