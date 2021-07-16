@@ -67,8 +67,6 @@ from gumby.log import setupLogging
 
 
 # @CONF_OPTION SYNC_SUBSCRIBERS_AMOUNT: Number of sync clients we should wait for to be registered before starting the experiment. (default is INSTANCES_TO_RUN)
-# @CONF_OPTION SYNC_EXPERIMENT_START_DELAY: Delay the synchronized start of the experiment by this amount of seconds when giving the start signal.
-# @CONF_OPTION SYNC_EXPERIMENT_START_DELAY: The default value should be OK for a few thousand instances. (float, default 5)
 # @CONF_OPTION SYNC_PORT: Port where we should listen on. (required)
 
 if __name__ == '__main__':
@@ -78,7 +76,7 @@ if __name__ == '__main__':
     else:
         expected_subscribers = int(environ['INSTANCES_TO_RUN'])
 
-    experiment_start_delay = float(environ.get('SYNC_EXPERIMENT_START_DELAY', 5))
+    experiment_start_delay = float(environ['SYNC_EXPERIMENT_START_DELAY'])
     server_port = int(environ['SYNC_PORT'])
 
     loop = get_event_loop()

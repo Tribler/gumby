@@ -54,9 +54,6 @@ In our example, we are keeping it simple and we will use the following ``hello_w
     # The designated experiment synchronization peer
     sync_host = 127.0.0.1
     sync_port = __unique_port__
-    
-    # How long we should wait for experiment nodes to connect
-    sync_experiment_start_delay = 1
 
     # The command which will handle post processing
     post_process_cmd = 'graph_process_guard_data.sh'
@@ -95,9 +92,6 @@ Alternatively, if you want to run your first experiment on the DAS5:
     
     # The designated experiment synchronization peer's port
     sync_port = __unique_port__
-    
-    # How long we should wait for experiment nodes to connect
-    sync_experiment_start_delay = 1
 
     # The command which will handle post processing
     post_process_cmd = 'graph_process_guard_data.sh'
