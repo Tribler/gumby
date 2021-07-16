@@ -79,14 +79,8 @@ if [ -z "$SYNC_HOST" ]; then
     export SYNC_HOST=$HEAD_HOST
 fi
 
-# This will be used from das4_node_run_job.sh to rsync the output data back to the head node
-if [ "$HEAD_NODES" == '[]' ]; then
-    # This means we are running the experiment locally
-    mkdir $OUTPUT_DIR/localhost
-    export OUTPUT_DIR_URI="$HEAD_HOST:$OUTPUT_DIR/localhost"
-else
-    export OUTPUT_DIR_URI="$HEAD_HOST:$OUTPUT_DIR"
-fi
+mkdir $OUTPUT_DIR/localhost
+export OUTPUT_DIR_URI="$HEAD_HOST:$OUTPUT_DIR/localhost"
 
 # We need to go back to home in order to prevent prun complaining about not being able to cwd into the directory
 WORKING_DIR=$PWD
