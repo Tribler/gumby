@@ -10,7 +10,7 @@ experiment_name = string
 workspace_dir = string(default="./")
 output_dir = string(default="output")
 
-experiment_server_cmd = string(default="")
+experiment_server_cmd = string(default="experiment_server.py")
 
 local_setup_cmd = string(default="")
 

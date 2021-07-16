@@ -83,8 +83,6 @@ An example configuration file to do so is given below:
 ```
 experiment_name = "simple_das5"
 
-experiment_server_cmd = 'experiment_server.py'
-
 local_setup_cmd = 'das4_setup.sh'
 
 local_instance_cmd = 'das4_reserve_and_run.sh'

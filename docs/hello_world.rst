@@ -50,9 +50,6 @@ In our example, we are keeping it simple and we will use the following ``hello_w
     scenario_file = 'hello_world.scenario'
 
     ## Don't change the following settings, unless you are 100% sure you know what you are doing
-
-    # The experiment setup script to use
-    experiment_server_cmd = 'experiment_server.py'
     
     # The designated experiment synchronization peer
     sync_host = 127.0.0.1
@@ -95,9 +92,6 @@ Alternatively, if you want to run your first experiment on the DAS5:
     local_setup_cmd = 'das4_setup.sh'
     local_instance_cmd = 'das4_reserve_and_run.sh'
     das4_node_command = "launch_scenario.py"
-
-    # The experiment setup script to use
-    experiment_server_cmd = 'experiment_server.py'
     
     # The designated experiment synchronization peer's port
     sync_port = __unique_port__
