@@ -68,7 +68,7 @@ def periodic_similarity():
     return PeriodicSimilarity
 
 
-@precondition('session.config.discovery_community.enabled')
+@precondition('session.config.ipv8.discovery.enabled')
 @overlay(discovery_community)
 @kwargs(max_peers='100')
 @walk_strategy(random_churn, target_peers=INFINITE)

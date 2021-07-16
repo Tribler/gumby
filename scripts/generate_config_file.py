@@ -70,19 +70,6 @@ CONFIG_FILE_HEADER = '''\
 # Take into account that if you use a single node you still need to add a comma at the end.
 # head_nodes = node1,node2,node3
 #
-# Command used to start a tracker in the background during the whole duration of the experiment.
-# If the tracker exits before the experiment finishes, the experiment will abort to avoid wasting time.
-# The tracker will be killed by gumby when the experiment finishes.
-# tracker_cmd =
-#
-# Set this to true if you want the tracker to be started on each remote node instead of locally.
-# Defaults to false
-# tracker_run_remote =
-#
-# Which port should the tracker use?
-# Defaults to 7788
-# tracker_port =
-#
 # Command used to start the experiment synchronization server in case you need one, if the experiment sync server exits with status 0,
 # the experiment will _not_ be canceled.
 # experiment_server_cmd =

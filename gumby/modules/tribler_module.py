@@ -1,28 +1,28 @@
+import binascii
 import glob
 import os
 import random
-
 from asyncio import ensure_future, sleep
 from pathlib import Path
 from random import Random
 
-import binascii
 from pony.orm import db_session
 
-from gumby.experiment import experiment_callback
-from gumby.gumby_tribler_config import GumbyTriblerConfig
-from gumby.modules.ipv8_community_launchers import IPv8DiscoveryCommunityLauncher, DHTCommunityLauncher
-from gumby.modules.tribler_community_launchers import TriblerTunnelCommunityLauncher, PopularityCommunityLauncher, \
-    GigaChannelCommunityLauncher, BandwidthCommunityLauncher
-from gumby.modules.experiment_module import static_module
-from gumby.modules.base_ipv8_module import BaseIPv8Module
-from gumby.modules.gumby_session import GumbyTriblerSession
-from gumby.util import run_task
-
 from tribler_common.simpledefs import dlstatus_strings
+
 from tribler_core.modules.libtorrent.download_config import DownloadConfig
 from tribler_core.modules.libtorrent.torrentdef import TorrentDef
 from tribler_core.utilities.unicode import hexlify
+
+from gumby.experiment import experiment_callback
+from gumby.gumby_tribler_config import GumbyTriblerConfig
+from gumby.modules.base_ipv8_module import BaseIPv8Module
+from gumby.modules.experiment_module import static_module
+from gumby.modules.gumby_session import GumbyTriblerSession
+from gumby.modules.ipv8_community_launchers import DHTCommunityLauncher
+from gumby.modules.tribler_community_launchers import BandwidthCommunityLauncher, GigaChannelCommunityLauncher, \
+    PopularityCommunityLauncher, TriblerTunnelCommunityLauncher
+from gumby.util import run_task
 
 
 @static_module
@@ -40,7 +40,6 @@ class TriblerModule(BaseIPv8Module):
 
     def create_ipv8_community_loader(self):
         loader = super().create_ipv8_community_loader()
-        loader.set_launcher(IPv8DiscoveryCommunityLauncher())
         loader.set_launcher(TriblerTunnelCommunityLauncher())
         loader.set_launcher(PopularityCommunityLauncher())
         loader.set_launcher(DHTCommunityLauncher())
@@ -83,7 +82,7 @@ class TriblerModule(BaseIPv8Module):
         config.ipv8.bootstrap_override = "0.0.0.0:0"
         config.trustchain.ec_keypair_filename = os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id))
         config.torrent_checking.enabled = False
-        config.discovery_community.enabled = False
+        config.ipv8.discovery.enabled = False
         config.chant.enabled = False
         config.libtorrent.enabled = False
         config.api.http_enabled = False
@@ -284,28 +283,6 @@ class TriblerModule(BaseIPv8Module):
         tdef.add_content(file_name)
         tdef.save()
         return tdef
-
-    @experiment_callback
-    def write_overlay_statistics(self):
-        """
-        Write information about the IPv8 overlay networks to a file.
-        """
-        with open('overlays.txt', 'w') as overlays_file:
-            overlays_file.write("name,pub_key,peers\n")
-            for overlay in self.session.ipv8.overlays:
-                overlays_file.write("%s,%s,%d\n" % (overlay.__class__.__name__,
-                                                    hexlify(overlay.my_peer.public_key.key_to_bin()),
-                                                    len(overlay.get_peers())))
-
-        # Write verified peers
-        with open('verified_peers.txt', 'w') as peers_file:
-            for peer in self.session.ipv8.network.verified_peers:
-                peers_file.write('%d\n' % (peer.address[1] - 12000))
-
-        # Write bandwidth statistics
-        with open('bandwidth.txt', 'w') as bandwidth_file:
-            bandwidth_file.write("%d,%d" % (self.session.ipv8.endpoint.bytes_up,
-                                            self.session.ipv8.endpoint.bytes_down))
 
     @experiment_callback
     def write_download_statistics(self):

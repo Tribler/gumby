@@ -1,12 +1,12 @@
 import time
 from binascii import unhexlify
 
+from ipv8.dht import DHTError
+from ipv8.dht.discovery import DHTDiscoveryCommunity
+
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.modules.experiment_module import static_module
-
-from ipv8.dht import DHTError
-from ipv8.dht.discovery import DHTDiscoveryCommunity
 
 
 @static_module

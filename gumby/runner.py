@@ -1,46 +1,8 @@
 #!/usr/bin/env python3
-# run.py ---
-#
-# Filename: run.py
-# Description:
-# Author: Elric Milon
-# Maintainer:
-# Created: Wed Jun  5 14:47:19 2013 (+0200)
-
-# Commentary:
-#
-#
-#
-#
-
-# Change Log:
-#
-#
-#
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 3, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth
-# Floor, Boston, MA 02110-1301, USA.
-#
-#
-
-# Code:
 import logging
-import sys
-from asyncio import CancelledError, create_subprocess_exec, ensure_future, gather, get_event_loop, subprocess, sleep
+from asyncio import CancelledError, create_subprocess_exec, ensure_future, gather, get_event_loop, sleep, subprocess
 from contextlib import suppress
-from os import path, chdir, environ, makedirs, listdir, remove
+from os import chdir, environ, listdir, makedirs, path, remove
 from shutil import rmtree
 
 import asyncssh
@@ -158,16 +120,6 @@ class ExperimentRunner():
             remote_instance_list.append(runRemoteCMD(host, args))
         return gather(*remote_instance_list)
 
-    async def startTracker(self):
-        if self._cfg['tracker_cmd']:
-            try:
-                await self.runCommand(self._cfg['tracker_cmd'], self._cfg.as_bool('tracker_run_remote'))
-            except Exception as e:
-                self._logger.error("Error while running tracker: %s", e)
-                # TODO: Add a config option to not shut down the experiment when the tracker dies
-                get_event_loop().exit_code = 1
-                get_event_loop().stop()
-
     async def startExperimentServer(self):
         if self._cfg['experiment_server_cmd']:
             self._logger.info("Starting experiment server")
@@ -227,11 +179,6 @@ class ExperimentRunner():
         # Run the set up script, both locally and in the head nodes
         await self.runSetupScripts()
 
-        # Step 5:
-        # Start the tracker, either locally or on the first head node of the list.
-        tracker_task = ensure_future(self.startTracker())
-        await sleep(1)
-
         # Step 6:
         # Start the config server, always locally if running instances locally as the head nodes are firewalled and
         # can only be reached from the outside trough SSH.
@@ -248,9 +195,7 @@ class ExperimentRunner():
         await self.collectOutputFromHeadNodes()
 
         # Cleanup background tasks
-        tracker_task.cancel()
         server_task.cancel()
-        await tracker_task
         await server_task
 
         # Step 9:
@@ -299,6 +244,3 @@ class ProcessRunner:
         while line:
             self._logger.info(prefix + line.rstrip().decode('utf-8'))
             line = await stream.readline()
-
-#
-# run.py ends here

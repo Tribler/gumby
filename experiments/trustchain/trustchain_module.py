@@ -1,15 +1,15 @@
+import csv
 import json
 import os
-from random import randint, choice
-import csv
+from random import choice, randint
 from time import time
 
 from anydex.trustchain.community import TrustChainCommunity
 from anydex.trustchain.listener import BlockListener
 
 from gumby.experiment import experiment_callback
-from gumby.modules.experiment_module import static_module
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
+from gumby.modules.experiment_module import static_module
 from gumby.util import run_task
 
 

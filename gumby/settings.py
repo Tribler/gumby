@@ -1,47 +1,9 @@
-# settings.py ---
-#
-# Filename: settings.py
-# Description:
-# Author: Elric Milon
-# Maintainer:
-# Created: Tue Jul  9 18:05:03 2013 (+0200)
-
-# Commentary:
-#
-#
-#
-#
-
-# Change Log:
-#
-#
-#
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 3, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth
-# Floor, Boston, MA 02110-1301, USA.
-#
-#
-
-# Code:
 import random
-from getpass import getuser
-from hashlib import md5
-from os import path, environ, curdir
-from validate import Validator
+from os import environ, path
 
 from configobj import ConfigObj
+
+from validate import Validator
 
 conf_spec = '''
 experiment_name = string
@@ -49,10 +11,6 @@ workspace_dir = string(default="./")
 remote_workspace_dir = string(default="./")
 output_dir = string(default="output")
 head_nodes = list(default=[])
-
-tracker_cmd = string(default="")
-tracker_run_remote = boolean(default=False)
-tracker_port = integer(min=1025, max=65535, default=7788)
 
 experiment_server_run_remote = boolean(default=False)
 experiment_server_cmd = string(default="")
@@ -106,5 +64,3 @@ def configToEnv(config):
     for name, val in config.items():
         env[name.upper()] = path.expanduser(path.expandvars(str(val)))
     return env
-#
-# settings.py ends here

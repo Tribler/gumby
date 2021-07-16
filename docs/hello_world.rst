@@ -51,10 +51,6 @@ In our example, we are keeping it simple and we will use the following ``hello_w
 
     ## Don't change the following settings, unless you are 100% sure you know what you are doing
 
-    # Run an IPv8 tracker for peer discovery
-    tracker_cmd = 'run_tracker.sh'
-    tracker_port = __unique_port__
-
     # The experiment setup script to use
     experiment_server_cmd = 'experiment_server.py'
     
@@ -99,10 +95,6 @@ Alternatively, if you want to run your first experiment on the DAS5:
     local_setup_cmd = 'das4_setup.sh'
     local_instance_cmd = 'das4_reserve_and_run.sh'
     das4_node_command = "launch_scenario.py"
-
-    # Run an IPv8 tracker for peer discovery
-    tracker_cmd = 'run_tracker.sh'
-    tracker_port = __unique_port__
 
     # The experiment setup script to use
     experiment_server_cmd = 'experiment_server.py'

@@ -1,9 +1,14 @@
-&module gumby.modules.tribler_module.TriblerModule
+&module gumby.modules.base_ipv8_module.BaseIPv8Module
 &module experiments.ipv8.discovery_module.DiscoveryModule
+&module experiments.ipv8.tracker_module.TrackerModule
+
 @0:0 enable_ipv8_statistics
+@0:0 set_bootstrap 1 45000
 @0:1 start_session
+@0:1 start_tracker port=45000 {1}
 @0:1 annotate start-experiment
 @0:2 start_ipv8_statistics_monitor
-@0:60 stop_session
-@0:65 write_overlay_statistics
-@0:67 stop
+@0:39 write_overlay_statistics
+@0:40 stop_tracker {1}
+@0:40 stop_session
+@0:45 stop
