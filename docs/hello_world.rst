@@ -52,7 +52,6 @@ In our example, we are keeping it simple and we will use the following ``hello_w
     ## Don't change the following settings, unless you are 100% sure you know what you are doing
     
     # The designated experiment synchronization peer
-    sync_host = 127.0.0.1
     sync_port = __unique_port__
 
     # The command which will handle post processing

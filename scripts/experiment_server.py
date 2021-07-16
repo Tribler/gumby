@@ -62,8 +62,8 @@ import logging
 from asyncio import ensure_future, get_event_loop
 from os import environ
 
-from gumby.sync import ExperimentServiceFactory
 from gumby.log import setupLogging
+from gumby.sync import ExperimentServiceFactory
 
 
 # @CONF_OPTION SYNC_SUBSCRIBERS_AMOUNT: Number of sync clients we should wait for to be registered before starting the experiment. (default is INSTANCES_TO_RUN)
