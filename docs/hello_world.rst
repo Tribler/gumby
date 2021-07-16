@@ -41,10 +41,10 @@ In our example, we are keeping it simple and we will use the following ``hello_w
     experiment_time = 90
     
     # The amount of processes we wish to deploy, this should be reflected in local_instance_cmd
-    sync_subscribers_amount = 5
+    instances_to_run = 5
 
     # This command will launch a process for each launch_scenario.py you feed it
-    local_instance_cmd = "process_guard.py -c launch_scenario.py -n 5 -t $EXPERIMENT_TIME -m $OUTPUT_DIR  -o $OUTPUT_DIR "
+    local_instance_cmd = "process_guard.py -c launch_scenario.py -n $INSTANCES_TO_RUN -t $EXPERIMENT_TIME -m $OUTPUT_DIR  -o $OUTPUT_DIR "
     
     # The scenario file to run
     scenario_file = 'hello_world.scenario'
