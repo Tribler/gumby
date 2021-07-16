@@ -149,10 +149,7 @@ class ExperimentClient(LineReceiver):
         # id:SOMETHING
         maybe_id, id = line.strip().split(b':', 1)
         if maybe_id == b"id":
-            if "PEER_ID" in os.environ:
-                self.my_id = int(os.environ["PEER_ID"])
-            else:
-                self.my_id = int(id)
+            self.my_id = int(id)
 
             self._logger.debug('Got assigned id: %s', self.my_id)
             get_event_loop().run_in_executor(None, self.on_id_received)
@@ -170,11 +167,6 @@ class ExperimentClient(LineReceiver):
         all_vars = json.loads(line)
         self.all_vars = all_vars["clients"]
         self.server_vars = all_vars["server"]
-        if "PEER_ID" in os.environ:
-            # this is a self service run, i.e. debugging a specific gumby experiment (hopefully in an IDE)
-            # and since the my_id var was explicitly set it won't match what the server sent... so let's fix that
-            self.all_vars[str(self.my_id)] = self.all_vars["0"]
-
         self.time_offset = self.all_vars[str(self.my_id)]["time_offset"]
         self.on_all_vars_received()
 
