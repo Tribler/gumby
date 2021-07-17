@@ -30,11 +30,8 @@ if [ -z "$DAS4_RESERVE_DURATION" ]; then
     let DAS4_RESERVE_DURATION=$NODE_TIMEOUT+120
 fi
 
-# @CONF_OPTION HEAD_HOST: Override the head host where the worker nodes will sync their datasets back (default is the host name where the script is executed from)
-if [ -z "$HEAD_HOST" ]; then
-    echo "HEAD_HOST is not set, using current host"
-    export HEAD_HOST=$(hostname)
-fi
+# Set the head host to the current host
+export HEAD_HOST=$(hostname)
 
 # @CONF_OPTION SYNC_HOST: Override the experiment synchronization server host to which the sync clients will try to connect to (default is HEAD_HOST)
 if [ -z "$SYNC_HOST" ]; then
