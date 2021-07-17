@@ -11,7 +11,8 @@ It receives 3 types of commands:
 
 When the all of the instances we are waiting for are all ready, all the information will
 be sent back to them in the form of a JSON document. After this, a "go" command will
-be sent to indicate that they should start running the experiment with the absolute time at which the experiment should start.
+be sent to indicate that they should start running the experiment with the absolute time at which the experiment
+should start.
 
 Example of an expected exchange:
 [connection is opened by the client]
@@ -19,7 +20,9 @@ Example of an expected exchange:
 -> time:1378479678.11
 -> set:asdf:ooooo
 -> ready
-<- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1": {"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"}, "2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
+<- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1":
+{"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"},
+"2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
 -> vars_received
 <- go:1388665322.478153
 

@@ -1,18 +1,17 @@
-#!/usr/bin/env python3
 import time
 from binascii import unhexlify
-
-from gumby.experiment import experiment_callback
-from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 
 from ipv8.messaging.anonymization.community import TunnelSettings
 from ipv8.messaging.anonymization.tunnel import PEER_FLAG_EXIT_BT, PEER_FLAG_RELAY
 
-from tribler_common.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
+from tribler_common.simpledefs import DOWNLOAD, UPLOAD, dlstatus_strings
 
-from tribler_core.utilities.unicode import hexlify
 from tribler_core.modules.tunnel.community.community import TriblerTunnelCommunity
+from tribler_core.utilities.unicode import hexlify
+
+from gumby.experiment import experiment_callback
+from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
+from gumby.modules.experiment_module import static_module
 
 
 @static_module

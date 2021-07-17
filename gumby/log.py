@@ -1,11 +1,9 @@
-from os import environ, path, chdir, makedirs
-from sys import stdout, stderr
 import logging
 import logging.config
-import sys
+from os import environ, path
+from sys import stderr, stdout
 
 
-# TODO(emilon): Document this on the user manual
 def setupLogging():
     # Allow to override the root handler log level from an environment variable.
     # @CONF_OPTION LOG_LEVEL: Override log level (for python that would be the root handler's log level only)

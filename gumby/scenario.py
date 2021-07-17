@@ -11,7 +11,7 @@ Usage example:
 """
 import logging
 import shlex
-from asyncio import iscoroutine, ensure_future
+from asyncio import ensure_future, iscoroutine
 from functools import partial
 from os import environ, path
 from re import compile as re_compile
