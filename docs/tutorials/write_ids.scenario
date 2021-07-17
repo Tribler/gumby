@@ -1,0 +1,4 @@
+&module docs.tutorials.simple_module.SimpleModule
+
+@0:5 write_peer_id
+@0:9 stop
