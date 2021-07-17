@@ -1,81 +1,78 @@
 #!/usr/bin/env python3
 import random
-from asyncio import ensure_future, get_event_loop
-from logging import debug, warning
+import sys
+from asyncio import get_event_loop
+from logging import debug
 from os import environ, path
-from sys import argv, path as python_path
+from sys import path as python_path
 
 from gumby.log import setupLogging
-from gumby.sync import ExperimentClientFactory, ExperimentServiceFactory
+from gumby.sync import ExperimentClientFactory
 from gumby.util import run_task
 
 
-# @CONF_OPTION SCENARIO_FILE: The scenario to run for this experiment (default: None)
-
-def main():
+def setup_environment_gumby():
     """
-    This is the main entry point for gumby experiments that run a scenario file.
-    To use it you must either:
-     - Supply a scenario file to run on the commandline (eg: launch_scenario.py some.scenario), or
-     - Set the scenario file to run in the SCENARIO_FILE environment variable.
-
-    The launch_scenario script will start the event loop and run an ExperimentClient on it.
+    Setup Gumby-related environment variables.
     """
+    environ["PROJECT_DIR"] = environ["PROJECT_DIR"] or path.abspath(path.join(path.dirname(__file__), ".."))
+    environ["OUTPUT_DIR"] = environ["OUTPUT_DIR"] or path.abspath(path.join(environ["PROJECT_DIR"], "output"))
 
-    if len(argv) > 2:
-        print("Launch invoke error, too many command line arguments. Specify 1 scenario file to run.")
-        exit(3)
-
-    if len(argv) == 2:
-        scenario_argument = path.abspath(argv[1])
-        if "SCENARIO_FILE" in environ:
-            print("Launch invoke error, can't take both a command line scenario file and an environment scenario file.")
-            exit(3)
-        else:
-            environ["SCENARIO_FILE"] = scenario_argument
-
-    # setup the environment
-    if "PROJECT_DIR" not in environ:
-        environ["PROJECT_DIR"] = path.abspath(path.join(path.dirname(__file__), ".."))
     if "EXPERIMENT_DIR" not in environ:
         if "SCENARIO_FILE" in environ:
+            # Assume that the experiment files are in the same directory as the scenario file
             environ["EXPERIMENT_DIR"] = path.abspath(path.dirname(environ["SCENARIO_FILE"]))
         else:
             environ["EXPERIMENT_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "experiments", "dummy"))
-    if "OUTPUT_DIR" not in environ:
-        environ["OUTPUT_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "output"))
-    if "TRIBLER_DIR" not in environ:
-        environ["TRIBLER_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler"))
-    if "IPV8_DIR" not in environ:
-        environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler", "src", "pyipv8"))
-    if "ANYDEX_DIR" in environ:
-        python_path.append(environ["ANYDEX_DIR"])
-    if "BAMI_DIR" in environ:
-        python_path.append(environ["BAMI_DIR"])
+
     if "SYNC_HOST" not in environ:
         # If we deploy using an SSH connection, use the IP of the host
         if "SSH_CONNECTION" in environ:
             environ["SYNC_HOST"] = environ["SSH_CONNECTION"].split(" ")[0]
         else:
             environ["SYNC_HOST"] = "localhost"
-    if "SYNC_PORT" not in environ:
-        environ['SYNC_PORT'] = "0"
-    if "SCENARIO_FILE" not in environ:
-        environ["SCENARIO_FILE"] = path.abspath(path.join(
-            environ["EXPERIMENT_DIR"], "%s.scenario" % path.basename(path.normpath(environ["EXPERIMENT_DIR"]))))
 
+    if environ["EXPERIMENT_DIR"] not in python_path:
+        python_path.append(environ["EXPERIMENT_DIR"])
+
+
+def setup_environment_other():
+    """
+    Setup environment variables related to various modules.
+    """
+    if "TRIBLER_DIR" not in environ:
+        environ["TRIBLER_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler"))
+
+    # Add the Tribler source directories to the Python path so we can import from them
     for subdir_name in ('tribler-common', 'tribler-core'):
         subdir_path = path.join(environ["TRIBLER_DIR"], 'src', subdir_name)
         if subdir_path not in python_path:
             python_path.append(subdir_path)
-    if environ["EXPERIMENT_DIR"] not in python_path:
-        python_path.append(environ["EXPERIMENT_DIR"])
+
+    if "IPV8_DIR" not in environ:
+        environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler", "src", "pyipv8"))
+    if "ANYDEX_DIR" in environ:
+        python_path.append(environ["ANYDEX_DIR"])
+    if "BAMI_DIR" in environ:
+        python_path.append(environ["BAMI_DIR"])
     if environ["IPV8_DIR"] not in python_path:
         python_path.append(environ["IPV8_DIR"])
 
+
+def main():
+    """
+    This is the main entry point for synchronized Gumby experiments (the most common way to run an experiment
+    using Gumby).
+    The launch_scenario script will start the event loop and run an ExperimentClient on it.
+    """
+    if not environ["SYNC_PORT"]:
+        print("Environment variable SYNC_PORT required.")
+        sys.exit(1)
+
+    setup_environment_gumby()
+    setup_environment_other()
+
     setupLogging()
-    if not path.exists(environ["SCENARIO_FILE"]):
-        warning("Unable to find scenario file: %s", environ["SCENARIO_FILE"])
 
     loop = get_event_loop()
     loop.exit_code = 0

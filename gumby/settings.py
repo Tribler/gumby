@@ -22,6 +22,7 @@ use_local_venv = boolean(default=True)
 virtualenv_dir = string(default="$HOME/venv")
 
 sync_experiment_start_delay = integer(default=1)
+scenario_file = string(default="")
 '''
 
 
