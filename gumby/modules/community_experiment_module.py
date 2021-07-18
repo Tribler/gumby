@@ -30,6 +30,9 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             'RandomChurn': RandomChurn
         }
 
+    def on_ipv8_available(self, ipv8):
+        pass
+
     @property
     def ipv8_provider(self):
         """
