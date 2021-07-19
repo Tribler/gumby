@@ -26,11 +26,7 @@ def setup_environment_gumby():
             environ["EXPERIMENT_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "experiments", "dummy"))
 
     if "SYNC_HOST" not in environ:
-        # If we deploy using an SSH connection, use the IP of the host
-        if "SSH_CONNECTION" in environ:
-            environ["SYNC_HOST"] = environ["SSH_CONNECTION"].split(" ")[0]
-        else:
-            environ["SYNC_HOST"] = "localhost"
+        environ["SYNC_HOST"] = "localhost"
 
     if environ["EXPERIMENT_DIR"] not in python_path:
         python_path.append(environ["EXPERIMENT_DIR"])
