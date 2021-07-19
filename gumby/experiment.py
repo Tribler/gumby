@@ -48,7 +48,7 @@ class ExperimentClient(LineReceiver):
     MAX_LENGTH = 2 ** 22
 
     def __init__(self, my_vars):
-        self._logger = logging.getLogger(self.__class__.__name__)
+        super().__init__()
 
         self.state = "id"
         self.my_id = None
