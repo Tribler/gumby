@@ -2,15 +2,16 @@ import imp
 import json
 import logging
 import os
-from asyncio import get_event_loop
-from os import chdir, environ, makedirs, path
 import sys
+from asyncio import get_event_loop
 from collections import Iterable
 from functools import reduce  # pylint: disable=redefined-builtin
+from os import chdir, environ, makedirs, path
 from time import time
+from typing import List, Optional
 
-from gumby.scenario import ScenarioRunner
 from gumby.line_receiver import LineReceiver
+from gumby.scenario import ScenarioRunner
 
 
 def experiment_callback(name=None):
@@ -125,20 +126,20 @@ class ExperimentClient(LineReceiver):
     def start_experiment(self):
         self.scenario_runner.run()
 
-    def get_peer_id(self, ip, port):
-        port = int(port)
+    def get_peer_id(self, ip, port) -> Optional[int]:
         for peer_id, peer_dict in self.all_vars.items():
-            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
-                return peer_id
+            if peer_dict['host'] == ip and peer_dict['port'] == port:
+                return int(peer_id)
 
-        self._logger.error("Could not get_peer_id for %s:%s", ip, port)
+        self._logger.error("Could not get peer ID for address %s:%s", ip, port)
+        return None
 
     def get_peer_ip_port_by_id(self, peer_id):
         if str(peer_id) in self.all_vars:
             return str(self.all_vars[str(peer_id)]['host']), self.all_vars[str(peer_id)]['port']
 
-    def get_peers(self):
-        return self.all_vars.keys()
+    def get_peers(self) -> List[int]:
+        return [int(peer_id) for peer_id in self.all_vars.keys()]
 
     #
     # Protocol state handlers
