@@ -2,11 +2,15 @@ from typing import Optional
 
 from pydantic import BaseSettings
 
+class DiscoveryConfig(BaseSettings):
+    enabled: bool = False
+
 
 class IPv8Config(BaseSettings):
     port: int = 8000
     statistics: bool = False
     bootstrap_override: Optional[str] = None
+    discovery: DiscoveryConfig = DiscoveryConfig()
 
 
 class TrustchainConfig(BaseSettings):

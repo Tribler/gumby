@@ -1,16 +1,6 @@
 #!/usr/bin/env python3
-# experiment_server.py ---
-#
-# Filename: experiment_server.py
-# Description:
-# Author: Elric Milon
-# Maintainer:
-# Created: Mon Sep  2 16:44:32 2013 (+0200)
 
-# Commentary:
-#
 # %*% Experiment metainfo and time synchronization server.
-# %*% TODO: Document this a bit more.
 #
 # It receives 3 types of commands:
 # * time:<float>  -> Tells the service the local time for the subprocess for sync reasons.
@@ -33,52 +23,21 @@
 # <- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1": {"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"}, "2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
 # <- go
 # [Connection is closed by the server]
-
-
-# Change Log:
-#
-#
-#
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 3, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth
-# Floor, Boston, MA 02110-1301, USA.
-#
-#
-
-# Code:
 import logging
 from asyncio import ensure_future, get_event_loop
 from os import environ
 
-from gumby.sync import ExperimentServiceFactory
 from gumby.log import setupLogging
+from gumby.sync import ExperimentServiceFactory
 
 
-# @CONF_OPTION SYNC_SUBSCRIBERS_AMOUNT: Number of sync clients we should wait for to be registered before starting the experiment. (default is INSTANCES_TO_RUN)
-# @CONF_OPTION SYNC_EXPERIMENT_START_DELAY: Delay the synchronized start of the experiment by this amount of seconds when giving the start signal.
-# @CONF_OPTION SYNC_EXPERIMENT_START_DELAY: The default value should be OK for a few thousand instances. (float, default 5)
 # @CONF_OPTION SYNC_PORT: Port where we should listen on. (required)
 
 if __name__ == '__main__':
     setupLogging()
-    if 'SYNC_SUBSCRIBERS_AMOUNT' in environ:
-        expected_subscribers = int(environ['SYNC_SUBSCRIBERS_AMOUNT'])
-    else:
-        expected_subscribers = int(environ['INSTANCES_TO_RUN'])
 
-    experiment_start_delay = float(environ.get('SYNC_EXPERIMENT_START_DELAY', 5))
+    expected_subscribers = int(environ['INSTANCES_TO_RUN'])
+    experiment_start_delay = float(environ['SYNC_EXPERIMENT_START_DELAY'])
     server_port = int(environ['SYNC_PORT'])
 
     loop = get_event_loop()
@@ -90,6 +49,3 @@ if __name__ == '__main__':
     loop.run_forever()
     loop.close()
     exit(loop.exit_code)
-
-#
-# experiment_server.py ends here

@@ -1,55 +1,17 @@
-#!/usr/bin/env python3
-# bartercast_client.py ---
-#
-# Filename: tunnel_module.py
-# Description:
-# Author: Rob Ruigrok
-# Maintainer:
-# Created: Wed Apr 22 11:44:23 2015 (+0200)
-
-# Commentary:
-#
-#
-#
-#
-
-# Change Log:
-#
-#
-#
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 3, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth
-# Floor, Boston, MA 02110-1301, USA.
-#
-#
-
-# Code:
 import time
 from binascii import unhexlify
-
-from gumby.experiment import experiment_callback
-from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 
 from ipv8.messaging.anonymization.community import TunnelSettings
 from ipv8.messaging.anonymization.tunnel import PEER_FLAG_EXIT_BT, PEER_FLAG_RELAY
 
-from tribler_common.simpledefs import dlstatus_strings, DOWNLOAD, UPLOAD
+from tribler_common.simpledefs import DOWNLOAD, UPLOAD, dlstatus_strings
 
-from tribler_core.utilities.unicode import hexlify
 from tribler_core.modules.tunnel.community.community import TriblerTunnelCommunity
+from tribler_core.utilities.unicode import hexlify
+
+from gumby.experiment import experiment_callback
+from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
+from gumby.modules.experiment_module import static_module
 
 
 @static_module

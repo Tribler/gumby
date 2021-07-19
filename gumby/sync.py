@@ -1,65 +1,35 @@
+"""
+Experiment metainfo and time synchronization server.
 
-# sync.py ---
-#
-# Filename: sync.py
-# Description:
-# Author: Elric Milon
-# Maintainer:
-# Created: Mon Sep  9 14:38:57 2013 (+0200)
+It receives 3 types of commands:
+* time:<float>  -> Tells the service the local time for the subprocess for sync reasons.
+* set:key:value -> Sets an arbitrary variable associated with this connection to the
+                   specified value, can be used to share arbitrary data generated at
+                   startup between nodes just before starting the experiment.
+* ready         -> Indicates that this specific instance has ending sending its info
+                   and its ready to start.
 
-# Commentary:
-#
-# Experiment metainfo and time synchronization server.
-#
-# It receives 3 types of commands:
-# * time:<float>  -> Tells the service the local time for the subprocess for sync reasons.
-# * set:key:value -> Sets an arbitrary variable associated with this connection to the
-#                    specified value, can be used to share arbitrary data generated at
-#                    startup between nodes just before starting the experiment.
-# * ready         -> Indicates that this specific instance has ending sending its info
-#                    and its ready to start.
-#
-# When the all of the instances we are waiting for are all ready, all the information will
-# be sent back to them in the form of a JSON document. After this, a "go" command will
-# be sent to indicate that they should start running the experiment with the absolute time at which the experiment should start.
-#
-# Example of an expected exchange:
-# [connection is opened by the client]
-# <- id:0
-# -> time:1378479678.11
-# -> set:asdf:ooooo
-# -> ready
-# <- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1": {"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"}, "2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
-# -> vars_received
-# <- go:1388665322.478153
-#
-# After the initial time synchronization and experiment metainfo exchange, peers can send messages to each
-# other using the synchronization server. This command looks like msg:<peer_id>:<message> where peer_id is the
-# peer to which the message should be forwarded to.
+When the all of the instances we are waiting for are all ready, all the information will
+be sent back to them in the form of a JSON document. After this, a "go" command will
+be sent to indicate that they should start running the experiment with the absolute time at which the experiment
+should start.
 
-# Change Log:
-#
-#
-#
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 3, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth
-# Floor, Boston, MA 02110-1301, USA.
-#
-#
+Example of an expected exchange:
+[connection is opened by the client]
+<- id:0
+-> time:1378479678.11
+-> set:asdf:ooooo
+-> ready
+<- {"0": {"host": "127.0.0.1", "time_offset": -0.94, "port": 12000, "asdf": "ooooo"}, "1":
+{"host": "127.0.0.1", "time_offset": "-1378479680.61", "port": 12001, "asdf": "ooooo"},
+"2": {"host": "127.0.0.1", "time_offset": "-1378479682.26", "port": 12002, "asdf": "ooooo"}}
+-> vars_received
+<- go:1388665322.478153
 
-# Code:
+After the initial time synchronization and experiment metainfo exchange, peers can send messages to each
+other using the synchronization server. This command looks like msg:<peer_id>:<message> where peer_id is the
+peer to which the message should be forwarded to.
+"""
 import json
 import logging
 from asyncio import Future, Semaphore, ensure_future, get_event_loop, sleep

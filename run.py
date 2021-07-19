@@ -1,61 +1,18 @@
 #!/usr/bin/env python3
-# run.py ---
-#
-# Filename: run.py
-# Description:
-# Author: Elric Milon
-# Maintainer:
-# Created: Wed Jun  5 14:47:19 2013 (+0200)
-
-# Commentary:
-#
-#
-#
-#
-
-# Change Log:
-#
-#
-#
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 3, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth
-# Floor, Boston, MA 02110-1301, USA.
-#
-#
-
-# Code:
-
+import argparse
 import logging
+import os
 import sys
 from asyncio import ensure_future, get_event_loop, sleep
-from os import environ, getpgid, getpid, kill, setpgrp
-from os.path import dirname, exists
 from signal import SIGKILL, SIGTERM, signal
 from time import time
 
-
-logging.basicConfig(level=getattr(logging, environ.get('GUMBY_LOG_LEVEL', 'INFO').upper()))
-logging.getLogger("asyncio").setLevel(logging.WARNING)
-
-# This conditional import is added to support older versions of psutil
-try:
-    from psutil import get_pid_list as pids
-except ImportError:
-    from psutil import pids
+import psutil
 
 from gumby.runner import ExperimentRunner
+
+logging.basicConfig(level=getattr(logging, os.environ.get('GUMBY_LOG_LEVEL', 'INFO').upper()))
+logging.getLogger("asyncio").setLevel(logging.WARNING)
 
 _terminating = False
 
@@ -70,12 +27,12 @@ def _termTrap(self, *argv):
 def _killGroup(signal=SIGTERM):
     global _terminating
     _terminating = True
-    mypid = getpid()
+    mypid = os.getpid()
     pids_found = 0
-    for pid in pids():
+    for pid in psutil.pids():
         try:
-            if getpgid(pid) == mypid and pid != mypid:
-                kill(pid, signal)
+            if os.getpgid(pid) == mypid and pid != mypid:
+                os.kill(pid, signal)
                 pids_found += 1
         except OSError:
             # The process could already be dead by the time we do the getpgid()
@@ -87,7 +44,7 @@ async def run_experiment(conf_path):
     loop = get_event_loop()
 
     # Create a process group so we can clean up after ourselves when
-    setpgrp()  # create new process group and become its leader
+    os.setpgrp()  # create new process group and become its leader
     # Catch SIGTERM to attempt to clean after ourselves
     signal(SIGTERM, _termTrap)
 
@@ -115,24 +72,23 @@ async def run_experiment(conf_path):
         logger.info("Time out waiting, sending SIGKILL to remaining processes.")
         _killGroup(SIGKILL)
 
-    logger.info("Done.")
+    logger.info("Experiment done")
     loop.stop()
 
 
 if __name__ == '__main__':
-    sys.path.append(dirname(__file__))
-    if len(sys.argv) == 2:
-        conf_path = sys.argv[1]
-        if not exists(conf_path):
-            print("Error: The specified configuration file doesn't exist.")
-            exit(1)
-        ensure_future(run_experiment(conf_path))
-        loop = get_event_loop()
-        loop.exit_code = 0
-        loop.run_forever()
-        loop.close()
-        exit(loop.exit_code)
-    print("Usage:\n%s EXPERIMENT_CONFIG" % sys.argv[0])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("confpath", help="The path to the experiment configuration file")
+    args = parser.parse_args()
 
-#
-# run.py ends here
+    if not os.path.exists(args.confpath):
+        print("Error: The specified configuration file doesn't exist.")
+        sys.exit(1)
+
+    sys.path.append(os.path.dirname(__file__))
+    ensure_future(run_experiment(args.confpath))
+    loop = get_event_loop()
+    loop.exit_code = 0
+    loop.run_forever()
+    loop.close()
+    sys.exit(loop.exit_code)

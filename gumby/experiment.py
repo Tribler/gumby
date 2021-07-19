@@ -2,15 +2,16 @@ import imp
 import json
 import logging
 import os
-from asyncio import get_event_loop
-from os import chdir, environ, makedirs, path
 import sys
+from asyncio import get_event_loop
 from collections import Iterable
 from functools import reduce  # pylint: disable=redefined-builtin
+from os import chdir, environ, makedirs, path
 from time import time
+from typing import List, Optional
 
-from gumby.scenario import ScenarioRunner
 from gumby.line_receiver import LineReceiver
+from gumby.scenario import ScenarioRunner
 
 
 def experiment_callback(name=None):
@@ -47,7 +48,7 @@ class ExperimentClient(LineReceiver):
     MAX_LENGTH = 2 ** 22
 
     def __init__(self, my_vars):
-        self._logger = logging.getLogger(self.__class__.__name__)
+        super().__init__()
 
         self.state = "id"
         self.my_id = None
@@ -125,20 +126,20 @@ class ExperimentClient(LineReceiver):
     def start_experiment(self):
         self.scenario_runner.run()
 
-    def get_peer_id(self, ip, port):
-        port = int(port)
+    def get_peer_id(self, ip, port) -> Optional[int]:
         for peer_id, peer_dict in self.all_vars.items():
-            if peer_dict['host'] == ip and int(peer_dict['port']) == port:
-                return peer_id
+            if peer_dict['host'] == ip and peer_dict['port'] == port:
+                return int(peer_id)
 
-        self._logger.error("Could not get_peer_id for %s:%s", ip, port)
+        self._logger.error("Could not get peer ID for address %s:%s", ip, port)
+        return None
 
     def get_peer_ip_port_by_id(self, peer_id):
         if str(peer_id) in self.all_vars:
             return str(self.all_vars[str(peer_id)]['host']), self.all_vars[str(peer_id)]['port']
 
-    def get_peers(self):
-        return self.all_vars.keys()
+    def get_peers(self) -> List[int]:
+        return [int(peer_id) for peer_id in self.all_vars.keys()]
 
     #
     # Protocol state handlers
@@ -149,10 +150,7 @@ class ExperimentClient(LineReceiver):
         # id:SOMETHING
         maybe_id, id = line.strip().split(b':', 1)
         if maybe_id == b"id":
-            if "PEER_ID" in os.environ:
-                self.my_id = int(os.environ["PEER_ID"])
-            else:
-                self.my_id = int(id)
+            self.my_id = int(id)
 
             self._logger.debug('Got assigned id: %s', self.my_id)
             get_event_loop().run_in_executor(None, self.on_id_received)
@@ -170,11 +168,6 @@ class ExperimentClient(LineReceiver):
         all_vars = json.loads(line)
         self.all_vars = all_vars["clients"]
         self.server_vars = all_vars["server"]
-        if "PEER_ID" in os.environ:
-            # this is a self service run, i.e. debugging a specific gumby experiment (hopefully in an IDE)
-            # and since the my_id var was explicitly set it won't match what the server sent... so let's fix that
-            self.all_vars[str(self.my_id)] = self.all_vars["0"]
-
         self.time_offset = self.all_vars[str(self.my_id)]["time_offset"]
         self.on_all_vars_received()
 

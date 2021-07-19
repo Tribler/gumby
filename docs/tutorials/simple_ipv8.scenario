@@ -1,0 +1,10 @@
+&module gumby.modules.base_ipv8_module.BaseIPv8Module
+&module docs.tutorials.ping_pong_module.PingPongModule
+
+@0:0 isolate_ipv8_overlay PingPongCommunity
+@0:1 start_session
+@0:1 annotate start-experiment
+@0:5 introduce_peers
+@0:10 send_ping {1}
+@0:15 stop_session
+@0:20 stop

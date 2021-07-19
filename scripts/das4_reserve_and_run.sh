@@ -1,42 +1,6 @@
 #!/bin/bash
-# das4_reserve_and_run.sh ---
-#
-# Filename: das4_reserve_and_run.sh
-# Description:
-# Author: Elric Milon
-# Maintainer:
-# Created: Tue Aug 27 19:27:30 2013 (+0200)
-
-# Commentary:
-#
 # %*% A simple script to run experiments on the DAS4 trough prun.
 # %*% Have in mind that this script uses das4_node_run_job.sh, so you will need to set its config options too.
-#
-
-# Change Log:
-#
-#
-#
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 3, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; see the file COPYING.  If not, write to
-# the Free Software Foundation, Inc., 51 Franklin Street, Fifth
-# Floor, Boston, MA 02110-1301, USA.
-#
-#
-
-# Code:
-
 EXIT_CODE=-15
 cancel_reservation () {
 # Cancel all our dr jobs in the queue
@@ -66,11 +30,8 @@ if [ -z "$DAS4_RESERVE_DURATION" ]; then
     let DAS4_RESERVE_DURATION=$NODE_TIMEOUT+120
 fi
 
-# @CONF_OPTION HEAD_HOST: Override the head host where the worker nodes will sync their datasets back (default is the host name where the script is executed from)
-if [ -z "$HEAD_HOST" ]; then
-    echo "HEAD_HOST is not set, using current host"
-    export HEAD_HOST=$(hostname)
-fi
+# Set the head host to the current host
+export HEAD_HOST=$(hostname)
 
 # @CONF_OPTION SYNC_HOST: Override the experiment synchronization server host to which the sync clients will try to connect to (default is HEAD_HOST)
 if [ -z "$SYNC_HOST" ]; then
@@ -79,14 +40,8 @@ if [ -z "$SYNC_HOST" ]; then
     export SYNC_HOST=$HEAD_HOST
 fi
 
-# This will be used from das4_node_run_job.sh to rsync the output data back to the head node
-if [ "$HEAD_NODES" == '[]' ]; then
-    # This means we are running the experiment locally
-    mkdir $OUTPUT_DIR/localhost
-    export OUTPUT_DIR_URI="$HEAD_HOST:$OUTPUT_DIR/localhost"
-else
-    export OUTPUT_DIR_URI="$HEAD_HOST:$OUTPUT_DIR"
-fi
+mkdir $OUTPUT_DIR/localhost
+export OUTPUT_DIR_URI="$HEAD_HOST:$OUTPUT_DIR/localhost"
 
 # We need to go back to home in order to prevent prun complaining about not being able to cwd into the directory
 WORKING_DIR=$PWD
@@ -102,6 +57,3 @@ wait $PID
 
 EXIT_CODE=$?
 cancel_reservation
-
-#
-# das4_reserve_and_run.sh ends here

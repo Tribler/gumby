@@ -5,9 +5,9 @@ import sys
 from gumby.statsparser import StatisticsParser
 
 
-class DummyStatisticsParser(StatisticsParser):
+class IDStatisticsParser(StatisticsParser):
     """
-    Simply read all the id.txt files and sum up the numbers inside them.
+    Simply read all the id.txt files created by instances and sum up the numbers inside them.
     """
 
     def aggregate_peer_ids(self):
@@ -27,5 +27,5 @@ class DummyStatisticsParser(StatisticsParser):
 # cd to the output directory
 os.chdir(os.environ['OUTPUT_DIR'])
 
-parser = DummyStatisticsParser(sys.argv[1])
+parser = IDStatisticsParser(sys.argv[1])
 parser.run()

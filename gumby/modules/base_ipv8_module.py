@@ -4,16 +4,17 @@ import time
 from asyncio import Future
 from binascii import hexlify
 
-from gumby.experiment import experiment_callback
-from gumby.gumby_client_config import GumbyConfig
-from gumby.modules.ipv8_community_launchers import DHTCommunityLauncher
-from gumby.modules.experiment_module import ExperimentModule
-from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
-from gumby.util import run_task, read_keypair_trustchain
-
+from ipv8.bootstrapping.dispersy.bootstrapper import DispersyBootstrapper
 from ipv8.configuration import get_default_configuration
 
 from ipv8_service import IPv8
+
+from gumby.experiment import experiment_callback
+from gumby.gumby_client_config import GumbyConfig
+from gumby.modules.experiment_module import ExperimentModule, static_module
+from gumby.modules.ipv8_community_launchers import DHTCommunityLauncher, IPv8DiscoveryCommunityLauncher
+from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
+from gumby.util import read_keypair_trustchain, run_task
 
 
 class GumbyMinimalSession:
@@ -26,6 +27,7 @@ class GumbyMinimalSession:
         self.trustchain_keypair = None
 
 
+@static_module
 class BaseIPv8Module(ExperimentModule):
 
     @classmethod
@@ -48,12 +50,42 @@ class BaseIPv8Module(ExperimentModule):
         self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
         self.ipv8_available = Future()
         self.ipv8 = None
+        self.bootstrappers = []
+
+    @experiment_callback
+    def write_overlay_statistics(self):
+        """
+        Write information about the IPv8 overlay networks to a file.
+        """
+        with open('overlays.txt', 'w') as overlays_file:
+            overlays_file.write("name,pub_key,peers\n")
+            for overlay in self.ipv8.overlays:
+                overlays_file.write("%s,%s,%d\n" % (overlay.__class__.__name__,
+                                                    hexlify(overlay.my_peer.public_key.key_to_bin()),
+                                                    len(overlay.get_peers())))
+
+        # Write verified peers
+        with open('verified_peers.txt', 'w') as peers_file:
+            for peer in self.ipv8.network.verified_peers:
+                peers_file.write('%d\n' % (peer.address[1] - 12000))
+
+        # Write bandwidth statistics
+        with open('bandwidth.txt', 'w') as bandwidth_file:
+            bandwidth_file.write("%d,%d" % (self.ipv8.endpoint.bytes_up,
+                                            self.ipv8.endpoint.bytes_down))
+
+    @experiment_callback
+    def set_bootstrap(self, peer_id, port):
+        bootstrap_host, _ = self.experiment.get_peer_ip_port_by_id(int(peer_id))
+        bootstrap_ip = (bootstrap_host, int(port))
+        self._logger.info("Setting bootstrap to: %s:%d", *bootstrap_ip)
+        self.bootstrappers.append(DispersyBootstrapper([bootstrap_ip], []))
 
     def write_ipv8_statistics(self):
-        if not self.session.ipv8:
+        if not self.ipv8:
             return
 
-        statistics = self.session.ipv8.endpoint.statistics
+        statistics = self.ipv8.endpoint.statistics
 
         # Cleanup this dictionary
         time_elapsed = time.time() - self.experiment.scenario_runner.exp_start_time
@@ -74,6 +106,7 @@ class BaseIPv8Module(ExperimentModule):
     def create_ipv8_community_loader(self):
         loader = IsolatedIPv8CommunityLoader(self.session_id)
         loader.set_launcher(DHTCommunityLauncher())
+        loader.set_launcher(IPv8DiscoveryCommunityLauncher())
         return loader
 
     @experiment_callback
@@ -92,8 +125,18 @@ class BaseIPv8Module(ExperimentModule):
 
         # Load overlays
         self.custom_ipv8_community_loader.load(self.ipv8, self.session)
+
+        # Set bootstrap servers if specified
+        if self.bootstrappers:
+            for overlay in self.ipv8.overlays:
+                overlay.bootstrappers = self.bootstrappers
+
         await self.ipv8.start()
         self.ipv8_available.set_result(self.ipv8)
+
+        if self.tribler_config.ipv8.statistics:
+            for overlay in self.ipv8.overlays:
+                self.ipv8.endpoint.enable_community_statistics(overlay.get_prefix(), True)
 
     @experiment_callback
     async def stop_session(self):

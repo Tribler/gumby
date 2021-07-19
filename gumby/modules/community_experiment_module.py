@@ -1,17 +1,15 @@
-from base64 import b64encode, b64decode
-from os import environ
+from base64 import b64decode, b64encode
 from random import sample
-from socket import gethostbyname
 from typing import Optional
-
-from gumby.experiment import experiment_callback
-from gumby.modules.experiment_module import ExperimentModule
-from gumby.util import generate_keypair_trustchain, save_keypair_trustchain, save_pub_key_trustchain
 
 from ipv8.loader import CommunityLauncher
 from ipv8.peer import Peer
 from ipv8.peerdiscovery.churn import RandomChurn
 from ipv8.peerdiscovery.discovery import EdgeWalk, RandomWalk
+
+from gumby.experiment import experiment_callback
+from gumby.modules.experiment_module import ExperimentModule
+from gumby.util import generate_keypair_trustchain, save_keypair_trustchain, save_pub_key_trustchain
 
 
 class IPv8OverlayExperimentModule(ExperimentModule):
@@ -31,6 +29,9 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             'EdgeWalk': EdgeWalk,
             'RandomChurn': RandomChurn
         }
+
+    def on_ipv8_available(self, ipv8):
+        pass
 
     @property
     def ipv8_provider(self):
@@ -162,13 +163,3 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         save_pub_key_trustchain(keypair, "%s.pub" % self.tribler_config.trustchain.ec_keypair_filename)
 
         self.vars['public_key'] = b64encode(keypair.pub().key_to_bin()).decode('utf-8')
-
-    def on_ipv8_available(self, ipv8):
-        # The IPv8 object is now available. This means that the tribler_config has been copy constructed into the
-        # session object. Using the tribler_config object after this is useless. The community is also guaranteed to be
-        # available.
-        base_tracker_port = int(environ['TRACKER_PORT'])
-        port_range = range(base_tracker_port, base_tracker_port + 4)
-        head_host = gethostbyname(environ['HEAD_HOST']) if 'HEAD_HOST' in environ else "127.0.0.1"
-        for port in port_range:
-            self.overlay.network.blacklist.append((head_host, port))

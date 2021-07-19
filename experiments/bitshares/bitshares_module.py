@@ -3,16 +3,15 @@ import os
 import random
 import shutil
 import subprocess
-from asyncio import get_event_loop
-
 import time
+from asyncio import get_event_loop
 from threading import Thread
 
 from grapheneapi.grapheneapi import GrapheneAPI
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule, static_module
 from gumby.util import run_task
 
 
@@ -179,8 +178,8 @@ class BitsharesModule(BlockchainModule):
     def transfer_asset_to_all_peers(self, asset_name):
         for peer_id in self.experiment.get_peers():
             response = self.wallet_rpc.transfer(
-                "nathan", "user%d" % (int(peer_id) - 1), 100000, asset_name, "transferral", True)
-            print("Transferred %s assets to peer %d, response: %s" % (asset_name, int(peer_id), response))
+                "nathan", "user%d" % (peer_id - 1), 100000, asset_name, "transferral", True)
+            print("Transferred %s assets to peer %d, response: %s" % (asset_name, peer_id, response))
 
     def post_order(self, order_type, spend_asset_name, receive_asset_name, price, amount):
         if order_type == "bid":
