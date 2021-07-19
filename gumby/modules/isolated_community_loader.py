@@ -52,7 +52,7 @@ class IsolatedIPv8LauncherWrapper(CommunityLauncher):
         private_bin = b"".join([unique_id[i:i+1] if i < len(unique_id) else b"0" for i in range(68)])
         eckey = eccrypto.key_from_private_bin(b"LibNaCLSK:" + private_bin)
         master_peer = Peer(eckey.pub().key_to_bin())
-        overlay.master_peer = master_peer
+        overlay.community_id = master_peer.mid
 
         self.child.finalize(ipv8, session, overlay)
 

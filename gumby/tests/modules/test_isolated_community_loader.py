@@ -3,7 +3,7 @@ import unittest
 from ipv8.loader import CommunityLauncher
 
 from gumby.modules.isolated_community_loader import IsolatedIPv8LauncherWrapper
-from gumby.tests.mocking import MockIPv8, MockSession, MockOverlay
+from gumby.tests.mocking import MockIPv8, MockOverlay, MockSession
 
 
 class MockUniqueLauncher1(CommunityLauncher):
@@ -48,7 +48,7 @@ class TestIsolatedLauncherWrapper(unittest.TestCase):
         wrapper2 = IsolatedIPv8LauncherWrapper(MockUniqueLauncher1(), self.session_id)
         wrapper2.finalize(self.ipv8, MockSession(), overlay2)
 
-        self.assertEqual(overlay1.master_peer, overlay2.master_peer)
+        self.assertEqual(overlay1.community_id, overlay2.community_id)
 
     def test_unique_id_same_name(self):
         """
@@ -62,7 +62,7 @@ class TestIsolatedLauncherWrapper(unittest.TestCase):
         wrapper2 = IsolatedIPv8LauncherWrapper(MockUniqueLauncher1(), "definitely something else")
         wrapper2.finalize(self.ipv8, MockSession(), overlay2)
 
-        self.assertNotEqual(overlay1.master_peer, overlay2.master_peer)
+        self.assertNotEqual(overlay1.community_id, overlay2.community_id)
 
     def test_same_id_unique_name(self):
         """
@@ -76,7 +76,7 @@ class TestIsolatedLauncherWrapper(unittest.TestCase):
         wrapper2 = IsolatedIPv8LauncherWrapper(MockUniqueLauncher2(), self.session_id)
         wrapper2.finalize(self.ipv8, MockSession(), overlay2)
 
-        self.assertNotEqual(overlay1.master_peer, overlay2.master_peer)
+        self.assertNotEqual(overlay1.community_id, overlay2.community_id)
 
     def test_unique_id_unique_name(self):
         """
@@ -90,4 +90,4 @@ class TestIsolatedLauncherWrapper(unittest.TestCase):
         wrapper2 = IsolatedIPv8LauncherWrapper(MockUniqueLauncher2(), "definitely something else")
         wrapper2.finalize(self.ipv8, MockSession(), overlay2)
 
-        self.assertNotEqual(overlay1.master_peer, overlay2.master_peer)
+        self.assertNotEqual(overlay1.community_id, overlay2.community_id)
