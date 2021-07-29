@@ -15,8 +15,8 @@ def setup_environment_gumby():
     """
     Setup Gumby-related environment variables.
     """
-    environ["PROJECT_DIR"] = environ["PROJECT_DIR"] or path.abspath(path.join(path.dirname(__file__), ".."))
-    environ["OUTPUT_DIR"] = environ["OUTPUT_DIR"] or path.abspath(path.join(environ["PROJECT_DIR"], "output"))
+    environ["PROJECT_DIR"] = environ.get("PROJECT_DIR", None) or path.abspath(path.join(path.dirname(__file__), ".."))
+    environ["OUTPUT_DIR"] = environ.get("OUTPUT_DIR", None) or path.abspath(path.join(environ["PROJECT_DIR"], "output"))
 
     if "EXPERIMENT_DIR" not in environ:
         if "SCENARIO_FILE" in environ:
@@ -26,7 +26,10 @@ def setup_environment_gumby():
             environ["EXPERIMENT_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "experiments", "dummy"))
 
     if "SYNC_HOST" not in environ:
-        environ["SYNC_HOST"] = "localhost"
+        if "SSH_CONNECTION" in environ:
+            environ["SYNC_HOST"] = environ["SSH_CONNECTION"].split(" ")[0]
+        else:
+            environ["SYNC_HOST"] = "localhost"
 
     if environ["EXPERIMENT_DIR"] not in python_path:
         python_path.append(environ["EXPERIMENT_DIR"])

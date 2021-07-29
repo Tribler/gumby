@@ -83,6 +83,8 @@ This synchronization process is coordinated by Gumby automatically.
 Recall that, in contrast to the previous experiment, we do not set the ``experiment_server_cmd`` configuration option
 to blank.
 This ensures that Gumby will spawn a synchronization server.
+The ``sync_host`` option specifies the IP address or host name of the machine running the synchronization server.
+In this experiment we set it to localhost.
 The ``sync_port`` option in the configuration file specifies the port of the synchronization server, and indicates to
 which port the spawned clients should connect. A value of ``__unique_port__`` indicates that Gumby will pick a random
 free port on runtime.
