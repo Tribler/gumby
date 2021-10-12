@@ -80,7 +80,7 @@ class TriblerModule(BaseIPv8Module):
         config.ipv8.bootstrap_override = "0.0.0.0:0"
         config.trustchain.ec_keypair_filename = os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id))
         config.torrent_checking.enabled = False
-        config.ipv8.discovery.enabled = False
+        config.discovery_community.enabled = False
         config.chant.enabled = False
         config.libtorrent.enabled = False
         config.api.http_enabled = False
