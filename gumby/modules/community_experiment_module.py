@@ -51,7 +51,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             return provider
 
         raise Exception("No IPv8 provider module loaded. Load an implementation of BaseIPv8Module ("
-                        "with has_ipv8 = True) before loading the %s module", self.__class__.__name__)
+                        "with has_ipv8 = True) before loading the %s module" % self.__class__.__name__)
 
     @property
     def ipv8(self):
