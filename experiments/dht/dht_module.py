@@ -54,7 +54,7 @@ class DHTModule(IPv8OverlayExperimentModule):
             await coro
             self.write_to_log('dht.log', '%d %s %.3f\n', ts, op, time.time() - self.start_time - ts)
         except DHTError:
-            self.write_to_log('dht.log', '%d %s -1', ts, op)
+            self.write_to_log('dht.log', '%d %s -1\n', ts, op)
 
     def write_to_log(self, fn, string, *values):
         with open(fn, 'a') as fp:
