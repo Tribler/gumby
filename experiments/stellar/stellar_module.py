@@ -18,10 +18,8 @@ from stellar_sdk.exceptions import NotFoundError
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module
 
 
-@static_module
 class StellarModule(BlockchainModule):
 
     def __init__(self, experiment):

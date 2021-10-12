@@ -17,7 +17,6 @@ from tribler_core.utilities.unicode import hexlify
 from gumby.experiment import experiment_callback
 from gumby.gumby_tribler_config import GumbyTriblerConfig
 from gumby.modules.base_ipv8_module import BaseIPv8Module
-from gumby.modules.experiment_module import static_module
 from gumby.modules.gumby_session import GumbyTriblerSession
 from gumby.modules.ipv8_community_launchers import DHTCommunityLauncher
 from gumby.modules.tribler_community_launchers import BandwidthCommunityLauncher, GigaChannelCommunityLauncher, \
@@ -25,7 +24,6 @@ from gumby.modules.tribler_community_launchers import BandwidthCommunityLauncher
 from gumby.util import run_task
 
 
-@static_module
 class TriblerModule(BaseIPv8Module):
 
     def __init__(self, experiment):

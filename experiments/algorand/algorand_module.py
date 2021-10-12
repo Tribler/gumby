@@ -18,10 +18,9 @@ from algosdk.wallet import Wallet
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule
 
 
-@static_module
 class AlgorandModule(BlockchainModule):
 
     def __init__(self, experiment):

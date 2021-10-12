@@ -8,7 +8,6 @@ from ipv8.types import Peer
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 from gumby.modules.ipv8_community_launchers import IPv8CommunityLauncher
 
 
@@ -54,7 +53,6 @@ class PingPongCommunityLauncher(IPv8CommunityLauncher):
 
 
 # ---- module ---- #
-@static_module
 class PingPongModule(IPv8OverlayExperimentModule):
     """
     This module contains code to manage experiments with the Basalt community.

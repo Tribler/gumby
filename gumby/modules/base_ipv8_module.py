@@ -11,7 +11,7 @@ from ipv8_service import IPv8
 
 from gumby.experiment import experiment_callback
 from gumby.gumby_client_config import GumbyConfig
-from gumby.modules.experiment_module import ExperimentModule, static_module
+from gumby.modules.experiment_module import ExperimentModule
 from gumby.modules.ipv8_community_launchers import DHTCommunityLauncher, IPv8DiscoveryCommunityLauncher
 from gumby.modules.isolated_community_loader import IsolatedIPv8CommunityLoader
 from gumby.util import read_keypair_trustchain, run_task
@@ -27,7 +27,6 @@ class GumbyMinimalSession:
         self.trustchain_keypair = None
 
 
-@static_module
 class BaseIPv8Module(ExperimentModule):
 
     @classmethod

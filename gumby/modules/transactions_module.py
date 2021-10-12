@@ -2,11 +2,10 @@ import os
 import time
 
 from gumby.experiment import experiment_callback
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import run_task
 
 
-@static_module
 class TransactionsModule(ExperimentModule):
 
     def __init__(self, experiment):

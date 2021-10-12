@@ -1,8 +1,7 @@
 from gumby.experiment import experiment_callback
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule
 
 
-@static_module
 class SimpleModule(ExperimentModule):
     """
     A very simple experiment module that has a single callback.

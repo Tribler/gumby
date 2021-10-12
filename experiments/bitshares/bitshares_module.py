@@ -11,11 +11,10 @@ from grapheneapi.grapheneapi import GrapheneAPI
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import ExperimentModule, static_module
+from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import run_task
 
 
-@static_module
 class BitsharesModule(BlockchainModule):
 
     def __init__(self, experiment):

@@ -11,7 +11,6 @@ from pony.orm import db_session, count
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 from gumby.util import run_task
 
 
@@ -46,7 +45,6 @@ class FakeDHTHealthManager(TaskManager):
         return future
 
 
-@static_module
 class PopularityModule(IPv8OverlayExperimentModule):
     """
     This module contains code to manage experiments with the popularity community.

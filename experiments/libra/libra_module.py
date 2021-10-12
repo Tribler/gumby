@@ -12,14 +12,13 @@ from ruamel.yaml import YAML
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import run_task
 
 
 MAX_MINT = 10 ** 19  # 10 trillion libras
 
 
-@static_module
 class LibraModule(BlockchainModule):
 
     def __init__(self, experiment):

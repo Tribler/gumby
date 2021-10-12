@@ -6,10 +6,8 @@ from ipv8.dht.discovery import DHTDiscoveryCommunity
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 
 
-@static_module
 class DHTModule(IPv8OverlayExperimentModule):
     """
     This module contains code to manage experiments with the DHT community.

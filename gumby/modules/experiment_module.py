@@ -17,10 +17,6 @@ class ExperimentModule(object):
         self.experiment.register(self)
         self.has_ipv8 = False  # Whether this module provides an instance of IPv8
 
-    @classmethod
-    def on_module_load(cls, experiment):
-        pass
-
     def print_dict_changes(self, name, prev_dict, cur_dict):
         return self.experiment.print_dict_changes(name, prev_dict, cur_dict)
 
@@ -98,19 +94,3 @@ class ExperimentModule(object):
                     total_size += os.path.getsize(fp)
 
         return total_size
-
-
-def static_module(cls):
-    """
-    Experiment module classes that have this decorator applied will have a singleton instance created when the module
-    class is loaded by a scenario file.
-    """
-
-    original_on_module_load = cls.on_module_load
-
-    def alt_on_module_load(_, experiment):
-        original_on_module_load(experiment)
-        cls._the_instance = cls(experiment)
-
-    cls.on_module_load = alt_on_module_load.__get__(cls, cls)
-    return cls

@@ -12,12 +12,10 @@ from anydex.wallet.tc_wallet import TrustchainWallet
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 
 from ipv8.peer import Peer
 
 
-@static_module
 class MarketModule(IPv8OverlayExperimentModule):
     """
     This module contains code to manage experiments with the market community.

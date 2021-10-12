@@ -3,12 +3,11 @@ import string
 import time
 
 from experiments.ethereum.ethereum_module import EthereumModule
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule
 
 from web3 import Web3
 
 
-@static_module
 class ERC20Module(ExperimentModule):
 
     def __init__(self, experiment):

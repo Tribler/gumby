@@ -2,12 +2,11 @@ import time
 
 from experiments.ethereum.ethereum_module import EthereumModule
 from gumby.experiment import experiment_callback
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule
 
 from web3 import Web3
 
 
-@static_module
 class TaxiModule(ExperimentModule):
 
     def __init__(self, experiment):

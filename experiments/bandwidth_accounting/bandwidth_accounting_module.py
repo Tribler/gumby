@@ -4,11 +4,9 @@ from tribler_core.modules.bandwidth_accounting.community import BandwidthAccount
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 from gumby.util import run_task
 
 
-@static_module
 class BandwidthAccountingModule(IPv8OverlayExperimentModule):
     def __init__(self, experiment):
         super().__init__(experiment, BandwidthAccountingCommunity)
