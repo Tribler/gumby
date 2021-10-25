@@ -56,7 +56,7 @@ fi
 
 export PATH=$HOME/python3/bin:$PATH
 
-python -v
+python3 -v
 
 if [ ! -e $VENV/bin/python ]; then
     PYTHON_BIN=$HOME/python3/bin
