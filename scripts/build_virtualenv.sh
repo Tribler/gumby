@@ -284,6 +284,7 @@ service_identity
 aiohttp
 aiohttp_apispec
 yappi
+orjson
 " > ~/requirements.txt
 
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade -r ~/requirements.txt
