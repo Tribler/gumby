@@ -83,7 +83,7 @@ if [ ! -e $VENV/lib/libboost_system.so -o ! -e $BOOST_MARKER ]; then
         wget https://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION/$BOOST_TAR
     fi
     if [ ! -d $BOOST_SRC ]; then
-        tar -xzvf $BOOST_TAR
+        tar -xzf $BOOST_TAR
     fi
     pushd $BOOST_SRC
     ./bootstrap.sh
