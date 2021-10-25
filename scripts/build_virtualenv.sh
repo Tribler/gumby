@@ -297,8 +297,6 @@ pycompile.py $VENV
 
 deactivate
 
-virtualenv --relocatable $VENV
-
 touch $VENV/.completed.$SCRIPT_VERSION
 
 # Clear some space
