@@ -62,7 +62,7 @@ if [ ! -e $VENV/bin/python ]; then
     PYTHON_BIN=$HOME/python3/bin
     python3 -m venv --system-site-packages --clear $VENV
 
-    $VENV/bin/easy_install --upgrade pip
+    $VENV/bin/pip install pip --upgrade
 fi
 
 mkdir -p $VENV/src
@@ -252,8 +252,6 @@ fi
 # export PKG_CONFIG_PATH to find libffi and libsodium
 export PKG_CONFIG_PATH=$VENV/lib/pkgconfig:$PKG_CONFIG_PATH
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
-
-easy_install pip
 
 # CFFI needs to be installed before pynacl or pip will find the older system version and faild to build it...
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade cffi
