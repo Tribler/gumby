@@ -3,21 +3,19 @@ import os
 import random
 from base64 import b64decode
 
-from anydex.core.community import MarketCommunity
 from anydex.core.assetamount import AssetAmount
 from anydex.core.assetpair import AssetPair
+from anydex.core.community import MarketCommunity
 from anydex.core.message import TraderId
 from anydex.wallet.dummy_wallet import DummyWallet1, DummyWallet2
 from anydex.wallet.tc_wallet import TrustchainWallet
 
-from gumby.experiment import experiment_callback
-from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
-
 from ipv8.peer import Peer
 
+from gumby.experiment import experiment_callback
+from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 
-@static_module
+
 class MarketModule(IPv8OverlayExperimentModule):
     """
     This module contains code to manage experiments with the market community.

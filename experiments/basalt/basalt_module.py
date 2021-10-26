@@ -1,12 +1,9 @@
-from gumby.experiment import experiment_callback
-from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
-
-
 from bami.basalt.community import BasaltCommunity
 
+from gumby.experiment import experiment_callback
+from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 
-@static_module
+
 class BasaltModule(IPv8OverlayExperimentModule):
     """
     This module contains code to manage experiments with the Basalt community.

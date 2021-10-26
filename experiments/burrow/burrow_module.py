@@ -10,19 +10,17 @@ from asyncio import get_event_loop
 from binascii import hexlify, unhexlify
 from threading import Thread
 
-import toml
-
 from solcx import compile_files, set_solc_version
+
+import toml
 
 from web3 import Web3
 from web3.exceptions import TimeExhausted
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module
 
 
-@static_module
 class BurrowModule(BlockchainModule):
 
     def __init__(self, experiment):

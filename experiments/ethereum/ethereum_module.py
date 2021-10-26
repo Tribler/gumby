@@ -4,9 +4,8 @@ import random
 import shutil
 import subprocess
 import time
-from asyncio import get_event_loop, sleep, ensure_future
+from asyncio import ensure_future, get_event_loop, sleep
 from binascii import hexlify, unhexlify
-
 from shutil import copyfile
 
 import requests
@@ -17,11 +16,10 @@ from web3 import Web3
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import run_task
 
 
-@static_module
 class EthereumModule(BlockchainModule):
 
     def __init__(self, experiment):

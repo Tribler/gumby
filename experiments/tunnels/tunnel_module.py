@@ -11,10 +11,8 @@ from tribler_core.utilities.unicode import hexlify
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 
 
-@static_module
 class TunnelModule(IPv8OverlayExperimentModule):
 
     def __init__(self, experiment):

@@ -4,10 +4,9 @@ import subprocess
 import ipv8
 
 from gumby.experiment import experiment_callback
-from gumby.modules.experiment_module import ExperimentModule, static_module
+from gumby.modules.experiment_module import ExperimentModule
 
 
-@static_module
 class TrackerModule(ExperimentModule):
     """
     This module contains code to manage the discovery community in IPv8.

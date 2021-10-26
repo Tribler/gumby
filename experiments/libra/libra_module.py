@@ -2,24 +2,23 @@ import json
 import os
 import subprocess
 import time
-from asyncio import sleep, get_event_loop
+from asyncio import get_event_loop, sleep
 
 import aiohttp
 
-from diem import LocalAccount, jsonrpc, stdlib, utils, testnet, diem_types, chain_ids
+from diem import LocalAccount, chain_ids, diem_types, jsonrpc, stdlib, testnet, utils
 
 from ruamel.yaml import YAML
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import run_task
 
 
 MAX_MINT = 10 ** 19  # 10 trillion libras
 
 
-@static_module
 class LibraModule(BlockchainModule):
 
     def __init__(self, experiment):

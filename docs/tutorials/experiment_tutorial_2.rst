@@ -60,9 +60,8 @@ following content:
 
 .. literalinclude:: simple_module.py
 
-This file contains the definition of the ``SimpleModule`` class. Note that this class is annotated with a
-``@static_module`` annotation, signaling to Gumby that this class is an experiment module. This decorator is required
-to correctly import module logic in a scenario file. The class contains a single method, namely ``write_peer_id``.
+This file contains the definition of the ``SimpleModule`` class.
+The class contains a single method, namely ``write_peer_id``.
 This method simply writes the ID of the peer to a file named ``id.txt``.
 Note that the name of this method corresponds to the event specified in our scenario file, and this method is invoked
 when the event fires. The method is annotated with a ``experiment_callback`` decorator. This is required to correctly

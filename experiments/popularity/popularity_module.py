@@ -4,14 +4,15 @@ import random
 from asyncio import Future
 from binascii import hexlify, unhexlify
 
-from tribler_core.modules.popularity.popularity_community import PopularityCommunity
-from tribler_core.modules.metadata_store.orm_bindings.channel_node import NEW
 from ipv8.taskmanager import TaskManager
-from pony.orm import db_session, count
+
+from pony.orm import count, db_session
+
+from tribler_core.modules.metadata_store.orm_bindings.channel_node import NEW
+from tribler_core.modules.popularity.popularity_community import PopularityCommunity
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 from gumby.util import run_task
 
 
@@ -46,7 +47,6 @@ class FakeDHTHealthManager(TaskManager):
         return future
 
 
-@static_module
 class PopularityModule(IPv8OverlayExperimentModule):
     """
     This module contains code to manage experiments with the popularity community.

@@ -42,12 +42,12 @@ if [ -e $VENV/.completed.$SCRIPT_VERSION ]; then
     exit
 fi
 
-# If we compile for Python 3, we want to install a newer version since the version on the DAS5 is outdated.
+# If we compile for Python 3, we want to install a newer version since the version on the DAS6 is outdated.
 if [ ! -e ~/python3/bin/python3 ]; then
     pushd $HOME
-    wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tgz
-    tar -xzvf Python-3.7.3.tgz
-    pushd Python-3.7.3
+    wget https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tgz
+    tar -xzvf Python-3.9.7.tgz
+    pushd Python-3.9.7
     ./configure --prefix=$PWD/../python3
     make install -j24
     popd
@@ -56,13 +56,13 @@ fi
 
 export PATH=$HOME/python3/bin:$PATH
 
-python -v
+python3 -v
 
 if [ ! -e $VENV/bin/python ]; then
     PYTHON_BIN=$HOME/python3/bin
     python3 -m venv --system-site-packages --clear $VENV
 
-    $VENV/bin/easy_install --upgrade pip
+    $VENV/bin/pip install pip --upgrade
 fi
 
 mkdir -p $VENV/src
@@ -83,11 +83,11 @@ if [ ! -e $VENV/lib/libboost_system.so -o ! -e $BOOST_MARKER ]; then
         wget https://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION/$BOOST_TAR
     fi
     if [ ! -d $BOOST_SRC ]; then
-        tar -xzvf $BOOST_TAR
+        tar -xzf $BOOST_TAR
     fi
     pushd $BOOST_SRC
     ./bootstrap.sh
-    export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:$HOME/python3/include/python3.7m"
+    export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:$HOME/python3/include/python3.9"
     ./b2 variant=debug -j24 --prefix=$VENV install
     rm -rf bin.v2
     popd
@@ -115,7 +115,7 @@ if [ ! -e $VENV/lib/python*/site-packages/libtorrent*.so  -o ! -e $LIBTORRENT_MA
     pushd $LIBTORRENT_SRC
 
     # The configuration of libtorrent highly depends on whether we are using Python 2 or Python 3
-    PYTHON=$VENV/bin/python CPPFLAGS="-I$VENV/include" LDFLAGS="-L$VENV/lib" ./configure PYTHON_LDFLAGS="-lpython3.7m -lpthread -ldl -lutil -lm" --enable-python-binding --with-boost-python=boost_python37 --with-boost-libdir=$VENV/lib --with-boost=$VENV --prefix=$VENV
+    PYTHON=$VENV/bin/python CPPFLAGS="-I$VENV/include" LDFLAGS="-L$VENV/lib" ./configure PYTHON_LDFLAGS="-lpython3.9 -lpthread -ldl -lutil -lm" --enable-python-binding --with-boost-python=boost_python37 --with-boost-libdir=$VENV/lib --with-boost=$VENV --prefix=$VENV
 
     make -j24
     make install
@@ -253,8 +253,6 @@ fi
 export PKG_CONFIG_PATH=$VENV/lib/pkgconfig:$PKG_CONFIG_PATH
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
 
-easy_install pip
-
 # CFFI needs to be installed before pynacl or pip will find the older system version and faild to build it...
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade cffi
 
@@ -286,6 +284,7 @@ service_identity
 aiohttp
 aiohttp_apispec
 yappi
+orjson
 " > ~/requirements.txt
 
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade -r ~/requirements.txt
@@ -298,8 +297,6 @@ find $VENV -iname *.py[oc] -delete
 pycompile.py $VENV
 
 deactivate
-
-virtualenv --relocatable $VENV
 
 touch $VENV/.completed.$SCRIPT_VERSION
 

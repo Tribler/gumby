@@ -4,10 +4,9 @@ This module provides profiling utilities during experiments. For now, we only su
 import yappi
 
 from gumby.experiment import experiment_callback
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule
 
 
-@static_module
 class ProfileModule(ExperimentModule):
 
     @experiment_callback

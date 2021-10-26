@@ -2,26 +2,22 @@ import os
 import random
 import shlex
 import shutil
-
-from asyncio import get_event_loop, sleep
-from threading import Thread
-import requests
 import subprocess
 import time
-
+from asyncio import get_event_loop, sleep
+from datetime import datetime
+from threading import Thread
 from urllib.parse import quote_plus
 
-from datetime import datetime
+import requests
 
-from stellar_sdk import Keypair, TransactionBuilder, AiohttpClient, Server, Account, TransactionEnvelope
+from stellar_sdk import Account, AiohttpClient, Keypair, Server, TransactionBuilder, TransactionEnvelope
 from stellar_sdk.exceptions import NotFoundError
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
-from gumby.modules.experiment_module import static_module
 
 
-@static_module
 class StellarModule(BlockchainModule):
 
     def __init__(self, experiment):

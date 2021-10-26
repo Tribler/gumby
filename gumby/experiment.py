@@ -1,6 +1,5 @@
 import imp
 import json
-import logging
 import os
 import sys
 from asyncio import get_event_loop
@@ -11,6 +10,7 @@ from time import time
 from typing import List, Optional
 
 from gumby.line_receiver import LineReceiver
+from gumby.modules.experiment_module import ExperimentModule
 from gumby.scenario import ScenarioRunner
 
 
@@ -448,8 +448,8 @@ class ExperimentClient(LineReceiver):
         &module gumby.module.tribler_module
         Will attempt to find gumby.module.tribler_module on the python path and import everything from it
 
-        The import is scanned for subclasses of ExperimentModule. Any such class that is not loaded yet will have its
-        on_module_load class method invoked if it exists.
+        The import is scanned for subclasses of ExperimentModule. Any such class that is not loaded yet will be
+        instantiated.
 
         :param filename: The file where the preprocessor directive was invoked
         :param line_number: The line number where the preprocessor directive was invoked
@@ -460,6 +460,10 @@ class ExperimentClient(LineReceiver):
         # If something has not been loaded previously.
         if stuff not in self.loaded_experiment_module_classes:
             self.loaded_experiment_module_classes.append(stuff)
-            self._logger.info("Loaded module: %s", line)
-            if hasattr(stuff, "on_module_load") and callable(stuff.on_module_load):
-                stuff.on_module_load(self)
+            self._logger.info("Loading module: %s", line)
+
+            if isinstance(stuff, type) and issubclass(stuff, ExperimentModule) and stuff is not ExperimentModule:
+                stuff(self)
+                self._logger.info("Loadded module: %s", line)
+            else:
+                self._logger.error('ExperimentModule subclass expected in %s:%d. Got: %s', filename, line_number, line)

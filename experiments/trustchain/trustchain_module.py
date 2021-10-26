@@ -9,7 +9,6 @@ from anydex.trustchain.listener import BlockListener
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 from gumby.util import run_task
 
 
@@ -49,7 +48,6 @@ class GeneratedBlockListener(BlockListener):
             writer.writerow({"time": time() - self.start_time, 'transaction': str(block.transaction)})
 
 
-@static_module
 class TrustchainModule(IPv8OverlayExperimentModule):
     def __init__(self, experiment):
         super(TrustchainModule, self).__init__(experiment, TrustChainCommunity)

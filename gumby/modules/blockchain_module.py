@@ -2,11 +2,10 @@ import os
 
 import psutil
 
-from gumby.modules.experiment_module import static_module, ExperimentModule
+from gumby.modules.experiment_module import ExperimentModule
 from gumby.modules.transactions_module import TransactionsModule
 
 
-@static_module
 class BlockchainModule(ExperimentModule):
 
     def __init__(self, experiment):

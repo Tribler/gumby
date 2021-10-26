@@ -1,15 +1,14 @@
 from pony.orm import db_session
 
 from tribler_common.simpledefs import DLSTATUS_SEEDING
+
 from tribler_core.modules.metadata_store.community.gigachannel_community import GigaChannelCommunity
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-from gumby.modules.experiment_module import static_module
 from gumby.util import run_task
 
 
-@static_module
 class GigaChannelModule(IPv8OverlayExperimentModule):
     """
     This module contains code to manage experiments with the channels2 community.
