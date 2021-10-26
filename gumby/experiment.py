@@ -1,6 +1,5 @@
 import imp
 import json
-import logging
 import os
 import sys
 from asyncio import get_event_loop
@@ -11,8 +10,8 @@ from time import time
 from typing import List, Optional
 
 from gumby.line_receiver import LineReceiver
-from gumby.scenario import ScenarioRunner
 from gumby.modules.experiment_module import ExperimentModule
+from gumby.scenario import ScenarioRunner
 
 
 def experiment_callback(name=None):

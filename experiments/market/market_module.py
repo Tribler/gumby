@@ -3,17 +3,17 @@ import os
 import random
 from base64 import b64decode
 
-from anydex.core.community import MarketCommunity
 from anydex.core.assetamount import AssetAmount
 from anydex.core.assetpair import AssetPair
+from anydex.core.community import MarketCommunity
 from anydex.core.message import TraderId
 from anydex.wallet.dummy_wallet import DummyWallet1, DummyWallet2
 from anydex.wallet.tc_wallet import TrustchainWallet
 
+from ipv8.peer import Peer
+
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-
-from ipv8.peer import Peer
 
 
 class MarketModule(IPv8OverlayExperimentModule):

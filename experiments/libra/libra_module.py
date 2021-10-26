@@ -2,11 +2,11 @@ import json
 import os
 import subprocess
 import time
-from asyncio import sleep, get_event_loop
+from asyncio import get_event_loop, sleep
 
 import aiohttp
 
-from diem import LocalAccount, jsonrpc, stdlib, utils, testnet, diem_types, chain_ids
+from diem import LocalAccount, chain_ids, diem_types, jsonrpc, stdlib, testnet, utils
 
 from ruamel.yaml import YAML
 

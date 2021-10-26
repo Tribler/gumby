@@ -4,10 +4,12 @@ import random
 from asyncio import Future
 from binascii import hexlify, unhexlify
 
-from tribler_core.modules.popularity.popularity_community import PopularityCommunity
-from tribler_core.modules.metadata_store.orm_bindings.channel_node import NEW
 from ipv8.taskmanager import TaskManager
-from pony.orm import db_session, count
+
+from pony.orm import count, db_session
+
+from tribler_core.modules.metadata_store.orm_bindings.channel_node import NEW
+from tribler_core.modules.popularity.popularity_community import PopularityCommunity
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule

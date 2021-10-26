@@ -1,7 +1,8 @@
-from experiments.tunnels.tunnel_module import TunnelModule
-from gumby.experiment import experiment_callback
-
 from tribler_core.utilities.unicode import hexlify
+
+from experiments.tunnels.tunnel_module import TunnelModule
+
+from gumby.experiment import experiment_callback
 
 
 class HiddenTunnelModule(TunnelModule):

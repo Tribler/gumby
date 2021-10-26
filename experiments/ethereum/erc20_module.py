@@ -2,10 +2,11 @@ import random
 import string
 import time
 
-from experiments.ethereum.ethereum_module import EthereumModule
-from gumby.modules.experiment_module import ExperimentModule
-
 from web3 import Web3
+
+from experiments.ethereum.ethereum_module import EthereumModule
+
+from gumby.modules.experiment_module import ExperimentModule
 
 
 class ERC20Module(ExperimentModule):

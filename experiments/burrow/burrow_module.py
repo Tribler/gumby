@@ -10,9 +10,9 @@ from asyncio import get_event_loop
 from binascii import hexlify, unhexlify
 from threading import Thread
 
-import toml
-
 from solcx import compile_files, set_solc_version
+
+import toml
 
 from web3 import Web3
 from web3.exceptions import TimeExhausted

@@ -1,20 +1,20 @@
 import hashlib
 import json
 import os
-from random import sample
-
-import requests
 import shutil
 import subprocess
 import time
 from binascii import hexlify
+from random import sample
 from threading import Thread
 
 from algosdk import transaction
 from algosdk.algod import AlgodClient
-from algosdk.error import KMDHTTPError, AlgodHTTPError
+from algosdk.error import AlgodHTTPError, KMDHTTPError
 from algosdk.kmd import KMDClient
 from algosdk.wallet import Wallet
+
+import requests
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule

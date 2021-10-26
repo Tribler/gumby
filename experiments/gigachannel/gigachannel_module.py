@@ -1,6 +1,7 @@
 from pony.orm import db_session
 
 from tribler_common.simpledefs import DLSTATUS_SEEDING
+
 from tribler_core.modules.metadata_store.community.gigachannel_community import GigaChannelCommunity
 
 from gumby.experiment import experiment_callback

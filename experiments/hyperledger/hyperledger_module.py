@@ -4,17 +4,17 @@ import random
 import shutil
 import subprocess
 import time
-from asyncio import sleep, get_event_loop, ensure_future
+from asyncio import ensure_future, get_event_loop, sleep
 
-from ruamel.yaml import YAML, RoundTripDumper, round_trip_dump
+from hfc.fabric import Client
+
+from ruamel.yaml import RoundTripDumper, YAML, round_trip_dump
 from ruamel.yaml.comments import CommentedMap
 
 from gumby.experiment import experiment_callback
 from gumby.modules.blockchain_module import BlockchainModule
 from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import run_task
-
-from hfc.fabric import Client
 
 
 class HyperledgerModule(BlockchainModule):

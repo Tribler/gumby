@@ -1,8 +1,7 @@
+from bami.basalt.community import BasaltCommunity
+
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
-
-
-from bami.basalt.community import BasaltCommunity
 
 
 class BasaltModule(IPv8OverlayExperimentModule):
