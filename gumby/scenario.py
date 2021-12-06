@@ -145,47 +145,6 @@ class ScenarioParser(object):
 
         return unnamed_args, named_args
 
-    def _parse_for_loop(self, loop):
-        """
-        Parse a for loop, checking for its syntactical and lexical correctness and returning its functional components
-
-        :param loop: a string containing the for loop. The string should have the following structure:
-                     'for <control_variable> in <lower_bound> to <higher_bound> call <callable> <optional_parameters>
-                     <peer_specification>'. The value of the lower_bound needn't actually be lower than the higher
-                     bound.
-        :return: return a tuple containing the following: the callable, the callable's argument line (unparsed),
-                 the lower_bound, the higher_bound, an offset (either 1 of -1) indicating the for's index in/decrements,
-                 the control variable (including the '$' character at the beginning)
-        """
-        parts = loop.split(' ', 7)
-
-        # Less than 7 tokens means that we had a malformed 'for'
-        if len(parts) < 7:
-            raise Exception()
-
-        offset = 1
-        control_var, lo_bound, hi_bound, callable_function = parts[::2]
-        args = parts[7] if len(parts) == 8 else ''
-
-        # Check if the other tokens are correct, so as to avoid ambiguity
-        if ['in', 'to', 'call'] != [x.lower() for x in parts[1:6:2]]:
-            raise Exception()
-
-        # Convert the bound strings to integers
-        lo_bound = int(lo_bound)
-        hi_bound = int(hi_bound)
-
-        # control_var
-        control_var = '$' + control_var
-
-        # The lower and upper bounds are considered inclusive, hence the additional in/decrements
-        if lo_bound > hi_bound:
-            offset = -1
-            hi_bound -= 1
-        else:
-            hi_bound += 1
-
-        return callable_function, args, lo_bound, hi_bound, offset, control_var
 
     def _parse_scenario_line(self, filename, line_number, line, peerspec):
         """
@@ -221,40 +180,12 @@ class ScenarioParser(object):
 
                 commands = []
 
-                if callable == 'for':
-                    # If our current command is a 'for' loop, then we further parse the line
-                    callable, args, lo_bound, hi_bound, offset, control_var = self._parse_for_loop(args)
-                    unnamed_args, named_args = self._parse_arguments(args)
+                if self._re_substitution.match(peerspec):
+                    # We have a substitution variable in the peerspec, which should be illegal in this branch
+                    raise Exception()
 
-                    # get the indexes and keys of the control variable in the (un)named variables
-                    control_index_args = [idx for idx in range(len(unnamed_args)) if unnamed_args[idx] == control_var]
-                    control_index_named_args = [key for key in named_args if named_args[key] == control_var]
-
-                    for i in range(lo_bound, hi_bound, offset):
-                        if not peerspec or (peerspec == control_var and i == self._peernumber) or \
-                                (peerspec == str(self._peernumber)):
-
-                            # Replace any arguments represented by the loop's control variable with its current value
-                            str_i = str(i)
-                            for idx in control_index_args:
-                                unnamed_args[idx] = str_i
-                            for key in control_index_named_args:
-                                named_args[key] = str_i
-
-                            # We need to copy the parameter list and dictionary since there's reference issues otherwise
-                            commands.append((begin, filename, line_number, callable, unnamed_args[:], dict(named_args)))
-                else:
-                    # TODO: a regex should be added to swap in the value of a variable used in the peerspec;
-                    #       one can check if the variable exists, and identifies this peer in _parse_for_this_peer
-                    #       the aforementioned function can also be the place where the variable is swapped
-                    #       if the command is a for, then the variable should be swapped only if it's not the loop's
-                    #       control variable
-                    if self._re_substitution.match(peerspec):
-                        # We have a substitution variable in the peerspec, which should be illegal in this branch
-                        raise Exception()
-
-                    unnamed_args, named_args = self._parse_arguments(args)
-                    commands = [(begin, filename, line_number, callable, unnamed_args, named_args)]
+                unnamed_args, named_args = self._parse_arguments(args)
+                commands = [(begin, filename, line_number, callable, unnamed_args, named_args)]
 
                 return commands
 
