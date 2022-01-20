@@ -124,81 +124,6 @@ if [ ! -e $VENV/lib/python*/site-packages/libtorrent*.so  -o ! -e $LIBTORRENT_MA
     touch $LIBTORRENT_MARKER
 fi
 
-# recent libgmp needed by gmpy2 + pycrypto
-GMP_VERSION=6.2.1
-GMP_MARKER=`build_marker gmp $GMP_VERSION`
-if [ ! -e $VENV/include/gmp.h  -o ! -e $GMP_MARKER ]; then
-
-    if [ ! -e $VENV/src/gmp-$GMP_VERSION.tar.bz2 ]; then
-        pushd $VENV/src
-        wget "https://ftp.gnu.org/gnu/gmp/gmp-$GMP_VERSION.tar.bz2"
-        popd
-    fi
-
-    if [ ! -e $VENV/src/gmp-$GMP_VERSION*/ ]; then
-        pushd $VENV/src
-        tar axvf $VENV/src/gmp-$GMP_VERSION.tar.bz2
-        popd
-    fi
-
-    pushd $VENV/src/gmp-$GMP_VERSION*/
-    ./configure --prefix=$VENV
-    make -j$CONCURRENCY_LEVEL || make
-    make install
-    popd
-    touch $GMP_MARKER
-fi
-
-# libmpfr needed by gmpy2
-MPFR_VERSION=4.1.0
-MPFR_MARKER=`build_marker mpfr $MPFR_VERSION`
-if [ ! -e $VENV/include/mpfr.h  -o ! -e $MPFR_MARKER ]; then
-
-    if [ ! -e $VENV/src/mpfr-$MPFR_VERSION.tar.bz2 ]; then
-        pushd $VENV/src
-        wget https://www.mpfr.org/mpfr-current/mpfr-$MPFR_VERSION.tar.bz2
-        popd
-    fi
-
-    if [ ! -e $VENV/src/mpfr-$MPFR_VERSION*/ ]; then
-        pushd $VENV/src
-        tar axvf $VENV/src/mpfr-$MPFR_VERSION.tar.bz2
-        popd
-    fi
-
-    pushd $VENV/src/mpfr-$MPFR_VERSION*/
-    ./configure --prefix=$VENV --with-gmp-lib=$VENV/lib --with-gmp-include=$VENV/include
-    make -j$CONCURRENCY_LEVEL || make
-    make install
-    popd
-    touch $MPFR_MARKER
-fi
-
-# libmpc needed by gmpy2
-MPC_VERSION=1.1.0
-MPC_MARKER=`build_marker mpc $MPC_VERSION`
-if [ ! -e $VENV/include/mpc.h  -o ! -e $MPC_MARKER ]; then
-
-    if [ ! -e $VENV/src/mpc-$MPC_VERSION.tar.gz ]; then
-        pushd $VENV/src
-        wget https://ftp.gnu.org/gnu/mpc/mpc-$MPC_VERSION.tar.gz
-        popd
-    fi
-
-    if [ ! -e $VENV/src/mpc-$MPC_VERSION*/ ]; then
-        pushd $VENV/src
-        tar xzvf $VENV/src/mpc-$MPC_VERSION.tar.gz
-        popd
-    fi
-
-    pushd $VENV/src/mpc-$MPC_VERSION*/
-    ./configure --prefix=$VENV --with-gmp-lib=$VENV/lib --with-gmp-include=$VENV/include --with-mpfr-lib=$VENV/lib --with-mpfr-include=$VENV/include
-    make -j$CONCURRENCY_LEVEL || make
-    make install
-    popd
-    touch $MPC_MARKER
-fi
-
 # libnacl needs libffi
 LIBFFI_VERSION=3.2.1
 LIBFFI_MARKER=`build_marker libffi $LIBFFI_VERSION`
@@ -253,11 +178,8 @@ fi
 export PKG_CONFIG_PATH=$VENV/lib/pkgconfig:$PKG_CONFIG_PATH
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
 
-# CFFI needs to be installed before pynacl or pip will find the older system version and faild to build it...
+# CFFI needs to be installed before pynacl or pip will find the older system version and fail to build it...
 CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade cffi
-
-# Gmpy2 requires libgmp, libmpfr and libmpc
-CFLAGS="$CFLAGS -I$VENV/include" LDFLAGS="$LDFLAGS -L$VENV/lib" pip install --upgrade gmpy2
 
 echo "
 bcrypt
