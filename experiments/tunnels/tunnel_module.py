@@ -4,35 +4,52 @@ from binascii import unhexlify
 from ipv8.messaging.anonymization.community import TunnelSettings
 from ipv8.messaging.anonymization.tunnel import PEER_FLAG_EXIT_BT, PEER_FLAG_RELAY
 
-from tribler_common.simpledefs import DOWNLOAD, UPLOAD, dlstatus_strings
-
-from tribler_core.modules.tunnel.community.community import TriblerTunnelCommunity
+from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
+from tribler_core.components.payout.payout_component import PayoutComponent
+from tribler_core.components.tunnel.community.tunnel_community import TriblerTunnelCommunity
+from tribler_core.components.tunnel.settings import TunnelCommunitySettings
+from tribler_core.components.tunnel.tunnel_component import TunnelsComponent
+from tribler_core.utilities.simpledefs import DOWNLOAD, UPLOAD, dlstatus_strings
 from tribler_core.utilities.unicode import hexlify
 
 from gumby.experiment import experiment_callback
-from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
+from gumby.modules.tribler_module import TriblerBasedModule
 
 
-class TunnelModule(IPv8OverlayExperimentModule):
+class TunnelModule(TriblerBasedModule):
 
     def __init__(self, experiment):
-        super(TunnelModule, self).__init__(experiment, TriblerTunnelCommunity)
+        super(TunnelModule, self).__init__(experiment)
         self.download_states_history = []
+
+        # TunnelSettings should be obtained from tribler_config settings. But not all properties of the tunnel settings
+        # can be controlled that way. So we store a custom TunnelSettings object in the community launcher. Properties
+        # that have a regular config option should also be set in the config object so we're consistent as far as all
+        # other code is concerned.
+        self.tunnel_settings = TunnelSettings()
 
     def on_id_received(self):
         super(TunnelModule, self).on_id_received()
-        self.tribler_config.tunnel_community.enabled = True
-        self.tribler_config.libtorrent.enabled = True
-        self.tribler_config.tunnel_community.socks5_listen_ports = [23000 + 100 * self.my_id + i for i in range(5)]
-        self.tribler_config.tunnel_community.exitnode_enabled = False
-        self.ipv8_community_launcher.community_kwargs["settings"] = TunnelSettings()
+        tribler_config = self.tribler_module.tribler_config
+        tribler_config.tunnel_community.enabled = True
+        tribler_config.libtorrent.enabled = True
+        tribler_config.tunnel_community.exitnode_enabled = False
+        self.tunnel_settings.min_circuits = tribler_config.tunnel_community.min_circuits
+        self.tunnel_settings.max_circuits = tribler_config.tunnel_community.max_circuits
 
-    def on_ipv8_available(self, _):
-        super(TunnelModule, self).on_ipv8_available(_)
+    @property
+    def community(self) -> TriblerTunnelCommunity:
+        component = TunnelsComponent.instance()
+        if component is None:
+            raise RuntimeError('TunnelsComponent not found')
+        return component.community
+
+    def on_ipv8_available(self, ipv8):
+        super().on_ipv8_available(ipv8)
+        self.community.settings = self.tunnel_settings
 
         def monitor_downloads(dslist):
-            if isinstance(self.overlay, TriblerTunnelCommunity):
-                self.overlay.monitor_downloads(dslist)
+            self.community.monitor_downloads(dslist)
 
             for state in dslist:
                 download = state.get_download()
@@ -54,9 +71,13 @@ class TunnelModule(IPv8OverlayExperimentModule):
                             self._logger.debug("Received peers %s (%s, %s) down total: %s, upload: %s, version %s ",
                                                peer["id"], peer["ip"], peer["port"], peer["dtotal"],
                                                peer["utotal"], peer["extended_version"])
-                    for pid, hashes in peer_aggregate.items():
-                        for infohash, balance in hashes.items():
-                            self.session.payout_manager.update_peer(pid, infohash, balance)
+
+                    payout_component = PayoutComponent.instance()
+                    if payout_component:
+                        payout_manager = payout_component.payout_manager
+                        for pid, hashes in peer_aggregate.items():
+                            for infohash, balance in hashes.items():
+                                payout_manager.update_peer(pid, infohash, balance)
 
                 status_dict = {
                     "time": time.time() - self.experiment.scenario_runner.exp_start_time,
@@ -72,21 +93,21 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
             return []
 
-        self.session.dlmgr.set_download_states_callback(monitor_downloads)
+        libtorrent_component = LibtorrentComponent.instance()
+        assert libtorrent_component
+        download_manager = libtorrent_component.download_manager
+        download_manager.set_download_states_callback(monitor_downloads)
 
-    # TunnelSettings should be obtained from tribler_config settings. But not all properties of the tunnel settings can
-    # be controlled that way. So we store a custom TunnelSettings object in the community launcher. Properties that have
-    # a regular config option should also be set in the config object so we're consistent as far as all other code is
-    # concerned.
     @property
-    def tunnel_settings(self):
-        return self.ipv8_community_launcher.community_kwargs["settings"]
+    def tunnel_config(self) -> TunnelCommunitySettings:
+        return self.tribler_module.tribler_config.tunnel_community
 
     @experiment_callback
     def set_tunnel_exit(self, value):
         value = TunnelModule.str2bool(value)
         self._logger.info("This peer will be exit node: %s" % ('Yes' if value else 'No'))
-        self.tribler_config.tunnel_community.exitnode_enabled = value
+
+        self.tunnel_config.exitnode_enabled = value
         self.tunnel_settings.become_exitnode = value
         self.tunnel_settings.peer_flags = {PEER_FLAG_EXIT_BT} if value else {PEER_FLAG_RELAY}
 
@@ -113,7 +134,7 @@ class TunnelModule(IPv8OverlayExperimentModule):
     @experiment_callback
     def build_circuits(self, hops):
         self._logger.info("Start building circuits")
-        self.overlay.build_tunnels(int(hops))
+        self.community.build_tunnels(int(hops))
 
     @experiment_callback
     def write_tunnels_info(self):
@@ -121,14 +142,14 @@ class TunnelModule(IPv8OverlayExperimentModule):
         Write information about established tunnels/introduction points/rendezvous points to files.
         """
         with open('circuits.txt', 'w') as circuits_file:
-            for circuit_id, circuit in self.overlay.circuits.items():
+            for circuit_id, circuit in self.community.circuits.items():
                 circuits_file.write('%s,%s,%s,%s,%s,%s,%s,%s:%d\n' % (circuit_id, str(circuit.state), circuit.goal_hops,
                                                                       circuit.bytes_up, circuit.bytes_down,
                                                                       circuit.creation_time, circuit.ctype,
                                                                       circuit.peer.address[0], circuit.peer.address[1]))
 
         with open('relays.txt', 'w') as relays_file:
-            for circuit_id_1, relay in self.overlay.relay_from_to.items():
+            for circuit_id_1, relay in self.community.relay_from_to.items():
                 relays_file.write('%s,%s,%s:%d,%s\n' % (circuit_id_1, relay.circuit_id, relay.peer.address[0],
                                                         relay.peer.address[1], relay.bytes_up))
 

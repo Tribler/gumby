@@ -2,67 +2,131 @@ import binascii
 import glob
 import os
 import random
+import signal
+from abc import abstractmethod
 from asyncio import ensure_future, sleep
+from base64 import b64decode, b64encode
 from pathlib import Path
-from random import Random
 
-from pony.orm import db_session
+from ipv8.community import Community
+from ipv8.peerdiscovery.churn import RandomChurn
+from ipv8.peerdiscovery.discovery import RandomWalk, EdgeWalk
+from ipv8_service import IPv8
 
-from tribler_common.simpledefs import dlstatus_strings
+from ipv8.dht.community import DHTCommunity
+from ipv8.peer import Peer
 
-from tribler_core.modules.libtorrent.download_config import DownloadConfig
-from tribler_core.modules.libtorrent.torrentdef import TorrentDef
+from pony.orm import db_session, desc
+
+from tribler_core.utilities.simpledefs import dlstatus_strings
+
+from tribler_core.components.bandwidth_accounting.bandwidth_accounting_component import BandwidthAccountingComponent
+from tribler_core.components.base import Session
+from tribler_core.components.gigachannel.gigachannel_component import GigaChannelComponent
+from tribler_core.components.gigachannel_manager.gigachannel_manager_component import GigachannelManagerComponent
+from tribler_core.components.ipv8.ipv8_component import Ipv8Component
+from tribler_core.components.key.key_component import KeyComponent
+from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
+from tribler_core.components.libtorrent.download_manager.download_config import DownloadConfig
+from tribler_core.components.libtorrent.torrentdef import TorrentDef
+from tribler_core.components.metadata_store.metadata_store_component import MetadataStoreComponent
+from tribler_core.components.popularity.popularity_component import PopularityComponent
+from tribler_core.components.socks_servers.socks_servers_component import SocksServersComponent
+from tribler_core.components.torrent_checker.torrent_checker_component import TorrentCheckerComponent
+from tribler_core.components.tunnel.tunnel_component import TunnelsComponent
+from tribler_core.config.tribler_config import TriblerConfig
 from tribler_core.utilities.unicode import hexlify
 
 from gumby.experiment import experiment_callback
-from gumby.gumby_tribler_config import GumbyTriblerConfig
-from gumby.modules.base_ipv8_module import BaseIPv8Module
-from gumby.modules.gumby_session import GumbyTriblerSession
-from gumby.modules.ipv8_community_launchers import DHTCommunityLauncher
-from gumby.modules.tribler_community_launchers import BandwidthCommunityLauncher, GigaChannelCommunityLauncher, \
-    PopularityCommunityLauncher, TriblerTunnelCommunityLauncher
-from gumby.util import run_task
+from gumby.modules.base_ipv8_module import IPv8Provider
+from gumby.modules.experiment_module import ExperimentModule
+from gumby.util import run_task, generate_keypair_trustchain, save_keypair_trustchain, save_pub_key_trustchain
 
 
-class TriblerModule(BaseIPv8Module):
+class TriblerModule(IPv8Provider):
+    tribler_session: Session
 
     def __init__(self, experiment):
-        super(TriblerModule, self).__init__(experiment)
+        if getattr(experiment, 'tribler_module', None) is not None:
+            raise RuntimeError('Cannot use more then one tribler_module in experiment')
+
+        super().__init__(experiment)
+        experiment.tribler_module = self
+
         self.transfer_size = 25 * 1024 * 1024
-        self.ipv8 = None
         self.download_stats = {
             'download': 0,
             'progress': 0.0,
             'upload': 0
         }
+        self.overlays_to_isolate = {}
+        self.isolated_overlays = set()
 
-    def create_ipv8_community_loader(self):
-        loader = super().create_ipv8_community_loader()
-        loader.set_launcher(TriblerTunnelCommunityLauncher())
-        loader.set_launcher(PopularityCommunityLauncher())
-        loader.set_launcher(DHTCommunityLauncher())
-        loader.set_launcher(GigaChannelCommunityLauncher())
-        loader.set_launcher(BandwidthCommunityLauncher())
-        return loader
+    @experiment_callback
+    def isolate_ipv8_overlay(self, name):
+        if self.isolated_overlays:
+            # this check was added as a safety check that the code does not have a race conditions
+            raise RuntimeError("Too late attempt to isolate overlays")
+
+        self.overlays_to_isolate.setdefault(name, False)
+
+    def do_isolate_overlays(self):
+        overlay: Community
+        for overlay in self.ipv8.overlays:
+            name = overlay.__class__.__name__
+            if name in self.overlays_to_isolate and not self.overlays_to_isolate[name]:
+                overlay.community_id = self.generate_isolated_community_id(overlay)
+                self.overlays_to_isolate[name] = True
+                self.isolated_overlays.add(overlay)
+        for overlay_name, was_isolated in self.overlays_to_isolate.items():
+            if not was_isolated:
+                raise RuntimeError(f'Overlay {overlay_name} was not isolated')
+
+    def generate_isolated_community_id(self, overlay):
+        from ipv8.keyvault.crypto import ECCrypto
+        eccrypto = ECCrypto()
+        unique_id = (overlay.__class__.__name__ + self.session_id).encode('utf-8')
+        private_bin = b"".join([unique_id[i:i+1] if i < len(unique_id) else b"0" for i in range(68)])
+        eckey = eccrypto.key_from_private_bin(b"LibNaCLSK:" + private_bin)
+        master_peer = Peer(eckey.pub().key_to_bin())
+        return master_peer.mid
 
     @experiment_callback
     async def start_session(self):
-        self.session = GumbyTriblerSession(config=self.tribler_config)
+        components = [
+            KeyComponent(),
+            Ipv8Component(),
+            TunnelsComponent(),
+            LibtorrentComponent(),
+            MetadataStoreComponent(),
+            GigaChannelComponent(),
+            BandwidthAccountingComponent(),
+            SocksServersComponent(),
+            TorrentCheckerComponent(),
+            PopularityComponent()
+        ]
+        config: TriblerConfig = self.tribler_config
         self.tribler_config = None
+        config.libtorrent.proxy_type = 0
+        config.libtorrent.proxy_server = ":"
 
-        self._logger.error("Starting Tribler Session")
+        session = Session(config, components)
+        signal.signal(signal.SIGTERM, lambda signum, stack: session.shutdown_event.set)
+        session.set_as_default()
+        self.tribler_session = session
 
-        if self.custom_ipv8_community_loader:
-            self.session.ipv8_community_loader = self.custom_ipv8_community_loader
+        self._logger.info("Starting Tribler Session")
+        await session.start_components()
+        self._logger.info("Tribler Session started")
 
-        await self.session.start()
-        self._logger.error("Tribler Session started")
-        self.ipv8 = self.session.ipv8
+        self.ipv8 = Ipv8Component.instance().ipv8
+        self.do_isolate_overlays()
+        self._logger.info("IPv8 overlay should be isolated now")
         self.ipv8_available.set_result(self.ipv8)
 
     @experiment_callback
     def stop_session(self):
-        ensure_future(self.session.shutdown())
+        ensure_future(self.tribler_session.shutdown())
 
         # Write away the start time of the experiment
         with open('start_time.txt', 'w') as start_time_time:
@@ -76,7 +140,7 @@ class TriblerModule(BaseIPv8Module):
         my_state_path = os.path.join(os.environ['OUTPUT_DIR'], str(self.my_id))
         self._logger.info("State path: %s", my_state_path)
 
-        config = GumbyTriblerConfig(state_dir=Path(my_state_path))
+        config = TriblerConfig(state_dir=Path(my_state_path))
         config.ipv8.bootstrap_override = "0.0.0.0:0"
         config.trustchain.ec_keypair_filename = os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id))
         config.torrent_checking.enabled = False
@@ -99,9 +163,10 @@ class TriblerModule(BaseIPv8Module):
 
     @experiment_callback
     def set_libtorrentmgr_alert_mask(self, mask=0xffffffff):
-        self.session.dlmgr.default_alert_mask = mask
-        self.session.dlmgr.session_stats_callback = self._process_libtorrent_alert
-        for ltsession in self.session.dlmgr.ltsessions.values():
+        download_manager = LibtorrentComponent.instance().download_manager
+        download_manager.default_alert_mask = mask
+        download_manager.session_stats_callback = self._process_libtorrent_alert
+        for ltsession in download_manager.ltsessions.values():
             ltsession.set_alert_mask(mask)
 
     def _process_libtorrent_alert(self, alert):
@@ -126,8 +191,9 @@ class TriblerModule(BaseIPv8Module):
                 fp.write(bytearray(random.getrandbits(8) for _ in range(bootstrap_size * 1024 * 1024)))
 
     @experiment_callback
-    def start_bootstrap_download(self):
-        self.session.start_bootstrap_download()
+    def start_bootstrap_download(self):  # obsolete?
+        # self.tribler_session.start_bootstrap_download()
+        pass
 
     @experiment_callback
     def disable_lt_rc4_encryption(self):
@@ -135,10 +201,11 @@ class TriblerModule(BaseIPv8Module):
         Disable the RC4 encryption that the libtorrent session in Tribler uses by default.
         This should speed up downloads when testing.
         """
-        ltsession = self.session.dlmgr.get_session(0)
-        settings = self.session.dlmgr.get_session_settings(ltsession)
+        download_manager = LibtorrentComponent.instance().download_manager
+        ltsession = download_manager.get_session(0)
+        settings = download_manager.get_session_settings(ltsession)
         settings['prefer_rc4'] = False
-        self.session.dlmgr.set_session_settings(ltsession, settings)
+        download_manager.set_session_settings(ltsession, settings)
 
     @experiment_callback
     async def transfer(self, action="download", hops=None, timeout=None, download_id=None, length=None):
@@ -174,12 +241,12 @@ class TriblerModule(BaseIPv8Module):
             length = self.transfer_size
 
         tdef = self.create_test_torrent(file_name, download_id, length)
-        dscfg = DownloadConfig(state_dir=self.session.config.state_dir)
+        download_config = DownloadConfig(state_dir=self.tribler_session.config.state_dir)
         if hops is not None:
-            dscfg.set_hops(hops)
-        dscfg.set_dest_dir(os.path.join(os.environ["OUTPUT_DIR"], str(self.my_id)))
+            download_config.set_hops(hops)
+        download_config.set_dest_dir(os.path.join(os.environ["OUTPUT_DIR"], str(self.my_id)))
         if action == "download":
-            os.remove(os.path.join(dscfg.get_dest_dir(), file_name))
+            os.remove(os.path.join(download_config.get_dest_dir(), file_name))
 
         def cb(ds):
             self._logger.info('transfer: %s infohash=%s, hops=%d, down=%d, up=%d, progress=%s, status=%s, seeds=%s',
@@ -212,13 +279,15 @@ class TriblerModule(BaseIPv8Module):
 
             return 1.0
 
-        download = self.session.dlmgr.start_download(tdef=tdef, config=dscfg)
+        download_manager = LibtorrentComponent.instance().download_manager
+        download = download_manager.start_download(tdef=tdef, config=download_config)
         download.set_state_callback(cb)
 
+        dht_community: DHTCommunity = Ipv8Component.instance().ipv8.get_overlay(DHTCommunity)
         if action == 'download':
             # Schedule a DHT lookup to fetch peers to add to this download
             await sleep(5)
-            peers = await self.session.dht_community.find_values(tdef.get_infohash())
+            peers = await dht_community.find_values(tdef.get_infohash())
             if not peers:
                 self._logger.info("No DHT peer found for infohash!")
             else:
@@ -227,35 +296,39 @@ class TriblerModule(BaseIPv8Module):
                     download.add_peer((parts[0], int(parts[1])))
         elif action == 'seed':
             host, _ = self.experiment.get_peer_ip_port_by_id(str(self.experiment.my_id))
-            value = "%s:%d" % (host, self.session.config.libtorrent.port)
-            await self.session.dht_community.store_value(tdef.get_infohash(), value.encode('utf-8'))
+            value = "%s:%d" % (host, self.tribler_session.config.libtorrent.port)
+            await dht_community.store_value(tdef.get_infohash(), value.encode('utf-8'))
 
         if timeout:
-            run_task(self.session.dlmgr.remove_download, download, True, delay=timeout)
+            run_task(download_manager.remove_download, download, True, delay=timeout)
 
     @experiment_callback
     def create_channel(self):
-        self.session.mds.ChannelMetadata.create_channel('test' + ''.join(str(i) for i in range(100)), 'test')
+        mds = MetadataStoreComponent.instance().mds
+        mds.ChannelMetadata.create_channel('test' + ''.join(str(i) for i in range(100)), 'test')
 
     @experiment_callback
     def add_torrents_to_channel(self, amount):
         amount = int(amount)
 
         with db_session:
-            my_channel = self.session.mds.ChannelMetadata.get_my_channel()
+            mds = MetadataStoreComponent.instance().mds
+            my_channel = mds.ChannelMetadata.get_my_channels().order_by(lambda c: desc(c.rowid)).first()
             for ind in range(amount):
                 test_tdef = self.create_test_torrent("file%s.txt" % ind, 0, 1024)
                 my_channel.add_torrent_to_channel(test_tdef)
 
             torrent_dict = my_channel.commit_channel_torrent()
             if torrent_dict:
-                self.session.gigachannel_manager.updated_my_channel(TorrentDef.load_from_dict(torrent_dict))
+                gigachannel_manager = GigachannelManagerComponent.instance().gigachannel_manager
+                gigachannel_manager.updated_my_channel(TorrentDef.load_from_dict(torrent_dict))
 
     @experiment_callback
     def add_peer_to_downloads(self, peer_nr):
         self._logger.info("Adding peer %s to all downloads", peer_nr)
         host, port = self.experiment.get_peer_ip_port_by_id(peer_nr)
-        for download in self.session.get_downloads():
+        download_manager = LibtorrentComponent.instance().download_manager
+        for download in download_manager.get_downloads():
             download.add_peer((host, port))
 
     @experiment_callback
@@ -273,7 +346,7 @@ class TriblerModule(BaseIPv8Module):
         if not os.path.exists(file_name):
             self._logger.info("Creating torrent data file %s", file_name)
             with open(file_name, 'wb') as fp:
-                rand = Random()
+                rand = random.Random()
                 rand.seed(download_id)
                 fp.write(TriblerModule.int2bytes(rand.getrandbits(8 * length)))
 
@@ -287,11 +360,105 @@ class TriblerModule(BaseIPv8Module):
         """
         Write away information about the downloads in Tribler.
         """
+        download_manager = LibtorrentComponent.instance().download_manager
         with open('downloads.txt', 'w') as downloads_file:
             downloads_file.write('infohash,status,progress\n')
-            for download in self.session.get_downloads():
+            for download in download_manager.get_downloads():
                 state = download.get_state()
                 downloads_file.write("%s,%s,%f\n" % (
                     hexlify(download.get_def().get_infohash()),
                     dlstatus_strings[state.get_status()],
                     state.get_progress()))
+
+
+class TriblerBasedModule(ExperimentModule):
+    ipv8: IPv8
+
+    def __init__(self, experiment):
+        super().__init__(experiment)
+        self.tribler_module.ipv8_available.add_done_callback(lambda f: self.on_ipv8_available(f.result()))
+        self.strategies = {
+            'RandomWalk': RandomWalk,
+            'EdgeWalk': EdgeWalk,
+            'RandomChurn': RandomChurn
+        }
+
+    def on_ipv8_available(self, ipv8):
+        self.ipv8 = ipv8
+
+    @property
+    def tribler_module(self) -> TriblerModule:
+        tribler_module = getattr(self.experiment, 'tribler_module', None)
+        if tribler_module is None:
+            raise RuntimeError('TriblerModule not found')
+        return tribler_module
+
+    @property
+    @abstractmethod
+    def community(self) -> Community:
+        ...
+
+    @experiment_callback
+    def introduce_one_peer(self, peer_id):
+        self.community.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
+
+    @experiment_callback
+    def introduce_peers(self, max_peers=None, excluded_peers=None):
+        """
+        Introduce peers to each other.
+        :param max_peers: If specified, this peer will walk to this number of peers at most.
+        :param excluded_peers: If specified, this method will ignore a specific peer from the introductions.
+        """
+        excluded_peers_list = []
+        if excluded_peers:
+            excluded_peers_list = [int(excluded_peer) for excluded_peer in excluded_peers.split(",")]
+
+        if self.my_id in excluded_peers_list:
+            self._logger.info("Not participating in the peer introductions!")
+            return
+
+        if not max_peers:
+            # bootstrap the peer introduction, ensuring everybody knows everybody to start off with.
+            for peer_id in self.all_vars.keys():
+                if int(peer_id) != self.my_id and int(peer_id) not in excluded_peers_list:
+                    self.community.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
+        else:
+            # Walk to a number of peers
+            eligible_peers = [peer_id for peer_id in self.all_vars.keys()
+                              if int(peer_id) not in excluded_peers_list and int(peer_id) != self.my_id]
+            rand_peer_ids = random.sample(eligible_peers, min(len(eligible_peers), int(max_peers)))
+            for rand_peer_id in rand_peer_ids:
+                self.community.walk_to(self.experiment.get_peer_ip_port_by_id(rand_peer_id))
+
+    @experiment_callback
+    def add_walking_strategy(self, name, max_peers, **kwargs):
+        if name not in self.strategies:
+            self._logger.warning("Strategy %s not found!", name)
+            return
+
+        strategy = self.strategies[name]
+
+        self.ipv8.strategies.append((strategy(self.community, **kwargs), int(max_peers)))
+
+    def get_peer(self, peer_id):
+        target = self.all_vars[peer_id]
+        address = (str(target['host']), target['port'])
+        return Peer(b64decode(self.get_peer_public_key(peer_id)), address=address)
+
+    def get_peer_public_key(self, peer_id):
+        return self.all_vars[peer_id]['public_key']
+
+    def on_id_received(self):
+        # Since the IPv8 source module is loaded before any community module, the IPv8 on_id_received has
+        # already completed. This means that the tribler_config is now available. So any configuration should happen in
+        # overrides of this function. (Be sure to call this super though!)
+        super().on_id_received()
+
+        # We need the IPv8 peer key at this point. However, the configured session is not started yet. So we
+        # generate the keys here and place them in the correct place. When the session starts it will load these keys.
+        keypair = generate_keypair_trustchain()
+        tribler_config = self.tribler_module.tribler_config
+        save_keypair_trustchain(keypair, tribler_config.trustchain.ec_keypair_filename)
+        save_pub_key_trustchain(keypair, "%s.pub" % tribler_config.trustchain.ec_keypair_filename)
+
+        self.vars['public_key'] = b64encode(keypair.pub().key_to_bin()).decode('utf-8')
