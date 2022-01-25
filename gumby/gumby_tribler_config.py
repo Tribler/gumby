@@ -1,5 +1,5 @@
+from tribler_core.components.key.settings import TrustchainSettings
 from tribler_core.config.tribler_config import TriblerConfig
-from tribler_core.modules.settings import TrustchainSettings
 
 
 class GumbyTrustchainSettings(TrustchainSettings):

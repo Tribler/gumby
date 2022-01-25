@@ -1,14 +1,13 @@
 from base64 import b64decode, b64encode
 from random import sample
-from typing import Optional
 
-from ipv8.loader import CommunityLauncher
 from ipv8.peer import Peer
 from ipv8.peerdiscovery.churn import RandomChurn
 from ipv8.peerdiscovery.discovery import EdgeWalk, RandomWalk
 
 from gumby.experiment import experiment_callback
 from gumby.modules.experiment_module import ExperimentModule
+from gumby.modules.base_ipv8_module import BaseIPv8Module
 from gumby.util import generate_keypair_trustchain, save_keypair_trustchain, save_pub_key_trustchain
 
 
@@ -30,25 +29,11 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             'RandomChurn': RandomChurn
         }
 
-    @property
-    def ipv8_community_loader(self):
-        return self.ipv8_provider.custom_ipv8_community_loader
-
-    @property
-    def ipv8_community_launcher(self) -> Optional[CommunityLauncher]:
-        """
-        Return the launcher associated with the community of this module.
-        """
-        for launcher, _ in self.ipv8_community_loader.community_launchers.values():
-            if launcher.get_overlay_class().__name__ == self.community_class.__name__:
-                return launcher
-        return None
-
     def on_ipv8_available(self, ipv8):
         pass
 
     @property
-    def ipv8_provider(self):
+    def ipv8_provider(self) -> BaseIPv8Module:
         """
         Gets an experiment module from the loaded experiment modules that inherits from BaseIPv8Module. It can be
         used as the source for the IPv8 instance, session, session config and custom community loader.
@@ -57,23 +42,24 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         provider = None
 
         for module in self.experiment.experiment_modules:
-            if isinstance(module, ExperimentModule) and module.has_ipv8:
+            if isinstance(module, ExperimentModule) and isinstance(module, BaseIPv8Module):
                 provider = module
                 break
 
         if provider:
             return provider
 
-        raise Exception("No IPv8 provider module loaded. Load an implementation of BaseIPv8Module ("
-                        "with has_ipv8 = True) before loading the %s module" % self.__class__.__name__)
+        raise Exception("No IPv8 provider module loaded. Load an implementation of BaseIPv8Module "
+                        "(or other module which supports IPv8Provider protocol) "
+                        "before loading the %s module" % self.__class__.__name__)
 
     @property
     def ipv8(self):
         return self.ipv8_provider.ipv8
 
     @property
-    def session(self):
-        return self.ipv8_provider.session
+    def gumby_session(self):
+        return self.ipv8_provider.gumby_session
 
     @property
     def tribler_config(self):
@@ -82,7 +68,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         # the tribler_config after the session has launched, return the session. It acts as a tribler_config as well and
         # alerts the user if some setting cannot be changed at runtime.
         if self.ipv8_provider.tribler_config is None:
-            return self.session
+            return self.gumby_session
 
         return self.ipv8_provider.tribler_config
 
@@ -140,7 +126,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         strategy = self.strategies[name]
 
-        self.session.ipv8.strategies.append((strategy(self.overlay, **kwargs), int(max_peers)))
+        self.ipv8.strategies.append((strategy(self.overlay, **kwargs), int(max_peers)))
 
     def get_peer(self, peer_id):
         target = self.all_vars[peer_id]

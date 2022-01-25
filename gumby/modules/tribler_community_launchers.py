@@ -6,33 +6,34 @@ from ipv8.loader import after, overlay, precondition, set_in_session, walk_strat
 
 # Communities
 def tribler_tunnel_community():
-    from tribler_core.modules.tunnel.community.community import TriblerTunnelCommunity
+    from tribler_core.components.tunnel.community.tunnel_community import TriblerTunnelCommunity
     return TriblerTunnelCommunity
 
 
 def bandwidth_accounting_community():
-    from tribler_core.modules.bandwidth_accounting.community import BandwidthAccountingCommunity
+    from tribler_core.components.bandwidth_accounting.community.bandwidth_accounting_community import \
+        BandwidthAccountingCommunity
     return BandwidthAccountingCommunity
 
 
 def popularity_community():
-    from tribler_core.modules.popularity.community import PopularityCommunity
+    from tribler_core.components.popularity.community.popularity_community import PopularityCommunity
     return PopularityCommunity
 
 
 def giga_channel_community():
-    from tribler_core.modules.metadata_store.community.gigachannel_community import GigaChannelCommunity
+    from tribler_core.components.gigachannel.community.gigachannel_community import GigaChannelCommunity
     return GigaChannelCommunity
 
 
 # Strategies
 def golden_ratio_strategy():
-    from tribler_core.modules.tunnel.community.discovery import GoldenRatioStrategy
+    from tribler_core.components.tunnel.community.discovery import GoldenRatioStrategy
     return GoldenRatioStrategy
 
 
 def remove_peers():
-    from tribler_core.modules.metadata_store.community.sync_strategy import RemovePeers
+    from tribler_core.components.gigachannel.community.sync_strategy import RemovePeers
     return RemovePeers
 
 
