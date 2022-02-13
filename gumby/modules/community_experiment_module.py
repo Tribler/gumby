@@ -30,6 +30,20 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             'RandomChurn': RandomChurn
         }
 
+    @property
+    def ipv8_community_loader(self):
+        return self.ipv8_provider.custom_ipv8_community_loader
+
+    @property
+    def ipv8_community_launcher(self) -> Optional[CommunityLauncher]:
+        """
+        Return the launcher associated with the community of this module.
+        """
+        for launcher, _ in self.ipv8_community_loader.community_launchers.values():
+            if launcher.get_overlay_class().__name__ == self.community_class.__name__:
+                return launcher
+        return None
+
     def on_ipv8_available(self, ipv8):
         pass
 
@@ -71,20 +85,6 @@ class IPv8OverlayExperimentModule(ExperimentModule):
             return self.session
 
         return self.ipv8_provider.tribler_config
-
-    @property
-    def ipv8_community_loader(self):
-        return self.ipv8_provider.custom_ipv8_community_loader
-
-    @property
-    def ipv8_community_launcher(self) -> Optional[CommunityLauncher]:
-        """
-        Return the launcher associated with the community of this module.
-        """
-        for launcher, _ in self.ipv8_community_loader.community_launchers.values():
-            if launcher.get_overlay_class().__name__ == self.community_class.__name__:
-                return launcher
-        return None
 
     @property
     def overlay(self):
