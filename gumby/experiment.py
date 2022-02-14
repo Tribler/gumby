@@ -280,7 +280,8 @@ class ExperimentClient(LineReceiver):
 
         new_values, changed_values = get_changed_values(prev_dict, cur_dict)
         if changed_values:
-            self._stats_file.write('%.1f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
+            with open("annotations.csv", "a") as annotations_file:
+                annotations_file.write('%.1f %s %s %s\n' % (time(), self.my_id, name, json.dumps(changed_values)))
             return new_values
         return prev_dict
 
