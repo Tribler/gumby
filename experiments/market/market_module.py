@@ -29,9 +29,9 @@ class MarketModule(IPv8OverlayExperimentModule):
 
     def on_id_received(self):
         super().on_id_received()
-        self.tribler_config.trustchain.enabled = True
-        self.tribler_config.dht.enabled = True
-        self.tribler_config.market.enabled = True
+        self.gumby_config.trustchain.enabled = True
+        self.gumby_config.dht.enabled = True
+        self.gumby_config.market.enabled = True
 
     @experiment_callback
     def init_wallets(self):
@@ -64,7 +64,7 @@ class MarketModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def enable_market_memory_db(self):
-        self.tribler_config.market.memory_db = True
+        self.gumby_config.market.memory_db = True
 
     @experiment_callback
     def connect_matchmakers(self, num_to_connect):

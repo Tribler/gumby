@@ -83,7 +83,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def enable_trustchain_memory_db(self):
-        self.tribler_config.trustchain.memory_db = True
+        self.gumby_config.trustchain.memory_db = True
 
     @experiment_callback
     def set_validation_range(self, value):

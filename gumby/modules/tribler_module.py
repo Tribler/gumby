@@ -45,6 +45,7 @@ from gumby.util import run_task, generate_keypair_trustchain, save_keypair_trust
 
 class TriblerModule(IPv8Provider):
     tribler_session: Session
+    tribler_config: TriblerConfig
 
     def __init__(self, experiment):
         if getattr(experiment, 'tribler_module', None) is not None:
@@ -62,6 +63,11 @@ class TriblerModule(IPv8Provider):
         self.overlays_to_isolate = {}
         self.isolated_overlays = set()
 
+    def on_id_received(self):
+        super().on_id_received()
+        self.tribler_config = self.setup_config()
+        setattr(self.experiment, 'tribler_config', self.tribler_config)
+
     @experiment_callback
     def isolate_ipv8_overlay(self, name):
         if self.isolated_overlays:
@@ -69,6 +75,10 @@ class TriblerModule(IPv8Provider):
             raise RuntimeError("Too late attempt to isolate overlays")
 
         self.overlays_to_isolate.setdefault(name, False)
+
+    @experiment_callback
+    def enable_ipv8_statistics(self):
+        self.tribler_config.ipv8.statistics = True
 
     def do_isolate_overlays(self):
         overlay: Community
