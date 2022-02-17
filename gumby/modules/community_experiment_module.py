@@ -62,15 +62,15 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         return self.ipv8_provider.gumby_session
 
     @property
-    def tribler_config(self):
-        # The tribler config only exists after on_id_received, up to session start. The session start copy constructs
-        # all settings so writing to the original tribler_config after this will not do anything. So on any access to
-        # the tribler_config after the session has launched, return the session. It acts as a tribler_config as well and
+    def gumby_config(self):
+        # The gumby config only exists after on_id_received, up to session start. The session start copy constructs
+        # all settings so writing to the original gumby_config after this will not do anything. So on any access to
+        # the gumby_config after the session has launched, return the session. It acts as a gumby_config as well and
         # alerts the user if some setting cannot be changed at runtime.
-        if self.ipv8_provider.tribler_config is None:
+        if self.ipv8_provider.gumby_config is None:
             return self.gumby_session
 
-        return self.ipv8_provider.tribler_config
+        return self.ipv8_provider.gumby_config
 
     @property
     def overlay(self):
@@ -138,14 +138,14 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
     def on_id_received(self):
         # Since the IPv8 source module is loaded before any community module, the IPv8 on_id_received has
-        # already completed. This means that the tribler_config is now available. So any configuration should happen in
+        # already completed. This means that the gumby_config is now available. So any configuration should happen in
         # overrides of this function. (Be sure to call this super though!)
         super(IPv8OverlayExperimentModule, self).on_id_received()
 
         # We need the IPv8 peer key at this point. However, the configured session is not started yet. So we
         # generate the keys here and place them in the correct place. When the session starts it will load these keys.
         keypair = generate_keypair_trustchain()
-        save_keypair_trustchain(keypair, self.tribler_config.trustchain.ec_keypair_filename)
-        save_pub_key_trustchain(keypair, "%s.pub" % self.tribler_config.trustchain.ec_keypair_filename)
+        save_keypair_trustchain(keypair, self.gumby_config.trustchain.ec_keypair_filename)
+        save_pub_key_trustchain(keypair, "%s.pub" % self.gumby_config.trustchain.ec_keypair_filename)
 
         self.vars['public_key'] = b64encode(keypair.pub().key_to_bin()).decode('utf-8')

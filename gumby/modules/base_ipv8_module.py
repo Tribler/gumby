@@ -30,8 +30,6 @@ class GumbyMinimalSession:
 
 
 class IPv8Provider(ExperimentModule):
-    gumby_session: Optional[GumbyMinimalSession] = None
-    tribler_config = None
     ipv8_available: Future
     ipv8: Optional[IPv8] = None
     ipv8_port: Optional[int] = None
@@ -93,18 +91,9 @@ class IPv8Provider(ExperimentModule):
         with open('ipv8_statistics.txt', 'a') as statistics_file:
             statistics_file.write(json.dumps(new_dict) + '\n')
 
-    def on_id_received(self):
-        super().on_id_received()
-        self.tribler_config = self.setup_config()
-        setattr(self.experiment, 'tribler_config', self.tribler_config)
-
     @abstractmethod
     def setup_config(self):
         raise NotImplementedError
-
-    @experiment_callback
-    def enable_ipv8_statistics(self):
-        self.tribler_config.ipv8.statistics = True
 
     @experiment_callback
     def start_ipv8_statistics_monitor(self):
@@ -112,6 +101,9 @@ class IPv8Provider(ExperimentModule):
 
 
 class BaseIPv8Module(IPv8Provider):
+    gumby_session: GumbyMinimalSession
+    gumby_config: GumbyConfig
+
     def __init__(self, experiment):
         super().__init__(experiment)
         self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
@@ -123,9 +115,10 @@ class BaseIPv8Module(IPv8Provider):
         loader.set_launcher(IPv8DiscoveryCommunityLauncher())
         return loader
 
-    @experiment_callback
-    def isolate_ipv8_overlay(self, name):
-        self.custom_ipv8_community_loader.isolate(name)
+    def on_id_received(self):
+        super().on_id_received()
+        self.gumby_config = self.setup_config()
+        setattr(self.experiment, 'gumby_config', self.gumby_config)
 
     def setup_config(self):
         if self.ipv8_port is None:
@@ -142,17 +135,25 @@ class BaseIPv8Module(IPv8Provider):
         return config
 
     @experiment_callback
+    def isolate_ipv8_overlay(self, name):
+        self.custom_ipv8_community_loader.isolate(name)
+
+    @experiment_callback
+    def enable_ipv8_statistics(self):
+        self.gumby_config.ipv8.statistics = True
+
+    @experiment_callback
     async def start_session(self):
         """
         Start an IPv8 session.
         """
         ipv8_config = get_default_configuration()
-        ipv8_config['port'] = self.tribler_config.ipv8.port
+        ipv8_config['port'] = self.gumby_config.ipv8.port
         ipv8_config['overlays'] = []
         ipv8_config['keys'] = []  # We load the keys ourselves
-        self.ipv8 = IPv8(ipv8_config, enable_statistics=self.tribler_config.ipv8.statistics)
+        self.ipv8 = IPv8(ipv8_config, enable_statistics=self.gumby_config.ipv8.statistics)
 
-        self.gumby_session = GumbyMinimalSession(self.tribler_config)
+        self.gumby_session = GumbyMinimalSession(self.gumby_config)
 
         # Load overlays
         self.custom_ipv8_community_loader.load(self.ipv8, self.gumby_session)
@@ -165,7 +166,7 @@ class BaseIPv8Module(IPv8Provider):
         await self.ipv8.start()
         self.ipv8_available.set_result(self.ipv8)
 
-        if self.tribler_config.ipv8.statistics:
+        if self.gumby_config.ipv8.statistics:
             for overlay in self.ipv8.overlays:
                 self.ipv8.endpoint.enable_community_statistics(overlay.get_prefix(), True)
 
