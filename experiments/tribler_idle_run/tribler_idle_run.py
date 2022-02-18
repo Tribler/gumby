@@ -25,7 +25,7 @@ async def idle_tribler_run():
 
     try:
         await session.start_components()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(str(e))
         return
 

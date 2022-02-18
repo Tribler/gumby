@@ -55,7 +55,7 @@ class PopularityModule(TriblerBasedModule):
     """
 
     def __init__(self, experiment):
-        super(PopularityModule, self).__init__(experiment)
+        super().__init__(experiment)
         self._logger = logging.getLogger(self.__class__.__name__)
         self.fake_dht_health_manager = None
         self.health_poll_lc = None

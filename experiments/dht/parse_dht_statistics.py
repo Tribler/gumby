@@ -19,7 +19,7 @@ class DHTStatisticsParser(StatisticsParser):
                         try:
                             ts, method, t = line.split()
                         except ValueError as e:
-                            raise ValueError(f"{e}: {line!r}")
+                            raise ValueError(f"{e}: {line!r}") from e
                         csv_fp.write('%s %s %s %s\n' % (peer_nr, ts, method, t))
 
     def run(self):

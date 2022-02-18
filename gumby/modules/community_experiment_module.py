@@ -6,8 +6,8 @@ from ipv8.peerdiscovery.churn import RandomChurn
 from ipv8.peerdiscovery.discovery import EdgeWalk, RandomWalk
 
 from gumby.experiment import experiment_callback
-from gumby.modules.experiment_module import ExperimentModule
 from gumby.modules.base_ipv8_module import BaseIPv8Module
+from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import generate_keypair_trustchain, save_keypair_trustchain, save_pub_key_trustchain
 
 
