@@ -9,16 +9,14 @@ from base64 import b64decode, b64encode
 from pathlib import Path
 
 from ipv8.community import Community
-from ipv8.peerdiscovery.churn import RandomChurn
-from ipv8.peerdiscovery.discovery import RandomWalk, EdgeWalk
-from ipv8_service import IPv8
-
 from ipv8.dht.community import DHTCommunity
 from ipv8.peer import Peer
+from ipv8.peerdiscovery.churn import RandomChurn
+from ipv8.peerdiscovery.discovery import EdgeWalk, RandomWalk
+
+from ipv8_service import IPv8
 
 from pony.orm import db_session, desc
-
-from tribler_core.utilities.simpledefs import dlstatus_strings
 
 from tribler_core.components.bandwidth_accounting.bandwidth_accounting_component import BandwidthAccountingComponent
 from tribler_core.components.base import Session
@@ -26,8 +24,8 @@ from tribler_core.components.gigachannel.gigachannel_component import GigaChanne
 from tribler_core.components.gigachannel_manager.gigachannel_manager_component import GigachannelManagerComponent
 from tribler_core.components.ipv8.ipv8_component import Ipv8Component
 from tribler_core.components.key.key_component import KeyComponent
-from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
 from tribler_core.components.libtorrent.download_manager.download_config import DownloadConfig
+from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
 from tribler_core.components.libtorrent.torrentdef import TorrentDef
 from tribler_core.components.metadata_store.metadata_store_component import MetadataStoreComponent
 from tribler_core.components.popularity.popularity_component import PopularityComponent
@@ -35,14 +33,16 @@ from tribler_core.components.socks_servers.socks_servers_component import SocksS
 from tribler_core.components.torrent_checker.torrent_checker_component import TorrentCheckerComponent
 from tribler_core.components.tunnel.tunnel_component import TunnelsComponent
 from tribler_core.config.tribler_config import TriblerConfig
+from tribler_core.utilities.simpledefs import dlstatus_strings
 from tribler_core.utilities.unicode import hexlify
 
 from gumby.experiment import experiment_callback
 from gumby.modules.base_ipv8_module import IPv8Provider
 from gumby.modules.experiment_module import ExperimentModule
-from gumby.util import run_task, generate_keypair_trustchain, save_keypair_trustchain, save_pub_key_trustchain
+from gumby.util import generate_keypair_trustchain, run_task, save_keypair_trustchain, save_pub_key_trustchain
 
 
+# pylint: disable=too-many-public-methods
 class TriblerModule(IPv8Provider):
     tribler_session: Session
     tribler_config: TriblerConfig
@@ -93,7 +93,7 @@ class TriblerModule(IPv8Provider):
                 raise RuntimeError(f'Overlay {overlay_name} was not isolated')
 
     def generate_isolated_community_id(self, overlay):
-        from ipv8.keyvault.crypto import ECCrypto
+        from ipv8.keyvault.crypto import ECCrypto  # pylint: disable=import-outside-toplevel
         eccrypto = ECCrypto()
         unique_id = (overlay.__class__.__name__ + self.session_id).encode('utf-8')
         private_bin = b"".join([unique_id[i:i+1] if i < len(unique_id) else b"0" for i in range(68)])

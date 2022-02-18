@@ -11,7 +11,7 @@ from ipv8.configuration import get_default_configuration
 
 from ipv8_service import IPv8
 
-from gumby.experiment import experiment_callback, ExperimentClient
+from gumby.experiment import ExperimentClient, experiment_callback
 from gumby.gumby_client_config import GumbyConfig
 from gumby.modules.experiment_module import ExperimentModule
 from gumby.modules.ipv8_community_launchers import DHTCommunityLauncher, IPv8DiscoveryCommunityLauncher

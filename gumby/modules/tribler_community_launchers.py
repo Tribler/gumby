@@ -1,7 +1,7 @@
 # pylint: disable=import-outside-toplevel
-from gumby.modules.ipv8_community_launchers import random_walk, IPv8CommunityLauncher, INFINITE
-
 from ipv8.loader import after, overlay, precondition, set_in_session, walk_strategy
+
+from gumby.modules.ipv8_community_launchers import INFINITE, IPv8CommunityLauncher, random_walk
 
 
 # Communities

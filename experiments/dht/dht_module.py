@@ -16,11 +16,11 @@ class DHTModule(TriblerBasedModule):
     """
 
     def __init__(self, experiment):
-        super(DHTModule, self).__init__(experiment)
+        super().__init__(experiment)
         self.start_time = 0
 
     def on_id_received(self):
-        super(DHTModule, self).on_id_received()
+        super().on_id_received()
         self.tribler_module.tribler_config.dht.enabled = True
         self.start_time = time.time()
 

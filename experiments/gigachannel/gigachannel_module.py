@@ -1,7 +1,7 @@
 from pony.orm import db_session
 
-from tribler_core.components.gigachannel.gigachannel_component import GigaChannelComponent
 from tribler_core.components.gigachannel.community.gigachannel_community import GigaChannelCommunity
+from tribler_core.components.gigachannel.gigachannel_component import GigaChannelComponent
 from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
 from tribler_core.components.metadata_store.metadata_store_component import MetadataStoreComponent
 from tribler_core.utilities.simpledefs import DLSTATUS_SEEDING

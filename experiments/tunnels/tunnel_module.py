@@ -19,7 +19,7 @@ from gumby.modules.tribler_module import TriblerBasedModule
 class TunnelModule(TriblerBasedModule):
 
     def __init__(self, experiment):
-        super(TunnelModule, self).__init__(experiment)
+        super().__init__(experiment)
         self.download_states_history = []
 
         # TunnelSettings should be obtained from tribler_config settings. But not all properties of the tunnel settings
@@ -29,7 +29,7 @@ class TunnelModule(TriblerBasedModule):
         self.tunnel_settings = TunnelSettings()
 
     def on_id_received(self):
-        super(TunnelModule, self).on_id_received()
+        super().on_id_received()
         tribler_config = self.tribler_module.tribler_config
         tribler_config.tunnel_community.enabled = True
         tribler_config.libtorrent.enabled = True
