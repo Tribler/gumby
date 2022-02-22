@@ -28,11 +28,17 @@ from tribler_core.components.libtorrent.download_manager.download_config import 
 from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
 from tribler_core.components.libtorrent.torrentdef import TorrentDef
 from tribler_core.components.metadata_store.metadata_store_component import MetadataStoreComponent
+from tribler_core.components.payout.payout_component import PayoutComponent
 from tribler_core.components.popularity.popularity_component import PopularityComponent
+from tribler_core.components.resource_monitor.resource_monitor_component import ResourceMonitorComponent
+from tribler_core.components.restapi.restapi_component import RESTComponent
 from tribler_core.components.socks_servers.socks_servers_component import SocksServersComponent
+from tribler_core.components.tag.tag_component import TagComponent
 from tribler_core.components.torrent_checker.torrent_checker_component import TorrentCheckerComponent
 from tribler_core.components.tunnel.tunnel_component import TunnelsComponent
+from tribler_core.components.watch_folder.watch_folder_component import WatchFolderComponent
 from tribler_core.config.tribler_config import TriblerConfig
+from tribler_core.config.tribler_config_section import TriblerConfigSection
 from tribler_core.utilities.simpledefs import dlstatus_strings
 from tribler_core.utilities.unicode import hexlify
 
@@ -42,10 +48,18 @@ from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import generate_keypair_trustchain, run_task, save_keypair_trustchain, save_pub_key_trustchain
 
 
+class TagsSettings(TriblerConfigSection):
+    enabled: bool = False
+
+
+class GumbyTriblerConfig(TriblerConfig):
+    tags: TagsSettings = TagsSettings()
+
+
 # pylint: disable=too-many-public-methods
 class TriblerModule(IPv8Provider):
     tribler_session: Session
-    tribler_config: TriblerConfig
+    tribler_config: GumbyTriblerConfig
 
     def __init__(self, experiment):
         if getattr(experiment, 'tribler_module', None) is not None:
@@ -101,25 +115,64 @@ class TriblerModule(IPv8Provider):
         master_peer = Peer(eckey.pub().key_to_bin())
         return master_peer.mid
 
+    def components_gen(self, config: GumbyTriblerConfig):
+        """
+        Copy-pasted and modified version of tribler_core.start_core.components_gen
+        """
+        # Removed part of components_gen are commented out and not removed to make the difference clearer
+
+        # yield ReporterComponent()
+
+        if config.api.http_enabled or config.api.https_enabled:
+            yield RESTComponent()
+        if config.chant.enabled or config.torrent_checking.enabled:
+            yield MetadataStoreComponent()
+        if config.ipv8.enabled:
+            yield Ipv8Component()
+
+        yield KeyComponent()
+
+        if config.tags.enabled:
+            yield TagComponent()
+
+        if config.libtorrent.enabled:
+            yield LibtorrentComponent()
+        if config.ipv8.enabled and config.chant.enabled:
+            yield GigaChannelComponent()
+        if config.ipv8.enabled:
+            yield BandwidthAccountingComponent()
+        if config.resource_monitor.enabled:
+            yield ResourceMonitorComponent()
+
+        # The components below are skipped if config.gui_test_mode == True
+        if config.gui_test_mode:
+            return
+
+        if config.libtorrent.enabled:
+            yield SocksServersComponent()
+
+        if config.torrent_checking.enabled:
+            yield TorrentCheckerComponent()
+        if config.ipv8.enabled and config.torrent_checking.enabled and config.popularity_community.enabled:
+            yield PopularityComponent()
+        if config.ipv8.enabled and config.tunnel_community.enabled:
+            yield TunnelsComponent()
+        if config.ipv8.enabled:
+            yield PayoutComponent()
+        if config.watch_folder.enabled:
+            yield WatchFolderComponent()
+        # if config.general.version_checker_enabled:
+        #     yield VersionCheckComponent()
+        if config.chant.enabled and config.chant.manager_enabled and config.libtorrent.enabled:
+            yield GigachannelManagerComponent()
+
     @experiment_callback
     async def start_session(self):
-        components = [
-            KeyComponent(),
-            Ipv8Component(),
-            TunnelsComponent(),
-            LibtorrentComponent(),
-            MetadataStoreComponent(),
-            GigaChannelComponent(),
-            BandwidthAccountingComponent(),
-            SocksServersComponent(),
-            TorrentCheckerComponent(),
-            PopularityComponent()
-        ]
-        config: TriblerConfig = self.tribler_config
+        config: GumbyTriblerConfig = self.tribler_config
         self.tribler_config = None
         config.libtorrent.proxy_type = 0
         config.libtorrent.proxy_server = ":"
-
+        components = list(self.components_gen(config))
         session = Session(config, components)
         signal.signal(signal.SIGTERM, lambda signum, stack: session.shutdown_event.set)
         session.set_as_default()
@@ -135,14 +188,15 @@ class TriblerModule(IPv8Provider):
         self.ipv8_available.set_result(self.ipv8)
 
     @experiment_callback
-    def stop_session(self):
-        ensure_future(self.tribler_session.shutdown())
+    async def stop_session(self):
+        self.tribler_session.shutdown_event.set()
+        await self.tribler_session.shutdown()
 
         # Write away the start time of the experiment
         with open('start_time.txt', 'w') as start_time_time:
             start_time_time.write("%f" % self.experiment.scenario_runner.exp_start_time)
 
-    def setup_config(self):
+    def setup_config(self) -> GumbyTriblerConfig:
         if self.ipv8_port is None:
             self.ipv8_port = 12000 + self.experiment.my_id
         self._logger.info("IPv8 port set to %d", self.ipv8_port)
@@ -150,21 +204,23 @@ class TriblerModule(IPv8Provider):
         my_state_path = os.path.join(os.environ['OUTPUT_DIR'], str(self.my_id))
         self._logger.info("State path: %s", my_state_path)
 
-        config = TriblerConfig(state_dir=Path(my_state_path))
-        config.ipv8.bootstrap_override = "0.0.0.0:0"
-        config.trustchain.ec_keypair_filename = os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id))
-        config.torrent_checking.enabled = False
-        config.discovery_community.enabled = False
-        config.chant.enabled = False
-        config.libtorrent.enabled = False
-        config.api.http_enabled = False
-        config.libtorrent.port = 20000 + self.experiment.my_id * 10
-        config.ipv8.port = self.ipv8_port
-        config.tunnel_community.enabled = False
-        config.dht.enabled = False
+        config = GumbyTriblerConfig(state_dir=Path(my_state_path))
         config.general.version_checker_enabled = False
+        config.tunnel_community.enabled = False
         config.bootstrap.enabled = False
+        config.ipv8.port = self.ipv8_port
+        config.ipv8.bootstrap_override = "0.0.0.0:0"
+        config.discovery_community.enabled = False
+        config.dht.enabled = False
+        config.trustchain.ec_keypair_filename = os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id))
+        config.chant.enabled = False
+        config.torrent_checking.enabled = False
+        config.libtorrent.enabled = False
+        config.libtorrent.port = 20000 + self.experiment.my_id * 10
+        config.api.http_enabled = False
+        config.resource_monitor.enabled = False
         config.popularity_community.enabled = False
+        config.tags.enabled = False
         return config
 
     @experiment_callback
