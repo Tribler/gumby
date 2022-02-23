@@ -115,7 +115,7 @@ class TriblerModule(IPv8Provider):
         master_peer = Peer(eckey.pub().key_to_bin())
         return master_peer.mid
 
-    def components_gen(self, config: GumbyTriblerConfig):
+    def components_gen(self, config: GumbyTriblerConfig):  # pylint: disable=too-many-branches
         """
         Copy-pasted and modified version of tribler_core.start_core.components_gen
         """

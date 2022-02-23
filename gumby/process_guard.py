@@ -14,7 +14,7 @@ from signal import SIGKILL, SIGTERM, signal
 from subprocess import Popen
 from time import sleep, time
 
-from psutil import Process, AccessDenied, NoSuchProcess
+from psutil import Process
 
 OK_EXIT_CODE = 0
 TIMEOUT_EXIT_CODE = 3
