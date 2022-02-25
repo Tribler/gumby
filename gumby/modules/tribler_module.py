@@ -257,11 +257,6 @@ class TriblerModule(IPv8Provider):
                 fp.write(bytearray(random.getrandbits(8) for _ in range(bootstrap_size * 1024 * 1024)))
 
     @experiment_callback
-    def start_bootstrap_download(self):  # obsolete?
-        # self.tribler_session.start_bootstrap_download()
-        pass
-
-    @experiment_callback
     def disable_lt_rc4_encryption(self):
         """
         Disable the RC4 encryption that the libtorrent session in Tribler uses by default.
