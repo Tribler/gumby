@@ -2,7 +2,7 @@ import json
 import os
 import sys
 from asyncio import get_event_loop
-from collections import Iterable
+from collections.abc import Iterable
 from functools import reduce  # pylint: disable=redefined-builtin
 from importlib.machinery import PathFinder
 from importlib.util import module_from_spec
