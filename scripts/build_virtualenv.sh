@@ -201,6 +201,7 @@ pony
 protobuf
 psutil
 pydantic
+pyipv8
 pynacl # New EC crypto stuff for tunnelcommunity
 pyyaml
 pyOpenSSL
