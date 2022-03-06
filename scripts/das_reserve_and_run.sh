@@ -1,6 +1,6 @@
 #!/bin/bash
-# %*% A simple script to run experiments on the DAS4 trough prun.
-# %*% Have in mind that this script uses das4_node_run_job.sh, so you will need to set its config options too.
+# %*% A simple script to run experiments on the DAS trough prun.
+# %*% Have in mind that this script uses das_node_run_job.sh, so you will need to set its config options too.
 EXIT_CODE=-15
 cancel_reservation () {
 # Cancel all our dr jobs in the queue
@@ -48,7 +48,7 @@ WORKING_DIR=$PWD
 cd ~
 
 echo "Reserving $NODE_AMOUNT nodes for $DAS4_RESERVE_DURATION secs."
-prun -t $DAS4_RESERVE_DURATION -v -np $NODE_AMOUNT das4_node_run_job.sh &
+prun -t $DAS4_RESERVE_DURATION -v -np $NODE_AMOUNT das_node_run_job.sh &
 PID=$!
 
 sleep 1
