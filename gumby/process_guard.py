@@ -14,11 +14,23 @@ from signal import SIGKILL, SIGTERM, signal
 from subprocess import Popen
 from time import sleep, time
 
-from psutil import Process, AccessDenied, NoSuchProcess
+from psutil import Process
 
 OK_EXIT_CODE = 0
 TIMEOUT_EXIT_CODE = 3
 COMMANDS_FAILED_EXIT_CODE = 5
+
+def extract_pgrp(stat_file_data):
+    """
+    Extracts PGRP value from the stats file content.
+
+    A process name can contain arbitrary symbols, including spaces. For example, `(Isolated Web Co)` is a valid
+    process name. Because of this, it is not enough to just split string by spaces. To find the end of the process name,
+    the function searches the last occurrence of a closing parenthesis.
+    """
+    end_of_process_name = stat_file_data.rfind(')')
+    pgrp = stat_file_data[end_of_process_name + 1:].split()[2]
+    return int(pgrp)
 
 
 class PGPopen(Popen):
@@ -154,7 +166,8 @@ class ResourceMonitor(object):
             stat_file = path.join(pid_dir, 'stat')
             io_file = path.join(pid_dir, 'io')
             if access(stat_file, R_OK) and access(io_file, R_OK):
-                pgrp = int(open(stat_file, 'r').read().split()[4])  # 4 is PGRP
+                pgrp = extract_pgrp(open(stat_file, 'r').read())
+
                 if pgrp in self.pgid_list:
                     self.pid_list.append(pid)
                 else:

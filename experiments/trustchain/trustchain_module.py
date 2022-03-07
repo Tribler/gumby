@@ -83,7 +83,7 @@ class TrustchainModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def enable_trustchain_memory_db(self):
-        self.tribler_config.trustchain.memory_db = True
+        self.gumby_config.trustchain.memory_db = True
 
     @experiment_callback
     def set_validation_range(self, value):
@@ -166,12 +166,12 @@ class TrustchainModule(IPv8OverlayExperimentModule):
         """
         num_blocks = len(self.overlay.persistence.get_all_blocks())
         with open('num_trustchain_blocks.txt', 'a') as output_file:
-            elapsed_time = time.time() - self.experiment.scenario_runner.exp_start_time
+            elapsed_time = time() - self.experiment.scenario_runner.exp_start_time
             output_file.write("%f,%d\n" % (elapsed_time, num_blocks))
 
     @experiment_callback
     def commit_blocks_to_db(self):
-        if self.session.config.trustchain.memory_db:
+        if self.gumby_session.config.trustchain.memory_db:
             self.overlay.persistence.commit(self.overlay.my_peer.public_key.key_to_bin())
 
     @experiment_callback

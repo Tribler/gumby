@@ -1,15 +1,17 @@
 import json
 import os
 import time
+from abc import abstractmethod
 from asyncio import Future
 from binascii import hexlify
+from typing import Optional
 
 from ipv8.bootstrapping.dispersy.bootstrapper import DispersyBootstrapper
 from ipv8.configuration import get_default_configuration
 
 from ipv8_service import IPv8
 
-from gumby.experiment import experiment_callback
+from gumby.experiment import ExperimentClient, experiment_callback
 from gumby.gumby_client_config import GumbyConfig
 from gumby.modules.experiment_module import ExperimentModule
 from gumby.modules.ipv8_community_launchers import DHTCommunityLauncher, IPv8DiscoveryCommunityLauncher
@@ -24,31 +26,22 @@ class GumbyMinimalSession:
 
     def __init__(self, config):
         self.config = config
-        self.trustchain_keypair = None
+        self.trustchain_keypair = read_keypair_trustchain(self.config.trustchain.ec_keypair_filename)
 
 
-class BaseIPv8Module(ExperimentModule):
+class IPv8Provider(ExperimentModule):
+    ipv8_available: Future
+    ipv8: Optional[IPv8] = None
+    ipv8_port: Optional[int] = None
 
-    @classmethod
-    def get_ipv8_provider(cls, experiment):
+    def __init__(self, experiment: ExperimentClient):
         for module in experiment.experiment_modules:
-            if isinstance(module, BaseIPv8Module):
-                return module
-        return None
+            if isinstance(module, IPv8Provider) and module is not self:
+                raise Exception("Unable to load multiple IPv8 providers in a single experiment")
 
-    def __init__(self, experiment):
-        if BaseIPv8Module.get_ipv8_provider(experiment) is not None:
-            raise Exception("Unable to load multiple IPv8 providers in a single experiment")
-
-        super(BaseIPv8Module, self).__init__(experiment)
-        self.has_ipv8 = True
-        self.session = None
-        self.tribler_config = None
-        self.ipv8_port = None
-        self.session_id = os.environ['SYNC_HOST'] + os.environ['SYNC_PORT']
-        self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
+        super().__init__(experiment)
         self.ipv8_available = Future()
-        self.ipv8 = None
+        self.session_id = os.environ['SYNC_HOST'] + os.environ['SYNC_PORT']
         self.bootstrappers = []
 
     @experiment_callback
@@ -98,9 +91,23 @@ class BaseIPv8Module(ExperimentModule):
         with open('ipv8_statistics.txt', 'a') as statistics_file:
             statistics_file.write(json.dumps(new_dict) + '\n')
 
-    def on_id_received(self):
-        super(BaseIPv8Module, self).on_id_received()
-        self.tribler_config = self.setup_config()
+    @abstractmethod
+    def setup_config(self):
+        raise NotImplementedError
+
+    @experiment_callback
+    def start_ipv8_statistics_monitor(self):
+        run_task(self.write_ipv8_statistics, interval=1)
+
+
+class BaseIPv8Module(IPv8Provider):
+    gumby_session: GumbyMinimalSession
+    gumby_config: GumbyConfig
+
+    def __init__(self, experiment):
+        super().__init__(experiment)
+        self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
+        self.bootstrappers = []
 
     def create_ipv8_community_loader(self):
         loader = IsolatedIPv8CommunityLoader(self.session_id)
@@ -108,50 +115,10 @@ class BaseIPv8Module(ExperimentModule):
         loader.set_launcher(IPv8DiscoveryCommunityLauncher())
         return loader
 
-    @experiment_callback
-    async def start_session(self):
-        """
-        Start an IPv8 session.
-        """
-        ipv8_config = get_default_configuration()
-        ipv8_config['port'] = self.tribler_config.ipv8.port
-        ipv8_config['overlays'] = []
-        ipv8_config['keys'] = []  # We load the keys ourselves
-        self.ipv8 = IPv8(ipv8_config, enable_statistics=self.tribler_config.ipv8.statistics)
-
-        self.session = GumbyMinimalSession(self.tribler_config)
-        self.session.trustchain_keypair = read_keypair_trustchain(self.tribler_config.trustchain.ec_keypair_filename)
-
-        # Load overlays
-        self.custom_ipv8_community_loader.load(self.ipv8, self.session)
-
-        # Set bootstrap servers if specified
-        if self.bootstrappers:
-            for overlay in self.ipv8.overlays:
-                overlay.bootstrappers = self.bootstrappers
-
-        await self.ipv8.start()
-        self.ipv8_available.set_result(self.ipv8)
-
-        if self.tribler_config.ipv8.statistics:
-            for overlay in self.ipv8.overlays:
-                self.ipv8.endpoint.enable_community_statistics(overlay.get_prefix(), True)
-
-    @experiment_callback
-    async def stop_session(self):
-        await self.ipv8.stop()
-
-    @experiment_callback
-    def enable_ipv8_statistics(self):
-        self.tribler_config.ipv8.statistics = True
-
-    @experiment_callback
-    def start_ipv8_statistics_monitor(self):
-        run_task(self.write_ipv8_statistics, interval=1)
-
-    @experiment_callback
-    def isolate_ipv8_overlay(self, name):
-        self.custom_ipv8_community_loader.isolate(name)
+    def on_id_received(self):
+        super().on_id_received()
+        self.gumby_config = self.setup_config()
+        setattr(self.experiment, 'gumby_config', self.gumby_config)
 
     def setup_config(self):
         if self.ipv8_port is None:
@@ -166,3 +133,43 @@ class BaseIPv8Module(ExperimentModule):
         config.state_dir = my_state_path
         config.ipv8.port = self.ipv8_port
         return config
+
+    @experiment_callback
+    def isolate_ipv8_overlay(self, name):
+        self.custom_ipv8_community_loader.isolate(name)
+
+    @experiment_callback
+    def enable_ipv8_statistics(self):
+        self.gumby_config.ipv8.statistics = True
+
+    @experiment_callback
+    async def start_session(self):
+        """
+        Start an IPv8 session.
+        """
+        ipv8_config = get_default_configuration()
+        ipv8_config['port'] = self.gumby_config.ipv8.port
+        ipv8_config['overlays'] = []
+        ipv8_config['keys'] = []  # We load the keys ourselves
+        self.ipv8 = IPv8(ipv8_config, enable_statistics=self.gumby_config.ipv8.statistics)
+
+        self.gumby_session = GumbyMinimalSession(self.gumby_config)
+
+        # Load overlays
+        self.custom_ipv8_community_loader.load(self.ipv8, self.gumby_session)
+
+        # Set bootstrap servers if specified
+        if self.bootstrappers:
+            for overlay in self.ipv8.overlays:
+                overlay.bootstrappers = self.bootstrappers
+
+        await self.ipv8.start()
+        self.ipv8_available.set_result(self.ipv8)
+
+        if self.gumby_config.ipv8.statistics:
+            for overlay in self.ipv8.overlays:
+                self.ipv8.endpoint.enable_community_statistics(overlay.get_prefix(), True)
+
+    @experiment_callback
+    async def stop_session(self):
+        await self.ipv8.stop()

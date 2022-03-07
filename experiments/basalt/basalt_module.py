@@ -18,7 +18,7 @@ class BasaltModule(IPv8OverlayExperimentModule):
 
     def on_id_received(self):
         super().on_id_received()
-        self.tribler_config.basalt.enabled = True
+        self.gumby_config.basalt.enabled = True
 
     @experiment_callback
     def register_sample_callback(self):
