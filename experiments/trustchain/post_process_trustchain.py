@@ -3,11 +3,11 @@ import json
 import os
 import sys
 
-from gumby.statsparser import StatisticsParser
+from anydex.trustchain.database import TrustChainDB
 
 from tribler.core.utilities.unicode import hexlify
 
-from anydex.trustchain.database import TrustChainDB
+from gumby.statsparser import StatisticsParser
 
 
 class TrustchainStatisticsParser(StatisticsParser):
