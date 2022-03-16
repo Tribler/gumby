@@ -4,13 +4,13 @@ from binascii import unhexlify
 from ipv8.messaging.anonymization.community import TunnelSettings
 from ipv8.messaging.anonymization.tunnel import PEER_FLAG_EXIT_BT, PEER_FLAG_RELAY
 
-from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
-from tribler_core.components.payout.payout_component import PayoutComponent
-from tribler_core.components.tunnel.community.tunnel_community import TriblerTunnelCommunity
-from tribler_core.components.tunnel.settings import TunnelCommunitySettings
-from tribler_core.components.tunnel.tunnel_component import TunnelsComponent
-from tribler_core.utilities.simpledefs import DOWNLOAD, UPLOAD, dlstatus_strings
-from tribler_core.utilities.unicode import hexlify
+from tribler.core.components.libtorrent.libtorrent_component import LibtorrentComponent
+from tribler.core.components.payout.payout_component import PayoutComponent
+from tribler.core.components.tunnel.community.tunnel_community import TriblerTunnelCommunity
+from tribler.core.components.tunnel.settings import TunnelCommunitySettings
+from tribler.core.components.tunnel.tunnel_component import TunnelsComponent
+from tribler.core.utilities.simpledefs import DOWNLOAD, UPLOAD, dlstatus_strings
+from tribler.core.utilities.unicode import hexlify
 
 from gumby.experiment import experiment_callback
 from gumby.modules.tribler_module import TriblerBasedModule

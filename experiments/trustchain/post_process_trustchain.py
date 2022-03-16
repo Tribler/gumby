@@ -5,7 +5,7 @@ import sys
 
 from gumby.statsparser import StatisticsParser
 
-from tribler_core.utilities.unicode import hexlify
+from tribler.core.utilities.unicode import hexlify
 
 from anydex.trustchain.database import TrustChainDB
 

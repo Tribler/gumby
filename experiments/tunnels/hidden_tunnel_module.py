@@ -1,4 +1,4 @@
-from tribler_core.utilities.unicode import hexlify
+from tribler.core.utilities.unicode import hexlify
 
 from experiments.tunnels.tunnel_module import TunnelModule
 

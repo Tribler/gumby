@@ -5,9 +5,9 @@ import signal
 import sys
 from pathlib import Path
 
-from tribler_core.components.base import Session
-from tribler_core.config.tribler_config import TriblerConfig
-from tribler_core.start_core import components_gen
+from tribler.core.components.base import Session
+from tribler.core.config.tribler_config import TriblerConfig
+from tribler.core.start_core import components_gen
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 DEFAULT_EXECUTION_TIME = 60 * 10  # Run for 10 minutes by default

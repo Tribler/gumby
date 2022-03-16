@@ -18,29 +18,29 @@ from ipv8_service import IPv8
 
 from pony.orm import db_session, desc
 
-from tribler_core.components.bandwidth_accounting.bandwidth_accounting_component import BandwidthAccountingComponent
-from tribler_core.components.base import Session
-from tribler_core.components.gigachannel.gigachannel_component import GigaChannelComponent
-from tribler_core.components.gigachannel_manager.gigachannel_manager_component import GigachannelManagerComponent
-from tribler_core.components.ipv8.ipv8_component import Ipv8Component
-from tribler_core.components.key.key_component import KeyComponent
-from tribler_core.components.libtorrent.download_manager.download_config import DownloadConfig
-from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
-from tribler_core.components.libtorrent.torrentdef import TorrentDef
-from tribler_core.components.metadata_store.metadata_store_component import MetadataStoreComponent
-from tribler_core.components.payout.payout_component import PayoutComponent
-from tribler_core.components.popularity.popularity_component import PopularityComponent
-from tribler_core.components.resource_monitor.resource_monitor_component import ResourceMonitorComponent
-from tribler_core.components.restapi.restapi_component import RESTComponent
-from tribler_core.components.socks_servers.socks_servers_component import SocksServersComponent
-from tribler_core.components.tag.tag_component import TagComponent
-from tribler_core.components.torrent_checker.torrent_checker_component import TorrentCheckerComponent
-from tribler_core.components.tunnel.tunnel_component import TunnelsComponent
-from tribler_core.components.watch_folder.watch_folder_component import WatchFolderComponent
-from tribler_core.config.tribler_config import TriblerConfig
-from tribler_core.config.tribler_config_section import TriblerConfigSection
-from tribler_core.utilities.simpledefs import dlstatus_strings
-from tribler_core.utilities.unicode import hexlify
+from tribler.core.components.bandwidth_accounting.bandwidth_accounting_component import BandwidthAccountingComponent
+from tribler.core.components.base import Session
+from tribler.core.components.gigachannel.gigachannel_component import GigaChannelComponent
+from tribler.core.components.gigachannel_manager.gigachannel_manager_component import GigachannelManagerComponent
+from tribler.core.components.ipv8.ipv8_component import Ipv8Component
+from tribler.core.components.key.key_component import KeyComponent
+from tribler.core.components.libtorrent.download_manager.download_config import DownloadConfig
+from tribler.core.components.libtorrent.libtorrent_component import LibtorrentComponent
+from tribler.core.components.libtorrent.torrentdef import TorrentDef
+from tribler.core.components.metadata_store.metadata_store_component import MetadataStoreComponent
+from tribler.core.components.payout.payout_component import PayoutComponent
+from tribler.core.components.popularity.popularity_component import PopularityComponent
+from tribler.core.components.resource_monitor.resource_monitor_component import ResourceMonitorComponent
+from tribler.core.components.restapi.restapi_component import RESTComponent
+from tribler.core.components.socks_servers.socks_servers_component import SocksServersComponent
+from tribler.core.components.tag.tag_component import TagComponent
+from tribler.core.components.torrent_checker.torrent_checker_component import TorrentCheckerComponent
+from tribler.core.components.tunnel.tunnel_component import TunnelsComponent
+from tribler.core.components.watch_folder.watch_folder_component import WatchFolderComponent
+from tribler.core.config.tribler_config import TriblerConfig
+from tribler.core.config.tribler_config_section import TriblerConfigSection
+from tribler.core.utilities.simpledefs import dlstatus_strings
+from tribler.core.utilities.unicode import hexlify
 
 from gumby.experiment import experiment_callback
 from gumby.modules.base_ipv8_module import IPv8Provider
@@ -117,7 +117,7 @@ class TriblerModule(IPv8Provider):
 
     def components_gen(self, config: GumbyTriblerConfig):  # pylint: disable=too-many-branches
         """
-        Copy-pasted and modified version of tribler_core.start_core.components_gen
+        Copy-pasted and modified version of tribler.core.start_core.components_gen
         """
         # Removed part of components_gen are commented out and not removed to make the difference clearer
 
