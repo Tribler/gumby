@@ -82,7 +82,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not os.path.exists(args.confpath):
-        print("Error: The specified configuration file doesn't exist.")
+        print(f"Error: The specified configuration file doesn't exist: {args.confpath}")
         sys.exit(1)
 
     sys.path.append(os.path.dirname(__file__))
