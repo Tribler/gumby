@@ -8,10 +8,10 @@ from ipv8.taskmanager import TaskManager
 
 from pony.orm import count, db_session, desc
 
-from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
-from tribler_core.components.metadata_store.db.orm_bindings.channel_node import NEW
-from tribler_core.components.popularity.community.popularity_community import PopularityCommunity
-from tribler_core.components.popularity.popularity_component import PopularityComponent
+from tribler.core.components.libtorrent.libtorrent_component import LibtorrentComponent
+from tribler.core.components.metadata_store.db.orm_bindings.channel_node import NEW
+from tribler.core.components.popularity.community.popularity_community import PopularityCommunity
+from tribler.core.components.popularity.popularity_component import PopularityComponent
 
 from gumby.experiment import experiment_callback
 from gumby.modules.tribler_module import TriblerBasedModule

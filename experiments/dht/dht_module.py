@@ -4,7 +4,7 @@ from binascii import unhexlify
 from ipv8.dht import DHTError
 from ipv8.dht.discovery import DHTDiscoveryCommunity
 
-from tribler_core.components.ipv8.ipv8_component import Ipv8Component
+from tribler.core.components.ipv8.ipv8_component import Ipv8Component
 
 from gumby.experiment import experiment_callback
 from gumby.modules.tribler_module import TriblerBasedModule

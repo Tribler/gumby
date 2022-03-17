@@ -42,11 +42,10 @@ def setup_environment_other():
     if "TRIBLER_DIR" not in environ:
         environ["TRIBLER_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler"))
 
-    # Add the Tribler source directories to the Python path so we can import from them
-    for subdir_name in ['tribler-core']:
-        subdir_path = path.join(environ["TRIBLER_DIR"], 'src', subdir_name)
-        if subdir_path not in python_path:
-            python_path.append(subdir_path)
+    # Add the Tribler source directory to the Python path so we can import from them
+    src_dir = path.join(environ["TRIBLER_DIR"], 'src')
+    if src_dir not in python_path:
+        python_path.append(src_dir)
 
     if "ANYDEX_DIR" in environ:
         python_path.append(environ["ANYDEX_DIR"])

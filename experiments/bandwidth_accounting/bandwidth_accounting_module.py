@@ -1,7 +1,7 @@
 import random
 
-from tribler_core.components.bandwidth_accounting.bandwidth_accounting_component import BandwidthAccountingComponent
-from tribler_core.components.bandwidth_accounting.community.bandwidth_accounting_community import \
+from tribler.core.components.bandwidth_accounting.bandwidth_accounting_component import BandwidthAccountingComponent
+from tribler.core.components.bandwidth_accounting.community.bandwidth_accounting_community import \
     BandwidthAccountingCommunity
 
 from gumby.experiment import experiment_callback
