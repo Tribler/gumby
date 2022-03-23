@@ -15,6 +15,7 @@ class ExperimentModule(object):
         self._logger.info("Load experiment module %s", self.__class__.__name__)
         self.experiment = experiment
         self.experiment.register(self)
+        self.has_ipv8 = False  # Whether this module provides an instance of IPv8
 
     def print_dict_changes(self, name, prev_dict, cur_dict):
         return self.experiment.print_dict_changes(name, prev_dict, cur_dict)

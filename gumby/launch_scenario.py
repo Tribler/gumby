@@ -43,16 +43,18 @@ def setup_environment_other():
         environ["TRIBLER_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler"))
 
     # Add the Tribler source directories to the Python path so we can import from them
-    for subdir_name in ['tribler-core']:
+    for subdir_name in ('tribler-common', 'tribler-core'):
         subdir_path = path.join(environ["TRIBLER_DIR"], 'src', subdir_name)
         if subdir_path not in python_path:
             python_path.append(subdir_path)
 
+    if "IPV8_DIR" not in environ:
+        environ["IPV8_DIR"] = path.abspath(path.join(environ["PROJECT_DIR"], "tribler", "src", "pyipv8"))
     if "ANYDEX_DIR" in environ:
         python_path.append(environ["ANYDEX_DIR"])
     if "BAMI_DIR" in environ:
         python_path.append(environ["BAMI_DIR"])
-    if "IPV8_DIR" in environ:
+    if environ["IPV8_DIR"] not in python_path:
         python_path.append(environ["IPV8_DIR"])
 
 

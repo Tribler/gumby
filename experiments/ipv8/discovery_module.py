@@ -13,4 +13,4 @@ class DiscoveryModule(IPv8OverlayExperimentModule):
 
     def on_id_received(self):
         super(DiscoveryModule, self).on_id_received()
-        self.gumby_config.ipv8.discovery.enabled = True
+        self.tribler_config.ipv8.discovery.enabled = True

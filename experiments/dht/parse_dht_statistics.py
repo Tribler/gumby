@@ -16,10 +16,7 @@ class DHTStatisticsParser(StatisticsParser):
             for peer_nr, filename, dir in self.yield_files('dht.log'):
                 with open(filename) as log_fp:
                     for line in log_fp.readlines():
-                        try:
-                            ts, method, t = line.split()
-                        except ValueError as e:
-                            raise ValueError(f"{e}: {line!r}") from e
+                        ts, method, t = line.split()
                         csv_fp.write('%s %s %s %s\n' % (peer_nr, ts, method, t))
 
     def run(self):

@@ -6,15 +6,13 @@ from binascii import hexlify, unhexlify
 
 from ipv8.taskmanager import TaskManager
 
-from pony.orm import count, db_session, desc
+from pony.orm import count, db_session
 
-from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
-from tribler_core.components.metadata_store.db.orm_bindings.channel_node import NEW
-from tribler_core.components.popularity.community.popularity_community import PopularityCommunity
-from tribler_core.components.popularity.popularity_component import PopularityComponent
+from tribler_core.modules.metadata_store.orm_bindings.channel_node import NEW
+from tribler_core.modules.popularity.popularity_community import PopularityCommunity
 
 from gumby.experiment import experiment_callback
-from gumby.modules.tribler_module import TriblerBasedModule
+from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.util import run_task
 
 
@@ -49,31 +47,23 @@ class FakeDHTHealthManager(TaskManager):
         return future
 
 
-class PopularityModule(TriblerBasedModule):
+class PopularityModule(IPv8OverlayExperimentModule):
     """
     This module contains code to manage experiments with the popularity community.
     """
 
     def __init__(self, experiment):
-        super().__init__(experiment)
+        super(PopularityModule, self).__init__(experiment, PopularityCommunity)
         self._logger = logging.getLogger(self.__class__.__name__)
         self.fake_dht_health_manager = None
         self.health_poll_lc = None
 
     def on_id_received(self):
         super(PopularityModule, self).on_id_received()
-        tribler_config = self.tribler_module.tribler_config
-        tribler_config.popularity_community.enabled = True
-        tribler_config.torrent_checking.enabled = True
+        self.tribler_config.popularity_community.enabled = True
+        self.tribler_config.torrent_checking.enabled = True
 
         self.autoplot_create('num_healths', 'Number of torrent healths')
-
-    @property
-    def community(self) -> PopularityCommunity:
-        component = PopularityComponent.instance()
-        if component is None:
-            raise RuntimeError('PopularityComponent not found')
-        return component.community
 
     @experiment_callback
     def start_health_poll(self, interval):
@@ -85,31 +75,28 @@ class PopularityModule(TriblerBasedModule):
 
     @experiment_callback
     def set_fake_dht_health_manager(self):
-        libtorrent_component = LibtorrentComponent.instance()
-        assert libtorrent_component
-        download_manager = libtorrent_component.download_manager
         self.fake_dht_health_manager = FakeDHTHealthManager()
-        download_manager.dht_health_manager = self.fake_dht_health_manager
+        self.session.dlmgr.dht_health_manager = self.fake_dht_health_manager
 
     @experiment_callback
     def introduce_peers_popularity(self):
         for peer_id in self.all_vars.keys():
             if int(peer_id) != self.my_id:
-                self.community.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
+                self.overlay.walk_to(self.experiment.get_peer_ip_port_by_id(peer_id))
 
     @experiment_callback
     def set_torrent_check_interval(self, interval):
         interval = int(interval)
         self._logger.info("Changing torrent check interval to %d seconds", interval)
-        torrent_checker = self.community.torrent_checker
-        torrent_checker.replace_task("torrent_check", torrent_checker.check_local_torrents, interval=interval)
+        torrent_checker = self.overlay.torrent_checker
+        torrent_checker.replace_task("torrent_check", torrent_checker.check_random_torrent, interval=interval)
 
     @experiment_callback
     def insert_torrents_from_file(self, filename):
         torrent_healths = {}
         dir_path = os.path.dirname(os.path.realpath(__file__))
         with db_session:
-            my_channel = self.community.mds.ChannelMetadata.get_my_channels().order_by(lambda c: desc(c.rowid)).first()
+            my_channel = self.overlay.metadata_store.ChannelMetadata.get_my_channel()
             with open(os.path.join(dir_path, filename)) as torrents_file:
                 for line in torrents_file.readlines():
                     line = line.rstrip()
@@ -125,7 +112,7 @@ class PopularityModule(TriblerBasedModule):
                             "size": 1024,
                             "status": NEW
                         }
-                        _ = self.community.mds.TorrentMetadata.from_dict(new_entry_dict)
+                        _ = self.overlay.metadata_store.TorrentMetadata.from_dict(new_entry_dict)
 
                     # Update torrent health
                     torrent_healths[unhexlify(parts[1])] = (int(parts[2]), int(parts[3]))
@@ -138,7 +125,7 @@ class PopularityModule(TriblerBasedModule):
     @experiment_callback
     def write_periodic_torrent_health_statistics(self):
         with db_session:
-            torrent_healths = count(state for state in self.community.mds.TorrentState.select()
+            torrent_healths = count(state for state in self.overlay.metadata_store.TorrentState.select()
                                     if state.last_check != 0)
             self.autoplot_add_point('num_healths', torrent_healths)
 
@@ -146,7 +133,7 @@ class PopularityModule(TriblerBasedModule):
     def write_torrent_health_statistics(self):
         with open("healths.txt", "w") as healths_file:
             with db_session:
-                torrent_healths = self.community.mds.TorrentState.select()[:]
+                torrent_healths = self.overlay.metadata_store.TorrentState.select()[:]
                 for torrent_health in torrent_healths:
                     healths_file.write("%s,%d,%d,%d\n" % (hexlify(torrent_health.infohash),
                                                           torrent_health.seeders,

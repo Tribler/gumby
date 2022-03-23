@@ -5,8 +5,8 @@ from pathlib import Path
 
 from pony.orm import db_session
 
-from tribler_core.components.bandwidth_accounting.db.database import BandwidthDatabase
-from tribler_core.components.bandwidth_accounting.db.transaction import BandwidthTransactionData
+from tribler_core.modules.bandwidth_accounting.database import BandwidthDatabase
+from tribler_core.modules.bandwidth_accounting.transaction import BandwidthTransactionData
 
 from gumby.statsparser import StatisticsParser
 

@@ -44,7 +44,6 @@ fi
 
 # If we compile for Python 3, we want to install a newer version since the version on the DAS6 is outdated.
 if [ ! -e ~/python3/bin/python3 ]; then
-    echo "Installing Python 3.9"
     pushd $HOME
     wget https://www.python.org/ftp/python/3.9.7/Python-3.9.7.tgz
     tar -xzvf Python-3.9.7.tgz
@@ -53,8 +52,6 @@ if [ ! -e ~/python3/bin/python3 ]; then
     make install -j24
     popd
     popd
-else
-    echo "Skip installing Python 3.9"
 fi
 
 export PATH=$HOME/python3/bin:$PATH
@@ -201,7 +198,6 @@ pony
 protobuf
 psutil
 pydantic
-pyipv8
 pynacl # New EC crypto stuff for tunnelcommunity
 pyyaml
 pyOpenSSL

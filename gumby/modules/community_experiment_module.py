@@ -1,12 +1,13 @@
 from base64 import b64decode, b64encode
 from random import sample
+from typing import Optional
 
+from ipv8.loader import CommunityLauncher
 from ipv8.peer import Peer
 from ipv8.peerdiscovery.churn import RandomChurn
 from ipv8.peerdiscovery.discovery import EdgeWalk, RandomWalk
 
 from gumby.experiment import experiment_callback
-from gumby.modules.base_ipv8_module import BaseIPv8Module
 from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import generate_keypair_trustchain, save_keypair_trustchain, save_pub_key_trustchain
 
@@ -33,7 +34,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         pass
 
     @property
-    def ipv8_provider(self) -> BaseIPv8Module:
+    def ipv8_provider(self):
         """
         Gets an experiment module from the loaded experiment modules that inherits from BaseIPv8Module. It can be
         used as the source for the IPv8 instance, session, session config and custom community loader.
@@ -42,35 +43,48 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         provider = None
 
         for module in self.experiment.experiment_modules:
-            if isinstance(module, ExperimentModule) and isinstance(module, BaseIPv8Module):
+            if isinstance(module, ExperimentModule) and module.has_ipv8:
                 provider = module
                 break
 
         if provider:
             return provider
 
-        raise Exception("No IPv8 provider module loaded. Load an implementation of BaseIPv8Module "
-                        "(or other module which supports IPv8Provider protocol) "
-                        "before loading the %s module" % self.__class__.__name__)
+        raise Exception("No IPv8 provider module loaded. Load an implementation of BaseIPv8Module ("
+                        "with has_ipv8 = True) before loading the %s module", self.__class__.__name__)
 
     @property
     def ipv8(self):
         return self.ipv8_provider.ipv8
 
     @property
-    def gumby_session(self):
-        return self.ipv8_provider.gumby_session
+    def session(self):
+        return self.ipv8_provider.session
 
     @property
-    def gumby_config(self):
-        # The gumby config only exists after on_id_received, up to session start. The session start copy constructs
-        # all settings so writing to the original gumby_config after this will not do anything. So on any access to
-        # the gumby_config after the session has launched, return the session. It acts as a gumby_config as well and
+    def tribler_config(self):
+        # The tribler config only exists after on_id_received, up to session start. The session start copy constructs
+        # all settings so writing to the original tribler_config after this will not do anything. So on any access to
+        # the tribler_config after the session has launched, return the session. It acts as a tribler_config as well and
         # alerts the user if some setting cannot be changed at runtime.
-        if self.ipv8_provider.gumby_config is None:
-            return self.gumby_session
+        if self.ipv8_provider.tribler_config is None:
+            return self.session
 
-        return self.ipv8_provider.gumby_config
+        return self.ipv8_provider.tribler_config
+
+    @property
+    def ipv8_community_loader(self):
+        return self.ipv8_provider.custom_ipv8_community_loader
+
+    @property
+    def ipv8_community_launcher(self) -> Optional[CommunityLauncher]:
+        """
+        Return the launcher associated with the community of this module.
+        """
+        for launcher, _ in self.ipv8_community_loader.community_launchers.values():
+            if launcher.get_overlay_class().__name__ == self.community_class.__name__:
+                return launcher
+        return None
 
     @property
     def overlay(self):
@@ -126,7 +140,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
         strategy = self.strategies[name]
 
-        self.ipv8.strategies.append((strategy(self.overlay, **kwargs), int(max_peers)))
+        self.session.ipv8.strategies.append((strategy(self.overlay, **kwargs), int(max_peers)))
 
     def get_peer(self, peer_id):
         target = self.all_vars[peer_id]
@@ -138,14 +152,14 @@ class IPv8OverlayExperimentModule(ExperimentModule):
 
     def on_id_received(self):
         # Since the IPv8 source module is loaded before any community module, the IPv8 on_id_received has
-        # already completed. This means that the gumby_config is now available. So any configuration should happen in
+        # already completed. This means that the tribler_config is now available. So any configuration should happen in
         # overrides of this function. (Be sure to call this super though!)
         super(IPv8OverlayExperimentModule, self).on_id_received()
 
         # We need the IPv8 peer key at this point. However, the configured session is not started yet. So we
         # generate the keys here and place them in the correct place. When the session starts it will load these keys.
         keypair = generate_keypair_trustchain()
-        save_keypair_trustchain(keypair, self.gumby_config.trustchain.ec_keypair_filename)
-        save_pub_key_trustchain(keypair, "%s.pub" % self.gumby_config.trustchain.ec_keypair_filename)
+        save_keypair_trustchain(keypair, self.tribler_config.trustchain.ec_keypair_filename)
+        save_pub_key_trustchain(keypair, "%s.pub" % self.tribler_config.trustchain.ec_keypair_filename)
 
         self.vars['public_key'] = b64encode(keypair.pub().key_to_bin()).decode('utf-8')

@@ -1,25 +1,16 @@
 import random
 
-from tribler_core.components.bandwidth_accounting.bandwidth_accounting_component import BandwidthAccountingComponent
-from tribler_core.components.bandwidth_accounting.community.bandwidth_accounting_community import \
-    BandwidthAccountingCommunity
+from tribler_core.modules.bandwidth_accounting.community import BandwidthAccountingCommunity
 
 from gumby.experiment import experiment_callback
-from gumby.modules.tribler_module import TriblerBasedModule
+from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
 from gumby.util import run_task
 
 
-class BandwidthAccountingModule(TriblerBasedModule):
+class BandwidthAccountingModule(IPv8OverlayExperimentModule):
     def __init__(self, experiment):
-        super().__init__(experiment)
+        super().__init__(experiment, BandwidthAccountingCommunity)
         self.payouts_task = None
-
-    @property
-    def community(self) -> BandwidthAccountingCommunity:
-        component = BandwidthAccountingComponent.instance()
-        if component is None:
-            raise RuntimeError('BandwidthAccountingComponent not found')
-        return component.community
 
     @experiment_callback
     def start_payouts(self):
@@ -32,11 +23,11 @@ class BandwidthAccountingModule(TriblerBasedModule):
         run_task(start, delay=delay)
 
     def do_random_payout(self):
-        verified_peers = list(self.community.network.verified_peers)
+        verified_peers = list(self.overlay.network.verified_peers)
         random_peer = random.choice(verified_peers)
         random_amount = random.randint(1 * 1024 * 1024, 10 * 1024 * 1024)
         self._logger.info("Performing payout to peer %s with amount %d", random_peer, random_amount)
-        self.community.do_payout(random_peer, random_amount)
+        self.overlay.do_payout(random_peer, random_amount)
 
     @experiment_callback
     def stop_payouts(self):
