@@ -8,6 +8,12 @@ Welcome to Gumby's documentation!
 
 .. toctree::
    :maxdepth: 1
+   :caption: Overview:
+
+   quickoverview.rst
+
+.. toctree::
+   :maxdepth: 1
    :caption: Concepts:
 
    advanced_scenario_concepts.rst
