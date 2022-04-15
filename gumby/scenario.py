@@ -50,9 +50,9 @@ class ScenarioParser(object):
              - Have in mind that in case of having several lines with the same
                time stamp, they will be executed in order.
     """
-    _re_substitution = re_compile("(\$\w+)")
-    _re_preprocessor_dir = re_compile("^&(\w+)\s+")
-    _re_named_arg = re_compile("^\s*(\w+)\s*=\s*(.*)$")
+    _re_substitution = re_compile(r"(\$\w+)")
+    _re_preprocessor_dir = re_compile(r"^&(\w+)\s+")
+    _re_named_arg = re_compile(r"^\s*(\w+)\s*=\s*(.*)$")
 
     def __init__(self):
         super(ScenarioParser, self).__init__()

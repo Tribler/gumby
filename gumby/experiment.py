@@ -1,10 +1,11 @@
-import imp
 import json
 import os
 import sys
 from asyncio import get_event_loop
-from collections import Iterable
+from collections.abc import Iterable
 from functools import reduce  # pylint: disable=redefined-builtin
+from importlib.machinery import PathFinder
+from importlib.util import module_from_spec
 from os import chdir, environ, makedirs, path
 from time import time
 from typing import List, Optional
@@ -330,19 +331,18 @@ class ExperimentClient(LineReceiver):
         :param directory_path: the file's path
         :return: the imported module or None
         """
-        if module_name in sys.modules and sys.modules[module_name]:
-            return sys.modules[module_name]
-        module = None
-        f = None
-        try:
-            f, pathname, desc = imp.find_module(name, [directory_path, ])
-            module = imp.load_module(module_name, f, pathname, desc)
-        except ImportError as e:
+        module = sys.modules.get(module_name)
+        if module is not None:
+            return module
+
+        module_spec = PathFinder().find_spec(name, [directory_path])
+        if module_spec is None:
             if logger:
-                logger.error("Unable to import %s from %s as %s: %s", name, directory_path, module_name, str(e))
-        finally:
-            if f:
-                f.close()
+                logger.error("Unable to import %s from %s as %s", name, directory_path, module_name)
+        else:
+            module = module_from_spec(module_spec)
+            sys.modules[module_name] = module
+            module_spec.loader.exec_module(module)
         return module
 
     @staticmethod
