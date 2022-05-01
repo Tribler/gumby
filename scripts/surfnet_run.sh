@@ -24,7 +24,7 @@ echo "CMD file: $CMDFILE"
 # Make the file empty
 > $CMDFILE
 
-# @CONF_OPTION DAS4_NODE_COMMAND: The command that will be repeatedly launched in the worker nodes of the cluster. (required)
+# @CONF_OPTION DAS_NODE_COMMAND: The command that will be repeatedly launched in the worker nodes of the cluster. (required)
 for INSTANCE in $(seq 1 1 $PROCESSES_IN_THIS_NODE); do
     echo "$INSTANCE_COMMAND" >> $CMDFILE
 done
