@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script is called from das4_reserve_and_run.sh and spawns N copies of the specified command, sending the output
+# This script is called from das_reserve_and_run.sh and spawns N copies of the specified command, sending the output
 # data back to the head node when finished.
 let "PROCESSES_PER_NODE=$INSTANCES_TO_RUN/$NODE_AMOUNT"
 let "PLUS_ONE_NODES=$INSTANCES_TO_RUN%$NODE_AMOUNT"
