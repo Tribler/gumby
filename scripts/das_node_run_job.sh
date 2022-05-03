@@ -16,7 +16,7 @@ fi
 
 export PROCESSES_IN_THIS_NODE
 
-echo "$(hostname) here, spawning $PROCESSES_IN_THIS_NODE instances of command: $DAS4_NODE_COMMAND"
+echo "$(hostname) here, spawning $PROCESSES_IN_THIS_NODE instances of command: $DAS_NODE_COMMAND"
 
 OUTPUT_DIR=/local/$USER/Experiment_${EXPERIMENT_NAME}_output
 rm -fR "$OUTPUT_DIR"
@@ -25,9 +25,9 @@ cd "$OUTPUT_DIR"
 
 CMDFILE=$(mktemp --tmpdir=/local/$USER/ process_guard_XXXXXXXXXXXXX_$USER)
 
-# @CONF_OPTION DAS4_NODE_COMMAND: The command that will be repeatedly launched in the worker nodes of the cluster. (required)
+# @CONF_OPTION DAS_NODE_COMMAND: The command that will be repeatedly launched in the worker nodes of the cluster. (required)
 for INSTANCE in $(seq 1 1 $PROCESSES_IN_THIS_NODE); do
-    echo "$DAS4_NODE_COMMAND" >> $CMDFILE
+    echo "$DAS_NODE_COMMAND" >> $CMDFILE
 done
 
 # @CONF_OPTION NODE_TIMEOUT: Time in seconds to wait for the sub-processes to run before killing them. (required)
