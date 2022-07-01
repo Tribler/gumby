@@ -16,10 +16,7 @@ class BandwidthAccountingModule(TriblerBasedModule):
 
     @property
     def community(self) -> BandwidthAccountingCommunity:
-        component = BandwidthAccountingComponent.instance()
-        if component is None:
-            raise RuntimeError('BandwidthAccountingComponent not found')
-        return component.community
+        return self.get_component(BandwidthAccountingComponent).community
 
     @experiment_callback
     def start_payouts(self):

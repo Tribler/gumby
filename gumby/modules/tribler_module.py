@@ -4,9 +4,10 @@ import os
 import random
 import signal
 from abc import abstractmethod
-from asyncio import ensure_future, sleep
+from asyncio import sleep
 from base64 import b64decode, b64encode
 from pathlib import Path
+from typing import Optional, Type, TypeVar
 
 from ipv8.community import Community
 from ipv8.dht.community import DHTCommunity
@@ -19,7 +20,7 @@ from ipv8_service import IPv8
 from pony.orm import db_session, desc
 
 from tribler.core.components.bandwidth_accounting.bandwidth_accounting_component import BandwidthAccountingComponent
-from tribler.core.components.base import Session
+from tribler.core.components.component import Component
 from tribler.core.components.gigachannel.gigachannel_component import GigaChannelComponent
 from tribler.core.components.gigachannel_manager.gigachannel_manager_component import GigachannelManagerComponent
 from tribler.core.components.ipv8.ipv8_component import Ipv8Component
@@ -32,6 +33,7 @@ from tribler.core.components.payout.payout_component import PayoutComponent
 from tribler.core.components.popularity.popularity_component import PopularityComponent
 from tribler.core.components.resource_monitor.resource_monitor_component import ResourceMonitorComponent
 from tribler.core.components.restapi.restapi_component import RESTComponent
+from tribler.core.components.session import Session
 from tribler.core.components.socks_servers.socks_servers_component import SocksServersComponent
 from tribler.core.components.tag.tag_component import TagComponent
 from tribler.core.components.torrent_checker.torrent_checker_component import TorrentCheckerComponent
@@ -46,6 +48,9 @@ from gumby.experiment import experiment_callback
 from gumby.modules.base_ipv8_module import IPv8Provider
 from gumby.modules.experiment_module import ExperimentModule
 from gumby.util import generate_keypair_trustchain, run_task, save_keypair_trustchain, save_pub_key_trustchain
+
+
+T = TypeVar('T', bound=Component)
 
 
 class TagsSettings(TriblerConfigSection):
@@ -175,14 +180,13 @@ class TriblerModule(IPv8Provider):
         components = list(self.components_gen(config))
         session = Session(config, components)
         signal.signal(signal.SIGTERM, lambda signum, stack: session.shutdown_event.set)
-        session.set_as_default()
         self.tribler_session = session
 
         self._logger.info("Starting Tribler Session")
         await session.start_components()
         self._logger.info("Tribler Session started")
 
-        self.ipv8 = Ipv8Component.instance().ipv8
+        self.ipv8 = self.get_component(Ipv8Component).ipv8
         self.do_isolate_overlays()
         self._logger.info("IPv8 overlay should be isolated now")
         self.ipv8_available.set_result(self.ipv8)
@@ -195,6 +199,19 @@ class TriblerModule(IPv8Provider):
         # Write away the start time of the experiment
         with open('start_time.txt', 'w') as start_time_time:
             start_time_time.write("%f" % self.experiment.scenario_runner.exp_start_time)
+
+    def get_component(self, component_class: Type[T], optional=False) -> Optional[T]:
+        session = self.tribler_session
+        if not session:
+            raise RuntimeError('Session was not initialized')
+
+        component = session.get_instance(component_class)
+        if not component:
+            if optional:
+                return None
+            raise RuntimeError(f'Instance of {component_class.__name__} not found')
+
+        return component
 
     def setup_config(self) -> GumbyTriblerConfig:
         if self.ipv8_port is None:
@@ -229,7 +246,7 @@ class TriblerModule(IPv8Provider):
 
     @experiment_callback
     def set_libtorrentmgr_alert_mask(self, mask=0xffffffff):
-        download_manager = LibtorrentComponent.instance().download_manager
+        download_manager = self.get_component(LibtorrentComponent).download_manager
         download_manager.default_alert_mask = mask
         download_manager.session_stats_callback = self._process_libtorrent_alert
         for ltsession in download_manager.ltsessions.values():
@@ -262,7 +279,7 @@ class TriblerModule(IPv8Provider):
         Disable the RC4 encryption that the libtorrent session in Tribler uses by default.
         This should speed up downloads when testing.
         """
-        download_manager = LibtorrentComponent.instance().download_manager
+        download_manager = self.get_component(LibtorrentComponent).download_manager
         ltsession = download_manager.get_session(0)
         settings = download_manager.get_session_settings(ltsession)
         settings['prefer_rc4'] = False
@@ -340,11 +357,11 @@ class TriblerModule(IPv8Provider):
 
             return 1.0
 
-        download_manager = LibtorrentComponent.instance().download_manager
+        download_manager = self.get_component(LibtorrentComponent).download_manager
         download = download_manager.start_download(tdef=tdef, config=download_config)
         download.set_state_callback(cb)
 
-        dht_community: DHTCommunity = Ipv8Component.instance().ipv8.get_overlay(DHTCommunity)
+        dht_community: DHTCommunity = self.get_component(Ipv8Component).ipv8.get_overlay(DHTCommunity)
         if action == 'download':
             # Schedule a DHT lookup to fetch peers to add to this download
             await sleep(5)
@@ -365,7 +382,7 @@ class TriblerModule(IPv8Provider):
 
     @experiment_callback
     def create_channel(self):
-        mds = MetadataStoreComponent.instance().mds
+        mds = self.get_component(MetadataStoreComponent).mds
         mds.ChannelMetadata.create_channel('test' + ''.join(str(i) for i in range(100)), 'test')
 
     @experiment_callback
@@ -373,7 +390,7 @@ class TriblerModule(IPv8Provider):
         amount = int(amount)
 
         with db_session:
-            mds = MetadataStoreComponent.instance().mds
+            mds = self.get_component(MetadataStoreComponent).mds
             my_channel = mds.ChannelMetadata.get_my_channels().order_by(lambda c: desc(c.rowid)).first()
             for ind in range(amount):
                 test_tdef = self.create_test_torrent("file%s.txt" % ind, 0, 1024)
@@ -381,14 +398,14 @@ class TriblerModule(IPv8Provider):
 
             torrent_dict = my_channel.commit_channel_torrent()
             if torrent_dict:
-                gigachannel_manager = GigachannelManagerComponent.instance().gigachannel_manager
+                gigachannel_manager = self.get_component(GigachannelManagerComponent).gigachannel_manager
                 gigachannel_manager.updated_my_channel(TorrentDef.load_from_dict(torrent_dict))
 
     @experiment_callback
     def add_peer_to_downloads(self, peer_nr):
         self._logger.info("Adding peer %s to all downloads", peer_nr)
         host, port = self.experiment.get_peer_ip_port_by_id(peer_nr)
-        download_manager = LibtorrentComponent.instance().download_manager
+        download_manager = self.get_component(LibtorrentComponent).download_manager
         for download in download_manager.get_downloads():
             download.add_peer((host, port))
 
@@ -421,7 +438,7 @@ class TriblerModule(IPv8Provider):
         """
         Write away information about the downloads in Tribler.
         """
-        download_manager = LibtorrentComponent.instance().download_manager
+        download_manager = self.get_component(LibtorrentComponent).download_manager
         with open('downloads.txt', 'w') as downloads_file:
             downloads_file.write('infohash,status,progress\n')
             for download in download_manager.get_downloads():
@@ -453,6 +470,9 @@ class TriblerBasedModule(ExperimentModule):
         if tribler_module is None:
             raise RuntimeError('TriblerModule not found')
         return tribler_module
+
+    def get_component(self, component_class: Type[T], optional=False) -> Optional[T]:
+        return self.tribler_module.get_component(component_class, optional=optional)
 
     @property
     @abstractmethod

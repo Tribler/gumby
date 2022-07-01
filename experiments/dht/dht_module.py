@@ -26,10 +26,7 @@ class DHTModule(TriblerBasedModule):
 
     @property
     def community(self) -> DHTDiscoveryCommunity:
-        ipv8_component = Ipv8Component.instance()
-        if ipv8_component is None:
-            raise RuntimeError('Ipv8Component not found')
-        return ipv8_component.dht_discovery_community
+        return self.get_component(Ipv8Component).dht_discovery_community
 
     @experiment_callback
     def introduce_peers_dht(self):

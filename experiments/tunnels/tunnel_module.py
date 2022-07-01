@@ -39,10 +39,7 @@ class TunnelModule(TriblerBasedModule):
 
     @property
     def community(self) -> TriblerTunnelCommunity:
-        component = TunnelsComponent.instance()
-        if component is None:
-            raise RuntimeError('TunnelsComponent not found')
-        return component.community
+        return self.get_component(TunnelsComponent).community
 
     def on_ipv8_available(self, ipv8):
         super().on_ipv8_available(ipv8)
@@ -72,7 +69,7 @@ class TunnelModule(TriblerBasedModule):
                                                peer["id"], peer["ip"], peer["port"], peer["dtotal"],
                                                peer["utotal"], peer["extended_version"])
 
-                    payout_component = PayoutComponent.instance()
+                    payout_component = self.get_component(PayoutComponent, optional=True)
                     if payout_component:
                         payout_manager = payout_component.payout_manager
                         for pid, hashes in peer_aggregate.items():
@@ -93,9 +90,7 @@ class TunnelModule(TriblerBasedModule):
 
             return []
 
-        libtorrent_component = LibtorrentComponent.instance()
-        assert libtorrent_component
-        download_manager = libtorrent_component.download_manager
+        download_manager = self.get_component(LibtorrentComponent).download_manager
         download_manager.set_download_states_callback(monitor_downloads)
 
     @property

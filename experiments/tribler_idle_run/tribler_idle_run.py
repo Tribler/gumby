@@ -5,7 +5,7 @@ import signal
 import sys
 from pathlib import Path
 
-from tribler.core.components.base import Session
+from tribler.core.components.session import Session
 from tribler.core.config.tribler_config import TriblerConfig
 from tribler.core.start_core import components_gen
 
@@ -13,10 +13,10 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '
 DEFAULT_EXECUTION_TIME = 60 * 10  # Run for 10 minutes by default
 
 
-async def run_session(config, session):
+async def run_session(config: TriblerConfig, session: Session):
     signal.signal(signal.SIGTERM, lambda signum, stack: session.shutdown_event.set)
     try:
-        async with session.start() as session:
+        async with session:
             if config.error:
                 session.logger.error(f'Config error: {config.error}')
                 sys.exit(-1)
