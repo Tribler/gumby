@@ -19,9 +19,8 @@ from ipv8_service import IPv8
 
 from pony.orm import db_session, desc
 
-from tribler.core.components.component import Component
 from tribler.core.components.bandwidth_accounting.bandwidth_accounting_component import BandwidthAccountingComponent
-from tribler.core.components.session import Session
+from tribler.core.components.component import Component
 from tribler.core.components.gigachannel.gigachannel_component import GigaChannelComponent
 from tribler.core.components.gigachannel_manager.gigachannel_manager_component import GigachannelManagerComponent
 from tribler.core.components.ipv8.ipv8_component import Ipv8Component
@@ -34,6 +33,7 @@ from tribler.core.components.payout.payout_component import PayoutComponent
 from tribler.core.components.popularity.popularity_component import PopularityComponent
 from tribler.core.components.resource_monitor.resource_monitor_component import ResourceMonitorComponent
 from tribler.core.components.restapi.restapi_component import RESTComponent
+from tribler.core.components.session import Session
 from tribler.core.components.socks_servers.socks_servers_component import SocksServersComponent
 from tribler.core.components.tag.tag_component import TagComponent
 from tribler.core.components.torrent_checker.torrent_checker_component import TorrentCheckerComponent
