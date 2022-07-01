@@ -70,10 +70,7 @@ class PopularityModule(TriblerBasedModule):
 
     @property
     def community(self) -> PopularityCommunity:
-        component = PopularityComponent.instance()
-        if component is None:
-            raise RuntimeError('PopularityComponent not found')
-        return component.community
+        return self.get_component(PopularityComponent).community
 
     @experiment_callback
     def start_health_poll(self, interval):
@@ -85,9 +82,7 @@ class PopularityModule(TriblerBasedModule):
 
     @experiment_callback
     def set_fake_dht_health_manager(self):
-        libtorrent_component = LibtorrentComponent.instance()
-        assert libtorrent_component
-        download_manager = libtorrent_component.download_manager
+        download_manager = self.get_component(LibtorrentComponent).download_manager
         self.fake_dht_health_manager = FakeDHTHealthManager()
         download_manager.dht_health_manager = self.fake_dht_health_manager
 

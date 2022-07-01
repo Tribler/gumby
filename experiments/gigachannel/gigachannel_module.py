@@ -29,10 +29,7 @@ class GigaChannelModule(TriblerBasedModule):
 
     @property
     def community(self) -> GigaChannelCommunity:
-        component = GigaChannelComponent.instance()
-        if component is None:
-            raise RuntimeError('GigaChannelComponent not found')
-        return component.community
+        return self.get_component(GigaChannelComponent).community
 
     def on_ipv8_available(self, ipv8):
         super().on_ipv8_available(ipv8)
@@ -48,12 +45,12 @@ class GigaChannelModule(TriblerBasedModule):
         """
         Write information about all discovered channels away.
         """
-        mds_component = MetadataStoreComponent.instance()
+        mds_component = self.get_component(MetadataStoreComponent, optional=True)
         if not mds_component:
             return
 
         mds = mds_component.mds
-        download_manager = LibtorrentComponent.instance().download_manager
+        download_manager = self.get_component(LibtorrentComponent).download_manager
         with db_session:
             self.autoplot_add_point('known_channels', len(list(mds.ChannelMetadata.select())))
             self.autoplot_add_point('total_torrents', len(list(mds.TorrentMetadata.select())))
