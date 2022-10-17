@@ -14,6 +14,11 @@ class BandwidthAccountingModule(TriblerBasedModule):
         super().__init__(experiment)
         self.payouts_task = None
 
+    def on_id_received(self):
+        super().on_id_received()
+        tribler_config = self.tribler_module.tribler_config
+        tribler_config.bw_accounting.enabled = True
+
     @property
     def community(self) -> BandwidthAccountingCommunity:
         return self.get_component(BandwidthAccountingComponent).community

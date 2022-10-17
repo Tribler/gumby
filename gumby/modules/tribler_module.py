@@ -25,6 +25,7 @@ from tribler.core.components.gigachannel.gigachannel_component import GigaChanne
 from tribler.core.components.gigachannel_manager.gigachannel_manager_component import GigachannelManagerComponent
 from tribler.core.components.ipv8.ipv8_component import Ipv8Component
 from tribler.core.components.key.key_component import KeyComponent
+from tribler.core.components.knowledge.knowledge_component import KnowledgeComponent
 from tribler.core.components.libtorrent.download_manager.download_config import DownloadConfig
 from tribler.core.components.libtorrent.libtorrent_component import LibtorrentComponent
 from tribler.core.components.libtorrent.torrentdef import TorrentDef
@@ -35,7 +36,6 @@ from tribler.core.components.resource_monitor.resource_monitor_component import 
 from tribler.core.components.restapi.restapi_component import RESTComponent
 from tribler.core.components.session import Session
 from tribler.core.components.socks_servers.socks_servers_component import SocksServersComponent
-from tribler.core.components.tag.tag_component import TagComponent
 from tribler.core.components.torrent_checker.torrent_checker_component import TorrentCheckerComponent
 from tribler.core.components.tunnel.tunnel_component import TunnelsComponent
 from tribler.core.components.watch_folder.watch_folder_component import WatchFolderComponent
@@ -53,12 +53,17 @@ from gumby.util import generate_keypair_trustchain, run_task, save_keypair_trust
 T = TypeVar('T', bound=Component)
 
 
-class TagsSettings(TriblerConfigSection):
+class BandwidthAccountingSettings(TriblerConfigSection):
+    enabled: bool = False
+
+
+class KnowledgeSettings(TriblerConfigSection):
     enabled: bool = False
 
 
 class GumbyTriblerConfig(TriblerConfig):
-    tags: TagsSettings = TagsSettings()
+    bw_accounting: BandwidthAccountingSettings = BandwidthAccountingSettings()
+    knowledge: KnowledgeSettings = KnowledgeSettings()
 
 
 # pylint: disable=too-many-public-methods
@@ -130,22 +135,23 @@ class TriblerModule(IPv8Provider):
 
         if config.api.http_enabled or config.api.https_enabled:
             yield RESTComponent()
-        if config.chant.enabled or config.torrent_checking.enabled:
+        if config.knowledge.enabled or config.chant.enabled or config.torrent_checking.enabled:
             yield MetadataStoreComponent()
         if config.ipv8.enabled:
             yield Ipv8Component()
 
         yield KeyComponent()
 
-        if config.tags.enabled:
-            yield TagComponent()
+        if config.knowledge.enabled:
+            yield KnowledgeComponent()
 
         if config.libtorrent.enabled:
             yield LibtorrentComponent()
         if config.ipv8.enabled and config.chant.enabled:
             yield GigaChannelComponent()
-        if config.ipv8.enabled:
+        if config.bw_accounting.enabled:
             yield BandwidthAccountingComponent()
+            yield PayoutComponent()
         if config.resource_monitor.enabled:
             yield ResourceMonitorComponent()
 
@@ -162,8 +168,6 @@ class TriblerModule(IPv8Provider):
             yield PopularityComponent()
         if config.ipv8.enabled and config.tunnel_community.enabled:
             yield TunnelsComponent()
-        if config.ipv8.enabled:
-            yield PayoutComponent()
         if config.watch_folder.enabled:
             yield WatchFolderComponent()
         # if config.general.version_checker_enabled:
@@ -237,7 +241,8 @@ class TriblerModule(IPv8Provider):
         config.api.http_enabled = False
         config.resource_monitor.enabled = False
         config.popularity_community.enabled = False
-        config.tags.enabled = False
+        config.bw_accounting.enabled = False
+        config.knowledge.enabled = False
         return config
 
     @experiment_callback

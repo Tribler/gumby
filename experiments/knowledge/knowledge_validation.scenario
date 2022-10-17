@@ -1,0 +1,12 @@
+&module gumby.modules.tribler_module.TriblerModule
+&module experiments.knowledge.knowledge_module.KnowledgeModule
+
+@0:0 annotate start-experiment
+@0:1 isolate_ipv8_overlay KnowledgeCommunity
+@0:2 start_session
+@0:7 introduce_peers
+@0:10 generate_knowledge
+@0:172 write_overlay_statistics
+@0:175 annotate stop_session
+@0:175 stop_session
+@0:180 stop
